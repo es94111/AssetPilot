@@ -10093,5 +10093,43 @@
   "@featuresSmartAssistFxRateRequired": {
     "description": "Web path: features.smartAssist.fxRateRequired",
     "x-webPath": "features.smartAssist.fxRateRequired"
+  },
+  "featuresTransactionsScanReceipt": "Escanear recibo",
+  "@featuresTransactionsScanReceipt": {
+    "description": "Web path: features.transactions.scanReceipt",
+    "x-webPath": "features.transactions.scanReceipt"
+  },
+  "featuresTransactionsScanningReceipt": "Escaneando…",
+  "@featuresTransactionsScanningReceipt": {
+    "description": "Web path: features.transactions.scanningReceipt",
+    "x-webPath": "features.transactions.scanningReceipt"
+  },
+  "featuresTransactionsOcrHelp": "Sube una imagen del recibo para detectar automáticamente el importe, la fecha y el comercio. Los resultados son solo borradores y se guardan tras tu confirmación.",
+  "@featuresTransactionsOcrHelp": {
+    "description": "Web path: features.transactions.ocrHelp",
+    "x-webPath": "features.transactions.ocrHelp"
+  },
+  "featuresTransactionsOcrApplied": "Se rellenaron los valores detectados. Revísalos antes de guardar.",
+  "@featuresTransactionsOcrApplied": {
+    "description": "Web path: features.transactions.ocrApplied",
+    "x-webPath": "features.transactions.ocrApplied"
+  },
+  "featuresTransactionsOcrNoFields": "No se pudo detectar ningún campo. Introdúcelos manualmente.",
+  "@featuresTransactionsOcrNoFields": {
+    "description": "Web path: features.transactions.ocrNoFields",
+    "x-webPath": "features.transactions.ocrNoFields"
+  },
+  "featuresTransactionsOcrUnavailable": "El escaneo de recibos no está habilitado en este servidor. Introduce los valores manualmente.",
+  "@featuresTransactionsOcrUnavailable": {
+    "description": "Web path: features.transactions.ocrUnavailable",
+    "x-webPath": "features.transactions.ocrUnavailable"
+  },
+  "featuresTransactionsOcrFailed": "El escaneo falló. Introduce los valores manualmente. ({message})",
+  "@featuresTransactionsOcrFailed": {
+    "description": "Web path: features.transactions.ocrFailed",
+    "x-webPath": "features.transactions.ocrFailed",
+    "placeholders": {
+      "message": {}
+    }
   }
 }

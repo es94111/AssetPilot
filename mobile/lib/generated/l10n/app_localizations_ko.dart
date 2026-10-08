@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6369,4 +6370,29 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresSmartAssistFxRateRequired => '저장하기 전에 유효한 환율을 입력하세요。';
+
+  @override
+  String get featuresTransactionsScanReceipt => '영수증 인식';
+
+  @override
+  String get featuresTransactionsScanningReceipt => '인식 중…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      '영수증 이미지를 업로드하면 금액·날짜·상점을 자동으로 인식합니다. 결과는 초안이며 확인 후에만 저장됩니다.';
+
+  @override
+  String get featuresTransactionsOcrApplied => '인식된 값을 채웠습니다. 저장 전에 확인해 주세요.';
+
+  @override
+  String get featuresTransactionsOcrNoFields => '필드를 인식하지 못했습니다. 직접 입력해 주세요.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      '이 서버에서는 영수증 인식이 비활성화되어 있습니다. 직접 입력해 주세요.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return '인식에 실패했습니다. 직접 입력해 주세요. ($message)';
+  }
 }

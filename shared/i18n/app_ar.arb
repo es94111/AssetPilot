@@ -10093,5 +10093,43 @@
   "@featuresSmartAssistFxRateRequired": {
     "description": "Web path: features.smartAssist.fxRateRequired",
     "x-webPath": "features.smartAssist.fxRateRequired"
+  },
+  "featuresTransactionsScanReceipt": "مسح الإيصال",
+  "@featuresTransactionsScanReceipt": {
+    "description": "Web path: features.transactions.scanReceipt",
+    "x-webPath": "features.transactions.scanReceipt"
+  },
+  "featuresTransactionsScanningReceipt": "جارٍ المسح…",
+  "@featuresTransactionsScanningReceipt": {
+    "description": "Web path: features.transactions.scanningReceipt",
+    "x-webPath": "features.transactions.scanningReceipt"
+  },
+  "featuresTransactionsOcrHelp": "ارفع صورة الإيصال للتعرف تلقائيًا على المبلغ والتاريخ والمتجر. النتائج مسودة فقط وتُحفظ بعد تأكيدك.",
+  "@featuresTransactionsOcrHelp": {
+    "description": "Web path: features.transactions.ocrHelp",
+    "x-webPath": "features.transactions.ocrHelp"
+  },
+  "featuresTransactionsOcrApplied": "تم تعبئة القيم المكتشفة. راجعها قبل الحفظ.",
+  "@featuresTransactionsOcrApplied": {
+    "description": "Web path: features.transactions.ocrApplied",
+    "x-webPath": "features.transactions.ocrApplied"
+  },
+  "featuresTransactionsOcrNoFields": "لم يتم التعرف على أي حقل. يرجى الإدخال يدويًا.",
+  "@featuresTransactionsOcrNoFields": {
+    "description": "Web path: features.transactions.ocrNoFields",
+    "x-webPath": "features.transactions.ocrNoFields"
+  },
+  "featuresTransactionsOcrUnavailable": "ميزة مسح الإيصالات غير مفعّلة على هذا الخادم. يرجى الإدخال يدويًا.",
+  "@featuresTransactionsOcrUnavailable": {
+    "description": "Web path: features.transactions.ocrUnavailable",
+    "x-webPath": "features.transactions.ocrUnavailable"
+  },
+  "featuresTransactionsOcrFailed": "فشل المسح. يرجى الإدخال يدويًا. ({message})",
+  "@featuresTransactionsOcrFailed": {
+    "description": "Web path: features.transactions.ocrFailed",
+    "x-webPath": "features.transactions.ocrFailed",
+    "placeholders": {
+      "message": {}
+    }
   }
 }

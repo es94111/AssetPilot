@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.140.0",
+  "currentVersion": "4.141.0",
   "releases": [
+    {
+      "version": "4.141.0",
+      "date": "2026-10-08",
+      "title": "收據 OCR 自動帶入",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增交易可上傳收據影像並辨識金額、日期與店家，以草稿預填表單並由使用者確認後儲存。OCR 不自動寫入資料庫，OCR API 認證不觸發固定收支等背景寫入。僅提供可設定的 HTTP OCR 供應商（含 API Key 時強制 HTTPS）；未設定供應商時明確降級為手動輸入，不提供僅讀圖片文字層的偽內建 OCR。沿用既有 photoCrypto 解密與 S3 存取權限，並新增 OCR／API 輸入回歸測試。#250"
+        }
+      ]
+    },
     {
       "version": "4.140.0",
       "date": "2026-10-08",

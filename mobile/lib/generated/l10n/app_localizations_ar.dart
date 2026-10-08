@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6547,4 +6548,31 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'أدخل سعر صرف صالحًا قبل الحفظ.';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'مسح الإيصال';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'جارٍ المسح…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'ارفع صورة الإيصال للتعرف تلقائيًا على المبلغ والتاريخ والمتجر. النتائج مسودة فقط وتُحفظ بعد تأكيدك.';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'تم تعبئة القيم المكتشفة. راجعها قبل الحفظ.';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'لم يتم التعرف على أي حقل. يرجى الإدخال يدويًا.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'ميزة مسح الإيصالات غير مفعّلة على هذا الخادم. يرجى الإدخال يدويًا.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'فشل المسح. يرجى الإدخال يدويًا. ($message)';
+  }
 }

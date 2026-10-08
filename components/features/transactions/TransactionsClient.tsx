@@ -13,6 +13,7 @@ import { localeTag } from '@/lib/i18n/localeTag';
 import { ArrowLeftRight, ArrowUpRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2, X } from 'lucide-react';
 import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
 import { isCalendarIsoDate } from '@/lib/calendarDates';
+import { applyReceiptOcrPrefill, createReceiptOcrRequestGate } from '@/lib/receiptOcrPrefill';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
@@ -34,10 +35,39 @@ type AttachmentItem = {
   url: string;
 };
 
+// 收據 OCR 草稿狀態（issue #250）。辨識結果只是預填，永不直接寫入 DB。
+type OcrDraft = {
+  amount: number | null;
+  currency: string | null;
+  date: string | null;
+  merchant: string | null;
+};
+
+type OcrState = {
+  running: boolean;
+  /** ok：成功；unavailable：站台未設定供應商；failed：辨識失敗。 */
+  status: 'ok' | 'unavailable' | 'failed';
+  draft: OcrDraft | null;
+  message: string;
+  /** 辨識來源：本次選取的檔案索引，或編輯中的既有附件 id。 */
+  sourceKey: string;
+};
+
 // Client-side compression: cap the longest edge at 1600px with JPEG quality 0.8
 // to reduce upload bandwidth and storage usage. Browser Canvas only; no new deps.
 const PHOTO_MAX_EDGE = 1600;
 const PHOTO_JPEG_QUALITY = 0.8;
+
+/** 讀取檔案為 base64（不含 data: 前綴），供收據 OCR 上傳辨識使用。 */
+async function fileToBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
 
 async function compressPhoto(file: File): Promise<File> {
   // Keep non-reencodable images and unsupported browsers on the original file.
@@ -111,8 +141,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentQuery = searchParams.toString();
-  const [txs, setTxs] = useState<any[]>([]);
+  const currentQuery = searchParams.toString();  const [txs, setTxs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(() => readPageParam(searchParams));
   const [pageSize, setPageSize] = useState(() => readPageSizeParam(searchParams));
@@ -141,6 +170,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoStorageStatus, setPhotoStorageStatus] = useState<PhotoStorageStatus | null>(null);
   const [photoUploadWarning, setPhotoUploadWarning] = useState('');
+  const [ocrState, setOcrState] = useState<OcrState | null>(null);
+  const ocrRunning = !!ocrState?.running;
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [restoreCreatedId, setRestoreCreatedId] = useState<string | null>(null);
   const [restoreNoteId, setRestoreNoteId] = useState<string | null>(null);
@@ -164,6 +195,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [suggestionsHidden, setSuggestionsHidden] = useState(false);
   const latestSuggestionsLoadId = useRef(0);
   const latestLoadId = useRef(0);
+  const ocrRequestGate = useRef(createReceiptOcrRequestGate()).current;
+  const manuallyEditedOcrFields = useRef(new Set<'amount' | 'date' | 'note'>());
 
   const load = useCallback(async (p = page) => {
     const loadId = ++latestLoadId.current;
@@ -300,15 +333,19 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, [currentQuery, filters, page, pageSize, pathname, quickCreateHandled, router, searchParams]);
 
   function openAdd(dateOverride?: string) {
+    ocrRequestGate.invalidate();
     const preferredAccount = accounts.find((account: any) => String(account.currency || 'TWD').toUpperCase() === defaultCurrency) || accounts[0];
     const defaultAccountId = preferredAccount?.id || '';
     const nextCurrency = String(preferredAccount?.currency || defaultCurrency || 'TWD').toUpperCase();
-    setForm({ ...EMPTY_FORM, date: dateOverride && isCalendarIsoDate(dateOverride) ? dateOverride : today(), accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
+    const selectedDate = dateOverride && isCalendarIsoDate(dateOverride) ? dateOverride : today();
+    manuallyEditedOcrFields.current = new Set(dateOverride && isCalendarIsoDate(dateOverride) ? ['date'] : []);
+    setForm({ ...EMPTY_FORM, date: selectedDate, accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
     setEditId(null);
     setFxFeeEdited(false);
     setFormError('');
     setPhotoUploadWarning('');
     setPhotoFiles([]);
+    setOcrState(null);
     setEditAttachments([]);
     setEditAttachmentsLoading(false);
     setPendingDeleteIds(new Set());
@@ -411,6 +448,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }
 
   function openEdit(tx: any) {
+    ocrRequestGate.invalidate();
+    const touchedFields: Array<'amount' | 'date' | 'note'> = ['date'];
+    if (tx.originalAmount ?? tx.amount) touchedFields.push('amount');
+    if (tx.note) touchedFields.push('note');
+    manuallyEditedOcrFields.current = new Set(touchedFields);
     if (tx.type === 'transfer_in' || tx.type === 'transfer_out') {
       setFormError(t('features.transactions.messages.editTransferBlocked'));
       return;
@@ -436,6 +478,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setFormError('');
     setPhotoUploadWarning('');
     setPhotoFiles([]);
+    setOcrState(null);
     setEditAttachments([]);
     setPendingDeleteIds(new Set());
     setAdvancedOpen(true);
@@ -475,6 +518,18 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setAttachmentPickerLoading(false);
   }
 
+  function invalidateOcrForSource(sourceKey: string) {
+    if (ocrState?.running && ocrState.sourceKey === sourceKey) {
+      ocrRequestGate.invalidate();
+      setOcrState(null);
+    }
+  }
+
+  function invalidateOcrForTransactionContextChange() {
+    ocrRequestGate.invalidate();
+    if (ocrState?.running) setOcrState(null);
+  }
+
   function addPhotoFiles(files: FileList | null) {
     const incoming = Array.from(files || []).filter((file) => file.type.startsWith('image/'));
     if (incoming.length === 0) return;
@@ -489,11 +544,73 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     });
   }
 
+  /**
+   * 收據 OCR：辨識影像後「預填」表單（issue #250）。
+   * 只更新草稿欄位，不呼叫任何寫入 API；使用者確認後才由 handleSave 儲存。
+   * 供應商未設定或辨識失敗時僅顯示訊息，表單維持可手動輸入。
+   */
+  async function runReceiptOcr(target: { kind: 'file'; index: number } | { kind: 'attachment'; id: string }) {
+    const requestId = ocrRequestGate.begin();
+    const sourceKey = target.kind === 'file' ? `file:${target.index}` : `attachment:${target.id}`;
+    setOcrState({ running: true, status: 'ok', draft: null, message: '', sourceKey });
+    try {
+      const body: Record<string, string> = {};
+      if (target.kind === 'file') {
+        const file = photoFiles[target.index];
+        if (!file) throw new Error(t('features.transactions.ocrNoFields'));
+        body.imageBase64 = await fileToBase64(file);
+        if (!ocrRequestGate.isCurrent(requestId)) return;
+        body.mimeType = file.type || 'image/jpeg';
+      } else {
+        if (!editId) throw new Error(t('features.transactions.ocrNoFields'));
+        body.transactionId = editId;
+        body.attachmentId = target.id;
+      }
+      const result = await apiPost('/api/transactions/receipt-ocr', body);
+      if (!ocrRequestGate.isCurrent(requestId)) return;
+      const status = result?.status === 'ok' ? 'ok' : result?.status === 'unavailable' ? 'unavailable' : 'failed';
+      const draft: OcrDraft = result?.draft || { amount: null, currency: null, date: null, merchant: null };
+      const hasAny = draft.amount !== null || draft.date !== null || draft.merchant !== null;
+
+      if (status === 'ok' && hasAny) {
+        setForm((current) => applyReceiptOcrPrefill(current, draft, {
+          amount: !manuallyEditedOcrFields.current.has('amount'),
+          date: !manuallyEditedOcrFields.current.has('date'),
+          note: !manuallyEditedOcrFields.current.has('note'),
+        }));
+        if (draft.date) manuallyEditedOcrFields.current.add('date');
+        setAdvancedOpen(true);
+        showToast(t('features.transactions.ocrApplied'), 'success');
+      } else if (status === 'unavailable') {
+        showToast(t('features.transactions.ocrUnavailable'), 'info');
+      } else if (status === 'ok') {
+        showToast(t('features.transactions.ocrNoFields'), 'info');
+      } else {
+        showToast(t('features.transactions.ocrFailed', { message: String(result?.message || '') }), 'error');
+      }
+      setOcrState({ running: false, status, draft, message: String(result?.message || ''), sourceKey });
+    } catch (e: any) {
+      if (!ocrRequestGate.isCurrent(requestId)) return;
+      // 連線或伺服器錯誤一律降級回手動輸入，不阻擋新增交易。
+      showToast(t('features.transactions.ocrFailed', { message: e?.message || '' }), 'error');
+      setOcrState({ running: false, status: 'failed', draft: null, message: e?.message || '', sourceKey });
+    }
+  }
+
+  function closeTransactionModal() {
+    ocrRequestGate.invalidate();
+    setModal(false);
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.date) { setAdvancedOpen(true); setFormError(t('features.transactions.messages.dateRequired')); return; }
     if (!form.amount || Number(form.amount) <= 0) { setFormError(t('features.transactions.messages.amountRequired')); return; }
     if (!/^[A-Z]{3}$/.test(form.currency)) { setAdvancedOpen(true); setFormError(t('features.accounts.messages.currencyInvalid')); return; }
+    // Freeze the reviewed form snapshot before building the payload; a pending OCR response
+    // must not mutate the form after the request has been submitted.
+    ocrRequestGate.invalidate();
+    setOcrState(null);
     setSaving(true);
     setFormError('');
     const clientRef = editId ? undefined : newQueueId();
@@ -542,7 +659,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             setSaving(false);
             return;
           }
-          setModal(false);
+          closeTransactionModal();
           setPage(1);
           // 離線路徑不送出照片；若使用者有選照片必須明確告知會被捨棄（與線上路的警告一致）。
           if (photoFiles.length > 0) {
@@ -561,7 +678,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           setFormError(t('features.transactions.createdWithWarning', { message }));
         }
       }
-      setModal(false);
+      closeTransactionModal();
       setPage(1);
       await load(1);
       notifyDataChanged('transactions');
@@ -1112,7 +1229,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      <Dialog open={modal} onOpenChange={setModal}>
+      <Dialog open={modal} onOpenChange={(open) => {
+        if (!open) ocrRequestGate.invalidate();
+        setModal(open);
+      }}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editId ? t('features.transactions.edit') : t('features.transactions.create')}</DialogTitle>
@@ -1127,7 +1247,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     type="button"
                     aria-pressed={form.type === type}
                     className={`min-h-11 rounded-xl border px-3 text-sm font-semibold transition-colors ${form.type === type ? 'border-primary bg-primary text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'}`}
-                    onClick={() => setForm((current) => ({ ...current, type, categoryId: '' }))}
+                    onClick={() => {
+                      if (form.type !== type) invalidateOcrForTransactionContextChange();
+                      setForm((current) => ({ ...current, type, categoryId: '' }));
+                    }}
                   >
                     {type === 'income' ? t('features.common.income') : t('features.common.expense')}
                   </button>
@@ -1136,7 +1259,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-amount" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.amountRequiredLabel')}</label>
-              <input id="transaction-amount" type="number" required min="0.01" step="any" inputMode="decimal" autoFocus={!editId} placeholder="0" className="min-h-12 w-full rounded-xl border border-gray-300 px-3 text-lg font-semibold shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.amount} onChange={(e) => setForm((current) => ({ ...current, amount: e.target.value }))} />
+              <input id="transaction-amount" type="number" required min="0.01" step="any" inputMode="decimal" autoFocus={!editId} placeholder="0" className="min-h-12 w-full rounded-xl border border-gray-300 px-3 text-lg font-semibold shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.amount} onChange={(e) => { manuallyEditedOcrFields.current.add('amount'); setForm((current) => ({ ...current, amount: e.target.value })); }} />
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-category" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.recurring.category')}</label>
@@ -1191,6 +1314,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-account" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.account')}</label>
               <select id="transaction-account" className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.accountId} onChange={(e) => {
+                if (form.accountId !== e.target.value) invalidateOcrForTransactionContextChange();
                 const acct = accounts.find((a: any) => a.id === e.target.value);
                 const nextCurrency = String(acct?.currency || 'TWD').toUpperCase();
                 setForm((current) => ({ ...current, accountId: e.target.value, currency: nextCurrency, fxRate: '' }));
@@ -1204,7 +1328,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <div className="space-y-3 border-t border-slate-200 p-3 dark:border-slate-700">
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-date" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.dateRequiredLabel')}</label>
-              <input id="transaction-date" type="date" required className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.date} onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))} />
+              <input id="transaction-date" type="date" required className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.date} onChange={(e) => { manuallyEditedOcrFields.current.add('date'); setForm((current) => ({ ...current, date: e.target.value })); }} />
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-currency" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.currency')}</label>
@@ -1215,7 +1339,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 maxLength={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 value={form.currency}
-                onChange={(e) => setForm((current) => ({ ...current, currency: e.target.value.toUpperCase(), fxRate: '' }))}
+                onChange={(e) => {
+                  const currency = e.target.value.toUpperCase();
+                  if (form.currency !== currency) invalidateOcrForTransactionContextChange();
+                  setForm((current) => ({ ...current, currency, fxRate: '' }));
+                }}
               />
               <datalist id="transaction-currency-options">
                 {currencyOptions.map((currency) => <option key={currency} value={currency} />)}
@@ -1254,7 +1382,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             )}
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-note" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.note')}</label>
-              <input id="transaction-note" type="text" maxLength={TRANSACTION_NOTE_MAX_LENGTH} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.note} onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))} />
+              <input id="transaction-note" type="text" maxLength={TRANSACTION_NOTE_MAX_LENGTH} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.note} onChange={(e) => { manuallyEditedOcrFields.current.add('note'); setForm((current) => ({ ...current, note: e.target.value })); }} />
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> {t('features.common.excludeFromStats')}
@@ -1272,13 +1400,27 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).map(a => (
                       <li key={a.id} className="flex items-center justify-between gap-2 text-xs text-slate-600">
                         <a href={activeLedgerFileUrl(a.url)} target="_blank" rel="noreferrer" className="min-w-0 truncate text-sky-600 hover:text-sky-700">{a.filename || t('features.transactions.photos')}</a>
-                        <button
-                          type="button"
-                          className="shrink-0 font-medium text-slate-500 hover:text-red-600"
-                          onClick={() => setPendingDeleteIds(prev => new Set([...prev, a.id]))}
-                        >
-                          {t('common.delete')}
-                        </button>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            className="font-medium text-slate-500 hover:text-sky-600"
+                            disabled={ocrRunning}
+                            onClick={() => void runReceiptOcr({ kind: 'attachment', id: a.id })}
+                          >
+                            {t('features.transactions.scanReceipt')}
+                          </button>
+                          <button
+                            type="button"
+                            className="font-medium text-slate-500 hover:text-red-600"
+                            disabled={ocrRunning}
+                            onClick={() => {
+                              invalidateOcrForSource(`attachment:${a.id}`);
+                              setPendingDeleteIds(prev => new Set([...prev, a.id]));
+                            }}
+                          >
+                            {t('common.delete')}
+                          </button>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -1316,25 +1458,51 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                   </div>
                 )}
                 <p className="text-xs text-slate-500">{t('features.transactions.photoHelp', { maxMb: Math.round((photoStorageStatus?.maxBytes || 10 * 1024 * 1024) / 1024 / 1024) })}</p>
+                <p className="text-xs text-slate-500">{t('features.transactions.ocrHelp')}</p>
               </div>
               {photoFiles.length > 0 && (
                 <div className="space-y-3">
                   <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-xs font-medium text-slate-600">{t('features.transactions.newPhotos', { count: photoFiles.length })}</p>
-                      <button type="button" className="text-xs font-medium text-slate-500 hover:text-slate-700" onClick={() => setPhotoFiles([])}>{t('common.clear')}</button>
+                      <button
+                        type="button"
+                        className="text-xs font-medium text-slate-500 hover:text-slate-700"
+                        disabled={ocrRunning}
+                        onClick={() => {
+                          if (ocrState?.running && ocrState.sourceKey.startsWith('file:')) {
+                            ocrRequestGate.invalidate();
+                            setOcrState(null);
+                          }
+                          setPhotoFiles([]);
+                        }}
+                      >{t('common.clear')}</button>
                     </div>
                     <ul className="space-y-1">
                       {photoFiles.map((file, index) => (
                         <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-2 text-xs text-slate-600">
                           <span className="min-w-0 truncate">{file.name || t('features.transactions.photoCount', { count: index + 1 })}</span>
-                          <button
-                            type="button"
-                            className="shrink-0 font-medium text-slate-500 hover:text-red-600"
-                            onClick={() => setPhotoFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-                          >
-                            {t('features.transactions.remove')}
-                          </button>
+                          <span className="flex shrink-0 items-center gap-2">
+                            <button
+                              type="button"
+                              className="font-medium text-slate-500 hover:text-sky-600"
+                              disabled={ocrRunning}
+                              onClick={() => void runReceiptOcr({ kind: 'file', index })}
+                            >
+                              {ocrRunning && ocrState?.sourceKey === `file:${index}` ? t('features.transactions.scanningReceipt') : t('features.transactions.scanReceipt')}
+                            </button>
+                            <button
+                              type="button"
+                              className="font-medium text-slate-500 hover:text-red-600"
+                              disabled={ocrRunning}
+                              onClick={() => {
+                                invalidateOcrForSource(`file:${index}`);
+                                setPhotoFiles((current) => current.filter((_, itemIndex) => itemIndex !== index));
+                              }}
+                            >
+                              {t('features.transactions.remove')}
+                            </button>
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -1343,6 +1511,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               )}
             </div>
             {photoUploadWarning && <p className="text-sm text-amber-600">{photoUploadWarning}</p>}
+            {ocrState && !ocrState.running && ocrState.status === 'ok' && (ocrState.draft?.amount !== null || ocrState.draft?.date || ocrState.draft?.merchant) && (
+              <p className="text-xs text-slate-500" role="status">{t('features.transactions.ocrApplied')}</p>
+            )}
             {formError && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{formError}</p>}
             <DialogFooter className="sticky bottom-0 z-10 -mx-1 flex-row justify-end border-t border-slate-200 bg-white/95 px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95">
               <DialogClose asChild>

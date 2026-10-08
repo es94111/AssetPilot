@@ -10093,5 +10093,43 @@
   "@featuresSmartAssistFxRateRequired": {
     "description": "Web path: features.smartAssist.fxRateRequired",
     "x-webPath": "features.smartAssist.fxRateRequired"
+  },
+  "featuresTransactionsScanReceipt": "영수증 인식",
+  "@featuresTransactionsScanReceipt": {
+    "description": "Web path: features.transactions.scanReceipt",
+    "x-webPath": "features.transactions.scanReceipt"
+  },
+  "featuresTransactionsScanningReceipt": "인식 중…",
+  "@featuresTransactionsScanningReceipt": {
+    "description": "Web path: features.transactions.scanningReceipt",
+    "x-webPath": "features.transactions.scanningReceipt"
+  },
+  "featuresTransactionsOcrHelp": "영수증 이미지를 업로드하면 금액·날짜·상점을 자동으로 인식합니다. 결과는 초안이며 확인 후에만 저장됩니다.",
+  "@featuresTransactionsOcrHelp": {
+    "description": "Web path: features.transactions.ocrHelp",
+    "x-webPath": "features.transactions.ocrHelp"
+  },
+  "featuresTransactionsOcrApplied": "인식된 값을 채웠습니다. 저장 전에 확인해 주세요.",
+  "@featuresTransactionsOcrApplied": {
+    "description": "Web path: features.transactions.ocrApplied",
+    "x-webPath": "features.transactions.ocrApplied"
+  },
+  "featuresTransactionsOcrNoFields": "필드를 인식하지 못했습니다. 직접 입력해 주세요.",
+  "@featuresTransactionsOcrNoFields": {
+    "description": "Web path: features.transactions.ocrNoFields",
+    "x-webPath": "features.transactions.ocrNoFields"
+  },
+  "featuresTransactionsOcrUnavailable": "이 서버에서는 영수증 인식이 비활성화되어 있습니다. 직접 입력해 주세요.",
+  "@featuresTransactionsOcrUnavailable": {
+    "description": "Web path: features.transactions.ocrUnavailable",
+    "x-webPath": "features.transactions.ocrUnavailable"
+  },
+  "featuresTransactionsOcrFailed": "인식에 실패했습니다. 직접 입력해 주세요. ({message})",
+  "@featuresTransactionsOcrFailed": {
+    "description": "Web path: features.transactions.ocrFailed",
+    "x-webPath": "features.transactions.ocrFailed",
+    "placeholders": {
+      "message": {}
+    }
   }
 }

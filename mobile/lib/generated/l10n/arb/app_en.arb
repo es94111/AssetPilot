@@ -10108,5 +10108,43 @@
   "@featuresSmartAssistFxRateRequired": {
     "description": "Web path: features.smartAssist.fxRateRequired",
     "x-webPath": "features.smartAssist.fxRateRequired"
+  },
+  "featuresTransactionsScanReceipt": "Scan receipt",
+  "@featuresTransactionsScanReceipt": {
+    "description": "Web path: features.transactions.scanReceipt",
+    "x-webPath": "features.transactions.scanReceipt"
+  },
+  "featuresTransactionsScanningReceipt": "Scanning…",
+  "@featuresTransactionsScanningReceipt": {
+    "description": "Web path: features.transactions.scanningReceipt",
+    "x-webPath": "features.transactions.scanningReceipt"
+  },
+  "featuresTransactionsOcrHelp": "Upload a receipt image to auto-detect the amount, date and merchant. Results are drafts only and are saved after you confirm.",
+  "@featuresTransactionsOcrHelp": {
+    "description": "Web path: features.transactions.ocrHelp",
+    "x-webPath": "features.transactions.ocrHelp"
+  },
+  "featuresTransactionsOcrApplied": "Detected values were filled in. Please review before saving.",
+  "@featuresTransactionsOcrApplied": {
+    "description": "Web path: features.transactions.ocrApplied",
+    "x-webPath": "features.transactions.ocrApplied"
+  },
+  "featuresTransactionsOcrNoFields": "No fields could be detected. Please enter them manually.",
+  "@featuresTransactionsOcrNoFields": {
+    "description": "Web path: features.transactions.ocrNoFields",
+    "x-webPath": "features.transactions.ocrNoFields"
+  },
+  "featuresTransactionsOcrUnavailable": "Receipt scanning is not enabled on this server. Please enter values manually.",
+  "@featuresTransactionsOcrUnavailable": {
+    "description": "Web path: features.transactions.ocrUnavailable",
+    "x-webPath": "features.transactions.ocrUnavailable"
+  },
+  "featuresTransactionsOcrFailed": "Scanning failed. Please enter values manually. ({message})",
+  "@featuresTransactionsOcrFailed": {
+    "description": "Web path: features.transactions.ocrFailed",
+    "x-webPath": "features.transactions.ocrFailed",
+    "placeholders": {
+      "message": {}
+    }
   }
 }

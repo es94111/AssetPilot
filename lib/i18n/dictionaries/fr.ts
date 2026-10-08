@@ -1257,6 +1257,13 @@ export const fr = {
         transfer_in: "Virement entrant",
         transfer_out: "Virement sortant",
       },
+      scanReceipt: "Scanner le reçu",
+      scanningReceipt: "Analyse…",
+      ocrHelp: "Importez une image du reçu pour détecter automatiquement le montant, la date et le commerçant. Les résultats ne sont que des brouillons et ne sont enregistrés qu'après confirmation.",
+      ocrApplied: "Les valeurs détectées ont été renseignées. Vérifiez-les avant d’enregistrer.",
+      ocrNoFields: "Aucun champ n’a pu être détecté. Veuillez les saisir manuellement.",
+      ocrUnavailable: "La reconnaissance de reçus n’est pas activée sur ce serveur. Saisissez les valeurs manuellement.",
+      ocrFailed: "Échec de l’analyse. Saisissez les valeurs manuellement. ({message})",
     },
     stocks: {
       tabs: {

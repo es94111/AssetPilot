@@ -1255,6 +1255,13 @@ export const zhTW = {
         transfer_in: "轉入",
         transfer_out: "轉出",
       },
+      scanReceipt: "辨識收據",
+      scanningReceipt: "辨識中…",
+      ocrHelp: "上傳收據影像後自動辨識金額、日期與店家，結果僅為草稿，確認後才會儲存。",
+      ocrApplied: "已帶入辨識結果，請確認後儲存",
+      ocrNoFields: "未能辨識出欄位，請手動輸入",
+      ocrUnavailable: "此站台未啟用收據辨識，請手動輸入",
+      ocrFailed: "辨識失敗，請手動輸入（{message}）",
     },
     stocks: {
       tabs: {

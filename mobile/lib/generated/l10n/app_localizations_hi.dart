@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6568,4 +6569,31 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'सहेजने से पहले मान्य विनिमय दर दर्ज करें।';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'रसीद स्कैन करें';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'स्कैन हो रहा है…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'रसीद की छवि अपलोड करें ताकि राशि, तिथि और दुकानदार स्वतः पहचाने जा सकें। परिणाम केवल ड्राफ़्ट हैं और पुष्टि के बाद ही सहेजे जाते हैं।';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'पहचाने गए मान भर दिए गए हैं। सहेजने से पहले जाँच लें।';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'कोई फ़ील्ड पहचान नहीं पाई गई। कृपया मैन्युअल रूप से भरें।';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'इस सर्वर पर रसीद स्कैन सक्षम नहीं है। कृपया मान स्वयं भरें।';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'स्कैन विफल रहा। कृपया मान स्वयं भरें। ($message)';
+  }
 }

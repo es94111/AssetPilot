@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6575,4 +6576,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'Enter a valid exchange rate before saving.';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'Scan receipt';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'Scanning…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'Upload a receipt image to auto-detect the amount, date and merchant. Results are drafts only and are saved after you confirm.';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'Detected values were filled in. Please review before saving.';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'No fields could be detected. Please enter them manually.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'Receipt scanning is not enabled on this server. Please enter values manually.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'Scanning failed. Please enter values manually. ($message)';
+  }
 }

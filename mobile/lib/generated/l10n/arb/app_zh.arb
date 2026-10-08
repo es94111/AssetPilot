@@ -10108,5 +10108,43 @@
   "@featuresSmartAssistFxRateRequired": {
     "description": "Web path: features.smartAssist.fxRateRequired",
     "x-webPath": "features.smartAssist.fxRateRequired"
+  },
+  "featuresTransactionsScanReceipt": "辨識收據",
+  "@featuresTransactionsScanReceipt": {
+    "description": "Web path: features.transactions.scanReceipt",
+    "x-webPath": "features.transactions.scanReceipt"
+  },
+  "featuresTransactionsScanningReceipt": "辨識中…",
+  "@featuresTransactionsScanningReceipt": {
+    "description": "Web path: features.transactions.scanningReceipt",
+    "x-webPath": "features.transactions.scanningReceipt"
+  },
+  "featuresTransactionsOcrHelp": "上傳收據影像後自動辨識金額、日期與店家，結果僅為草稿，確認後才會儲存。",
+  "@featuresTransactionsOcrHelp": {
+    "description": "Web path: features.transactions.ocrHelp",
+    "x-webPath": "features.transactions.ocrHelp"
+  },
+  "featuresTransactionsOcrApplied": "已帶入辨識結果，請確認後儲存",
+  "@featuresTransactionsOcrApplied": {
+    "description": "Web path: features.transactions.ocrApplied",
+    "x-webPath": "features.transactions.ocrApplied"
+  },
+  "featuresTransactionsOcrNoFields": "未能辨識出欄位，請手動輸入",
+  "@featuresTransactionsOcrNoFields": {
+    "description": "Web path: features.transactions.ocrNoFields",
+    "x-webPath": "features.transactions.ocrNoFields"
+  },
+  "featuresTransactionsOcrUnavailable": "此站台未啟用收據辨識，請手動輸入",
+  "@featuresTransactionsOcrUnavailable": {
+    "description": "Web path: features.transactions.ocrUnavailable",
+    "x-webPath": "features.transactions.ocrUnavailable"
+  },
+  "featuresTransactionsOcrFailed": "辨識失敗，請手動輸入（{message}）",
+  "@featuresTransactionsOcrFailed": {
+    "description": "Web path: features.transactions.ocrFailed",
+    "x-webPath": "features.transactions.ocrFailed",
+    "placeholders": {
+      "message": {}
+    }
   }
 }

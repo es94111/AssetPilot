@@ -3157,6 +3157,98 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/transactions/receipt-ocr:
+    post:
+      operationId: recognizeReceipt
+      tags: [Transactions]
+      summary: 收據影像辨識（草稿預填，不寫入資料庫）
+      description: |
+        以設定的 OCR 供應商辨識收據影像，回傳金額／日期／店家草稿。
+        結果僅供前端預填，使用者確認後才由 POST /api/transactions 儲存。
+        未設定供應商或辨識失敗時回傳 `status: unavailable` / `failed`，前端降級為手動輸入。
+        讀取既有附件時沿用 photoCrypto 解密與 S3 存取控制，直接上傳的影像不落地儲存。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: |
+                兩種來源擇一：(a) 同時提供 imageBase64 與 mimeType；
+                (b) 同時提供 transactionId 與 attachmentId 以讀取既有附件（MIME type 從附件資料取得）。
+              oneOf:
+                - required: [imageBase64, mimeType]
+                - required: [transactionId, attachmentId]
+              properties:
+                imageBase64:
+                  type: string
+                  description: "收據影像的 base64（不含 data URI 前綴）"
+                mimeType:
+                  type: string
+                  description: "影像 MIME type（搭配 imageBase64 使用）"
+                transactionId:
+                  type: string
+                  description: "既有交易 id（改讀已加密存放的附件）"
+                attachmentId:
+                  type: string
+                  description: "既有附件 id（需與 transactionId 同時提供）"
+      responses:
+        "200":
+          description: 辨識結果（草稿；即使失敗亦回 200 並帶 status）
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, provider, draft, warnings]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, unavailable, failed]
+                  provider:
+                    type: string
+                    enum: [none, http]
+                  draft:
+                    type: object
+                    nullable: true
+                    properties:
+                      amount:
+                        type: number
+                        nullable: true
+                      currency:
+                        type: string
+                        nullable: true
+                      date:
+                        type: string
+                        nullable: true
+                        description: 嚴格 ISO `YYYY-MM-DD`
+                      merchant:
+                        type: string
+                        nullable: true
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  message:
+                    type: string
+        "400":
+          description: 請求內容格式無效或未提供影像
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 找不到該附件（或非本人所有）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: 影像超過 OCR 大小上限
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── 管理員 / 系統 / 資料庫備份（不經過 Cloudflare，不納入 API Shield） ──
   # /api/admin/*        — 管理員設定、使用者管理、登入紀錄、憑證管理
   # /api/system/*       — 系統更新

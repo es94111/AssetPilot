@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6654,6 +6655,33 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'Informe uma taxa de câmbio válida antes de salvar.';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'Escanear recibo';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'Digitalizando…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'Envie uma imagem do recibo para detectar automaticamente o valor, a data e o estabelecimento. Os resultados são apenas rascunhos e só são salvos após a confirmação.';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'Os valores detectados foram preenchidos. Revise antes de salvar.';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'Nenhum campo pôde ser detectado. Insira-os manualmente.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'A leitura de recibos não está habilitada neste servidor. Insira os valores manualmente.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'Falha na leitura. Insira os valores manualmente. ($message)';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -13297,4 +13325,31 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'Informe uma taxa de câmbio válida antes de salvar.';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'Escanear recibo';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'Digitalizando…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'Envie uma imagem do recibo para detectar automaticamente o valor, a data e o estabelecimento. Os resultados são apenas rascunhos e só são salvos após a confirmação.';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'Os valores detectados foram preenchidos. Revise antes de salvar.';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'Nenhum campo pôde ser detectado. Insira-os manualmente.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'A leitura de recibos não está habilitada neste servidor. Insira os valores manualmente.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'Falha na leitura. Insira os valores manualmente. ($message)';
+  }
 }

@@ -1257,6 +1257,13 @@ export const ptBR = {
         transfer_in: "Transferência recebida",
         transfer_out: "Transferência enviada",
       },
+      scanReceipt: "Escanear recibo",
+      scanningReceipt: "Digitalizando…",
+      ocrHelp: "Envie uma imagem do recibo para detectar automaticamente o valor, a data e o estabelecimento. Os resultados são apenas rascunhos e só são salvos após a confirmação.",
+      ocrApplied: "Os valores detectados foram preenchidos. Revise antes de salvar.",
+      ocrNoFields: "Nenhum campo pôde ser detectado. Insira-os manualmente.",
+      ocrUnavailable: "A leitura de recibos não está habilitada neste servidor. Insira os valores manualmente.",
+      ocrFailed: "Falha na leitura. Insira os valores manualmente. ({message})",
     },
     stocks: {
       tabs: {

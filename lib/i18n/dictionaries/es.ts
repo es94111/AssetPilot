@@ -1257,6 +1257,13 @@ export const es = {
         transfer_in: "Transferencia recibida",
         transfer_out: "Transferencia enviada",
       },
+      scanReceipt: "Escanear recibo",
+      scanningReceipt: "Escaneando…",
+      ocrHelp: "Sube una imagen del recibo para detectar automáticamente el importe, la fecha y el comercio. Los resultados son solo borradores y se guardan tras tu confirmación.",
+      ocrApplied: "Se rellenaron los valores detectados. Revísalos antes de guardar.",
+      ocrNoFields: "No se pudo detectar ningún campo. Introdúcelos manualmente.",
+      ocrUnavailable: "El escaneo de recibos no está habilitado en este servidor. Introduce los valores manualmente.",
+      ocrFailed: "El escaneo falló. Introduce los valores manualmente. ({message})",
     },
     stocks: {
       tabs: {

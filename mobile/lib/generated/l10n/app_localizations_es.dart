@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6695,4 +6696,31 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'Introduce un tipo de cambio válido antes de guardar.';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'Escanear recibo';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'Escaneando…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'Sube una imagen del recibo para detectar automáticamente el importe, la fecha y el comercio. Los resultados son solo borradores y se guardan tras tu confirmación.';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'Se rellenaron los valores detectados. Revísalos antes de guardar.';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'No se pudo detectar ningún campo. Introdúcelos manualmente.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'El escaneo de recibos no está habilitado en este servidor. Introduce los valores manualmente.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'El escaneo falló. Introduce los valores manualmente. ($message)';
+  }
 }

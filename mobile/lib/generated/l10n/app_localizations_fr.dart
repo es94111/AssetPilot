@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6696,4 +6697,31 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'Saisissez un taux de change valide avant d’enregistrer.';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'Scanner le reçu';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'Analyse…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'Importez une image du reçu pour détecter automatiquement le montant, la date et le commerçant. Les résultats ne sont que des brouillons et ne sont enregistrés qu\'après confirmation.';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'Les valeurs détectées ont été renseignées. Vérifiez-les avant d’enregistrer.';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'Aucun champ n’a pu être détecté. Veuillez les saisir manuellement.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'La reconnaissance de reçus n’est pas activée sur ce serveur. Saisissez les valeurs manuellement.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'Échec de l’analyse. Saisissez les valeurs manuellement. ($message)';
+  }
 }

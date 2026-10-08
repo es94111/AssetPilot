@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6647,4 +6648,31 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresSmartAssistFxRateRequired =>
       'Перед сохранением введите корректный курс обмена。';
+
+  @override
+  String get featuresTransactionsScanReceipt => 'Распознать чек';
+
+  @override
+  String get featuresTransactionsScanningReceipt => 'Распознавание…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      'Загрузите изображение чека, чтобы автоматически распознать сумму, дату и магазин. Результат — только черновик, сохранение происходит после подтверждения.';
+
+  @override
+  String get featuresTransactionsOcrApplied =>
+      'Распознанные значения подставлены. Проверьте их перед сохранением.';
+
+  @override
+  String get featuresTransactionsOcrNoFields =>
+      'Не удалось распознать поля. Введите их вручную.';
+
+  @override
+  String get featuresTransactionsOcrUnavailable =>
+      'Распознавание чеков отключено на этом сервере. Введите значения вручную.';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return 'Не удалось распознать. Введите значения вручную. ($message)';
+  }
 }

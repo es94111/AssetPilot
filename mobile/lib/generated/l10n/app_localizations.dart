@@ -11479,6 +11479,48 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'請輸入有效匯率後再儲存。'**
   String get featuresSmartAssistFxRateRequired;
+
+  /// Web path: features.transactions.scanReceipt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'辨識收據'**
+  String get featuresTransactionsScanReceipt;
+
+  /// Web path: features.transactions.scanningReceipt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'辨識中…'**
+  String get featuresTransactionsScanningReceipt;
+
+  /// Web path: features.transactions.ocrHelp
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'上傳收據影像後自動辨識金額、日期與店家，結果僅為草稿，確認後才會儲存。'**
+  String get featuresTransactionsOcrHelp;
+
+  /// Web path: features.transactions.ocrApplied
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已帶入辨識結果，請確認後儲存'**
+  String get featuresTransactionsOcrApplied;
+
+  /// Web path: features.transactions.ocrNoFields
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未能辨識出欄位，請手動輸入'**
+  String get featuresTransactionsOcrNoFields;
+
+  /// Web path: features.transactions.ocrUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此站台未啟用收據辨識，請手動輸入'**
+  String get featuresTransactionsOcrUnavailable;
+
+  /// Web path: features.transactions.ocrFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'辨識失敗，請手動輸入（{message}）'**
+  String featuresTransactionsOcrFailed(Object message);
 }
 
 class _AppLocalizationsDelegate

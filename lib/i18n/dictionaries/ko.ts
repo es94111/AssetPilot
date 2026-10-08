@@ -1257,6 +1257,13 @@ export const ko = {
         transfer_in: "이체 입금",
         transfer_out: "이체 출금",
       },
+      scanReceipt: "영수증 인식",
+      scanningReceipt: "인식 중…",
+      ocrHelp: "영수증 이미지를 업로드하면 금액·날짜·상점을 자동으로 인식합니다. 결과는 초안이며 확인 후에만 저장됩니다.",
+      ocrApplied: "인식된 값을 채웠습니다. 저장 전에 확인해 주세요.",
+      ocrNoFields: "필드를 인식하지 못했습니다. 직접 입력해 주세요.",
+      ocrUnavailable: "이 서버에서는 영수증 인식이 비활성화되어 있습니다. 직접 입력해 주세요.",
+      ocrFailed: "인식에 실패했습니다. 직접 입력해 주세요. ({message})",
     },
     stocks: {
       tabs: {

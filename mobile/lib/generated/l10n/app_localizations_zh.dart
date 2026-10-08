@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6270,6 +6271,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresSmartAssistFxRateRequired => '請輸入有效匯率後再儲存。';
+
+  @override
+  String get featuresTransactionsScanReceipt => '辨識收據';
+
+  @override
+  String get featuresTransactionsScanningReceipt => '辨識中…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      '上傳收據影像後自動辨識金額、日期與店家，結果僅為草稿，確認後才會儲存。';
+
+  @override
+  String get featuresTransactionsOcrApplied => '已帶入辨識結果，請確認後儲存';
+
+  @override
+  String get featuresTransactionsOcrNoFields => '未能辨識出欄位，請手動輸入';
+
+  @override
+  String get featuresTransactionsOcrUnavailable => '此站台未啟用收據辨識，請手動輸入';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return '辨識失敗，請手動輸入（$message）';
+  }
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -12541,6 +12566,30 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresSmartAssistFxRateRequired => '请输入有效汇率后再保存。';
+
+  @override
+  String get featuresTransactionsScanReceipt => '识别收据';
+
+  @override
+  String get featuresTransactionsScanningReceipt => '识别中…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      '上传收据影像后自动识别金额、日期与商家，结果仅为草稿，确认后才会保存。';
+
+  @override
+  String get featuresTransactionsOcrApplied => '已填入识别结果，请确认后保存';
+
+  @override
+  String get featuresTransactionsOcrNoFields => '未能识别出字段，请手动输入';
+
+  @override
+  String get featuresTransactionsOcrUnavailable => '此站点未启用收据识别，请手动输入';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return '识别失败，请手动输入（$message）';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -18809,4 +18858,28 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresSmartAssistFxRateRequired => '請輸入有效匯率後再儲存。';
+
+  @override
+  String get featuresTransactionsScanReceipt => '辨識收據';
+
+  @override
+  String get featuresTransactionsScanningReceipt => '辨識中…';
+
+  @override
+  String get featuresTransactionsOcrHelp =>
+      '上傳收據影像後自動辨識金額、日期與店家，結果僅為草稿，確認後才會儲存。';
+
+  @override
+  String get featuresTransactionsOcrApplied => '已帶入辨識結果，請確認後儲存';
+
+  @override
+  String get featuresTransactionsOcrNoFields => '未能辨識出欄位，請手動輸入';
+
+  @override
+  String get featuresTransactionsOcrUnavailable => '此站台未啟用收據辨識，請手動輸入';
+
+  @override
+  String featuresTransactionsOcrFailed(Object message) {
+    return '辨識失敗，請手動輸入（$message）';
+  }
 }

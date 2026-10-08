@@ -51,6 +51,9 @@ const USER_OWNED_DELETE_STATEMENTS = [
   "DELETE FROM report_schedules WHERE user_id = ?",
   "DELETE FROM line_expense_reminders WHERE user_id = ?",
   "DELETE FROM line_bot_states WHERE user_id = ?",
+  // Web Push 訂閱與推播去重紀錄（issue #257）
+  "DELETE FROM web_push_subscriptions WHERE user_id = ?",
+  "DELETE FROM web_push_send_log WHERE user_id = ?",
   // 驗證 / 工作階段
   "DELETE FROM passkey_credentials WHERE user_id = ?",
   "DELETE FROM login_sessions WHERE user_id = ?",

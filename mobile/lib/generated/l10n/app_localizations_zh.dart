@@ -5806,6 +5806,158 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresGoalsScheduleInvalidShort => '計畫需調整';
+
+  @override
+  String get settingsNotificationsTitle => '推播通知';
+
+  @override
+  String get settingsNotificationsDescription =>
+      '開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      '此瀏覽器不支援推播通知（需支援 Service Worker 與 Push API）。';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      '伺服器尚未啟用 Web Push（缺少 VAPID 金鑰設定）。';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      '瀏覽器已封鎖通知權限，請在瀏覽器設定中允許本站通知後再試。';
+
+  @override
+  String get settingsNotificationsSubscribe => '在此裝置啟用推播';
+
+  @override
+  String get settingsNotificationsSubscribing => '啟用中…';
+
+  @override
+  String get settingsNotificationsSubscribed => '此裝置已訂閱推播通知。';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess => '已在此裝置啟用推播通知。';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return '啟用推播失敗：$error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => '解除此裝置訂閱';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess => '已解除此裝置的推播訂閱。';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return '解除訂閱失敗：$error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => '通知類型';
+
+  @override
+  String get settingsNotificationsBillDue => '帳單到期';
+
+  @override
+  String get settingsNotificationsBillDueHint => '信用卡每月結帳日當天，若當期有新消費就提醒。';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => '預算超標';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      '當月某項預算的已用金額超過預算時提醒（每項預算每月一次）。';
+
+  @override
+  String get settingsNotificationsDividend => '股利發放';
+
+  @override
+  String get settingsNotificationsDividendHint => '股利紀錄的發放日當天提醒。';
+
+  @override
+  String get settingsNotificationsDevicesTitle => '已訂閱裝置';
+
+  @override
+  String get settingsNotificationsNoDevices => '尚無訂閱裝置。';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => '未知裝置';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return '訂閱於 $date';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled => '已停用（多次發送失敗，請重新訂閱）';
+
+  @override
+  String get settingsNotificationsRemoveDevice => '刪除';
+
+  @override
+  String get settingsNotificationsDeviceRemoved => '已刪除訂閱裝置。';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return '刪除裝置失敗：$error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => '測試通知';
+
+  @override
+  String get settingsNotificationsTestButton => '傳送測試通知';
+
+  @override
+  String get settingsNotificationsTestSending => '傳送中…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return '測試通知已送出（成功 $delivered 個裝置）。';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice => '請先在此裝置啟用推播，再傳送測試通知。';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return '測試通知發送失敗：$error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => '帳單到期提醒';
+
+  @override
+  String get notificationsPushBillDueBody => '有帳單到期，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => '預算超標提醒';
+
+  @override
+  String get notificationsPushBudgetExceededBody => '有預算超標，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get notificationsPushDividendTitle => '股利發放提醒';
+
+  @override
+  String get notificationsPushDividendBody => '有股利發放，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get notificationsPushTestTitle => '測試推播通知';
+
+  @override
+  String get notificationsPushTestBody => '如果你看到這則通知，代表此裝置的推播設定正確。';
+
+  @override
+  String get navNotifications => '通知設定';
+
+  @override
+  String get notificationsPushGenericTitle => 'AssetPilot 通知';
+
+  @override
+  String get notificationsPushGenericBody => '有一則通知，開啟 AssetPilot 查看詳情。';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -11613,6 +11765,158 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresGoalsScheduleInvalidShort => '计划需调整';
+
+  @override
+  String get settingsNotificationsTitle => '推送通知';
+
+  @override
+  String get settingsNotificationsDescription =>
+      '开启后，符合条件的事件会实时推送到已订阅的设备。此设置不影响 Email／LINE 报表通知。';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      '此浏览器不支持推送通知（需要支持 Service Worker 与 Push API）。';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      '服务器尚未启用 Web Push（缺少 VAPID 密钥设置）。';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      '浏览器已阻止通知权限，请在浏览器设置中允许本站通知后重试。';
+
+  @override
+  String get settingsNotificationsSubscribe => '在此设备启用推送';
+
+  @override
+  String get settingsNotificationsSubscribing => '启用中…';
+
+  @override
+  String get settingsNotificationsSubscribed => '此设备已订阅推送通知。';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess => '已在此设备启用推送通知。';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return '启用推送失败：$error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => '解除此设备订阅';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess => '已解除此设备的推送订阅。';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return '解除订阅失败：$error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => '通知类型';
+
+  @override
+  String get settingsNotificationsBillDue => '账单到期';
+
+  @override
+  String get settingsNotificationsBillDueHint => '信用卡每月账单日当天，若当期有新消费就提醒。';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => '预算超标';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      '当月某项预算的已用金额超过预算时提醒（每项预算每月一次）。';
+
+  @override
+  String get settingsNotificationsDividend => '股利发放';
+
+  @override
+  String get settingsNotificationsDividendHint => '股利记录的发放日当天提醒。';
+
+  @override
+  String get settingsNotificationsDevicesTitle => '已订阅设备';
+
+  @override
+  String get settingsNotificationsNoDevices => '尚无订阅设备。';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => '未知设备';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return '订阅于 $date';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled => '已停用（多次发送失败，请重新订阅）';
+
+  @override
+  String get settingsNotificationsRemoveDevice => '删除';
+
+  @override
+  String get settingsNotificationsDeviceRemoved => '已删除订阅设备。';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return '删除设备失败：$error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => '测试通知';
+
+  @override
+  String get settingsNotificationsTestButton => '发送测试通知';
+
+  @override
+  String get settingsNotificationsTestSending => '发送中…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return '测试通知已发送（成功 $delivered 个设备）。';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice => '请先在此设备启用推送，再发送测试通知。';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return '测试通知发送失败：$error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => '账单到期提醒';
+
+  @override
+  String get notificationsPushBillDueBody => '有账单到期，打开 AssetPilot 查看详情。';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => '预算超标提醒';
+
+  @override
+  String get notificationsPushBudgetExceededBody => '有预算超标，打开 AssetPilot 查看详情。';
+
+  @override
+  String get notificationsPushDividendTitle => '股利发放提醒';
+
+  @override
+  String get notificationsPushDividendBody => '有股利发放，打开 AssetPilot 查看详情。';
+
+  @override
+  String get notificationsPushTestTitle => '测试推送通知';
+
+  @override
+  String get notificationsPushTestBody => '如果你看到这条通知，说明此设备的推送设置正确。';
+
+  @override
+  String get navNotifications => '通知设置';
+
+  @override
+  String get notificationsPushGenericTitle => 'AssetPilot 通知';
+
+  @override
+  String get notificationsPushGenericBody => '有一条通知，打开 AssetPilot 查看详情。';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -17417,4 +17721,156 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresGoalsScheduleInvalidShort => '計畫需調整';
+
+  @override
+  String get settingsNotificationsTitle => '推播通知';
+
+  @override
+  String get settingsNotificationsDescription =>
+      '開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      '此瀏覽器不支援推播通知（需支援 Service Worker 與 Push API）。';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      '伺服器尚未啟用 Web Push（缺少 VAPID 金鑰設定）。';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      '瀏覽器已封鎖通知權限，請在瀏覽器設定中允許本站通知後再試。';
+
+  @override
+  String get settingsNotificationsSubscribe => '在此裝置啟用推播';
+
+  @override
+  String get settingsNotificationsSubscribing => '啟用中…';
+
+  @override
+  String get settingsNotificationsSubscribed => '此裝置已訂閱推播通知。';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess => '已在此裝置啟用推播通知。';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return '啟用推播失敗：$error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => '解除此裝置訂閱';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess => '已解除此裝置的推播訂閱。';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return '解除訂閱失敗：$error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => '通知類型';
+
+  @override
+  String get settingsNotificationsBillDue => '帳單到期';
+
+  @override
+  String get settingsNotificationsBillDueHint => '信用卡每月結帳日當天，若當期有新消費就提醒。';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => '預算超標';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      '當月某項預算的已用金額超過預算時提醒（每項預算每月一次）。';
+
+  @override
+  String get settingsNotificationsDividend => '股利發放';
+
+  @override
+  String get settingsNotificationsDividendHint => '股利紀錄的發放日當天提醒。';
+
+  @override
+  String get settingsNotificationsDevicesTitle => '已訂閱裝置';
+
+  @override
+  String get settingsNotificationsNoDevices => '尚無訂閱裝置。';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => '未知裝置';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return '訂閱於 $date';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled => '已停用（多次發送失敗，請重新訂閱）';
+
+  @override
+  String get settingsNotificationsRemoveDevice => '刪除';
+
+  @override
+  String get settingsNotificationsDeviceRemoved => '已刪除訂閱裝置。';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return '刪除裝置失敗：$error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => '測試通知';
+
+  @override
+  String get settingsNotificationsTestButton => '傳送測試通知';
+
+  @override
+  String get settingsNotificationsTestSending => '傳送中…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return '測試通知已送出（成功 $delivered 個裝置）。';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice => '請先在此裝置啟用推播，再傳送測試通知。';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return '測試通知發送失敗：$error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => '帳單到期提醒';
+
+  @override
+  String get notificationsPushBillDueBody => '有帳單到期，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => '預算超標提醒';
+
+  @override
+  String get notificationsPushBudgetExceededBody => '有預算超標，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get notificationsPushDividendTitle => '股利發放提醒';
+
+  @override
+  String get notificationsPushDividendBody => '有股利發放，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get notificationsPushTestTitle => '測試推播通知';
+
+  @override
+  String get notificationsPushTestBody => '如果你看到這則通知，代表此裝置的推播設定正確。';
+
+  @override
+  String get navNotifications => '通知設定';
+
+  @override
+  String get notificationsPushGenericTitle => 'AssetPilot 通知';
+
+  @override
+  String get notificationsPushGenericBody => '有一則通知，開啟 AssetPilot 查看詳情。';
 }

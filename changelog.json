@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.135.0",
+  "currentVersion": "4.136.0",
   "releases": [
+    {
+      "version": "4.136.0",
+      "date": "2026-10-08",
+      "title": "Web Push 推播通知",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增 VAPID Web Push 訂閱與解除、帳單到期／預算超標／股利發放三類個別開關與多語系設定頁；Node 執行期每 5 分鐘掃描已訂閱使用者，透過 PostgreSQL 單一 owner lease（過期可接管）、多實例 advisory transaction lock、分頁與 event-loop yield 協調，並以唯一事件鍵冪等去重、清理失效訂閱。通知標題、內文與 tag 不揭露事件類型或金融明細；ENV_PATH generated-secret snapshot 原子選出共用 VAPID pair，公鑰 marker 拒絕不一致 replica；發送具 10 秒絕對截止、完整 drain response 與併發安全的 failure counter。#257"
+        }
+      ]
+    },
     {
       "version": "4.135.0",
       "date": "2026-10-08",

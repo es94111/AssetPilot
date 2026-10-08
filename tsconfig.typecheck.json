@@ -6,6 +6,7 @@
   "exclude": [
     "node_modules",
     "tests/e2e",
-    "docs/marketing-screenshots"
+    "docs/marketing-screenshots",
+    "build/standalone"
   ]
 }

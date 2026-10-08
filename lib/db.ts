@@ -1422,6 +1422,99 @@ END $$`);
     "CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_pending ON webhook_deliveries(status, next_retry_at)",
   );
 
+  // 009-web-push：Web Push（VAPID）推播通知（issue #257）。
+  // 訂閱端點由瀏覽器 push service 簽發，同一裝置重新訂閱會換新端點，故以 endpoint 為
+  // 唯一鍵（UNIQUE）讓重複訂閱直接覆蓋；失效端點（push service 回 404/410）由發送端刪除。
+  db.run(`CREATE TABLE IF NOT EXISTS web_push_subscriptions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    user_agent TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    last_success_at INTEGER DEFAULT 0,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    disabled_at INTEGER DEFAULT 0,
+    CONSTRAINT web_push_subscriptions_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  alterIgnore(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_web_push_subscriptions_endpoint ON web_push_subscriptions(endpoint)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_web_push_subscriptions_user ON web_push_subscriptions(user_id, disabled_at)",
+  );
+  alterIgnore(
+    "ALTER TABLE web_push_subscriptions ADD COLUMN user_agent TEXT NOT NULL DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE web_push_subscriptions ADD COLUMN last_success_at INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE web_push_subscriptions ADD COLUMN failure_count INTEGER NOT NULL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE web_push_subscriptions ADD COLUMN disabled_at INTEGER DEFAULT 0",
+  );
+
+  // 推播去重紀錄（比照 monthly_report_send_log 的「先 INSERT、UNIQUE 衝突即跳過」設計）。
+  // 同一使用者 + 同一通知種類 + 同一事件鍵只會成功寫入一次，event_key 由事件本身決定
+  // （帳單週期、預算年月、股利列 id），因此不會因重複觸發而重複推播。
+  db.run(`CREATE TABLE IF NOT EXISTS web_push_send_log (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    category TEXT NOT NULL CHECK(category IN ('bill_due','budget_exceeded','dividend')),
+    event_key TEXT NOT NULL,
+    sent_at_utc TEXT NOT NULL,
+    send_status TEXT NOT NULL DEFAULT 'success' CHECK(send_status IN ('success','failed')),
+    delivered INTEGER NOT NULL DEFAULT 0,
+    error_message TEXT NOT NULL DEFAULT '',
+    UNIQUE(user_id, category, event_key),
+    CONSTRAINT web_push_send_log_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_web_push_send_log_user ON web_push_send_log(user_id, category, sent_at_utc DESC)",
+  );
+  alterIgnore(
+    "ALTER TABLE web_push_send_log ADD COLUMN delivered INTEGER NOT NULL DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE web_push_send_log ADD COLUMN error_message TEXT NOT NULL DEFAULT ''",
+  );
+
+  // 各通知種類的開關（預設全開；關閉後該種類不再推播，Email／LINE 管道不受影響）。
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN push_bill_due INTEGER NOT NULL DEFAULT 1",
+  );
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN push_budget_exceeded INTEGER NOT NULL DEFAULT 1",
+  );
+  alterIgnore(
+    "ALTER TABLE user_settings ADD COLUMN push_dividend INTEGER NOT NULL DEFAULT 1",
+  );
+
+  // Single-owner lease for the Node-runtime Web Push sweep (issue #257). The row-level
+  // conditional UPDATE lets multiple app instances coordinate without holding a DB
+  // transaction open across network requests; stale leases expire after process crashes.
+  db.run(`CREATE TABLE IF NOT EXISTS web_push_scheduler_locks (
+    lock_name TEXT PRIMARY KEY,
+    lock_owner TEXT NOT NULL DEFAULT '',
+    lock_until INTEGER NOT NULL DEFAULT 0
+  )`);
+  db.run(
+    "INSERT INTO web_push_scheduler_locks (lock_name, lock_owner, lock_until) VALUES ('event-scan', '', 0) ON CONFLICT (lock_name) DO NOTHING",
+  );
+
+  // Store only the public VAPID key as a cluster consistency marker. Multi-replica
+  // deployments that accidentally generate different per-volume keys fail closed on the
+  // non-canonical replica instead of accepting subscriptions that another replica cannot send.
+  db.run(`CREATE TABLE IF NOT EXISTS web_push_vapid_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    public_key TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`);
+
   // REAL/DOUBLE PRECISION 會在 PostgreSQL 以 float4/float8 儲存金額，
   // 大額或多次換算可能產生不可逆的四捨五入。新表使用 NUMERIC；
   // 既有部署在此冪等轉型，保留資料值但避免後續再以二進位浮點儲存。
@@ -1503,6 +1596,12 @@ END $$`);
   );
   addCheck(
     "ALTER TABLE monthly_report_send_log ADD CONSTRAINT monthly_report_send_log_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE web_push_subscriptions ADD CONSTRAINT web_push_subscriptions_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT VALID",
+  );
+  addCheck(
+    "ALTER TABLE web_push_send_log ADD CONSTRAINT web_push_send_log_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE NOT VALID",
   );
   addCheck(
     "ALTER TABLE stock_transactions ADD CONSTRAINT stock_transactions_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE NOT VALID",

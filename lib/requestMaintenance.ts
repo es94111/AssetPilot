@@ -78,6 +78,13 @@ export function triggerUserRequestMaintenance(userId: string, userTimezone: stri
     .then(({ checkAndRunStockPriceUpdateOnUserRequest }) => checkAndRunStockPriceUpdateOnUserRequest())
     .catch((error) => console.error('[stock-price-update] user-triggered import failed', error));
 
+  // Web Push 推播通知（issue #257）：帳單到期／預算超標／股利發放。
+  // 與排程報表相同，只在已驗證請求中順帶掃描；發送端另有 UNIQUE 去重，
+  // 因此即使多個請求同時觸發也不會重複推播（見 lib/webPush.ts）。
+  void import('./webPushEvents')
+    .then(({ dispatchDuePushEvents }) => dispatchDuePushEvents(userId, userTimezone || 'Asia/Taipei', now))
+    .catch((error) => console.error('[web-push] user-triggered dispatch failed', error));
+
   // Webhook 待投遞佇列的排空（issue #258）。原本僅在「本次請求剛好排入事件」時觸發，
   // 導致重試永遠不會被後續請求拾起；改為已驗證請求順帶排空到期項目（含冷卻時間）。
   if (now - lastWebhookDrainAt >= WEBHOOK_DRAIN_COOLDOWN_MS) {

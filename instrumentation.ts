@@ -1,7 +1,8 @@
-// instrumentation.ts — only initialize the database runtime at server startup.
-// User-triggered maintenance is invoked from authenticated requests; there is
-// intentionally no application scheduler here so Railway can sleep. Database
-// reconnects are handled by lib/db.ts with unref'ed timers.
+// instrumentation.ts — initialize the database runtime at server startup.
+// Request-triggered maintenance is handled in lib/requestMaintenance.ts. Web Push also has
+// a low-frequency unref'ed sweep so subscribed users receive day-based events while inactive;
+// the timer does not keep an otherwise idle Node process alive. Database reconnects use an
+// unref'ed backoff in lib/db.ts.
 
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
@@ -17,6 +18,12 @@ export async function register() {
     // unref'ed backoff and publishes the adapter once migrations succeed.
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[db] startup connection unavailable; retrying: ${message}`);
+  }
+
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    void import('./lib/webPushEvents')
+      .then(({ startWebPushScheduler }) => startWebPushScheduler())
+      .catch((error) => console.error('[web-push] scheduler startup failed', error));
   }
 
   // 程序結束時保留既有關閉 hook；PostgreSQL 寫入已即時 commit。

@@ -6058,4 +6058,168 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresGoalsScheduleInvalidShort => 'يتطلب التعديل';
+
+  @override
+  String get settingsNotificationsTitle => 'إشعارات الدفع';
+
+  @override
+  String get settingsNotificationsDescription =>
+      'عند التفعيل، تُرسل الأحداث المطابقة فورًا إلى أجهزتك المشتركة. لا يؤثر ذلك على إشعارات التقارير عبر البريد الإلكتروني/LINE.';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      'هذا المتصفح لا يدعم إشعارات الدفع (يلزم Service Worker وPush API).';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      'لم يتم تفعيل Web Push على الخادم (إعداد مفاتيح VAPID مفقود).';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      'إذن الإشعارات محظور. اسمح بالإشعارات لهذا الموقع من إعدادات المتصفح ثم أعد المحاولة.';
+
+  @override
+  String get settingsNotificationsSubscribe => 'تفعيل الدفع على هذا الجهاز';
+
+  @override
+  String get settingsNotificationsSubscribing => 'جارٍ التفعيل…';
+
+  @override
+  String get settingsNotificationsSubscribed =>
+      'هذا الجهاز مشترك في إشعارات الدفع.';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess =>
+      'تم تفعيل إشعارات الدفع على هذا الجهاز.';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return 'فشل تفعيل الدفع: $error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => 'إلغاء اشتراك هذا الجهاز';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess =>
+      'تم إلغاء اشتراك هذا الجهاز.';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return 'فشل إلغاء الاشتراك: $error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => 'أنواع الإشعارات';
+
+  @override
+  String get settingsNotificationsBillDue => 'استحقاق الفاتورة';
+
+  @override
+  String get settingsNotificationsBillDueHint =>
+      'يذكّرك في يوم إقفال كشف البطاقة الشهري عند وجود مصروفات جديدة.';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => 'تجاوز الميزانية';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      'يذكّرك عند تجاوز ميزانية شهرية (مرة واحدة لكل ميزانية شهريًا).';
+
+  @override
+  String get settingsNotificationsDividend => 'صرف الأرباح';
+
+  @override
+  String get settingsNotificationsDividendHint =>
+      'يذكّرك في يوم صرف أرباحك المسجلة.';
+
+  @override
+  String get settingsNotificationsDevicesTitle => 'الأجهزة المشتركة';
+
+  @override
+  String get settingsNotificationsNoDevices => 'لا توجد أجهزة مشتركة بعد.';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => 'جهاز غير معروف';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return 'اشترك في $date';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled =>
+      'معطّل (فشل متكرر في الإرسال — يرجى إعادة الاشتراك)';
+
+  @override
+  String get settingsNotificationsRemoveDevice => 'إزالة';
+
+  @override
+  String get settingsNotificationsDeviceRemoved => 'تمت إزالة الجهاز المشترك.';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return 'فشل إزالة الجهاز: $error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => 'إشعار تجريبي';
+
+  @override
+  String get settingsNotificationsTestButton => 'إرسال إشعار تجريبي';
+
+  @override
+  String get settingsNotificationsTestSending => 'جارٍ الإرسال…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return 'تم إرسال الإشعار التجريبي ($delivered جهاز).';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice =>
+      'فعّل الدفع على هذا الجهاز قبل إرسال إشعار تجريبي.';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return 'فشل إرسال الإشعار التجريبي: $error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => 'تذكير بموعد الفاتورة';
+
+  @override
+  String get notificationsPushBillDueBody =>
+      'هناك فاتورة مستحقة. افتح AssetPilot لعرض التفاصيل.';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => 'تم تجاوز الميزانية';
+
+  @override
+  String get notificationsPushBudgetExceededBody =>
+      'تم تجاوز إحدى الميزانيات. افتح AssetPilot لعرض التفاصيل.';
+
+  @override
+  String get notificationsPushDividendTitle => 'تذكير بصرف الأرباح';
+
+  @override
+  String get notificationsPushDividendBody =>
+      'تم صرف أرباح. افتح AssetPilot لعرض التفاصيل.';
+
+  @override
+  String get notificationsPushTestTitle => 'إشعار دفع تجريبي';
+
+  @override
+  String get notificationsPushTestBody =>
+      'إذا رأيت هذا الإشعار، فإن إشعارات الدفع تعمل على هذا الجهاز.';
+
+  @override
+  String get navNotifications => 'الإشعارات';
+
+  @override
+  String get notificationsPushGenericTitle => 'إشعار من AssetPilot';
+
+  @override
+  String get notificationsPushGenericBody =>
+      'لديك إشعار. افتح AssetPilot لعرض التفاصيل.';
 }

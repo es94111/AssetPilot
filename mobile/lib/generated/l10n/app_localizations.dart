@@ -10648,6 +10648,276 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'計畫需調整'**
   String get featuresGoalsScheduleInvalidShort;
+
+  /// Web path: settings.notifications.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'推播通知'**
+  String get settingsNotificationsTitle;
+
+  /// Web path: settings.notifications.description
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。'**
+  String get settingsNotificationsDescription;
+
+  /// Web path: settings.notifications.unsupported
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此瀏覽器不支援推播通知（需支援 Service Worker 與 Push API）。'**
+  String get settingsNotificationsUnsupported;
+
+  /// Web path: settings.notifications.disabledOnServer
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'伺服器尚未啟用 Web Push（缺少 VAPID 金鑰設定）。'**
+  String get settingsNotificationsDisabledOnServer;
+
+  /// Web path: settings.notifications.permissionDenied
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'瀏覽器已封鎖通知權限，請在瀏覽器設定中允許本站通知後再試。'**
+  String get settingsNotificationsPermissionDenied;
+
+  /// Web path: settings.notifications.subscribe
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'在此裝置啟用推播'**
+  String get settingsNotificationsSubscribe;
+
+  /// Web path: settings.notifications.subscribing
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用中…'**
+  String get settingsNotificationsSubscribing;
+
+  /// Web path: settings.notifications.subscribed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此裝置已訂閱推播通知。'**
+  String get settingsNotificationsSubscribed;
+
+  /// Web path: settings.notifications.subscribeSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已在此裝置啟用推播通知。'**
+  String get settingsNotificationsSubscribeSuccess;
+
+  /// Web path: settings.notifications.subscribeFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用推播失敗：{error}'**
+  String settingsNotificationsSubscribeFailed(Object error);
+
+  /// Web path: settings.notifications.unsubscribe
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'解除此裝置訂閱'**
+  String get settingsNotificationsUnsubscribe;
+
+  /// Web path: settings.notifications.unsubscribeSuccess
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已解除此裝置的推播訂閱。'**
+  String get settingsNotificationsUnsubscribeSuccess;
+
+  /// Web path: settings.notifications.unsubscribeFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'解除訂閱失敗：{error}'**
+  String settingsNotificationsUnsubscribeFailed(Object error);
+
+  /// Web path: settings.notifications.categoriesTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'通知類型'**
+  String get settingsNotificationsCategoriesTitle;
+
+  /// Web path: settings.notifications.billDue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳單到期'**
+  String get settingsNotificationsBillDue;
+
+  /// Web path: settings.notifications.billDueHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'信用卡每月結帳日當天，若當期有新消費就提醒。'**
+  String get settingsNotificationsBillDueHint;
+
+  /// Web path: settings.notifications.budgetExceeded
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預算超標'**
+  String get settingsNotificationsBudgetExceeded;
+
+  /// Web path: settings.notifications.budgetExceededHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'當月某項預算的已用金額超過預算時提醒（每項預算每月一次）。'**
+  String get settingsNotificationsBudgetExceededHint;
+
+  /// Web path: settings.notifications.dividend
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股利發放'**
+  String get settingsNotificationsDividend;
+
+  /// Web path: settings.notifications.dividendHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股利紀錄的發放日當天提醒。'**
+  String get settingsNotificationsDividendHint;
+
+  /// Web path: settings.notifications.devicesTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已訂閱裝置'**
+  String get settingsNotificationsDevicesTitle;
+
+  /// Web path: settings.notifications.noDevices
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無訂閱裝置。'**
+  String get settingsNotificationsNoDevices;
+
+  /// Web path: settings.notifications.deviceUnknown
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未知裝置'**
+  String get settingsNotificationsDeviceUnknown;
+
+  /// Web path: settings.notifications.deviceSubscribedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'訂閱於 {date}'**
+  String settingsNotificationsDeviceSubscribedAt(Object date);
+
+  /// Web path: settings.notifications.deviceDisabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已停用（多次發送失敗，請重新訂閱）'**
+  String get settingsNotificationsDeviceDisabled;
+
+  /// Web path: settings.notifications.removeDevice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除'**
+  String get settingsNotificationsRemoveDevice;
+
+  /// Web path: settings.notifications.deviceRemoved
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已刪除訂閱裝置。'**
+  String get settingsNotificationsDeviceRemoved;
+
+  /// Web path: settings.notifications.deviceRemoveFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除裝置失敗：{error}'**
+  String settingsNotificationsDeviceRemoveFailed(Object error);
+
+  /// Web path: settings.notifications.testTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'測試通知'**
+  String get settingsNotificationsTestTitle;
+
+  /// Web path: settings.notifications.testButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'傳送測試通知'**
+  String get settingsNotificationsTestButton;
+
+  /// Web path: settings.notifications.testSending
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'傳送中…'**
+  String get settingsNotificationsTestSending;
+
+  /// Web path: settings.notifications.testSent
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'測試通知已送出（成功 {delivered} 個裝置）。'**
+  String settingsNotificationsTestSent(Object delivered);
+
+  /// Web path: settings.notifications.testNoDevice
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請先在此裝置啟用推播，再傳送測試通知。'**
+  String get settingsNotificationsTestNoDevice;
+
+  /// Web path: settings.notifications.testFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'測試通知發送失敗：{error}'**
+  String settingsNotificationsTestFailed(Object error);
+
+  /// Web path: notifications.push.billDue.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳單到期提醒'**
+  String get notificationsPushBillDueTitle;
+
+  /// Web path: notifications.push.billDue.body
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'有帳單到期，開啟 AssetPilot 查看詳情。'**
+  String get notificationsPushBillDueBody;
+
+  /// Web path: notifications.push.budgetExceeded.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預算超標提醒'**
+  String get notificationsPushBudgetExceededTitle;
+
+  /// Web path: notifications.push.budgetExceeded.body
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'有預算超標，開啟 AssetPilot 查看詳情。'**
+  String get notificationsPushBudgetExceededBody;
+
+  /// Web path: notifications.push.dividend.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股利發放提醒'**
+  String get notificationsPushDividendTitle;
+
+  /// Web path: notifications.push.dividend.body
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'有股利發放，開啟 AssetPilot 查看詳情。'**
+  String get notificationsPushDividendBody;
+
+  /// Web path: notifications.push.test.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'測試推播通知'**
+  String get notificationsPushTestTitle;
+
+  /// Web path: notifications.push.test.body
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'如果你看到這則通知，代表此裝置的推播設定正確。'**
+  String get notificationsPushTestBody;
+
+  /// Web path: nav.notifications
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'通知設定'**
+  String get navNotifications;
+
+  /// Web path: notifications.push.generic.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'AssetPilot 通知'**
+  String get notificationsPushGenericTitle;
+
+  /// Web path: notifications.push.generic.body
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'有一則通知，開啟 AssetPilot 查看詳情。'**
+  String get notificationsPushGenericBody;
 }
 
 class _AppLocalizationsDelegate

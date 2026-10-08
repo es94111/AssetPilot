@@ -127,6 +127,7 @@ migrations/*.sqlite
 docker-compose.override.yml
 # 存放本機環境變數與敏感資訊（如資料庫密碼、API 金鑰），防止重大資安外洩
 .env
+.env.generated-secrets*
 .envrc
 
 # ==========================================

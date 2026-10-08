@@ -5894,4 +5894,163 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get featuresGoalsScheduleInvalidShort => '수정 필요';
+
+  @override
+  String get settingsNotificationsTitle => '푸시 알림';
+
+  @override
+  String get settingsNotificationsDescription =>
+      '활성화하면 조건에 맞는 이벤트가 구독한 기기에 즉시 전송됩니다. Email/LINE 보고서 알림에는 영향을 주지 않습니다.';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      '이 브라우저는 푸시 알림을 지원하지 않습니다(Service Worker 및 Push API 필요).';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      '서버에서 Web Push가 활성화되지 않았습니다(VAPID 키 설정 누락).';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      '알림 권한이 차단되어 있습니다. 브라우저 설정에서 이 사이트의 알림을 허용한 후 다시 시도하세요.';
+
+  @override
+  String get settingsNotificationsSubscribe => '이 기기에서 푸시 활성화';
+
+  @override
+  String get settingsNotificationsSubscribing => '활성화 중…';
+
+  @override
+  String get settingsNotificationsSubscribed => '이 기기는 푸시 알림을 구독하고 있습니다.';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess => '이 기기에서 푸시 알림을 활성화했습니다.';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return '푸시 활성화 실패: $error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => '이 기기 구독 해지';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess => '이 기기의 구독을 해지했습니다.';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return '구독 해지 실패: $error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => '알림 유형';
+
+  @override
+  String get settingsNotificationsBillDue => '청구서 만기';
+
+  @override
+  String get settingsNotificationsBillDueHint =>
+      '카드의 월 결제일 당일 새 지출이 있으면 알려줍니다.';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => '예산 초과';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      '월 예산을 초과하면 알려줍니다(예산당 월 1회).';
+
+  @override
+  String get settingsNotificationsDividend => '배당금 지급';
+
+  @override
+  String get settingsNotificationsDividendHint => '배당 기록의 지급일 당일에 알려줍니다.';
+
+  @override
+  String get settingsNotificationsDevicesTitle => '구독한 기기';
+
+  @override
+  String get settingsNotificationsNoDevices => '아직 구독한 기기가 없습니다.';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => '알 수 없는 기기';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return '$date 구독';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled =>
+      '비활성화됨(반복 전송 실패 — 다시 구독하세요)';
+
+  @override
+  String get settingsNotificationsRemoveDevice => '삭제';
+
+  @override
+  String get settingsNotificationsDeviceRemoved => '구독한 기기를 삭제했습니다.';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return '기기 삭제 실패: $error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => '테스트 알림';
+
+  @override
+  String get settingsNotificationsTestButton => '테스트 알림 보내기';
+
+  @override
+  String get settingsNotificationsTestSending => '전송 중…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return '테스트 알림을 보냈습니다($delivered개 기기 전송).';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice =>
+      '테스트 알림을 보내기 전에 이 기기에서 푸시를 활성화하세요.';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return '테스트 알림 실패: $error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => '청구서 만기 알림';
+
+  @override
+  String get notificationsPushBillDueBody =>
+      '만기된 청구서가 있습니다. 자세한 내용은 AssetPilot을 여세요.';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => '예산 초과';
+
+  @override
+  String get notificationsPushBudgetExceededBody =>
+      '예산을 초과했습니다. 자세한 내용은 AssetPilot을 여세요.';
+
+  @override
+  String get notificationsPushDividendTitle => '배당금 지급 알림';
+
+  @override
+  String get notificationsPushDividendBody =>
+      '배당금이 지급되었습니다. 자세한 내용은 AssetPilot을 여세요.';
+
+  @override
+  String get notificationsPushTestTitle => '테스트 푸시 알림';
+
+  @override
+  String get notificationsPushTestBody => '이 알림이 보이면 이 기기에서 푸시 알림이 정상 동작합니다.';
+
+  @override
+  String get navNotifications => '알림 설정';
+
+  @override
+  String get notificationsPushGenericTitle => 'AssetPilot 알림';
+
+  @override
+  String get notificationsPushGenericBody =>
+      '새 알림이 있습니다. 자세한 내용은 AssetPilot을 여세요.';
 }

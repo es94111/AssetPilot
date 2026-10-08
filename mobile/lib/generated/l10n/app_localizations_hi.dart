@@ -6079,4 +6079,171 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresGoalsScheduleInvalidShort => 'संपादन आवश्यक';
+
+  @override
+  String get settingsNotificationsTitle => 'पुश सूचनाएँ';
+
+  @override
+  String get settingsNotificationsDescription =>
+      'सक्षम होने पर, मेल खाती घटनाएँ आपके सब्सक्राइब किए गए उपकरणों पर तुरंत भेजी जाती हैं। यह Email/LINE रिपोर्ट सूचनाओं को प्रभावित नहीं करता।';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      'यह ब्राउज़र पुश सूचनाएँ समर्थित नहीं करता (Service Worker और Push API आवश्यक)।';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      'सर्वर पर Web Push सक्षम नहीं है (VAPID कुंजी कॉन्फ़िगरेशन अनुपलब्ध)।';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      'सूचना अनुमति अवरुद्ध है। ब्राउज़र सेटिंग में इस साइट के लिए सूचनाएँ अनुमत करें और पुनः प्रयास करें।';
+
+  @override
+  String get settingsNotificationsSubscribe => 'इस उपकरण पर पुश सक्षम करें';
+
+  @override
+  String get settingsNotificationsSubscribing => 'सक्षम किया जा रहा है…';
+
+  @override
+  String get settingsNotificationsSubscribed =>
+      'यह उपकरण पुश सूचनाओं के लिए सब्सक्राइब है।';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess =>
+      'इस उपकरण पर पुश सूचनाएँ सक्षम की गईं।';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return 'पुश सक्षम करने में विफल: $error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe =>
+      'इस उपकरण की सदस्यता समाप्त करें';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess =>
+      'इस उपकरण की सदस्यता समाप्त कर दी गई।';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return 'सदस्यता समाप्त करने में विफल: $error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => 'सूचना प्रकार';
+
+  @override
+  String get settingsNotificationsBillDue => 'बिल देय';
+
+  @override
+  String get settingsNotificationsBillDueHint =>
+      'कार्ड के मासिक स्टेटमेंट क्लोज़िंग दिन पर नए खर्च होने पर याद दिलाता है।';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => 'बजट से अधिक';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      'मासिक बजट से अधिक खर्च होने पर याद दिलाता है (प्रति बजट प्रति माह एक बार)।';
+
+  @override
+  String get settingsNotificationsDividend => 'लाभांश भुगतान';
+
+  @override
+  String get settingsNotificationsDividendHint =>
+      'आपके लाभांश रिकॉर्ड के भुगतान दिवस पर याद दिलाता है।';
+
+  @override
+  String get settingsNotificationsDevicesTitle => 'सब्सक्राइब किए गए उपकरण';
+
+  @override
+  String get settingsNotificationsNoDevices =>
+      'अभी तक कोई सब्सक्राइब किया गया उपकरण नहीं।';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => 'अज्ञात उपकरण';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return '$date को सब्सक्राइब किया';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled =>
+      'अक्षम (बार-बार डिलीवरी विफल — कृपया पुनः सब्सक्राइब करें)';
+
+  @override
+  String get settingsNotificationsRemoveDevice => 'हटाएँ';
+
+  @override
+  String get settingsNotificationsDeviceRemoved =>
+      'सब्सक्राइब किया गया उपकरण हटाया गया।';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return 'उपकरण हटाने में विफल: $error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => 'परीक्षण सूचना';
+
+  @override
+  String get settingsNotificationsTestButton => 'परीक्षण सूचना भेजें';
+
+  @override
+  String get settingsNotificationsTestSending => 'भेजा जा रहा है…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return 'परीक्षण सूचना भेजी गई ($delivered उपकरण)।';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice =>
+      'परीक्षण सूचना भेजने से पहले इस उपकरण पर पुश सक्षम करें।';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return 'परीक्षण सूचना विफल: $error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => 'बिल देय अनुस्मारक';
+
+  @override
+  String get notificationsPushBillDueBody =>
+      'एक बिल देय है। विवरण देखने के लिए AssetPilot खोलें।';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => 'बजट से अधिक';
+
+  @override
+  String get notificationsPushBudgetExceededBody =>
+      'एक बजट पार हो गया। विवरण देखने के लिए AssetPilot खोलें।';
+
+  @override
+  String get notificationsPushDividendTitle => 'लाभांश भुगतान अनुस्मारक';
+
+  @override
+  String get notificationsPushDividendBody =>
+      'लाभांश का भुगतान हुआ। विवरण देखने के लिए AssetPilot खोलें।';
+
+  @override
+  String get notificationsPushTestTitle => 'परीक्षण पुश सूचना';
+
+  @override
+  String get notificationsPushTestBody =>
+      'यदि आप यह सूचना देख सकते हैं, तो इस उपकरण पर पुश सूचनाएँ काम करती हैं।';
+
+  @override
+  String get navNotifications => 'सूचनाएँ';
+
+  @override
+  String get notificationsPushGenericTitle => 'AssetPilot सूचना';
+
+  @override
+  String get notificationsPushGenericBody =>
+      'आपके पास एक सूचना है। विवरण देखने के लिए AssetPilot खोलें।';
 }

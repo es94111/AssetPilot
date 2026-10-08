@@ -1820,6 +1820,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresAccountsTitle => 'Contas';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Conta de investimentos';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Conta bancária';
 
   @override
@@ -2706,6 +2709,17 @@ class AppLocalizationsPt extends AppLocalizations {
       'Digite um preço válido';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel =>
+      'Day trade (taxa reduzida à metade)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'Mesma conta, mesmo dia útil, compra à vista e venda da mesma quantidade; imposto de venda a 0,15% (art. 2-2).';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'Day trade';
+
+  @override
   String get featuresStocksDividendsTitle => 'Dividendos';
 
   @override
@@ -2765,6 +2779,24 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'Digite dividendo em dinheiro ou em ações';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel =>
+      'Reinvestir dividendo (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'Reinveste o dividendo em dinheiro no mesmo título; um registro de compra é criado automaticamente e incluído na base de custo FIFO.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => 'Ações reinvestidas';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'Preço de reinvestimento por ação';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'Reinvestido';
 
   @override
   String get featuresStocksRealizedTitle => 'P/L realizado';
@@ -6540,6 +6572,12 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Consulte faturas eletrônicas na nuvem pelo código de barras móvel usando o endpoint de API do provedor configurado.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Conta de negociação';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Não especificada';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -8358,6 +8396,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get featuresAccountsTitle => 'Contas';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Conta de investimentos';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Conta bancária';
 
   @override
@@ -9235,6 +9276,17 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Digite um preço válido';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel =>
+      'Day trade (taxa reduzida à metade)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'Mesma conta, mesmo dia útil, compra à vista e venda da mesma quantidade; imposto de venda a 0,15% (art. 2-2).';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'Day trade';
+
+  @override
   String get featuresStocksDividendsTitle => 'Dividendos';
 
   @override
@@ -9294,6 +9346,24 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'Digite dividendo em dinheiro ou em ações';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel =>
+      'Reinvestir dividendo (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'Reinveste o dividendo em dinheiro no mesmo título; um registro de compra é criado automaticamente e incluído na base de custo FIFO.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => 'Ações reinvestidas';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'Preço de reinvestimento por ação';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'Reinvestido';
 
   @override
   String get featuresStocksRealizedTitle => 'P/L realizado';
@@ -13069,4 +13139,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Consulte faturas eletrônicas na nuvem pelo código de barras móvel usando o endpoint de API do provedor configurado.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Conta de negociação';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Não especificada';
 }

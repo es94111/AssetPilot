@@ -1067,6 +1067,7 @@ export const zhTW = {
     accounts: {
       title: "帳戶管理",
       typeLabels: {
+        securities: "證券帳戶",
         bank: "銀行帳戶",
         credit_card: "信用卡",
         cash: "現金",
@@ -1354,6 +1355,11 @@ export const zhTW = {
           sharesRequired: "請輸入有效股數",
           priceRequired: "請輸入有效價格",
         },
+        dayTradeLabel: "現股當沖（稅率減半）",
+        dayTradeHint: "同一帳戶同日現款買進與現券賣出同種類同數量，賣出證交稅依證交稅條例第 2 條之 2 以 0.15% 計算。",
+        dayTradeBadge: "當沖",
+        accountLabel: "交易帳戶",
+        accountUnspecified: "未指定",
       },
       dividends: {
         title: "股利紀錄",
@@ -1374,6 +1380,11 @@ export const zhTW = {
           stockRequired: "請選擇股票",
           dividendRequired: "請輸入現金股利或股票股利",
         },
+        reinvestLabel: "股利再投資（DRIP）",
+        reinvestHint: "以現金股利再買入同一標的，系統會自動產生一筆買進紀錄並計入 FIFO 成本基礎。",
+        reinvestSharesLabel: "再投資股數",
+        reinvestPriceLabel: "再投資每股價格",
+        reinvestBadge: "再投資",
       },
       realized: {
         title: "實現損益",

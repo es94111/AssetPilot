@@ -1069,6 +1069,7 @@ export const ar = {
     accounts: {
       title: "الحسابات",
       typeLabels: {
+        securities: "حساب أوراق مالية",
         bank: "حساب بنكي",
         credit_card: "بطاقة ائتمان",
         cash: "نقد",
@@ -1356,6 +1357,11 @@ export const ar = {
           sharesRequired: "أدخل عدد أسهم صحيحًا",
           priceRequired: "أدخل سعرًا صحيحًا",
         },
+        dayTradeLabel: "التداول اليومي (نصف معدل الضريبة)",
+        dayTradeHint: "نفس الحساب، نفس يوم العمل، شراء نقدي وبيع لنفس الكمية؛ تُطبَّق ضريبة البيع بنسبة 0.15% وفق المادة 2-2.",
+        dayTradeBadge: "تداول يومي",
+        accountLabel: "حساب التداول",
+        accountUnspecified: "غير محدد",
       },
       dividends: {
         title: "التوزيعات",
@@ -1376,6 +1382,11 @@ export const ar = {
           stockRequired: "اختر سهمًا",
           dividendRequired: "أدخل توزيعًا نقديًا أو توزيع أسهم",
         },
+        reinvestLabel: "إعادة استثمار التوزيعات (DRIP)",
+        reinvestHint: "يُعاد استثمار التوزيعات النقدية في نفس الورقة؛ ويُنشأ سجل شراء تلقائيًا ويُدرج في أساس تكلفة FIFO.",
+        reinvestSharesLabel: "الأسهم المعاد استثمارها",
+        reinvestPriceLabel: "سعر إعادة الاستثمار للسهم",
+        reinvestBadge: "معاد استثماره",
       },
       realized: {
         title: "الربح/الخسارة المحققة",

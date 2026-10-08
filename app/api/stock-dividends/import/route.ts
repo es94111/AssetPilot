@@ -10,7 +10,11 @@ import {
   isValidIso8601Date,
 } from "../../../../lib/auditHelpers";
 import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
-import { makeDividendHash } from "../../../../lib/stockHelpers";
+import {
+  DRIP_SYNTH_NOTE_PREFIX,
+  makeDividendHash,
+  validateDripInput,
+} from "../../../../lib/stockHelpers";
 import { inferStockType } from "../../../../lib/twseFetchNext";
 import {
   isValidStockSymbol,
@@ -29,6 +33,21 @@ function cell(row, ...keys) {
     if (row[key] != null && row[key] !== "") return row[key];
   }
   return "";
+}
+
+function resolveImportedTransactionId(value) {
+  const candidate = String(value ?? "").trim();
+  if (/^[a-f0-9]{32}$/i.test(candidate) && !queryOne("SELECT id FROM stock_transactions WHERE id = ?", [candidate])) {
+    return candidate;
+  }
+  return uid();
+}
+
+function parseImportedCreatedAt(value, columnPresent = false) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return columnPresent ? null : Date.now();
+  const parsed = Number(raw);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : Date.now();
 }
 
 function acquireImportLock(userId) {
@@ -125,6 +144,17 @@ async function handlePOST(request) {
       const currency = stockCurrency(market);
       const cashDividend = cell(row, "cashDividend", "現金股利");
       const stockDividend = cell(row, "stockDividend", "股票股利");
+      const reinvestRaw = cell(row, "reinvest", "再投資");
+      const reinvestSharesRaw = cell(row, "reinvestShares", "再投資股數");
+      const reinvestPriceRaw = cell(row, "reinvestPrice", "再投資價格");
+      const stockDividendTxCreatedAtKeys = ["stockDividendTxCreatedAt", "股票股利 FIFO 排序時間"];
+      const reinvestTxCreatedAtKeys = ["reinvestTxCreatedAt", "再投資 FIFO 排序時間"];
+      const hasStockDividendTxCreatedAtColumn = stockDividendTxCreatedAtKeys.some((key) => Object.hasOwn(row, key));
+      const hasReinvestTxCreatedAtColumn = reinvestTxCreatedAtKeys.some((key) => Object.hasOwn(row, key));
+      const stockDividendTxCreatedAtRaw = cell(row, ...stockDividendTxCreatedAtKeys);
+      const reinvestTxCreatedAtRaw = cell(row, ...reinvestTxCreatedAtKeys);
+      const stockDividendTxIdRaw = cell(row, "stockDividendTxId", "股票股利 FIFO 排序識別碼");
+      const reinvestTxIdRaw = cell(row, "reinvestTxId", "再投資 FIFO 排序識別碼");
       const accountName = cell(row, "accountName", "帳戶");
       const note = cell(row, "note", "備註");
       if (!rawDate || !symbol || !isValidStockSymbol(symbol, market)) {
@@ -182,6 +212,76 @@ async function handlePOST(request) {
         "SELECT * FROM stocks WHERE user_id = ? AND market = ? AND symbol = ?",
         [auth.userId, market, symbol],
       );
+      const h = makeDividendHash(date, symbol, cash, stock_d, market);
+      if (existingHashes.has(h) || batchHashes.has(h)) {
+        skipped++;
+        return;
+      }
+
+      // 股利再投資（DRIP）：驗證必須先於新增持倉，避免無效 CSV 列留下空股票。
+      const reinvestShares =
+        reinvestSharesRaw == null || String(reinvestSharesRaw).trim() === ""
+          ? 0
+          : Number(reinvestSharesRaw);
+      const reinvestPrice =
+        reinvestPriceRaw == null || String(reinvestPriceRaw).trim() === ""
+          ? 0
+          : Number(reinvestPriceRaw);
+      let drip;
+      try {
+        drip = validateDripInput({
+          reinvest: reinvestRaw,
+          cashDividend: cash,
+          reinvestShares,
+          reinvestPrice,
+          market,
+        });
+      } catch (e) {
+        errors.push({
+          row: idx + 2,
+          reason: e.message,
+        });
+        skipped++;
+        return;
+      }
+
+      let accountId = "";
+      if (accountName) {
+        const acc = queryOne(
+          "SELECT id FROM accounts WHERE user_id = ? AND name = ?",
+          [auth.userId, accountName],
+        );
+        if (acc) accountId = acc.id;
+      }
+
+      let synthAccountId = accountId;
+      if (stock_d > 0 && !synthAccountId) {
+        const lastBuy = stock
+          ? queryOne(
+              `SELECT st.account_id FROM stock_transactions st
+               JOIN accounts a ON a.id = st.account_id AND a.user_id = st.user_id
+               WHERE st.user_id = ? AND st.stock_id = ? AND st.type = 'buy'
+                 AND st.account_id IS NOT NULL AND st.account_id != ''
+               ORDER BY st.date DESC LIMIT 1`,
+              [auth.userId, stock.id],
+            )
+          : null;
+        if (lastBuy?.account_id) {
+          synthAccountId = lastBuy.account_id;
+        } else if (securityAccounts.length === 1) {
+          synthAccountId = securityAccounts[0].id;
+        } else if (securityAccounts.length > 1) {
+          errors.push({
+            row: idx + 2,
+            reason:
+              "純股票股利合成交易無法判定所屬帳戶，請於 CSV 帳戶欄位明示",
+          });
+          skipped++;
+          return;
+        }
+      }
+
+      // All validation and duplicate checks passed; only now create/update stock data.
       if (!stock) {
         const sid = uid();
         const inferredType =
@@ -209,53 +309,23 @@ async function handlePOST(request) {
           stock.id,
         ]);
       }
-
-      const h = makeDividendHash(date, symbol, cash, stock_d, market);
-      if (existingHashes.has(h) || batchHashes.has(h)) {
-        skipped++;
-        return;
-      }
       batchHashes.add(h);
 
-      let accountId = "";
-      if (accountName) {
-        const acc = queryOne(
-          "SELECT id FROM accounts WHERE user_id = ? AND name = ?",
-          [auth.userId, accountName],
-        );
-        if (acc) accountId = acc.id;
-      }
-
+      const dividendId = uid();
+      const stockDividendTxCreatedAt = parseImportedCreatedAt(
+        stockDividendTxCreatedAtRaw,
+        hasStockDividendTxCreatedAtColumn,
+      );
+      const reinvestTxCreatedAt = parseImportedCreatedAt(
+        reinvestTxCreatedAtRaw,
+        hasReinvestTxCreatedAtColumn,
+      );
       if (stock_d > 0) {
-        let synthAccountId = accountId;
-        if (!synthAccountId) {
-          const lastBuy = queryOne(
-            `SELECT st.account_id FROM stock_transactions st
-             JOIN accounts a ON a.id = st.account_id AND a.user_id = st.user_id
-             WHERE st.user_id = ? AND st.stock_id = ? AND st.type = 'buy'
-               AND st.account_id IS NOT NULL AND st.account_id != ''
-             ORDER BY st.date DESC LIMIT 1`,
-            [auth.userId, stock.id],
-          );
-          if (lastBuy && lastBuy.account_id) {
-            synthAccountId = lastBuy.account_id;
-          } else if (securityAccounts.length === 1) {
-            synthAccountId = securityAccounts[0].id;
-          } else if (securityAccounts.length > 1) {
-            errors.push({
-              row: idx + 2,
-              reason:
-                "純股票股利合成交易無法判定所屬帳戶，請於 CSV 帳戶欄位明示",
-            });
-            skipped++;
-            return;
-          }
-        }
         const synthNote = "[SYNTH] 股票股利配發 " + (note || "");
         db.run(
-          "INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at, linked_dividend_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
-            uid(),
+            resolveImportedTransactionId(stockDividendTxIdRaw),
             auth.userId,
             stock.id,
             "buy",
@@ -266,15 +336,38 @@ async function handlePOST(request) {
             0,
             synthAccountId || "",
             synthNote,
-            Date.now(),
+            stockDividendTxCreatedAt,
+            dividendId,
+          ],
+        );
+      }
+
+      if (Number(drip.reinvest)) {
+        const dripNote = `${DRIP_SYNTH_NOTE_PREFIX} | 每股 $${drip.reinvestPrice} ${note || ""}`.trim();
+        db.run(
+          "INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at, linked_dividend_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            resolveImportedTransactionId(reinvestTxIdRaw),
+            auth.userId,
+            stock.id,
+            "buy",
+            date,
+            drip.reinvestShares,
+            drip.reinvestPrice,
+            0,
+            0,
+            accountId || "",
+            dripNote,
+            reinvestTxCreatedAt,
+            dividendId,
           ],
         );
       }
 
       db.run(
-        "INSERT INTO stock_dividends (id, user_id, stock_id, date, cash_dividend, stock_dividend_shares, account_id, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO stock_dividends (id, user_id, stock_id, date, cash_dividend, stock_dividend_shares, account_id, note, created_at, reinvest, reinvest_shares, reinvest_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
-          uid(),
+          dividendId,
           auth.userId,
           stock.id,
           date,
@@ -283,6 +376,9 @@ async function handlePOST(request) {
           accountId || null,
           note || "",
           Date.now(),
+          drip.reinvest ? 1 : 0,
+          drip.reinvestShares,
+          drip.reinvestPrice,
         ],
       );
       imported++;

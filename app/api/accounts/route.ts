@@ -16,7 +16,7 @@ import {
 import { todayInUserTz } from "../../../lib/userTime";
 import { uid, todayStr } from "../../../lib/userDefaults";
 
-type AccountCategory = "bank" | "credit_card" | "cash" | "virtual_wallet";
+type AccountCategory = "bank" | "credit_card" | "cash" | "virtual_wallet" | "securities";
 
 interface AccountRow {
   id: string;
@@ -55,6 +55,7 @@ const VALID_CATEGORIES: AccountCategory[] = [
   "credit_card",
   "cash",
   "virtual_wallet",
+  "securities",
 ];
 
 function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {

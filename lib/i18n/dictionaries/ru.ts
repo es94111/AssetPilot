@@ -1069,6 +1069,7 @@ export const ru = {
     accounts: {
       title: "Счета",
       typeLabels: {
+        securities: "Брокерский счет",
         bank: "Банковский счет",
         credit_card: "Кредитная карта",
         cash: "Наличные",
@@ -1356,6 +1357,11 @@ export const ru = {
           sharesRequired: "Введите корректное количество акций",
           priceRequired: "Введите корректную цену",
         },
+        dayTradeLabel: "Дей-трейд (половинная ставка налога)",
+        dayTradeHint: "Тот же счёт и рабочий день, покупка за наличные и продажа того же объёма; налог продажи 0,15% (ст. 2-2).",
+        dayTradeBadge: "Дей-трейд",
+        accountLabel: "Торговый счёт",
+        accountUnspecified: "Не указан",
       },
       dividends: {
         title: "Дивиденды",
@@ -1376,6 +1382,11 @@ export const ru = {
           stockRequired: "Выберите акцию",
           dividendRequired: "Введите денежный дивиденд или дивиденд акциями",
         },
+        reinvestLabel: "Реинвестирование дивиденда (DRIP)",
+        reinvestHint: "Реинвестирует денежный дивиденд в ту же бумагу; запись покупки создаётся автоматически и включается в базу затрат FIFO.",
+        reinvestSharesLabel: "Реинвестированные акции",
+        reinvestPriceLabel: "Цена реинвестирования за акцию",
+        reinvestBadge: "Реинвестировано",
       },
       realized: {
         title: "Реализованная P/L",

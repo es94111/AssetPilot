@@ -309,7 +309,7 @@ export function getStockPortfolioStatus(userId: string): {
   const holdings: Array<{ stockId: string; name: string; symbol: string; currency: string; marketValue: number; priced: boolean; shares: number; avgCost: number; currentPrice: number; unrealizedPL: number }> = [];
   const total = stocks.reduce((sum, stock) => {
     const txs = queryAll(
-      'SELECT * FROM stock_transactions WHERE user_id = ? AND stock_id = ? ORDER BY date, created_at',
+      'SELECT * FROM stock_transactions WHERE user_id = ? AND stock_id = ? ORDER BY date, created_at, id',
       [userId, stock.id]
     );
     const divs = queryAll(

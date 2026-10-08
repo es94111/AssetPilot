@@ -1069,6 +1069,7 @@ export const hi = {
     accounts: {
       title: "खाते",
       typeLabels: {
+        securities: "प्रतिभूति खाता",
         bank: "बैंक खाता",
         credit_card: "क्रेडिट कार्ड",
         cash: "नकद",
@@ -1356,6 +1357,11 @@ export const hi = {
           sharesRequired: "मान्य शेयर संख्या दर्ज करें",
           priceRequired: "मान्य कीमत दर्ज करें",
         },
+        dayTradeLabel: "डे ट्रेड (आधी कर दर)",
+        dayTradeHint: "एक ही खाता, एक ही कारोबारी दिन, समान मात्रा की नकद खरीद और बिक्री; बिक्री कर 0.15% दर पर (धारा 2-2)।",
+        dayTradeBadge: "डे ट्रेड",
+        accountLabel: "ट्रेडिंग खाता",
+        accountUnspecified: "निर्दिष्ट नहीं",
       },
       dividends: {
         title: "डिविडेंड",
@@ -1376,6 +1382,11 @@ export const hi = {
           stockRequired: "शेयर चुनें",
           dividendRequired: "नकद डिविडेंड या शेयर डिविडेंड दर्ज करें",
         },
+        reinvestLabel: "लाभांश पुनर्निवेश (DRIP)",
+        reinvestHint: "नकद लाभांश को उसी स्टॉक में पुनर्निवेशित करता है; एक खरीद रिकॉर्ड स्वतः बनता है और FIFO लागत आधार में जोड़ा जाता है।",
+        reinvestSharesLabel: "पुनर्निवेशित शेयर",
+        reinvestPriceLabel: "पुनर्निवेश प्रति शेयर मूल्य",
+        reinvestBadge: "पुनर्निवेशित",
       },
       realized: {
         title: "वास्तविक P/L",

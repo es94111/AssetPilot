@@ -36,6 +36,9 @@ const EMPTY_FORM = {
   date: "",
   cashDividend: "",
   stockDividendShares: "",
+  reinvest: false,
+  reinvestShares: "",
+  reinvestPrice: "",
   accountId: "",
   note: "",
 };
@@ -186,6 +189,10 @@ export default function DividendsClient(_props: { user?: any } = {}) {
       date: form.date,
       cashDividend: Number(form.cashDividend) || 0,
       stockDividendShares: Number(form.stockDividendShares) || 0,
+      // DRIP：現金股利再買入同一標的（見 lib/stockHelpers.ts validateDripInput）。
+      reinvest: !!form.reinvest,
+      reinvestShares: form.reinvest ? Number(form.reinvestShares) || 0 : 0,
+      reinvestPrice: form.reinvest ? Number(form.reinvestPrice) || 0 : 0,
       accountId: form.accountId || null,
       note: form.note,
     };
@@ -372,6 +379,43 @@ export default function DividendsClient(_props: { user?: any } = {}) {
                 setForm((f) => ({ ...f, stockDividendShares: e.target.value }))
               }
             />
+            {/* 股利再投資（DRIP）：以現金股利買回同一標的，自動產生買入紀錄並計入 FIFO 成本。 */}
+            <label className="mb-2 flex items-start gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4"
+                checked={!!form.reinvest}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, reinvest: e.target.checked }))
+                }
+              />
+              <span>
+                {t("features.stocks.dividends.reinvestLabel")}
+                <span className="block text-xs text-slate-500">
+                  {t("features.stocks.dividends.reinvestHint")}
+                </span>
+              </span>
+            </label>
+            {form.reinvest && (
+              <>
+                <Input
+                  label={t("features.stocks.dividends.reinvestSharesLabel")}
+                  type="number"
+                  value={form.reinvestShares}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, reinvestShares: e.target.value }))
+                  }
+                />
+                <Input
+                  label={t("features.stocks.dividends.reinvestPriceLabel")}
+                  type="number"
+                  value={form.reinvestPrice}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, reinvestPrice: e.target.value }))
+                  }
+                />
+              </>
+            )}
             <Select
               label={t("features.stocks.dividends.depositAccount")}
               options={[
@@ -459,6 +503,7 @@ export default function DividendsClient(_props: { user?: any } = {}) {
               <TableHead>{t("features.common.stock")}</TableHead>
               <TableHead>{t("features.stocks.common.cashDividend")}</TableHead>
               <TableHead>{t("features.stocks.common.stockDividend")}</TableHead>
+              <TableHead>{t("features.stocks.dividends.reinvestBadge")}</TableHead>
               <TableHead>{t("features.common.note")}</TableHead>
               <TableHead>{t("features.common.actions")}</TableHead>
             </TableRow>
@@ -486,6 +531,17 @@ export default function DividendsClient(_props: { user?: any } = {}) {
                     t("features.common.notRecorded")}
                 </TableCell>
                 <TableCell>
+                  {Number(d.reinvest) === 1 ? (
+                    <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
+                      {t("features.stocks.dividends.reinvestBadge")}
+                      {Number(d.reinvest_shares ?? d.reinvestShares) > 0 &&
+                        ` · ${Number(d.reinvest_shares ?? d.reinvestShares).toLocaleString(localeTag(locale))} @ ${fmtCurrency(d.reinvest_price ?? d.reinvestPrice, d.currency, locale)}`}
+                    </span>
+                  ) : (
+                    t("features.common.notRecorded")
+                  )}
+                </TableCell>
+                <TableCell>
                   {d.note || t("features.common.notRecorded")}
                 </TableCell>
                 <TableCell className="flex gap-2">
@@ -499,6 +555,10 @@ export default function DividendsClient(_props: { user?: any } = {}) {
                         cashDividend: d.cashDividend ?? d.cash_dividend,
                         stockDividendShares:
                           d.stockDividendShares ?? d.stock_dividend_shares,
+                        reinvest: Number(d.reinvest) === 1,
+                        reinvestShares:
+                          d.reinvestShares ?? d.reinvest_shares ?? "",
+                        reinvestPrice: d.reinvestPrice ?? d.reinvest_price ?? "",
                         accountId: d.accountId || d.account_id || "",
                         note: d.note || "",
                       });

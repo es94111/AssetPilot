@@ -627,7 +627,11 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     date TEXT NOT NULL,
     CONSTRAINT stock_transactions_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,
     note TEXT DEFAULT '',
-    created_at INTEGER
+    created_at INTEGER,
+    -- 現股當沖標記（issue #263）：1 = 同一帳戶同一營業日現款買進與現券賣出，
+    -- 賣出證交稅適用證券交易稅條例第 2 條之 2 的千分之一點五稅率。
+    day_trade INTEGER DEFAULT 0 CHECK (day_trade IN (0,1)),
+    linked_dividend_id TEXT DEFAULT ''
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS stock_dividends (
@@ -639,7 +643,12 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     date TEXT NOT NULL,
     note TEXT DEFAULT '',
     CONSTRAINT stock_dividends_stock_fk FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,
-    created_at INTEGER
+    created_at INTEGER,
+    -- 股利再投資（DRIP，issue #263）：1 = 以現金股利再買入同一標的，
+    -- 系統會同步寫入一筆合成買進交易（price = reinvest_price）調整 FIFO 成本基礎。
+    reinvest INTEGER DEFAULT 0 CHECK (reinvest IN (0,1)),
+    reinvest_shares NUMERIC DEFAULT 0 CHECK (reinvest_shares >= 0 AND reinvest_shares::text NOT IN ('NaN', 'Infinity', '-Infinity')),
+    reinvest_price NUMERIC DEFAULT 0 CHECK (reinvest_price >= 0 AND reinvest_price::text NOT IN ('NaN', 'Infinity', '-Infinity'))
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS stock_recurring (
@@ -1059,6 +1068,22 @@ END $$`);
   );
   alterIgnore(
     "ALTER TABLE stock_dividends ADD COLUMN account_id TEXT DEFAULT ''",
+  );
+  // issue #263：現股當沖標記（證券交易稅條例第 2 條之 2）與股利再投資（DRIP）欄位。
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN day_trade INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_transactions ADD COLUMN linked_dividend_id TEXT DEFAULT ''",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_dividends ADD COLUMN reinvest INTEGER DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_dividends ADD COLUMN reinvest_shares NUMERIC DEFAULT 0",
+  );
+  alterIgnore(
+    "ALTER TABLE stock_dividends ADD COLUMN reinvest_price NUMERIC DEFAULT 0",
   );
   alterIgnore("ALTER TABLE login_audit_logs ADD COLUMN id TEXT DEFAULT ''");
   alterIgnore(
@@ -1618,6 +1643,8 @@ END $$`);
     "ALTER TABLE stock_dividends ALTER COLUMN shares TYPE NUMERIC USING shares::numeric",
     "ALTER TABLE stock_dividends ALTER COLUMN cash_dividend TYPE NUMERIC USING cash_dividend::numeric",
     "ALTER TABLE stock_dividends ALTER COLUMN stock_dividend_shares TYPE NUMERIC USING stock_dividend_shares::numeric",
+    "ALTER TABLE stock_dividends ALTER COLUMN reinvest_shares TYPE NUMERIC USING reinvest_shares::numeric",
+    "ALTER TABLE stock_dividends ALTER COLUMN reinvest_price TYPE NUMERIC USING reinvest_price::numeric",
     "ALTER TABLE stock_recurring ALTER COLUMN amount TYPE NUMERIC USING amount::numeric",
     "ALTER TABLE stock_recurring ALTER COLUMN shares TYPE NUMERIC USING shares::numeric",
     "ALTER TABLE stock_recurring ALTER COLUMN price TYPE NUMERIC USING price::numeric",

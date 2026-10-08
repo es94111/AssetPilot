@@ -644,6 +644,7 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           price: Number(r.price) || 0,
           fee: Number(r.fee) || 0,
           tax: Number(r.tax) || 0,
+          dayTrade: Number(r.day_trade) === 1,
           date: r.date,
           note: r.note || "",
         }));
@@ -721,6 +722,9 @@ export function buildMcpServer(credential: VerifyMcpTokenResult): McpServer {
           date: r.date,
           cashDividend: Number(r.cash_dividend) || 0,
           stockDividendShares: Number(r.stock_dividend_shares) || 0,
+          reinvest: Number(r.reinvest) === 1,
+          reinvestShares: Number(r.reinvest_shares) || 0,
+          reinvestPrice: Number(r.reinvest_price) || 0,
           note: r.note || "",
         }));
         return toolResult({

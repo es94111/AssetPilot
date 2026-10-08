@@ -5,6 +5,10 @@ import { requireAuth } from "../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../lib/db";
 import { uid } from "../../../lib/userDefaults";
 import { normalizeDate } from "../../../lib/accountHelpers";
+import {
+  DRIP_SYNTH_NOTE_PREFIX,
+  validateDripInput,
+} from "../../../lib/stockHelpers";
 
 export async function GET(request) {
   const auth = await requireAuth(request);
@@ -95,7 +99,7 @@ async function handlePOST(request) {
   }
 
   const stock = queryOne(
-    "SELECT id, name FROM stocks WHERE id = ? AND user_id = ?",
+    "SELECT id, name, market FROM stocks WHERE id = ? AND user_id = ?",
     [stockId, auth.userId],
   );
   if (!stock)
@@ -119,13 +123,30 @@ async function handlePOST(request) {
       );
   }
 
+  // 股利再投資（DRIP）：需現金股利 + 正數的再投資股數與每股價格（見 lib/stockHelpers.ts）。
+  let drip;
+  try {
+    drip = validateDripInput({
+      reinvest: body.reinvest,
+      cashDividend: cash,
+      reinvestShares:
+        body.reinvestShares == null ? 0 : Number(body.reinvestShares),
+      reinvestPrice:
+        body.reinvestPrice == null ? 0 : Number(body.reinvestPrice),
+      market: stock.market || "TW",
+    });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+
   const id = uid();
   const db = getDB();
   let synthTxId = null;
+  let dripTxId = null;
   try {
     db.run("BEGIN");
     db.run(
-      "INSERT INTO stock_dividends (id,user_id,stock_id,date,cash_dividend,stock_dividend_shares,account_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO stock_dividends (id,user_id,stock_id,date,cash_dividend,stock_dividend_shares,account_id,note,created_at,reinvest,reinvest_shares,reinvest_price) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
       [
         id,
         auth.userId,
@@ -136,6 +157,9 @@ async function handlePOST(request) {
         accountId || null,
         note || "",
         Date.now(),
+        drip.reinvest ? 1 : 0,
+        drip.reinvestShares,
+        drip.reinvestPrice,
       ],
     );
 
@@ -143,7 +167,7 @@ async function handlePOST(request) {
       synthTxId = uid();
       const synthNote = `[SYNTH] 股票股利配發 | ${note || ""}`.trim();
       db.run(
-        "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,linked_dividend_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         [
           synthTxId,
           auth.userId,
@@ -158,6 +182,33 @@ async function handlePOST(request) {
           synthNote,
           Date.now(),
           1,
+          id,
+        ],
+      );
+    }
+
+    // DRIP：以現金股利再買入同一標的，寫入合成買進交易讓 FIFO 自然納入成本基礎。
+    // 手續費為 0：再投資金額即為股利，券商不另收取（見 lib/twStockTaxRules.ts 同檔註解）。
+    if (drip.reinvest) {
+      dripTxId = uid();
+      const dripNote = `${DRIP_SYNTH_NOTE_PREFIX} | 每股 $${drip.reinvestPrice} | ${note || ""}`.trim();
+      db.run(
+        "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,linked_dividend_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [
+          dripTxId,
+          auth.userId,
+          stockId,
+          date,
+          "buy",
+          drip.reinvestShares,
+          drip.reinvestPrice,
+          0,
+          0,
+          accountId || null,
+          dripNote,
+          Date.now(),
+          1,
+          id,
         ],
       );
     }
@@ -173,7 +224,7 @@ async function handlePOST(request) {
   }
   saveDB();
 
-  return NextResponse.json({ id, synthTxId }, { status: 201 });
+  return NextResponse.json({ id, synthTxId, dripTxId }, { status: 201 });
 }
 
 export const POST = withLedgerWriteAudit(handlePOST);

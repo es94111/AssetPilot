@@ -1817,6 +1817,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresAccountsTitle => 'Счета';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Брокерский счет';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Банковский счет';
 
   @override
@@ -2699,6 +2702,17 @@ class AppLocalizationsRu extends AppLocalizations {
       'Введите корректную цену';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel =>
+      'Дей-трейд (половинная ставка налога)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'Тот же счёт и рабочий день, покупка за наличные и продажа того же объёма; налог продажи 0,15% (ст. 2-2).';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'Дей-трейд';
+
+  @override
   String get featuresStocksDividendsTitle => 'Дивиденды';
 
   @override
@@ -2757,6 +2771,25 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'Введите денежный дивиденд или дивиденд акциями';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel =>
+      'Реинвестирование дивиденда (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'Реинвестирует денежный дивиденд в ту же бумагу; запись покупки создаётся автоматически и включается в базу затрат FIFO.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel =>
+      'Реинвестированные акции';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'Цена реинвестирования за акцию';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'Реинвестировано';
 
   @override
   String get featuresStocksRealizedTitle => 'Реализованная P/L';
@@ -6531,4 +6564,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Запрос облачных электронных счетов по мобильному штрихкоду через настроенную конечную точку API поставщика.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Торговый счёт';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Не указан';
 }

@@ -2771,6 +2771,11 @@
     "description": "Web path: features.accounts.title",
     "x-webPath": "features.accounts.title"
   },
+  "featuresAccountsTypeLabelsSecurities": "Брокерский счет",
+  "@featuresAccountsTypeLabelsSecurities": {
+    "description": "Web path: features.accounts.typeLabels.securities",
+    "x-webPath": "features.accounts.typeLabels.securities"
+  },
   "featuresAccountsTypeLabelsBank": "Банковский счет",
   "@featuresAccountsTypeLabelsBank": {
     "description": "Web path: features.accounts.typeLabels.bank",
@@ -4028,6 +4033,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "Дей-трейд (половинная ставка налога)",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "Тот же счёт и рабочий день, покупка за наличные и продажа того же объёма; налог продажи 0,15% (ст. 2-2).",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "Дей-трейд",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "Дивиденды",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4116,6 +4136,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "Реинвестирование дивиденда (DRIP)",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "Реинвестирует денежный дивиденд в ту же бумагу; запись покупки создаётся автоматически и включается в базу затрат FIFO.",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "Реинвестированные акции",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "Цена реинвестирования за акцию",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "Реинвестировано",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "Реализованная P/L",
   "@featuresStocksRealizedTitle": {
@@ -9929,5 +9974,15 @@
   "@publicApiCreditsPageDescriptionsEinvoice": {
     "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
     "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
+  },
+  "featuresStocksTransactionsAccountLabel": "Торговый счёт",
+  "@featuresStocksTransactionsAccountLabel": {
+    "description": "Web path: features.stocks.transactions.accountLabel",
+    "x-webPath": "features.stocks.transactions.accountLabel"
+  },
+  "featuresStocksTransactionsAccountUnspecified": "Не указан",
+  "@featuresStocksTransactionsAccountUnspecified": {
+    "description": "Web path: features.stocks.transactions.accountUnspecified",
+    "x-webPath": "features.stocks.transactions.accountUnspecified"
   }
 }

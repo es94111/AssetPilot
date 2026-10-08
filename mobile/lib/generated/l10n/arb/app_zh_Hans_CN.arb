@@ -2771,6 +2771,11 @@
     "description": "Web path: features.accounts.title",
     "x-webPath": "features.accounts.title"
   },
+  "featuresAccountsTypeLabelsSecurities": "证券账户",
+  "@featuresAccountsTypeLabelsSecurities": {
+    "description": "Web path: features.accounts.typeLabels.securities",
+    "x-webPath": "features.accounts.typeLabels.securities"
+  },
   "featuresAccountsTypeLabelsBank": "银行账户",
   "@featuresAccountsTypeLabelsBank": {
     "description": "Web path: features.accounts.typeLabels.bank",
@@ -4028,6 +4033,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "现股当冲（税率减半）",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "同一账户同日现款买进与现券卖出同种类同数量，卖出证交税依证交税条例第 2 条之 2 以 0.15% 计算。",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "当冲",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "股利",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4116,6 +4136,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "股利再投资（DRIP）",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "以现金股利再买入同一标的，系统会自动生成一笔买入记录并计入 FIFO 成本基础。",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "再投资股数",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "再投资每股价格",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "再投资",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "已实现盈亏",
   "@featuresStocksRealizedTitle": {
@@ -9929,5 +9974,15 @@
   "@publicApiCreditsPageDescriptionsEinvoice": {
     "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
     "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
+  },
+  "featuresStocksTransactionsAccountLabel": "交易账户",
+  "@featuresStocksTransactionsAccountLabel": {
+    "description": "Web path: features.stocks.transactions.accountLabel",
+    "x-webPath": "features.stocks.transactions.accountLabel"
+  },
+  "featuresStocksTransactionsAccountUnspecified": "未指定",
+  "@featuresStocksTransactionsAccountUnspecified": {
+    "description": "Web path: features.stocks.transactions.accountUnspecified",
+    "x-webPath": "features.stocks.transactions.accountUnspecified"
   }
 }

@@ -1701,6 +1701,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresAccountsTitle => '帳戶管理';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => '證券帳戶';
+
+  @override
   String get featuresAccountsTypeLabelsBank => '銀行帳戶';
 
   @override
@@ -2549,6 +2552,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresStocksTransactionsMessagesPriceRequired => '請輸入有效價格';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel => '現股當沖（稅率減半）';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      '同一帳戶同日現款買進與現券賣出同種類同數量，賣出證交稅依證交稅條例第 2 條之 2 以 0.15% 計算。';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => '當沖';
+
+  @override
   String get featuresStocksDividendsTitle => '股利紀錄';
 
   @override
@@ -2604,6 +2617,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresStocksDividendsMessagesDividendRequired => '請輸入現金股利或股票股利';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel => '股利再投資（DRIP）';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      '以現金股利再買入同一標的，系統會自動產生一筆買進紀錄並計入 FIFO 成本基礎。';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => '再投資股數';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel => '再投資每股價格';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => '再投資';
 
   @override
   String get featuresStocksRealizedTitle => '實現損益';
@@ -6163,6 +6192,12 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '交易帳戶';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '未指定';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -7864,6 +7899,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresAccountsTitle => '账户管理';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => '证券账户';
+
+  @override
   String get featuresAccountsTypeLabelsBank => '银行账户';
 
   @override
@@ -8703,6 +8741,16 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresStocksTransactionsMessagesPriceRequired => '请输入有效价格';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel => '现股当冲（税率减半）';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      '同一账户同日现款买进与现券卖出同种类同数量，卖出证交税依证交税条例第 2 条之 2 以 0.15% 计算。';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => '当冲';
+
+  @override
   String get featuresStocksDividendsTitle => '股利';
 
   @override
@@ -8758,6 +8806,22 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresStocksDividendsMessagesDividendRequired => '请输入现金股利或股票股利';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel => '股利再投资（DRIP）';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      '以现金股利再买入同一标的，系统会自动生成一笔买入记录并计入 FIFO 成本基础。';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => '再投资股数';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel => '再投资每股价格';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => '再投资';
 
   @override
   String get featuresStocksRealizedTitle => '已实现盈亏';
@@ -12327,6 +12391,12 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '通过配置的供应商 API 端点，使用手机条码查询云端电子发票。';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '交易账户';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '未指定';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -14026,6 +14096,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresAccountsTitle => '帳戶管理';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => '證券帳戶';
+
+  @override
   String get featuresAccountsTypeLabelsBank => '銀行帳戶';
 
   @override
@@ -14874,6 +14947,16 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresStocksTransactionsMessagesPriceRequired => '請輸入有效價格';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel => '現股當沖（稅率減半）';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      '同一帳戶同日現款買進與現券賣出同種類同數量，賣出證交稅依證交稅條例第 2 條之 2 以 0.15% 計算。';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => '當沖';
+
+  @override
   String get featuresStocksDividendsTitle => '股利紀錄';
 
   @override
@@ -14929,6 +15012,22 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresStocksDividendsMessagesDividendRequired => '請輸入現金股利或股票股利';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel => '股利再投資（DRIP）';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      '以現金股利再買入同一標的，系統會自動產生一筆買進紀錄並計入 FIFO 成本基礎。';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => '再投資股數';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel => '再投資每股價格';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => '再投資';
 
   @override
   String get featuresStocksRealizedTitle => '實現損益';
@@ -18488,4 +18587,10 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '交易帳戶';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '未指定';
 }

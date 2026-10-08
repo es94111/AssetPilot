@@ -3343,6 +3343,12 @@ abstract class AppLocalizations {
   /// **'帳戶管理'**
   String get featuresAccountsTitle;
 
+  /// Web path: features.accounts.typeLabels.securities
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'證券帳戶'**
+  String get featuresAccountsTypeLabelsSecurities;
+
   /// Web path: features.accounts.typeLabels.bank
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -4888,6 +4894,24 @@ abstract class AppLocalizations {
   /// **'請輸入有效價格'**
   String get featuresStocksTransactionsMessagesPriceRequired;
 
+  /// Web path: features.stocks.transactions.dayTradeLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'現股當沖（稅率減半）'**
+  String get featuresStocksTransactionsDayTradeLabel;
+
+  /// Web path: features.stocks.transactions.dayTradeHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'同一帳戶同日現款買進與現券賣出同種類同數量，賣出證交稅依證交稅條例第 2 條之 2 以 0.15% 計算。'**
+  String get featuresStocksTransactionsDayTradeHint;
+
+  /// Web path: features.stocks.transactions.dayTradeBadge
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'當沖'**
+  String get featuresStocksTransactionsDayTradeBadge;
+
   /// Web path: features.stocks.dividends.title
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -4987,6 +5011,36 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'請輸入現金股利或股票股利'**
   String get featuresStocksDividendsMessagesDividendRequired;
+
+  /// Web path: features.stocks.dividends.reinvestLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股利再投資（DRIP）'**
+  String get featuresStocksDividendsReinvestLabel;
+
+  /// Web path: features.stocks.dividends.reinvestHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'以現金股利再買入同一標的，系統會自動產生一筆買進紀錄並計入 FIFO 成本基礎。'**
+  String get featuresStocksDividendsReinvestHint;
+
+  /// Web path: features.stocks.dividends.reinvestSharesLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'再投資股數'**
+  String get featuresStocksDividendsReinvestSharesLabel;
+
+  /// Web path: features.stocks.dividends.reinvestPriceLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'再投資每股價格'**
+  String get featuresStocksDividendsReinvestPriceLabel;
+
+  /// Web path: features.stocks.dividends.reinvestBadge
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'再投資'**
+  String get featuresStocksDividendsReinvestBadge;
 
   /// Web path: features.stocks.realized.title
   ///
@@ -11300,6 +11354,18 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。'**
   String get publicApiCreditsPageDescriptionsEinvoice;
+
+  /// Web path: features.stocks.transactions.accountLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易帳戶'**
+  String get featuresStocksTransactionsAccountLabel;
+
+  /// Web path: features.stocks.transactions.accountUnspecified
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未指定'**
+  String get featuresStocksTransactionsAccountUnspecified;
 }
 
 class _AppLocalizationsDelegate

@@ -27,6 +27,7 @@ import {
   allowsFractionalShares,
   isValidStockShareQuantity,
 } from "@/lib/stockMarket";
+import { isDayTradeTaxEffective } from "@/lib/twStockTaxRules";
 import { Plus, Trash2, Edit3 } from "lucide-react";
 
 function fmtCurrency(n: number | string, currency: string, locale: string) {
@@ -43,11 +44,22 @@ const EMPTY_FORM = {
   price: "",
   fee: "",
   tax: "",
+  accountId: "",
+  dayTrade: false,
   note: "",
 };
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];
 
 type QueryParams = { get(name: string): string | null };
+
+function isDayTradeEligibleStock(stock: any, date: string, account: any): boolean {
+  return (
+    String(stock?.market || "TW").toUpperCase() !== "US" &&
+    (stock?.stockType || stock?.stock_type || "stock") === "stock" &&
+    (account?.category === "securities" || account?.account_type === "證券帳戶") &&
+    isDayTradeTaxEffective(date)
+  );
+}
 
 function readPageParam(searchParams: QueryParams) {
   return Math.max(1, Number(searchParams.get("page")) || 1);
@@ -71,6 +83,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
     readPageSizeParam(searchParams),
   );
   const [stocks, setStocks] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStockId, setFilterStockId] = useState(
     () => searchParams.get("stockId") || "",
@@ -112,8 +125,12 @@ export default function StockTxClient(_props: { user?: any } = {}) {
   );
 
   const loadMeta = useCallback(async () => {
-    const stockResp = await apiGet("/api/stocks").catch(() => []);
+    const [stockResp, accountResp] = await Promise.all([
+      apiGet("/api/stocks").catch(() => []),
+      apiGet("/api/accounts").catch(() => []),
+    ]);
     setStocks(Array.isArray(stockResp) ? stockResp : stockResp?.stocks || []);
+    setAccounts(Array.isArray(accountResp) ? accountResp : accountResp?.accounts || []);
   }, []);
 
   useEffect(() => {
@@ -187,7 +204,10 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       date: form.date,
       shares: shareNum,
       price: Number(form.price),
+      accountId: form.accountId || null,
       note: form.note,
+      dayTrade:
+        form.type === "sell" && dayTradeEligible ? !!form.dayTrade : false,
     };
     const feeText = String(form.fee ?? "").trim();
     const taxText = String(form.tax ?? "").trim();
@@ -220,7 +240,10 @@ export default function StockTxClient(_props: { user?: any } = {}) {
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const selectedStock = stocks.find((s) => s.id === form.stockId);
+  const selectedAccount = accounts.find((account) => account.id === form.accountId);
   const fractionalShares = allowsFractionalShares(selectedStock?.market);
+  // 現股當沖僅適用有效期間內的台股一般股票與證券帳戶。
+  const dayTradeEligible = isDayTradeEligibleStock(selectedStock, form.date, selectedAccount);
 
   return (
     <div className="space-y-6">
@@ -322,9 +345,18 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                 value: s.id,
               }))}
               value={form.stockId}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, stockId: e.target.value }))
-              }
+              onChange={(e) => {
+                const nextStock = stocks.find((stock) => stock.id === e.target.value);
+                setForm((f) => ({
+                  ...f,
+                  stockId: e.target.value,
+                  dayTrade:
+                    f.type === "sell" &&
+                    isDayTradeEligibleStock(nextStock, f.date, accounts.find((account) => account.id === f.accountId))
+                      ? f.dayTrade
+                      : false,
+                }));
+              }}
             />
             <Select
               label={t("features.stocks.transactions.typeLabel")}
@@ -333,13 +365,53 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                 { label: t("features.stocks.common.sell"), value: "sell" },
               ]}
               value={form.type}
-              onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  type: e.target.value,
+                  dayTrade:
+                    e.target.value === "sell" &&
+                    isDayTradeEligibleStock(selectedStock, f.date, accounts.find((account) => account.id === f.accountId))
+                      ? f.dayTrade
+                      : false,
+                }))
+              }
+            />
+            <Select
+              label={t("features.stocks.transactions.accountLabel")}
+              options={[
+                { label: t("features.stocks.transactions.accountUnspecified"), value: "" },
+                ...accounts.map((account) => ({ label: account.name, value: account.id })),
+              ]}
+              value={form.accountId}
+              onChange={(e) => {
+                const nextAccount = accounts.find((account) => account.id === e.target.value);
+                setForm((f) => ({
+                  ...f,
+                  accountId: e.target.value,
+                  dayTrade:
+                    f.type === "sell" &&
+                    isDayTradeEligibleStock(selectedStock, f.date, nextAccount)
+                      ? f.dayTrade
+                      : false,
+                }));
+              }}
             />
             <Input
               label={t("features.stocks.transactions.dateLabel")}
               type="date"
               value={form.date}
-              onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  date: e.target.value,
+                  dayTrade:
+                    f.type === "sell" &&
+                    isDayTradeEligibleStock(selectedStock, e.target.value, accounts.find((account) => account.id === f.accountId))
+                      ? f.dayTrade
+                      : false,
+                }))
+              }
             />
             <Input
               label={t("features.stocks.transactions.sharesLabel")}
@@ -367,15 +439,36 @@ export default function StockTxClient(_props: { user?: any } = {}) {
               onChange={(e) => setForm((f) => ({ ...f, fee: e.target.value }))}
             />
             {form.type === "sell" && (
-              <Input
-                label={t("features.stocks.transactions.taxLabel")}
-                type="number"
-                placeholder={t("features.stocks.common.autoCalculate")}
-                value={form.tax}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, tax: e.target.value }))
-                }
-              />
+              <>
+                <Input
+                  label={t("features.stocks.transactions.taxLabel")}
+                  type="number"
+                  placeholder={t("features.stocks.common.autoCalculate")}
+                  value={form.tax}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, tax: e.target.value }))
+                  }
+                />
+                {/* 現股當沖（證券交易稅條例第 2 條之 2）：僅台股一般股票適用，稅率減半為 0.15%。 */}
+                {dayTradeEligible && (
+                  <label className="mb-4 flex items-start gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4"
+                      checked={!!form.dayTrade}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, dayTrade: e.target.checked }))
+                      }
+                    />
+                    <span>
+                      {t("features.stocks.transactions.dayTradeLabel")}
+                      <span className="block text-xs text-slate-500">
+                        {t("features.stocks.transactions.dayTradeHint")}
+                      </span>
+                    </span>
+                  </label>
+                )}
+              </>
             )}
             <Input
               label={t("features.common.note")}
@@ -433,6 +526,11 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                         ? t("features.stocks.common.buy")
                         : t("features.stocks.common.sell")}
                     </span>
+                    {Number(tx.day_trade) === 1 && (
+                      <span className="ml-1 px-2 py-1 rounded text-xs bg-amber-100 text-amber-800">
+                        {t("features.stocks.transactions.dayTradeBadge")}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {String(tx.market || "TW").toUpperCase() === "US"
@@ -463,7 +561,16 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                           shares: String(tx.shares ?? ""),
                           price: String(tx.price ?? ""),
                           fee: tx.fee != null ? String(tx.fee) : "",
-                          tax: tx.tax != null ? String(tx.tax) : "",
+                          accountId: tx.account_id || "",
+                          // Leave calculated tax empty so a day-trade toggle recalculates it;
+                          // only a user-entered manual tax is sent back as an override.
+                          tax:
+                            Number(tx.tax_auto_calculated) === 1
+                              ? ""
+                              : tx.tax != null
+                                ? String(tx.tax)
+                                : "",
+                          dayTrade: Number(tx.day_trade) === 1,
                           note: tx.note || "",
                         });
                         setEditId(tx.id);

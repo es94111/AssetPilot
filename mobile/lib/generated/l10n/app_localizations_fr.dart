@@ -1828,6 +1828,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get featuresAccountsTitle => 'Comptes';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Compte-titres';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Compte bancaire';
 
   @override
@@ -2722,6 +2725,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Saisissez un prix valide';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel =>
+      'Day trade (taux réduit de moitié)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'Même compte, même jour ouvré, achat au comptant et vente de la même quantité ; taxe de vente à 0,15 % (art. 2-2).';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'Day trade';
+
+  @override
   String get featuresStocksDividendsTitle => 'Dividendes';
 
   @override
@@ -2782,6 +2796,25 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'Saisissez un dividende en espèces ou en actions';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel =>
+      'Réinvestir le dividende (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'Réinvestit le dividende en espèces dans le même titre ; un enregistrement d’achat est créé automatiquement et intégré à la base de coût FIFO.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel =>
+      'Actions réinvesties';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'Prix de réinvestissement par action';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'Réinvesti';
 
   @override
   String get featuresStocksRealizedTitle => 'P/L réalisé';
@@ -6580,4 +6613,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Consultez les factures électroniques cloud par code-barres mobile via le point de terminaison API du fournisseur configuré.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Compte de courtage';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Non spécifié';
 }

@@ -10,7 +10,15 @@ import {
   isValidIso8601Date,
 } from "../../../../lib/auditHelpers";
 import { getRequestIpFromHeaders } from "../../../../lib/loginHelpers";
-import { makeStockTxHash } from "../../../../lib/stockHelpers";
+import {
+  calcStockTaxForTrade,
+  canMarkDayTrade,
+  getStockSettings,
+  hasQualifyingDayTradePurchase,
+  hasValidDayTradeCoverageAfterChanges,
+  isProtectedSyntheticTransaction,
+  makeStockTxHash,
+} from "../../../../lib/stockHelpers";
 import { inferStockType } from "../../../../lib/twseFetchNext";
 import {
   allowsFractionalShares,
@@ -39,6 +47,14 @@ function parseBool(value, fallback = true) {
     .toLowerCase();
   if (!s) return fallback;
   return s === "1" || s === "true" || s === "yes" || s === "y" || s === "是";
+}
+
+function resolveImportedTransactionId(value) {
+  const candidate = String(value ?? "").trim();
+  if (/^[a-f0-9]{32}$/i.test(candidate) && !queryOne("SELECT id FROM stock_transactions WHERE id = ?", [candidate])) {
+    return candidate;
+  }
+  return uid();
 }
 
 function acquireImportLock(userId) {
@@ -98,7 +114,15 @@ async function handlePOST(request) {
     failureStage = "validating";
     const existing = queryAll(
       `SELECT st.date, st.type, st.shares, st.price, st.account_id, s.symbol, s.market
-       FROM stock_transactions st JOIN stocks s ON st.stock_id = s.id WHERE st.user_id = ?`,
+       FROM stock_transactions st JOIN stocks s ON st.stock_id = s.id
+       WHERE st.user_id = ? AND NOT (
+         st.type = 'buy' AND (
+           COALESCE(st.linked_dividend_id, '') != ''
+           OR COALESCE(st.note, '') LIKE '[SYNTH] 股票股利%'
+           OR COALESCE(st.note, '') LIKE '股票股利配發%'
+           OR COALESCE(st.note, '') LIKE '[DRIP] 股利再投資%'
+         )
+       )`,
       [auth.userId],
     );
     const existingHashes = new Set();
@@ -116,12 +140,42 @@ async function handlePOST(request) {
       );
     });
     const batchHashes = new Set();
+    const stockSettings = getStockSettings(auth.userId);
 
     db.run("BEGIN");
     txStarted = true;
     failureStage = "writing";
 
-    rows.forEach((row, idx) => {
+    const orderedRows = rows
+      .map((row, idx) => ({ row, idx }))
+      .sort((a, b) => {
+        const dateKey = (row) => {
+          const raw = cell(row, "date", "日期");
+          return isValidIso8601Date(raw) ? String(raw) : normalizeDate(raw) || String(raw || "");
+        };
+        const dateOrder = dateKey(a.row).localeCompare(dateKey(b.row));
+        if (dateOrder !== 0) return dateOrder;
+        const typeKey = (row) => cell(row, "type", "類型");
+        const isBuy = (row) => ["買進", "buy"].includes(typeKey(row));
+        const typeOrder = Number(!isBuy(a.row)) - Number(!isBuy(b.row));
+        if (typeOrder !== 0) return typeOrder;
+        const createdAtKey = (row) => {
+          const value = cell(row, "createdAt", "created_at", "FIFO 排序時間");
+          const parsed = Number(value);
+          return value !== "" && Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+        };
+        const createdAtA = createdAtKey(a.row);
+        const createdAtB = createdAtKey(b.row);
+        if (createdAtA === null && createdAtB !== null) return 1;
+        if (createdAtA !== null && createdAtB === null) return -1;
+        const createdAtOrder = (createdAtA ?? 0) - (createdAtB ?? 0);
+        if (createdAtOrder !== 0) return createdAtOrder;
+        const idOrder = String(cell(a.row, "transactionId", "transaction_id", "交易 ID", "FIFO 排序識別碼") || "")
+          .localeCompare(String(cell(b.row, "transactionId", "transaction_id", "交易 ID", "FIFO 排序識別碼") || ""));
+        return idOrder || a.idx - b.idx;
+      });
+
+    orderedRows.forEach(({ row, idx }) => {
       const rawDate = cell(row, "date", "日期");
       const market = normalizeStockMarket(cell(row, "market", "市場"));
       const symbol = normalizeStockSymbol(
@@ -143,6 +197,11 @@ async function handlePOST(request) {
         "tax_auto_calculated",
         "稅額自動計算",
       );
+      const dayTradeRaw = cell(row, "dayTrade", "day_trade", "現股當沖");
+      const createdAtKeys = ["createdAt", "created_at", "FIFO 排序時間"];
+      const hasCreatedAtColumn = createdAtKeys.some((key) => Object.hasOwn(row, key));
+      const createdAtRaw = cell(row, ...createdAtKeys);
+      const sourceTransactionId = cell(row, "transactionId", "transaction_id", "交易 ID", "FIFO 排序識別碼");
       const accountName = cell(row, "accountName", "帳戶");
       const note = cell(row, "note", "備註");
       if (
@@ -178,8 +237,19 @@ async function handlePOST(request) {
         return;
       }
       const priceNum = Number(price);
+      const importedCreatedAt = Number(createdAtRaw);
+      const createdAt =
+        hasCreatedAtColumn && String(createdAtRaw ?? "").trim() === ""
+          ? null
+          : createdAtRaw != null &&
+              String(createdAtRaw).trim() !== "" &&
+              Number.isSafeInteger(importedCreatedAt) &&
+              importedCreatedAt >= 0
+            ? importedCreatedAt
+            : Date.now();
       const feeNum = fee == null || String(fee).trim() === "" ? 0 : Number(fee);
-      const taxNum = tax == null || String(tax).trim() === "" ? 0 : Number(tax);
+      const taxWasProvided = tax != null && String(tax).trim() !== "";
+      const taxNum = taxWasProvided ? Number(tax) : 0;
       const realizedPlNum =
         realizedPl == null || String(realizedPl).trim() === ""
           ? 0
@@ -205,48 +275,45 @@ async function handlePOST(request) {
         return;
       }
 
+      const txType = type === "買進" || type === "buy" ? "buy" : "sell";
+      if (txType === "buy" && isProtectedSyntheticTransaction(note)) {
+        errors.push({
+          row: idx + 2,
+          reason: "股利合成買進請透過股利 CSV 匯入，以保留與股利紀錄的連結",
+        });
+        skipped++;
+        return;
+      }
+      const dayTrade = parseBool(dayTradeRaw, false);
       let stock = queryOne(
         "SELECT * FROM stocks WHERE user_id = ? AND market = ? AND symbol = ?",
         [auth.userId, market, symbol],
       );
-      if (!stock) {
-        const sid = uid();
-        const inferredType =
-          stockType || (market === "TW" ? inferStockType(symbol) : "stock");
-        const fallbackName =
-          (stockName && String(stockName).trim()) || "（未命名）";
-        db.run(
-          "INSERT INTO stocks (id, user_id, symbol, market, name, current_price, stock_type, currency, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          [
-            sid,
-            auth.userId,
-            symbol,
-            market,
-            fallbackName,
-            priceNum,
-            inferredType,
-            currency,
-            Date.now(),
-          ],
-        );
-        stock = queryOne("SELECT * FROM stocks WHERE id = ?", [sid]);
-      } else if (stock.name === symbol && stockName && stockName !== symbol) {
-        db.run("UPDATE stocks SET name = ? WHERE id = ?", [
-          stockName,
-          stock.id,
-        ]);
+      const resolvedStockType =
+        stock?.stock_type ||
+        stockType ||
+        (market === "TW" ? inferStockType(symbol) : "stock");
+      if (
+        dayTrade &&
+        (txType !== "sell" || !canMarkDayTrade(resolvedStockType, market, date))
+      ) {
+        errors.push({
+          row: idx + 2,
+          reason: "現股當沖僅適用於台股一般股票賣出交易",
+        });
+        skipped++;
+        return;
       }
 
       let accountId = "";
       if (accountName) {
-        const acc = queryOne(
-          "SELECT id FROM accounts WHERE user_id = ? AND name = ?",
-          [auth.userId, accountName],
-        );
+        const accountSql = dayTrade
+          ? "SELECT id FROM accounts WHERE user_id = ? AND name = ? AND (category = 'securities' OR account_type = '證券帳戶')"
+          : "SELECT id FROM accounts WHERE user_id = ? AND name = ?";
+        const acc = queryOne(accountSql, [auth.userId, accountName]);
         if (acc) accountId = acc.id;
       }
 
-      const txType = type === "買進" || type === "buy" ? "buy" : "sell";
       const h = makeStockTxHash(
         date,
         symbol,
@@ -260,12 +327,102 @@ async function handlePOST(request) {
         skipped++;
         return;
       }
+      if (dayTrade && !accountId) {
+        errors.push({
+          row: idx + 2,
+          reason: "現股當沖需指定證券帳戶",
+        });
+        skipped++;
+        return;
+      }
+      if (
+        dayTrade &&
+        (!stock ||
+          !hasQualifyingDayTradePurchase(
+            auth.userId,
+            String(stock.id),
+            date,
+            shareNum,
+            accountId,
+          ))
+      ) {
+        errors.push({
+          row: idx + 2,
+          reason: "現股當沖需有同帳戶、同日、同標的且股數足夠的現款買進交易",
+        });
+        skipped++;
+        return;
+      }
+      if (
+        txType === "sell" &&
+        stock &&
+        !hasValidDayTradeCoverageAfterChanges(auth.userId, [
+          {
+            id: `csv-row-${idx}`,
+            stockId: String(stock.id),
+            date,
+            type: txType,
+            shares: shareNum,
+            price: priceNum,
+            accountId,
+            dayTrade,
+            note: note || "",
+          },
+        ])
+      ) {
+        errors.push({
+          row: idx + 2,
+          reason: "此賣出會使同日現股當沖賣出超出現款買進股數",
+        });
+        skipped++;
+        return;
+      }
+      const taxAutoCalc = parseBool(taxAutoCalculated, true);
+      const finalTaxNum =
+        txType === "sell" && !taxWasProvided && taxAutoCalc
+          ? calcStockTaxForTrade(
+              shareNum,
+              priceNum,
+              resolvedStockType,
+              stockSettings,
+              market,
+              dayTrade,
+              date,
+            )
+          : taxNum;
+
+      // Only mutate holdings after the row has passed validation and deduplication.
+      if (!stock) {
+        const sid = uid();
+        const fallbackName =
+          (stockName && String(stockName).trim()) || "（未命名）";
+        db.run(
+          "INSERT INTO stocks (id, user_id, symbol, market, name, current_price, stock_type, currency, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            sid,
+            auth.userId,
+            symbol,
+            market,
+            fallbackName,
+            priceNum,
+            resolvedStockType,
+            currency,
+            Date.now(),
+          ],
+        );
+        stock = queryOne("SELECT * FROM stocks WHERE id = ?", [sid]);
+      } else if (stock.name === symbol && stockName && stockName !== symbol) {
+        db.run("UPDATE stocks SET name = ? WHERE id = ?", [
+          stockName,
+          stock.id,
+        ]);
+      }
       batchHashes.add(h);
 
       db.run(
-        "INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at, realized_pl, tax_auto_calculated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO stock_transactions (id, user_id, stock_id, type, date, shares, price, fee, tax, account_id, note, created_at, realized_pl, tax_auto_calculated, day_trade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
-          uid(),
+          resolveImportedTransactionId(sourceTransactionId),
           auth.userId,
           stock.id,
           txType,
@@ -273,12 +430,13 @@ async function handlePOST(request) {
           shareNum,
           priceNum,
           feeNum,
-          taxNum,
+          finalTaxNum,
           accountId,
           note || "",
-          Date.now(),
+          createdAt,
           realizedPlNum,
-          parseBool(taxAutoCalculated, true) ? 1 : 0,
+          taxAutoCalc ? 1 : 0,
+          dayTrade ? 1 : 0,
         ],
       );
       imported++;

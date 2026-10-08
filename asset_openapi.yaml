@@ -403,6 +403,9 @@ components:
           type: number
         tax:
           type: number
+        dayTrade:
+          type: boolean
+          description: 現股當沖（僅 2017-04-28 至 2027-12-31 的台股一般股票賣出適用）；需有同證券帳戶、同日、同標的且股數足夠的現款買進，證交稅依證券交易稅條例第 2 條之 2 以 0.15% 計算。
         accountId:
           type: string
         note:
@@ -420,6 +423,15 @@ components:
           type: number
         stockDividendShares:
           type: number
+        reinvest:
+          type: boolean
+          description: 股利再投資（DRIP）：以現金股利再買入同一標的，自動產生買入紀錄並計入 FIFO 成本基礎。
+        reinvestShares:
+          type: number
+          description: 再投資股數（reinvest = true 時必填且為正數）。
+        reinvestPrice:
+          type: number
+          description: 再投資每股價格（reinvest = true 時必填且為正數）；再投資股數 × 價格不得超過現金股利。
         accountId:
           type: string
         note:
@@ -2479,6 +2491,9 @@ paths:
                   type: number
                 tax:
                   type: number
+                dayTrade:
+                  type: boolean
+                  description: 現股當沖（僅 2017-04-28 至 2027-12-31 的台股一般股票賣出適用）；需有同證券帳戶、同日、同標的且股數足夠的現款買進，證交稅依證券交易稅條例第 2 條之 2 以 0.15% 計算。
                 accountId:
                   type: string
                 note:
@@ -2619,6 +2634,15 @@ paths:
                   type: number
                 stockDividendShares:
                   type: number
+                reinvest:
+                  type: boolean
+                  description: 股利再投資（DRIP），以現金股利再買入同一標的並計入 FIFO 成本基礎。
+                reinvestShares:
+                  type: number
+                  description: 再投資股數（reinvest = true 時需為正數；台股必須為整數）。
+                reinvestPrice:
+                  type: number
+                  description: 再投資每股價格（reinvest = true 時需為正數）。
                 accountId:
                   type: string
                 note:

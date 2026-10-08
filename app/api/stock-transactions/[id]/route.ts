@@ -6,8 +6,13 @@ import { getDB, queryOne, saveDB } from "../../../../lib/db";
 import { normalizeDate } from "../../../../lib/accountHelpers";
 import {
   getStockSettings,
-  calcStockFee,
-  calcStockTax,
+  calcStockFeeForTrade,
+  calcStockTaxForTrade,
+  isProtectedSyntheticTransaction,
+  canMarkDayTrade,
+  hasQualifyingDayTradePurchase,
+  hasValidDayTradeCoverageAfterChanges,
+  normalizeDayTradeFlag,
   validateChainConstraint,
 } from "../../../../lib/stockHelpers";
 import { isValidStockShareQuantity } from "../../../../lib/stockMarket";
@@ -54,24 +59,32 @@ async function handlePUT(request, { params }) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
 
-  if (accountId) {
-    const acc = queryOne(
-      "SELECT id FROM accounts WHERE id = ? AND user_id = ?",
-      [accountId, auth.userId],
-    );
-    if (!acc)
-      return NextResponse.json(
-        { error: "帳戶不存在或無權限" },
-        { status: 400 },
-      );
-  }
-
   const t = queryOne(
     "SELECT * FROM stock_transactions WHERE id = ? AND user_id = ?",
     [id, auth.userId],
   );
   if (!t)
     return NextResponse.json({ error: "交易紀錄不存在" }, { status: 404 });
+  const effectiveAccountId =
+    body.accountId === undefined ? String(t.account_id || "") : String(accountId || "");
+  let selectedAccount = null;
+  if (effectiveAccountId) {
+    selectedAccount = queryOne(
+      "SELECT id, category, account_type FROM accounts WHERE id = ? AND user_id = ?",
+      [effectiveAccountId, auth.userId],
+    );
+    if (!selectedAccount)
+      return NextResponse.json(
+        { error: "帳戶不存在或無權限" },
+        { status: 400 },
+      );
+  }
+  if (isProtectedSyntheticTransaction(t.note)) {
+    return NextResponse.json(
+      { error: "股利合成交易必須透過編輯或刪除對應股利紀錄處理" },
+      { status: 400 },
+    );
+  }
 
   const chain = validateChainConstraint(
     auth.userId,
@@ -90,37 +103,109 @@ async function handlePUT(request, { params }) {
     );
   }
 
-  const taxAutoCalc =
-    body.tax === undefined || body.tax === null || body.tax === "" ? 1 : 0;
   const stock = queryOne(
     "SELECT stock_type, market FROM stocks WHERE id = ? AND user_id = ?",
     [t.stock_id, auth.userId],
   );
   if (!isValidStockShareQuantity(shareNum, stock?.market || "TW"))
     return NextResponse.json({ error: "股數必須為整數" }, { status: 400 });
+
+  // 現股當沖僅適用台股一般股票，且僅限賣出交易（證券交易稅條例第 2 條之 2）。
+  // Older clients omit the newly added flag; preserve the stored setting on such edits.
+  const dayTrade =
+    body.dayTrade === undefined
+      ? type === "sell"
+        ? normalizeDayTradeFlag(t.day_trade)
+        : false
+      : normalizeDayTradeFlag(body.dayTrade);
+  if (dayTrade && !canMarkDayTrade(stock?.stock_type || "stock", stock?.market || "TW", date)) {
+    return NextResponse.json(
+      { error: "現股當沖僅適用台股一般股票（ETF／權證不適用）" },
+      { status: 400 },
+    );
+  }
+  if (dayTrade && type !== "sell") {
+    return NextResponse.json(
+      { error: "現股當沖標記僅適用於賣出交易" },
+      { status: 400 },
+    );
+  }
+  if (dayTrade && selectedAccount?.category !== "securities" && selectedAccount?.account_type !== "證券帳戶") {
+    return NextResponse.json(
+      { error: "現股當沖需指定證券帳戶類型的帳戶" },
+      { status: 400 },
+    );
+  }
+  if (
+    dayTrade &&
+    !hasQualifyingDayTradePurchase(
+      auth.userId,
+      String(t.stock_id),
+      date,
+      shareNum,
+      effectiveAccountId,
+      id,
+    )
+  ) {
+    return NextResponse.json(
+      { error: "現股當沖需有同帳戶、同日、同標的且股數足夠的現款買進交易" },
+      { status: 400 },
+    );
+  }
+  if (
+    !hasValidDayTradeCoverageAfterChanges(auth.userId, [
+      {
+        id,
+        stockId: String(t.stock_id),
+        date,
+        type,
+        shares: shareNum,
+        price: priceNum,
+        accountId: effectiveAccountId,
+        dayTrade,
+        note: note || "",
+        linkedDividendId: t.linked_dividend_id || "",
+      },
+    ])
+  ) {
+    return NextResponse.json(
+      { error: "此修改會使同日現股當沖賣出超出現款買進股數" },
+      { status: 400 },
+    );
+  }
   const settings = getStockSettings(auth.userId);
-  const amount = shareNum * priceNum;
   const finalFee = feeProvided
     ? manualFee
-    : calcStockFee(amount, shareNum, settings, stock?.market || "TW");
+    : calcStockFeeForTrade(
+        shares,
+        price,
+        settings,
+        stock?.market || "TW",
+      );
+  // An explicit tax value is always treated as a manual override, including when
+  // the day-trade flag changes. Leave the field blank to recalculate using the flag.
   const finalTax =
     type === "sell"
       ? taxProvided
         ? manualTax
-        : calcStockTax(
-            amount,
+        : calcStockTaxForTrade(
+            shares,
+            price,
             stock?.stock_type || "stock",
             settings,
             stock?.market || "TW",
+            dayTrade,
+            date,
           )
       : taxProvided
         ? manualTax
         : 0;
+  const nextTaxAutoCalc = taxProvided ? 0 : 1;
   const db = getDB();
   db.run("BEGIN");
   try {
     db.run(
-      "UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=?, tax_auto_calculated=? WHERE id=? AND user_id=?",
+      "UPDATE stock_transactions SET date=?, type=?, shares=?, price=?, fee=?, tax=?, account_id=?, note=?, tax_auto_calculated=?, day_trade=? WHERE id=? AND user_id=?",
       [
         date,
         type,
@@ -128,9 +213,10 @@ async function handlePUT(request, { params }) {
         priceNum,
         finalFee,
         finalTax,
-        accountId || "",
+        effectiveAccountId,
         note || "",
-        taxAutoCalc,
+        nextTaxAutoCalc,
+        dayTrade && type === "sell" ? 1 : 0,
         id,
         auth.userId,
       ],
@@ -157,6 +243,25 @@ async function handleDELETE(request, { params }) {
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
+  const existing = queryOne(
+    "SELECT * FROM stock_transactions WHERE id = ? AND user_id = ?",
+    [id, auth.userId],
+  );
+  if (existing && isProtectedSyntheticTransaction(existing.note)) {
+    return NextResponse.json(
+      { error: "股利合成交易必須透過刪除對應股利紀錄連動處理，請至「股利紀錄」頁刪除" },
+      { status: 400 },
+    );
+  }
+  if (
+    existing &&
+    !hasValidDayTradeCoverageAfterChanges(auth.userId, [], [String(id)])
+  ) {
+    return NextResponse.json(
+      { error: "不可刪除此交易，因為它是現股當沖賣出的必要同日買進數量" },
+      { status: 400 },
+    );
+  }
   const db = getDB();
   db.run("DELETE FROM stock_transactions WHERE id = ? AND user_id = ?", [
     id,

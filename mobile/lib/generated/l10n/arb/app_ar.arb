@@ -2771,6 +2771,11 @@
     "description": "Web path: features.accounts.title",
     "x-webPath": "features.accounts.title"
   },
+  "featuresAccountsTypeLabelsSecurities": "حساب أوراق مالية",
+  "@featuresAccountsTypeLabelsSecurities": {
+    "description": "Web path: features.accounts.typeLabels.securities",
+    "x-webPath": "features.accounts.typeLabels.securities"
+  },
   "featuresAccountsTypeLabelsBank": "حساب بنكي",
   "@featuresAccountsTypeLabelsBank": {
     "description": "Web path: features.accounts.typeLabels.bank",
@@ -4028,6 +4033,21 @@
     "description": "Web path: features.stocks.transactions.messages.priceRequired",
     "x-webPath": "features.stocks.transactions.messages.priceRequired"
   },
+  "featuresStocksTransactionsDayTradeLabel": "التداول اليومي (نصف معدل الضريبة)",
+  "@featuresStocksTransactionsDayTradeLabel": {
+    "description": "Web path: features.stocks.transactions.dayTradeLabel",
+    "x-webPath": "features.stocks.transactions.dayTradeLabel"
+  },
+  "featuresStocksTransactionsDayTradeHint": "نفس الحساب، نفس يوم العمل، شراء نقدي وبيع لنفس الكمية؛ تُطبَّق ضريبة البيع بنسبة 0.15% وفق المادة 2-2.",
+  "@featuresStocksTransactionsDayTradeHint": {
+    "description": "Web path: features.stocks.transactions.dayTradeHint",
+    "x-webPath": "features.stocks.transactions.dayTradeHint"
+  },
+  "featuresStocksTransactionsDayTradeBadge": "تداول يومي",
+  "@featuresStocksTransactionsDayTradeBadge": {
+    "description": "Web path: features.stocks.transactions.dayTradeBadge",
+    "x-webPath": "features.stocks.transactions.dayTradeBadge"
+  },
   "featuresStocksDividendsTitle": "التوزيعات",
   "@featuresStocksDividendsTitle": {
     "description": "Web path: features.stocks.dividends.title",
@@ -4116,6 +4136,31 @@
   "@featuresStocksDividendsMessagesDividendRequired": {
     "description": "Web path: features.stocks.dividends.messages.dividendRequired",
     "x-webPath": "features.stocks.dividends.messages.dividendRequired"
+  },
+  "featuresStocksDividendsReinvestLabel": "إعادة استثمار التوزيعات (DRIP)",
+  "@featuresStocksDividendsReinvestLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestLabel",
+    "x-webPath": "features.stocks.dividends.reinvestLabel"
+  },
+  "featuresStocksDividendsReinvestHint": "يُعاد استثمار التوزيعات النقدية في نفس الورقة؛ ويُنشأ سجل شراء تلقائيًا ويُدرج في أساس تكلفة FIFO.",
+  "@featuresStocksDividendsReinvestHint": {
+    "description": "Web path: features.stocks.dividends.reinvestHint",
+    "x-webPath": "features.stocks.dividends.reinvestHint"
+  },
+  "featuresStocksDividendsReinvestSharesLabel": "الأسهم المعاد استثمارها",
+  "@featuresStocksDividendsReinvestSharesLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestSharesLabel",
+    "x-webPath": "features.stocks.dividends.reinvestSharesLabel"
+  },
+  "featuresStocksDividendsReinvestPriceLabel": "سعر إعادة الاستثمار للسهم",
+  "@featuresStocksDividendsReinvestPriceLabel": {
+    "description": "Web path: features.stocks.dividends.reinvestPriceLabel",
+    "x-webPath": "features.stocks.dividends.reinvestPriceLabel"
+  },
+  "featuresStocksDividendsReinvestBadge": "معاد استثماره",
+  "@featuresStocksDividendsReinvestBadge": {
+    "description": "Web path: features.stocks.dividends.reinvestBadge",
+    "x-webPath": "features.stocks.dividends.reinvestBadge"
   },
   "featuresStocksRealizedTitle": "الربح/الخسارة المحققة",
   "@featuresStocksRealizedTitle": {
@@ -9929,5 +9974,15 @@
   "@publicApiCreditsPageDescriptionsEinvoice": {
     "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
     "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
+  },
+  "featuresStocksTransactionsAccountLabel": "حساب التداول",
+  "@featuresStocksTransactionsAccountLabel": {
+    "description": "Web path: features.stocks.transactions.accountLabel",
+    "x-webPath": "features.stocks.transactions.accountLabel"
+  },
+  "featuresStocksTransactionsAccountUnspecified": "غير محدد",
+  "@featuresStocksTransactionsAccountUnspecified": {
+    "description": "Web path: features.stocks.transactions.accountUnspecified",
+    "x-webPath": "features.stocks.transactions.accountUnspecified"
   }
 }

@@ -1069,6 +1069,7 @@ export const zhCN = {
     accounts: {
       title: "账户管理",
       typeLabels: {
+        securities: "证券账户",
         bank: "银行账户",
         credit_card: "信用卡",
         cash: "现金",
@@ -1356,6 +1357,11 @@ export const zhCN = {
           sharesRequired: "请输入有效股数",
           priceRequired: "请输入有效价格",
         },
+        dayTradeLabel: "现股当冲（税率减半）",
+        dayTradeHint: "同一账户同日现款买进与现券卖出同种类同数量，卖出证交税依证交税条例第 2 条之 2 以 0.15% 计算。",
+        dayTradeBadge: "当冲",
+        accountLabel: "交易账户",
+        accountUnspecified: "未指定",
       },
       dividends: {
         title: "股利",
@@ -1376,6 +1382,11 @@ export const zhCN = {
           stockRequired: "请选择股票",
           dividendRequired: "请输入现金股利或股票股利",
         },
+        reinvestLabel: "股利再投资（DRIP）",
+        reinvestHint: "以现金股利再买入同一标的，系统会自动生成一笔买入记录并计入 FIFO 成本基础。",
+        reinvestSharesLabel: "再投资股数",
+        reinvestPriceLabel: "再投资每股价格",
+        reinvestBadge: "再投资",
       },
       realized: {
         title: "已实现盈亏",

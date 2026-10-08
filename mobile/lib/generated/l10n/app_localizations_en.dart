@@ -1795,6 +1795,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresAccountsTitle => 'Account management';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Securities account';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Bank account';
 
   @override
@@ -2674,6 +2677,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please enter a valid price';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel =>
+      'Day trade (half tax rate)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      'Same account, same business day, cash buy and sell of the same security quantity; the sell tax uses the 0.15% rate under Article 2-2 of the Securities Transaction Tax Act.';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => 'Day trade';
+
+  @override
   String get featuresStocksDividendsTitle => 'Dividends';
 
   @override
@@ -2733,6 +2747,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       'Please enter a cash dividend or stock dividend';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel => 'Reinvest dividend (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      'Reinvest the cash dividend into the same stock; a buy record is created automatically and included in the FIFO cost basis.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => 'Reinvested shares';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel =>
+      'Reinvest price per share';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => 'Reinvested';
 
   @override
   String get featuresStocksRealizedTitle => 'Realized P/L';
@@ -6462,4 +6493,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Query cloud e-invoices by mobile barcode through the configured provider API endpoint.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Trading account';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Unspecified';
 }

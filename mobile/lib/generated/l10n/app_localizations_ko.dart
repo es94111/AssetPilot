@@ -1735,6 +1735,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresAccountsTitle => '계좌';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => '증권 계좌';
+
+  @override
   String get featuresAccountsTypeLabelsBank => '은행 계좌';
 
   @override
@@ -2589,6 +2592,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresStocksTransactionsMessagesPriceRequired => '올바른 가격을 입력하세요';
 
   @override
+  String get featuresStocksTransactionsDayTradeLabel => '데이트레이드 (세율 절반)';
+
+  @override
+  String get featuresStocksTransactionsDayTradeHint =>
+      '동일 계좌, 동일 영업일, 동일 수량 현금 매수·매도; 매도세는 0.15% 적용(제2조의2).';
+
+  @override
+  String get featuresStocksTransactionsDayTradeBadge => '데이트레이드';
+
+  @override
   String get featuresStocksDividendsTitle => '배당';
 
   @override
@@ -2645,6 +2658,22 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get featuresStocksDividendsMessagesDividendRequired =>
       '현금 배당 또는 주식 배당을 입력하세요';
+
+  @override
+  String get featuresStocksDividendsReinvestLabel => '배당 재투자 (DRIP)';
+
+  @override
+  String get featuresStocksDividendsReinvestHint =>
+      '현금 배당을 동일 종목에 재투자하며, 매수 기록이 자동 생성되어 FIFO 원가 기준에 반영됩니다.';
+
+  @override
+  String get featuresStocksDividendsReinvestSharesLabel => '재투자 주식 수';
+
+  @override
+  String get featuresStocksDividendsReinvestPriceLabel => '재투자 주당 가격';
+
+  @override
+  String get featuresStocksDividendsReinvestBadge => '재투자';
 
   @override
   String get featuresStocksRealizedTitle => '실현 손익';
@@ -6261,4 +6290,10 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '설정된 공급자 API 엔드포인트를 통해 모바일 바코드로 클라우드 전자 영수증을 조회합니다.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '거래 계좌';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '미지정';
 }

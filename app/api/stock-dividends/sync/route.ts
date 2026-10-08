@@ -132,7 +132,7 @@ async function handlePOST(request) {
     const stockHoldingPeriods = {};
     stocks.forEach((s) => {
       const txs = queryAll(
-        "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at",
+        "SELECT * FROM stock_transactions WHERE stock_id = ? AND user_id = ? ORDER BY date, created_at, id",
         [s.id, auth.userId],
       );
       if (txs.length === 0) return;
@@ -352,7 +352,7 @@ async function handlePOST(request) {
       if (stockDividendShares > 0) {
         const synthNote = `[SYNTH] 股票股利配發 | ${divNote}`;
         db.run(
-          "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,linked_dividend_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
           [
             uid(),
             auth.userId,
@@ -367,6 +367,7 @@ async function handlePOST(request) {
             synthNote,
             Date.now(),
             1,
+            divId,
           ],
         );
       }

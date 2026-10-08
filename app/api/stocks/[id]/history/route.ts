@@ -52,7 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   try {
     const candles = await fetchStockHistory(symbol, from, to);
     const transactions = queryAll(
-      "SELECT id, date, type, shares, price FROM stock_transactions WHERE stock_id = ? AND user_id = ? AND date >= ? AND date <= ? ORDER BY date, created_at",
+      "SELECT id, date, type, shares, price FROM stock_transactions WHERE stock_id = ? AND user_id = ? AND date >= ? AND date <= ? ORDER BY date, created_at, id",
       [stock.id, auth.userId, from, to],
     ).map((transaction) => ({
       id: transaction.id,

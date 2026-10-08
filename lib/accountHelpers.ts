@@ -28,6 +28,8 @@ export function normalizeAccountIcon(icon: string | null | undefined): string {
 
 export function categoryFromAccountType(accountType: string): string {
   switch (accountType) {
+    case "證券帳戶":
+      return "securities";
     case "銀行":
       return "bank";
     case "信用卡":
@@ -43,6 +45,8 @@ export function categoryFromAccountType(accountType: string): string {
 
 export function accountTypeFromCategory(category: string): string {
   switch (category) {
+    case "securities":
+      return "證券帳戶";
     case "bank":
       return "銀行";
     case "credit_card":

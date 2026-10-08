@@ -6199,4 +6199,172 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresGoalsScheduleInvalidShort => 'À modifier';
+
+  @override
+  String get settingsNotificationsTitle => 'Notifications push';
+
+  @override
+  String get settingsNotificationsDescription =>
+      'Lorsqu\'elles sont activées, les événements correspondants sont envoyés instantanément à vos appareils abonnés. Cela n\'affecte pas les notifications de rapport Email/LINE.';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      'Ce navigateur ne prend pas en charge les notifications push (Service Worker et Push API requis).';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      'Web Push n\'est pas activé sur le serveur (configuration des clés VAPID manquante).';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      'L\'autorisation de notification est bloquée. Autorisez les notifications pour ce site dans les paramètres du navigateur, puis réessayez.';
+
+  @override
+  String get settingsNotificationsSubscribe =>
+      'Activer le push sur cet appareil';
+
+  @override
+  String get settingsNotificationsSubscribing => 'Activation…';
+
+  @override
+  String get settingsNotificationsSubscribed =>
+      'Cet appareil est abonné aux notifications push.';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess =>
+      'Notifications push activées sur cet appareil.';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return 'Échec de l\'activation du push : $error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => 'Désabonner cet appareil';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess =>
+      'Cet appareil a été désabonné.';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return 'Échec du désabonnement : $error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => 'Types de notification';
+
+  @override
+  String get settingsNotificationsBillDue => 'Échéance de facture';
+
+  @override
+  String get settingsNotificationsBillDueHint =>
+      'Vous rappelle le jour de clôture mensuel de la carte en cas de nouvelles dépenses.';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => 'Budget dépassé';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      'Vous avertit lorsqu’un budget mensuel est dépassé (une fois par budget et par mois).';
+
+  @override
+  String get settingsNotificationsDividend => 'Versement de dividende';
+
+  @override
+  String get settingsNotificationsDividendHint =>
+      'Vous rappelle le jour de versement de vos dividendes enregistrés.';
+
+  @override
+  String get settingsNotificationsDevicesTitle => 'Appareils abonnés';
+
+  @override
+  String get settingsNotificationsNoDevices =>
+      'Aucun appareil abonné pour le moment.';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => 'Appareil inconnu';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return 'Abonné le $date';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled =>
+      'Désactivé (échecs d\'envoi répétés — veuillez vous réabonner)';
+
+  @override
+  String get settingsNotificationsRemoveDevice => 'Supprimer';
+
+  @override
+  String get settingsNotificationsDeviceRemoved => 'Appareil abonné supprimé.';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return 'Échec de la suppression de l\'appareil : $error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => 'Notification de test';
+
+  @override
+  String get settingsNotificationsTestButton =>
+      'Envoyer une notification de test';
+
+  @override
+  String get settingsNotificationsTestSending => 'Envoi…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return 'Notification de test envoyée ($delivered appareil(s) livré(s)).';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice =>
+      'Activez le push sur cet appareil avant d\'envoyer une notification de test.';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return 'Échec de la notification de test : $error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => 'Rappel d’échéance de facture';
+
+  @override
+  String get notificationsPushBillDueBody =>
+      'Une facture arrive à échéance. Ouvrez AssetPilot pour voir les détails.';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => 'Budget dépassé';
+
+  @override
+  String get notificationsPushBudgetExceededBody =>
+      'Un budget a été dépassé. Ouvrez AssetPilot pour voir les détails.';
+
+  @override
+  String get notificationsPushDividendTitle =>
+      'Rappel de versement de dividendes';
+
+  @override
+  String get notificationsPushDividendBody =>
+      'Un dividende a été versé. Ouvrez AssetPilot pour voir les détails.';
+
+  @override
+  String get notificationsPushTestTitle => 'Notification push de test';
+
+  @override
+  String get notificationsPushTestBody =>
+      'Si vous voyez cette notification, les notifications push fonctionnent sur cet appareil.';
+
+  @override
+  String get navNotifications => 'Notifications';
+
+  @override
+  String get notificationsPushGenericTitle => 'Notification AssetPilot';
+
+  @override
+  String get notificationsPushGenericBody =>
+      'Vous avez une notification. Ouvrez AssetPilot pour voir les détails.';
 }

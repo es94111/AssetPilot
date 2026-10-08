@@ -6151,4 +6151,173 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresGoalsScheduleInvalidShort => 'Требует правки';
+
+  @override
+  String get settingsNotificationsTitle => 'Push-уведомления';
+
+  @override
+  String get settingsNotificationsDescription =>
+      'Если включено, подходящие события мгновенно отправляются на ваши подписанные устройства. На уведомления отчётов по Email/LINE это не влияет.';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      'Этот браузер не поддерживает push-уведомления (требуются Service Worker и Push API).';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      'Web Push не включён на сервере (отсутствует настройка ключей VAPID).';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      'Разрешение на уведомления заблокировано. Разрешите уведомления для этого сайта в настройках браузера и повторите попытку.';
+
+  @override
+  String get settingsNotificationsSubscribe =>
+      'Включить push на этом устройстве';
+
+  @override
+  String get settingsNotificationsSubscribing => 'Включение…';
+
+  @override
+  String get settingsNotificationsSubscribed =>
+      'Это устройство подписано на push-уведомления.';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess =>
+      'Push-уведомления включены на этом устройстве.';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return 'Не удалось включить push: $error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => 'Отписать это устройство';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess =>
+      'Подписка этого устройства отменена.';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return 'Не удалось отменить подписку: $error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => 'Типы уведомлений';
+
+  @override
+  String get settingsNotificationsBillDue => 'Срок оплаты счёта';
+
+  @override
+  String get settingsNotificationsBillDueHint =>
+      'Напомнит в день закрытия месячной выписки по карте при новых расходах.';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => 'Бюджет превышен';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      'Уведомит при превышении месячного бюджета (один раз на бюджет в месяц).';
+
+  @override
+  String get settingsNotificationsDividend => 'Выплата дивидендов';
+
+  @override
+  String get settingsNotificationsDividendHint =>
+      'Напомнит в день выплаты по вашим записям о дивидендах.';
+
+  @override
+  String get settingsNotificationsDevicesTitle => 'Подписанные устройства';
+
+  @override
+  String get settingsNotificationsNoDevices =>
+      'Пока нет подписанных устройств.';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => 'Неизвестное устройство';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return 'Подписано $date';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled =>
+      'Отключено (повторные ошибки доставки — подпишитесь заново)';
+
+  @override
+  String get settingsNotificationsRemoveDevice => 'Удалить';
+
+  @override
+  String get settingsNotificationsDeviceRemoved =>
+      'Подписанное устройство удалено.';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return 'Не удалось удалить устройство: $error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => 'Тестовое уведомление';
+
+  @override
+  String get settingsNotificationsTestButton =>
+      'Отправить тестовое уведомление';
+
+  @override
+  String get settingsNotificationsTestSending => 'Отправка…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return 'Тестовое уведомление отправлено (доставлено на $delivered устройств).';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice =>
+      'Сначала включите push на этом устройстве, затем отправьте тестовое уведомление.';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return 'Не удалось отправить тестовое уведомление: $error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => 'Напоминание о сроке оплаты';
+
+  @override
+  String get notificationsPushBillDueBody =>
+      'Срок оплаты счёта наступил. Откройте AssetPilot, чтобы посмотреть подробности.';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => 'Бюджет превышен';
+
+  @override
+  String get notificationsPushBudgetExceededBody =>
+      'Бюджет превышен. Откройте AssetPilot, чтобы посмотреть подробности.';
+
+  @override
+  String get notificationsPushDividendTitle =>
+      'Напоминание о выплате дивидендов';
+
+  @override
+  String get notificationsPushDividendBody =>
+      'Выплачены дивиденды. Откройте AssetPilot, чтобы посмотреть подробности.';
+
+  @override
+  String get notificationsPushTestTitle => 'Тестовое push-уведомление';
+
+  @override
+  String get notificationsPushTestBody =>
+      'Если вы видите это уведомление, push-уведомления работают на этом устройстве.';
+
+  @override
+  String get navNotifications => 'Уведомления';
+
+  @override
+  String get notificationsPushGenericTitle => 'Уведомление AssetPilot';
+
+  @override
+  String get notificationsPushGenericBody =>
+      'У вас новое уведомление. Откройте AssetPilot, чтобы посмотреть подробности.';
 }

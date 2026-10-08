@@ -6086,4 +6086,168 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresGoalsScheduleInvalidShort => 'Needs editing';
+
+  @override
+  String get settingsNotificationsTitle => 'Push notifications';
+
+  @override
+  String get settingsNotificationsDescription =>
+      'When enabled, matching events are pushed instantly to your subscribed devices. This does not affect Email/LINE report notifications.';
+
+  @override
+  String get settingsNotificationsUnsupported =>
+      'This browser does not support push notifications (Service Worker and Push API required).';
+
+  @override
+  String get settingsNotificationsDisabledOnServer =>
+      'Web Push is not enabled on the server (missing VAPID key configuration).';
+
+  @override
+  String get settingsNotificationsPermissionDenied =>
+      'Notification permission is blocked. Allow notifications for this site in your browser settings and try again.';
+
+  @override
+  String get settingsNotificationsSubscribe => 'Enable push on this device';
+
+  @override
+  String get settingsNotificationsSubscribing => 'Enabling…';
+
+  @override
+  String get settingsNotificationsSubscribed =>
+      'This device is subscribed to push notifications.';
+
+  @override
+  String get settingsNotificationsSubscribeSuccess =>
+      'Push notifications enabled on this device.';
+
+  @override
+  String settingsNotificationsSubscribeFailed(Object error) {
+    return 'Failed to enable push: $error';
+  }
+
+  @override
+  String get settingsNotificationsUnsubscribe => 'Unsubscribe this device';
+
+  @override
+  String get settingsNotificationsUnsubscribeSuccess =>
+      'This device has been unsubscribed.';
+
+  @override
+  String settingsNotificationsUnsubscribeFailed(Object error) {
+    return 'Failed to unsubscribe: $error';
+  }
+
+  @override
+  String get settingsNotificationsCategoriesTitle => 'Notification types';
+
+  @override
+  String get settingsNotificationsBillDue => 'Bill due';
+
+  @override
+  String get settingsNotificationsBillDueHint =>
+      'Reminds you on the card’s monthly statement closing day when there is new spending.';
+
+  @override
+  String get settingsNotificationsBudgetExceeded => 'Budget exceeded';
+
+  @override
+  String get settingsNotificationsBudgetExceededHint =>
+      'Reminds you when a monthly budget is exceeded (once per budget per month).';
+
+  @override
+  String get settingsNotificationsDividend => 'Dividend payout';
+
+  @override
+  String get settingsNotificationsDividendHint =>
+      'Reminds you on the payout date of your dividend records.';
+
+  @override
+  String get settingsNotificationsDevicesTitle => 'Subscribed devices';
+
+  @override
+  String get settingsNotificationsNoDevices => 'No subscribed devices yet.';
+
+  @override
+  String get settingsNotificationsDeviceUnknown => 'Unknown device';
+
+  @override
+  String settingsNotificationsDeviceSubscribedAt(Object date) {
+    return 'Subscribed $date';
+  }
+
+  @override
+  String get settingsNotificationsDeviceDisabled =>
+      'Disabled (repeated delivery failures — please re-subscribe)';
+
+  @override
+  String get settingsNotificationsRemoveDevice => 'Remove';
+
+  @override
+  String get settingsNotificationsDeviceRemoved => 'Subscribed device removed.';
+
+  @override
+  String settingsNotificationsDeviceRemoveFailed(Object error) {
+    return 'Failed to remove device: $error';
+  }
+
+  @override
+  String get settingsNotificationsTestTitle => 'Test notification';
+
+  @override
+  String get settingsNotificationsTestButton => 'Send test notification';
+
+  @override
+  String get settingsNotificationsTestSending => 'Sending…';
+
+  @override
+  String settingsNotificationsTestSent(Object delivered) {
+    return 'Test notification sent ($delivered device(s) delivered).';
+  }
+
+  @override
+  String get settingsNotificationsTestNoDevice =>
+      'Enable push on this device before sending a test notification.';
+
+  @override
+  String settingsNotificationsTestFailed(Object error) {
+    return 'Test notification failed: $error';
+  }
+
+  @override
+  String get notificationsPushBillDueTitle => 'Bill due reminder';
+
+  @override
+  String get notificationsPushBillDueBody =>
+      'A bill is due. Open AssetPilot to view details.';
+
+  @override
+  String get notificationsPushBudgetExceededTitle => 'Budget exceeded';
+
+  @override
+  String get notificationsPushBudgetExceededBody =>
+      'A budget was exceeded. Open AssetPilot to view details.';
+
+  @override
+  String get notificationsPushDividendTitle => 'Dividend payout reminder';
+
+  @override
+  String get notificationsPushDividendBody =>
+      'A dividend was paid. Open AssetPilot to view details.';
+
+  @override
+  String get notificationsPushTestTitle => 'Test push notification';
+
+  @override
+  String get notificationsPushTestBody =>
+      'If you can see this notification, push notifications work on this device.';
+
+  @override
+  String get navNotifications => 'Notifications';
+
+  @override
+  String get notificationsPushGenericTitle => 'AssetPilot notification';
+
+  @override
+  String get notificationsPushGenericBody =>
+      'You have a notification. Open AssetPilot to view details.';
 }

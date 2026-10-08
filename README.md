@@ -328,6 +328,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `STOCK_AUTO_UPDATE_INTERVAL_MIN` | 選配 | 股價自動更新間隔（分鐘） | `10` |
 | `MEGA_S4_*` | 選配 | MEGA S4 雲端備份的 S3 相容 bucket 設定 | — |
 | `TRANSACTION_PHOTO_*` | 選配 | 交易照片本機或 S3 儲存設定 | — |
+| `RECEIPT_OCR_PROVIDER` / `RECEIPT_OCR_ENDPOINT` / `RECEIPT_OCR_API_KEY` | 選配 | 收據 OCR 自動帶入的供應商設定：`http`（自訂 OCR 端點；設定 API Key 時必須使用 HTTPS）。未設定供應商時維持手動輸入 | — |
 | `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` | 寄信 | 主要／備用寄信通道：`smtp` / `zeabur` / `resend` | — |
 | `SMTP_*` / `ZEABUR_*` / `RESEND_*` | 寄信 | 各寄信通道的連線設定 | — |
 | `APP_URL` | MCP OAuth / 寄信 | 正式環境的對外 HTTPS origin | — |

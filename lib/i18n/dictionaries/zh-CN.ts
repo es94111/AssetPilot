@@ -1257,6 +1257,13 @@ export const zhCN = {
         transfer_in: "转入",
         transfer_out: "转出",
       },
+      scanReceipt: "识别收据",
+      scanningReceipt: "识别中…",
+      ocrHelp: "上传收据影像后自动识别金额、日期与商家，结果仅为草稿，确认后才会保存。",
+      ocrApplied: "已填入识别结果，请确认后保存",
+      ocrNoFields: "未能识别出字段，请手动输入",
+      ocrUnavailable: "此站点未启用收据识别，请手动输入",
+      ocrFailed: "识别失败，请手动输入（{message}）",
     },
     stocks: {
       tabs: {

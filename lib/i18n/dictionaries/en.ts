@@ -1257,6 +1257,13 @@ export const en = {
         transfer_in: "Transfer in",
         transfer_out: "Transfer out",
       },
+      scanReceipt: "Scan receipt",
+      scanningReceipt: "Scanning…",
+      ocrHelp: "Upload a receipt image to auto-detect the amount, date and merchant. Results are drafts only and are saved after you confirm.",
+      ocrApplied: "Detected values were filled in. Please review before saving.",
+      ocrNoFields: "No fields could be detected. Please enter them manually.",
+      ocrUnavailable: "Receipt scanning is not enabled on this server. Please enter values manually.",
+      ocrFailed: "Scanning failed. Please enter values manually. ({message})",
     },
     stocks: {
       tabs: {

@@ -159,6 +159,23 @@ if (!DB_URL) {
         && /\(user_id, category, event_key\)/i.test(index.indexdef)),
       'web_push_send_log 必須以 user_id + category + event_key 唯一去重',
     );
+
+    const schedulerLocks = queryAll(
+      "SELECT lock_name, lock_owner, lock_until FROM web_push_scheduler_locks WHERE lock_name = 'event-scan'",
+    ) as Array<{ lock_name: string; lock_owner: string; lock_until: string | number }>;
+    assert.equal(schedulerLocks.length, 1, 'scheduler lease row must be seeded exactly once');
+    assert.equal(schedulerLocks[0].lock_name, 'event-scan');
+
+    const schedulerIndexes = queryAll(
+      "SELECT indexname FROM pg_indexes WHERE tablename = 'web_push_scheduler_locks'",
+    ) as Array<{ indexname: string }>;
+    assert.ok(schedulerIndexes.some((index) => index.indexname.endsWith('_pkey')));
+
+    const vapidColumns = queryAll(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'web_push_vapid_config' ORDER BY ordinal_position`,
+    ) as Array<{ column_name: string }>;
+    assert.deepEqual(vapidColumns.map((column) => column.column_name), ['id', 'public_key', 'created_at']);
   });
 
   test('Web Push 去重 UNIQUE 條件拒絕同一事件重複 INSERT', () => {

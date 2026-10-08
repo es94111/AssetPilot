@@ -1494,6 +1494,27 @@ END $$`);
     "ALTER TABLE user_settings ADD COLUMN push_dividend INTEGER NOT NULL DEFAULT 1",
   );
 
+  // Single-owner lease for the Node-runtime Web Push sweep (issue #257). The row-level
+  // conditional UPDATE lets multiple app instances coordinate without holding a DB
+  // transaction open across network requests; stale leases expire after process crashes.
+  db.run(`CREATE TABLE IF NOT EXISTS web_push_scheduler_locks (
+    lock_name TEXT PRIMARY KEY,
+    lock_owner TEXT NOT NULL DEFAULT '',
+    lock_until INTEGER NOT NULL DEFAULT 0
+  )`);
+  db.run(
+    "INSERT INTO web_push_scheduler_locks (lock_name, lock_owner, lock_until) VALUES ('event-scan', '', 0) ON CONFLICT (lock_name) DO NOTHING",
+  );
+
+  // Store only the public VAPID key as a cluster consistency marker. Multi-replica
+  // deployments that accidentally generate different per-volume keys fail closed on the
+  // non-canonical replica instead of accepting subscriptions that another replica cannot send.
+  db.run(`CREATE TABLE IF NOT EXISTS web_push_vapid_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    public_key TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`);
+
   // REAL/DOUBLE PRECISION 會在 PostgreSQL 以 float4/float8 儲存金額，
   // 大額或多次換算可能產生不可逆的四捨五入。新表使用 NUMERIC；
   // 既有部署在此冪等轉型，保留資料值但避免後續再以二進位浮點儲存。

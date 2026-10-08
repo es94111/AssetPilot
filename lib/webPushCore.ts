@@ -271,64 +271,31 @@ export function formatPushAmount(amount: number, currency: string): string {
 
 /** 通知點擊後的導頁路徑（單一來源，前端與測試共用）。 */
 export const PUSH_NOTIFICATION_URLS: Record<PushCategory, string> = {
-  bill_due: '/finance/accounts',
-  budget_exceeded: '/finance/budget',
-  dividend: '/stocks/dividends',
+  bill_due: '/dashboard',
+  budget_exceeded: '/dashboard',
+  dividend: '/dashboard',
 };
+
+function notificationTag(event: PushEvent): string {
+  // Internal event ids are used by the database dedup key, but must not appear in the
+  // push payload sent to third-party browser push services. Use a one-way display tag.
+  const digest = crypto.createHash('sha256').update(eventKeyOf(event)).digest('hex').slice(0, 32);
+  return `assetpilot:${digest}`;
+}
 
 /**
  * 組裝單一事件的推播 payload。
- * 文案一律走 i18n 字典（notifications.push.*），與 Email／LINE 通知相同的多語言來源。
+ * 財務金額、帳戶名稱、分類與股票代號不放進 push payload：通知可能在共用／鎖定畫面顯示，
+ * 且 endpoint 在重新登入轉移時可能有尚未完成的傳送。點擊後導向需登入的 App 查看詳情。
  */
 export function buildPushPayload(event: PushEvent, t: PushTranslator): PushNotificationPayload {
   const url = PUSH_NOTIFICATION_URLS[event.category];
-  switch (event.category) {
-    case 'bill_due': {
-      const amount = formatPushAmount(event.amount, event.currency);
-      return {
-        category: event.category,
-        title: t('notifications.push.billDue.title'),
-        body: t('notifications.push.billDue.body', {
-          account: event.accountName,
-          date: event.cycleEnd,
-          amount,
-        }),
-        tag: eventKeyOf(event),
-        url,
-      };
-    }
-    case 'budget_exceeded': {
-      const budgetAmount = formatPushAmount(event.budgetAmount, 'TWD');
-      const usedAmount = formatPushAmount(event.usedAmount, 'TWD');
-      return {
-        category: event.category,
-        title: t('notifications.push.budgetExceeded.title', { category: event.categoryName }),
-        body: t('notifications.push.budgetExceeded.body', {
-          month: event.yearMonth,
-          used: usedAmount,
-          budget: budgetAmount,
-        }),
-        tag: eventKeyOf(event),
-        url,
-      };
-    }
-    case 'dividend': {
-      const cash = formatPushAmount(event.cashDividend, event.currency);
-      const shares = String(Math.round((Number(event.stockDividendShares) || 0) * 10000) / 10000);
-      return {
-        category: event.category,
-        title: t('notifications.push.dividend.title'),
-        body: t('notifications.push.dividend.body', {
-          symbol: event.symbol,
-          date: event.date,
-          cash,
-          shares,
-        }),
-        tag: eventKeyOf(event),
-        url,
-      };
-    }
-  }
+  const tag = notificationTag(event);
+  // Event kind remains only on the server for preferences/dedup. Push services and
+  // lock-screen UI receive identical generic text for every financial event type.
+  const title = t('notifications.push.generic.title');
+  const body = t('notifications.push.generic.body');
+  return { category: event.category, title, body, tag, url };
 }
 
 /**
@@ -341,7 +308,6 @@ export function serializePushPayload(payload: PushNotificationPayload): string {
     body: payload.body,
     tag: payload.tag,
     url: payload.url,
-    category: payload.category,
   });
 }
 

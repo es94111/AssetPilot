@@ -5,6 +5,13 @@
 // 執行：node --experimental-transform-types --import ./tests/setup/register.mjs tests/lib/webPush.test.ts
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createTranslator } from '../../lib/i18n/translate.ts';
 import { zhTW } from '../../lib/i18n/dictionaries/zh-TW.ts';
 import {
@@ -37,6 +44,10 @@ import {
   yearMonthOf,
 } from '../../lib/webPushCore.ts';
 import { findDueBills, findExceededBudgets, findTodayDividends } from '../../lib/webPushEvents.ts';
+import {
+  __sendPushRequestWithDeadlineForTests,
+  type WebPushRequestFactory,
+} from '../../lib/webPush.ts';
 
 const t = createTranslator(zhTW);
 
@@ -248,12 +259,12 @@ test('金額格式化帶幣別且千分位', () => {
   assert.equal(formatPushAmount(Number.NaN, ''), 'TWD 0');
 });
 
-test('帳單到期通知：標題與內文帶入帳戶、結帳日與金額，並指向帳戶頁', () => {
+test('帳單到期通知只含通用文案，不洩漏帳戶、日期或金額', () => {
   const payload = buildPushPayload(
     {
       category: 'bill_due',
-      accountId: 'acc1',
-      accountName: '國泰信用卡',
+      accountId: 'private-account-id',
+      accountName: 'PRIVATE_ACCOUNT_NAME',
       cycleStart: '2026-09-06',
       cycleEnd: '2026-10-05',
       amount: 12345,
@@ -262,22 +273,22 @@ test('帳單到期通知：標題與內文帶入帳戶、結帳日與金額，�
     t,
   );
   assert.equal(payload.category, 'bill_due');
-  assert.equal(payload.title, t('notifications.push.billDue.title'));
-  assert.match(payload.body, /國泰信用卡/);
-  assert.match(payload.body, /2026-10-05/);
-  assert.match(payload.body, /TWD 12,345/);
-  assert.equal(payload.tag, 'bill:acc1:2026-10-05');
-  assert.equal(payload.url, '/finance/accounts');
-  // 不得出現未插值的佔位符
-  assert.doesNotMatch(payload.body, /\{[a-zA-Z]+\}/);
+  assert.equal(payload.title, t('notifications.push.generic.title'));
+  assert.equal(payload.body, t('notifications.push.generic.body'));
+  assert.equal(payload.url, '/dashboard');
+  const serialized = serializePushPayload(payload);
+  for (const privateValue of ['PRIVATE_ACCOUNT_NAME', 'private-account-id', '2026-10-05', '12,345']) {
+    assert.doesNotMatch(serialized, new RegExp(privateValue));
+  }
+  assert.doesNotMatch(payload.tag, /private-account-id/);
 });
 
-test('預算超標通知：標題帶分類、內文帶年月與用量，並指向預算頁', () => {
+test('預算超標通知只含通用文案，不洩漏分類、月份或金額', () => {
   const payload = buildPushPayload(
     {
       category: 'budget_exceeded',
-      budgetId: 'bud1',
-      categoryName: '餐飲',
+      budgetId: 'private-budget-id',
+      categoryName: 'PRIVATE_CATEGORY',
       yearMonth: '2026-10',
       budgetAmount: 10000,
       usedAmount: 13500,
@@ -285,21 +296,40 @@ test('預算超標通知：標題帶分類、內文帶年月與用量，並指�
     t,
   );
   assert.equal(payload.category, 'budget_exceeded');
-  assert.match(payload.title, /餐飲/);
-  assert.match(payload.body, /2026-10/);
-  assert.match(payload.body, /TWD 13,500/);
-  assert.match(payload.body, /TWD 10,000/);
-  assert.equal(payload.tag, 'budget:bud1:2026-10');
-  assert.equal(payload.url, '/finance/budget');
+  assert.equal(payload.title, t('notifications.push.generic.title'));
+  assert.equal(payload.body, t('notifications.push.generic.body'));
+  assert.equal(payload.url, '/dashboard');
+  const serialized = serializePushPayload(payload);
+  for (const privateValue of ['PRIVATE_CATEGORY', 'private-budget-id', '2026-10', '13,500', '10,000']) {
+    assert.doesNotMatch(serialized, new RegExp(privateValue));
+  }
+  assert.doesNotMatch(payload.tag, /private-budget-id/);
 });
 
-test('股利發放通知：帶股票代號、日期、現金與股數，並指向股利頁', () => {
+test('預算超標通用文案不依賴分類名稱（總預算亦不會產生空分類）', () => {
+  const payload = buildPushPayload(
+    {
+      category: 'budget_exceeded',
+      budgetId: 'total-budget',
+      categoryName: '',
+      yearMonth: '2026-10',
+      budgetAmount: 10000,
+      usedAmount: 13500,
+    },
+    t,
+  );
+  assert.equal(payload.title, t('notifications.push.generic.title'));
+  assert.equal(payload.body, t('notifications.push.generic.body'));
+  assert.doesNotMatch(payload.title, /總預算|「」/);
+});
+
+test('股利發放通知只含通用文案，不洩漏股票代號、日期、現金或股數', () => {
   const payload = buildPushPayload(
     {
       category: 'dividend',
-      dividendId: 'div1',
-      symbol: '2330',
-      stockName: '台積電',
+      dividendId: 'private-dividend-id',
+      symbol: 'PRIVATE_SYMBOL',
+      stockName: 'PRIVATE_STOCK_NAME',
       date: '2026-10-07',
       cashDividend: 5000,
       stockDividendShares: 12.5,
@@ -308,21 +338,24 @@ test('股利發放通知：帶股票代號、日期、現金與股數，並指�
     t,
   );
   assert.equal(payload.category, 'dividend');
-  assert.match(payload.body, /2330/);
-  assert.match(payload.body, /2026-10-07/);
-  assert.match(payload.body, /TWD 5,000/);
-  assert.match(payload.body, /12\.5/);
-  assert.equal(payload.tag, 'dividend:div1');
-  assert.equal(payload.url, '/stocks/dividends');
+  assert.equal(payload.title, t('notifications.push.generic.title'));
+  assert.equal(payload.body, t('notifications.push.generic.body'));
+  assert.equal(payload.url, '/dashboard');
+  const serialized = serializePushPayload(payload);
+  for (const privateValue of ['PRIVATE_SYMBOL', 'PRIVATE_STOCK_NAME', 'private-dividend-id', '2026-10-07', '5,000', '12.5']) {
+    assert.doesNotMatch(serialized, new RegExp(privateValue));
+  }
+  assert.doesNotMatch(payload.tag, /private-dividend-id/);
 });
 
 test('英文語系亦使用同一組鍵（多語系文案不寫死在程式）', () => {
   const en = createTranslator({
     notifications: {
       push: {
-        billDue: { title: 'Bill due', body: 'Card {account} · {date} · {amount}' },
-        budgetExceeded: { title: 'Budget exceeded: {category}', body: '{month} used {used} of {budget}' },
-        dividend: { title: 'Dividend', body: '{symbol} on {date}: cash {cash}, shares {shares}' },
+        billDue: { title: 'Bill due reminder', body: 'A bill is due. Open AssetPilot to view details.' },
+        budgetExceeded: { title: 'Budget exceeded', body: 'A budget was exceeded. Open AssetPilot to view details.' },
+        dividend: { title: 'Dividend payout reminder', body: 'A dividend was paid. Open AssetPilot to view details.' },
+        generic: { title: 'AssetPilot notification', body: 'You have a notification. Open AssetPilot to view details.' },
         test: { title: 'Test', body: 'Test body' },
       },
     },
@@ -338,8 +371,8 @@ test('英文語系亦使用同一組鍵（多語系文案不寫死在程式）',
     },
     en,
   );
-  assert.equal(payload.title, 'Budget exceeded: Dining');
-  assert.equal(payload.body, '2026-10 used TWD 13,500 of TWD 10,000');
+  assert.equal(payload.title, 'AssetPilot notification');
+  assert.equal(payload.body, 'You have a notification. Open AssetPilot to view details.');
 });
 
 test('序列化後的 payload 保持精簡（4KB 上限內）且欄位齊全', () => {
@@ -358,10 +391,132 @@ test('序列化後的 payload 保持精簡（4KB 上限內）且欄位齊全', (
   );
   const json = serializePushPayload(payload);
   const parsed = JSON.parse(json) as Record<string, unknown>;
-  assert.deepEqual(Object.keys(parsed).sort(), ['body', 'category', 'tag', 'title', 'url']);
-  assert.equal(parsed.tag, 'dividend:div1');
+  assert.deepEqual(Object.keys(parsed).sort(), ['body', 'tag', 'title', 'url']);
+  assert.match(parsed.tag as string, /^assetpilot:[a-f0-9]{32}$/);
+  assert.doesNotMatch(parsed.tag as string, /bill_due|budget_exceeded|dividend|div1/);
+  assert.equal(parsed.title, t('notifications.push.generic.title'));
+  assert.equal(parsed.body, t('notifications.push.generic.body'));
+
+  const crossCategoryPayloads = [
+    buildPushPayload({category:'bill_due',accountId:'a',accountName:'x',cycleStart:'2026-01-01',cycleEnd:'2026-01-31',amount:1,currency:'TWD'}, t),
+    buildPushPayload({category:'budget_exceeded',budgetId:'b',categoryName:'y',yearMonth:'2026-01',budgetAmount:1,usedAmount:2}, t),
+    buildPushPayload({category:'dividend',dividendId:'c',symbol:'z',stockName:'q',date:'2026-01-31',cashDividend:2,stockDividendShares:0,currency:'TWD'}, t),
+  ].map(serializePushPayload).map((raw) => { const item = JSON.parse(raw); delete item.tag; return item; });
+  assert.deepEqual(crossCategoryPayloads[0], crossCategoryPayloads[1]);
+  assert.deepEqual(crossCategoryPayloads[1], crossCategoryPayloads[2]);
   assert.ok(Buffer.byteLength(json, 'utf8') < 4096, 'payload 必須在 push service 上限內');
 });
+
+test('absolute Web Push deadline destroys a request that never receives a response', async () => {
+  let destroyed = false;
+  const factory = ((
+    _endpoint: URL,
+    _options: import('node:https').RequestOptions,
+  ) => {
+    const request = new EventEmitter() as EventEmitter & {
+      write: (_body: Buffer) => boolean;
+      end: () => void;
+      destroy: (error?: Error) => unknown;
+    };
+    request.write = () => true;
+    request.end = () => {};
+    request.destroy = (error?: Error) => {
+      destroyed = true;
+      if (error) queueMicrotask(() => request.emit('error', error));
+      return request;
+    };
+    return request as unknown as import('node:http').ClientRequest;
+  }) as WebPushRequestFactory;
+
+  const error = await __sendPushRequestWithDeadlineForTests(
+    { endpoint: 'https://fcm.googleapis.com/fcm/send/stalled', method: 'POST', headers: {}, body: Buffer.from('x') },
+    30,
+    factory,
+  ).then(() => null, (caught: Error & { code?: string }) => caught);
+  assert.equal(destroyed, true);
+  assert.equal(error?.code, 'ETIMEDOUT');
+});
+
+test('absolute deadline covers a response body that starts but never completes', async () => {
+  let response: PassThrough & { statusCode?: number; headers?: Record<string, string>; complete?: boolean };
+  let requestDestroyed = false;
+  const factory = ((
+    _endpoint: URL,
+    _options: import('node:https').RequestOptions,
+    onResponse: (response: import('node:http').IncomingMessage) => void,
+  ) => {
+    const request = new EventEmitter() as EventEmitter & {
+      write: (_body: Buffer) => boolean;
+      end: () => void;
+      destroy: (error?: Error) => unknown;
+    };
+    request.write = () => true;
+    request.end = () => {
+      response = new PassThrough() as typeof response;
+      response.statusCode = 201;
+      response.headers = {};
+      response.complete = false;
+      onResponse(response as unknown as import('node:http').IncomingMessage);
+      response.write('partial response');
+    };
+    request.destroy = (error?: Error) => {
+      requestDestroyed = true;
+      response.destroy(error);
+      if (error) queueMicrotask(() => request.emit('error', error));
+      return request;
+    };
+    return request as unknown as import('node:http').ClientRequest;
+  }) as WebPushRequestFactory;
+
+  const error = await __sendPushRequestWithDeadlineForTests(
+    { endpoint: 'https://fcm.googleapis.com/fcm/send/stalled-body', method: 'POST', headers: {}, body: Buffer.from('x') },
+    30,
+    factory,
+  ).then(() => null, (caught: Error & { code?: string }) => caught);
+  assert.equal(requestDestroyed, true);
+  assert.equal(response!.destroyed, true, 'response body/socket must be destroyed at absolute deadline');
+  assert.equal(error?.code, 'ETIMEDOUT');
+});
+
+test('successful Web Push response body is fully consumed before transport resolves', async () => {
+  let response: PassThrough & { statusCode?: number; headers?: Record<string, string>; complete?: boolean };
+  let receivedBodyBytes = 0;
+  const factory = ((
+    _endpoint: URL,
+    _options: import('node:https').RequestOptions,
+    onResponse: (response: import('node:http').IncomingMessage) => void,
+  ) => {
+    const request = new EventEmitter() as EventEmitter & {
+      write: (_body: Buffer) => boolean;
+      end: () => void;
+      destroy: (error?: Error) => unknown;
+    };
+    request.write = () => true;
+    request.end = () => {
+      response = new PassThrough() as typeof response;
+      response.statusCode = 201;
+      response.headers = {};
+      response.complete = true;
+      response.on('data', (chunk: Buffer) => { receivedBodyBytes += chunk.length; });
+      onResponse(response as unknown as import('node:http').IncomingMessage);
+      response.end('push accepted');
+    };
+    request.destroy = (error?: Error) => {
+      if (error) queueMicrotask(() => request.emit('error', error));
+      return request;
+    };
+    return request as unknown as import('node:http').ClientRequest;
+  }) as WebPushRequestFactory;
+
+  await __sendPushRequestWithDeadlineForTests(
+    { endpoint: 'https://fcm.googleapis.com/fcm/send/ok', method: 'POST', headers: {}, body: Buffer.from('x') },
+    1000,
+    factory,
+  );
+  assert.equal(response!.readableEnded, true);
+  assert.equal(receivedBodyBytes, Buffer.byteLength('push accepted'));
+});
+
 
 test('urlBase64ToUint8Array 可還原 VAPID 公鑰位元組', () => {
   const keys = generateVapidKeys();

@@ -1681,20 +1681,24 @@ export const es = {
     fallbackUser: "Usuario",
     push: {
       billDue: {
-        title: "Estado de cuenta cerrado",
-        body: "{account} se cerró el {date} con {amount} en este ciclo.",
+        title: "Recordatorio de factura",
+        body: "Hay una factura pendiente. Abre AssetPilot para ver los detalles.",
       },
       budgetExceeded: {
-        title: "Presupuesto de «{category}» excedido",
-        body: "{month}: usado {used} de {budget}.",
+        title: "Presupuesto excedido",
+        body: "Se superó un presupuesto. Abre AssetPilot para ver los detalles.",
       },
       dividend: {
-        title: "Recordatorio de pago de dividendos",
-        body: "{symbol} pagó dividendos el {date}: efectivo {cash}, acciones {shares}.",
+        title: "Aviso de pago de dividendos",
+        body: "Se pagó un dividendo. Abre AssetPilot para ver los detalles.",
       },
       test: {
         title: "Notificación push de prueba",
         body: "Si ves esta notificación, las notificaciones push funcionan en este dispositivo.",
+      },
+      generic: {
+        title: "Notificación de AssetPilot",
+        body: "Tienes una notificación. Abre AssetPilot para ver los detalles.",
       },
     },
   },

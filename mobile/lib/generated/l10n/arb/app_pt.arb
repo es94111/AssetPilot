@@ -9549,54 +9549,35 @@
       "error": {}
     }
   },
-  "notificationsPushBillDueTitle": "Fatura do cartão fechada",
+  "notificationsPushBillDueTitle": "Lembrete de fatura",
   "@notificationsPushBillDueTitle": {
     "description": "Web path: notifications.push.billDue.title",
     "x-webPath": "notifications.push.billDue.title"
   },
-  "notificationsPushBillDueBody": "{account} fechou em {date} com {amount} neste ciclo.",
+  "notificationsPushBillDueBody": "Há uma fatura vencendo. Abra o AssetPilot para ver os detalhes.",
   "@notificationsPushBillDueBody": {
     "description": "Web path: notifications.push.billDue.body",
-    "x-webPath": "notifications.push.billDue.body",
-    "placeholders": {
-      "account": {},
-      "date": {},
-      "amount": {}
-    }
+    "x-webPath": "notifications.push.billDue.body"
   },
-  "notificationsPushBudgetExceededTitle": "Orçamento de “{category}” excedido",
+  "notificationsPushBudgetExceededTitle": "Orçamento excedido",
   "@notificationsPushBudgetExceededTitle": {
     "description": "Web path: notifications.push.budgetExceeded.title",
-    "x-webPath": "notifications.push.budgetExceeded.title",
-    "placeholders": {
-      "category": {}
-    }
+    "x-webPath": "notifications.push.budgetExceeded.title"
   },
-  "notificationsPushBudgetExceededBody": "{month}: usado {used} de {budget}.",
+  "notificationsPushBudgetExceededBody": "Um orçamento foi excedido. Abra o AssetPilot para ver os detalhes.",
   "@notificationsPushBudgetExceededBody": {
     "description": "Web path: notifications.push.budgetExceeded.body",
-    "x-webPath": "notifications.push.budgetExceeded.body",
-    "placeholders": {
-      "month": {},
-      "used": {},
-      "budget": {}
-    }
+    "x-webPath": "notifications.push.budgetExceeded.body"
   },
   "notificationsPushDividendTitle": "Lembrete de pagamento de dividendos",
   "@notificationsPushDividendTitle": {
     "description": "Web path: notifications.push.dividend.title",
     "x-webPath": "notifications.push.dividend.title"
   },
-  "notificationsPushDividendBody": "{symbol} pagou dividendos em {date}: {cash} em dinheiro, {shares} ações.",
+  "notificationsPushDividendBody": "Um dividendo foi pago. Abra o AssetPilot para ver os detalhes.",
   "@notificationsPushDividendBody": {
     "description": "Web path: notifications.push.dividend.body",
-    "x-webPath": "notifications.push.dividend.body",
-    "placeholders": {
-      "symbol": {},
-      "date": {},
-      "cash": {},
-      "shares": {}
-    }
+    "x-webPath": "notifications.push.dividend.body"
   },
   "notificationsPushTestTitle": "Notificação push de teste",
   "@notificationsPushTestTitle": {
@@ -9612,5 +9593,15 @@
   "@navNotifications": {
     "description": "Web path: nav.notifications",
     "x-webPath": "nav.notifications"
+  },
+  "notificationsPushGenericTitle": "Notificação do AssetPilot",
+  "@notificationsPushGenericTitle": {
+    "description": "Web path: notifications.push.generic.title",
+    "x-webPath": "notifications.push.generic.title"
+  },
+  "notificationsPushGenericBody": "Você tem uma notificação. Abra o AssetPilot para ver os detalhes.",
+  "@notificationsPushGenericBody": {
+    "description": "Web path: notifications.push.generic.body",
+    "x-webPath": "notifications.push.generic.body"
   }
 }

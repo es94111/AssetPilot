@@ -85,13 +85,17 @@ export default function NotificationsSettingsClient() {
       const registration = await navigator.serviceWorker.getRegistration('/');
       const local = await registration?.pushManager.getSubscription();
       const endpoint = local?.endpoint || '';
-      setCurrentEndpoint(endpoint);
       const data = await apiFetch('/api/push/subscriptions', {
         headers: endpoint ? { 'x-push-endpoint': endpoint } : undefined,
       });
-      setSubscriptions(data.subscriptions || []);
+      const list: SubscriptionSummary[] = data.subscriptions || [];
+      setSubscriptions(list);
+      // A browser may retain its local PushSubscription across account switches. Only
+      // show it as subscribed for this account if the server confirms endpoint ownership.
+      setCurrentEndpoint(list.some((item) => item.isCurrent) ? endpoint : '');
     } catch {
       setSubscriptions([]);
+      setCurrentEndpoint('');
     }
   }, []);
 

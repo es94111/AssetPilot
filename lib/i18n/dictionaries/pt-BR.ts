@@ -1681,20 +1681,24 @@ export const ptBR = {
     fallbackUser: "Usuário",
     push: {
       billDue: {
-        title: "Fatura do cartão fechada",
-        body: "{account} fechou em {date} com {amount} neste ciclo.",
+        title: "Lembrete de fatura",
+        body: "Há uma fatura vencendo. Abra o AssetPilot para ver os detalhes.",
       },
       budgetExceeded: {
-        title: "Orçamento de “{category}” excedido",
-        body: "{month}: usado {used} de {budget}.",
+        title: "Orçamento excedido",
+        body: "Um orçamento foi excedido. Abra o AssetPilot para ver os detalhes.",
       },
       dividend: {
         title: "Lembrete de pagamento de dividendos",
-        body: "{symbol} pagou dividendos em {date}: {cash} em dinheiro, {shares} ações.",
+        body: "Um dividendo foi pago. Abra o AssetPilot para ver os detalhes.",
       },
       test: {
         title: "Notificação push de teste",
         body: "Se você vê esta notificação, as notificações push funcionam neste dispositivo.",
+      },
+      generic: {
+        title: "Notificação do AssetPilot",
+        body: "Você tem uma notificação. Abra o AssetPilot para ver os detalhes.",
       },
     },
   },

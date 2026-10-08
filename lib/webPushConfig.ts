@@ -10,6 +10,7 @@
 import crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { queryOne, getDB } from './db';
 import {
   generateVapidKeys,
   isValidVapidKeyPair,
@@ -54,6 +55,24 @@ function persistKeys(keys: VapidKeyPair): void {
 }
 
 /**
+ * Validate and atomically register the public half of the VAPID pair for this cluster.
+ * Private key material is never written to the database. Concurrent replicas converge on
+ * the first persisted public key; replicas with mismatched ENV_PATH keys fail closed.
+ */
+export function assertSharedVapidPublicKey(publicKey: string): void {
+  getDB().run(
+    'INSERT INTO web_push_vapid_config (id, public_key, created_at) VALUES (1, ?, ?) ON CONFLICT (id) DO NOTHING',
+    [publicKey, Date.now()],
+  );
+  const row = queryOne('SELECT public_key FROM web_push_vapid_config WHERE id = 1');
+  if (String(row?.public_key || '') !== publicKey) {
+    throw new Error(
+      'This replica has a different VAPID key than the shared database. Configure the same VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY on every replica.',
+    );
+  }
+}
+
+/**
  * 取得 VAPID 金鑰組；缺少時自動產生並持久化。
  * 環境變數若存在但格式不合法（例如被截斷），一律視為未設定並重新產生，
  * 避免以壞掉的金鑰送出必然失敗的推播。
@@ -64,6 +83,7 @@ export function getVapidKeys(): VapidKeyPair {
   const publicKey = String(process.env[VAPID_PUBLIC_KEY_ENV] || '').trim();
   const privateKey = String(process.env[VAPID_PRIVATE_KEY_ENV] || '').trim();
   if (isValidVapidKeyPair(publicKey, privateKey)) {
+    assertSharedVapidPublicKey(publicKey);
     cached = { publicKey, privateKey };
     return cached;
   }
@@ -73,13 +93,18 @@ export function getVapidKeys(): VapidKeyPair {
     persistKeys(generated);
     process.env[VAPID_PUBLIC_KEY_ENV] = generated.publicKey;
     process.env[VAPID_PRIVATE_KEY_ENV] = generated.privateKey;
-    cached = generated;
   } catch (error) {
-    // 寫檔失敗（例如唯讀檔案系統）時仍以本次產生的金鑰運作，但下次啟動會換新金鑰；
-    // 明確記錄以便維運察覺並改為手動設定環境變數。
-    console.error('[web-push] 無法寫入 VAPID 金鑰至持久化 .env，重啟後訂閱將失效：', error);
-    cached = generated;
+    // VAPID is optional: with read-only ENV_PATH the current process may still run,
+    // but shared-database verification below decides whether this replica is canonical.
+    console.error(
+      '[web-push] Could not persist generated VAPID keys to ENV_PATH; pushes will work only until restart. Configure a writable persistent ENV_PATH or set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.',
+      error,
+    );
+    process.env[VAPID_PUBLIC_KEY_ENV] = generated.publicKey;
+    process.env[VAPID_PRIVATE_KEY_ENV] = generated.privateKey;
   }
+  assertSharedVapidPublicKey(generated.publicKey);
+  cached = generated;
   return cached;
 }
 

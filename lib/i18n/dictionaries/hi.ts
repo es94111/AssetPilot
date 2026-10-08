@@ -1681,20 +1681,24 @@ export const hi = {
     fallbackUser: "यूज़र",
     push: {
       billDue: {
-        title: "क्रेडिट कार्ड स्टेटमेंट बंद",
-        body: "{account} ने {date} को क्लोज़ किया, इस चक्र में {amount}।",
+        title: "बिल देय अनुस्मारक",
+        body: "एक बिल देय है। विवरण देखने के लिए AssetPilot खोलें।",
       },
       budgetExceeded: {
-        title: "“{category}” बजट से अधिक",
-        body: "{month}: {budget} में से {used} उपयोग।",
+        title: "बजट से अधिक",
+        body: "एक बजट पार हो गया। विवरण देखने के लिए AssetPilot खोलें।",
       },
       dividend: {
         title: "लाभांश भुगतान अनुस्मारक",
-        body: "{symbol} ने {date} को लाभांश दिया: नकद {cash}, स्टॉक {shares} शेयर।",
+        body: "लाभांश का भुगतान हुआ। विवरण देखने के लिए AssetPilot खोलें।",
       },
       test: {
         title: "परीक्षण पुश सूचना",
         body: "यदि आप यह सूचना देख सकते हैं, तो इस उपकरण पर पुश सूचनाएँ काम करती हैं।",
+      },
+      generic: {
+        title: "AssetPilot सूचना",
+        body: "आपके पास एक सूचना है। विवरण देखने के लिए AssetPilot खोलें।",
       },
     },
   },

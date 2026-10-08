@@ -1681,20 +1681,24 @@ export const fr = {
     fallbackUser: "Utilisateur",
     push: {
       billDue: {
-        title: "Relevé de carte clôturé",
-        body: "{account} a été clôturé le {date} avec {amount} pour ce cycle.",
+        title: "Rappel d’échéance de facture",
+        body: "Une facture arrive à échéance. Ouvrez AssetPilot pour voir les détails.",
       },
       budgetExceeded: {
-        title: "Budget « {category} » dépassé",
-        body: "{month} : {used} utilisés sur {budget}.",
+        title: "Budget dépassé",
+        body: "Un budget a été dépassé. Ouvrez AssetPilot pour voir les détails.",
       },
       dividend: {
-        title: "Rappel de versement de dividende",
-        body: "{symbol} a versé des dividendes le {date} : {cash} en numéraire, {shares} actions.",
+        title: "Rappel de versement de dividendes",
+        body: "Un dividende a été versé. Ouvrez AssetPilot pour voir les détails.",
       },
       test: {
         title: "Notification push de test",
         body: "Si vous voyez cette notification, les notifications push fonctionnent sur cet appareil.",
+      },
+      generic: {
+        title: "Notification AssetPilot",
+        body: "Vous avez une notification. Ouvrez AssetPilot pour voir les détails.",
       },
     },
   },

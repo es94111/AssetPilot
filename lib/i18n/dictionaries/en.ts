@@ -1681,20 +1681,24 @@ export const en = {
     fallbackUser: "User",
     push: {
       billDue: {
-        title: "Credit card statement closed",
-        body: "{account} closed on {date} with {amount} this cycle.",
+        title: "Bill due reminder",
+        body: "A bill is due. Open AssetPilot to view details.",
       },
       budgetExceeded: {
-        title: "“{category}” budget exceeded",
-        body: "{month}: used {used} of {budget}.",
+        title: "Budget exceeded",
+        body: "A budget was exceeded. Open AssetPilot to view details.",
       },
       dividend: {
         title: "Dividend payout reminder",
-        body: "{symbol} paid dividends on {date}: cash {cash}, stock {shares} shares.",
+        body: "A dividend was paid. Open AssetPilot to view details.",
       },
       test: {
         title: "Test push notification",
         body: "If you can see this notification, push notifications work on this device.",
+      },
+      generic: {
+        title: "AssetPilot notification",
+        body: "You have a notification. Open AssetPilot to view details.",
       },
     },
   },

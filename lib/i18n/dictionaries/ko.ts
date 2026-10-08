@@ -1681,20 +1681,24 @@ export const ko = {
     fallbackUser: "사용자",
     push: {
       billDue: {
-        title: "카드 청구서 마감",
-        body: "{account}이(가) {date}에 마감되었고 이번 주기 사용액은 {amount}입니다.",
+        title: "청구서 만기 알림",
+        body: "만기된 청구서가 있습니다. 자세한 내용은 AssetPilot을 여세요.",
       },
       budgetExceeded: {
-        title: "“{category}” 예산 초과",
-        body: "{month}: {budget} 중 {used} 사용.",
+        title: "예산 초과",
+        body: "예산을 초과했습니다. 자세한 내용은 AssetPilot을 여세요.",
       },
       dividend: {
         title: "배당금 지급 알림",
-        body: "{symbol}이(가) {date}에 배당금을 지급했습니다: 현금 {cash}, 주식 {shares}주.",
+        body: "배당금이 지급되었습니다. 자세한 내용은 AssetPilot을 여세요.",
       },
       test: {
         title: "테스트 푸시 알림",
         body: "이 알림이 보이면 이 기기에서 푸시 알림이 정상 동작합니다.",
+      },
+      generic: {
+        title: "AssetPilot 알림",
+        body: "새 알림이 있습니다. 자세한 내용은 AssetPilot을 여세요.",
       },
     },
   },

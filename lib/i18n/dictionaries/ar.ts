@@ -1681,20 +1681,24 @@ export const ar = {
     fallbackUser: "المستخدم",
     push: {
       billDue: {
-        title: "تم إقفال كشف البطاقة",
-        body: "تم إقفال {account} في {date} بمصروفات {amount} لهذه الدورة.",
+        title: "تذكير بموعد الفاتورة",
+        body: "هناك فاتورة مستحقة. افتح AssetPilot لعرض التفاصيل.",
       },
       budgetExceeded: {
-        title: "تجاوز ميزانية «{category}»",
-        body: "{month}: المستخدم {used} من {budget}.",
+        title: "تم تجاوز الميزانية",
+        body: "تم تجاوز إحدى الميزانيات. افتح AssetPilot لعرض التفاصيل.",
       },
       dividend: {
         title: "تذكير بصرف الأرباح",
-        body: "{symbol} وزّع أرباحًا في {date}: نقدًا {cash}، أسهم {shares}.",
+        body: "تم صرف أرباح. افتح AssetPilot لعرض التفاصيل.",
       },
       test: {
         title: "إشعار دفع تجريبي",
         body: "إذا رأيت هذا الإشعار، فإن إشعارات الدفع تعمل على هذا الجهاز.",
+      },
+      generic: {
+        title: "إشعار من AssetPilot",
+        body: "لديك إشعار. افتح AssetPilot لعرض التفاصيل.",
       },
     },
   },

@@ -26,11 +26,9 @@ import {
   endpointHost,
   eventKeyOf,
   isExpiredSubscriptionStatus,
-  nextFailureCount,
   normalizePushSubscription,
   readPushPreferences,
   serializePushPayload,
-  shouldDisableSubscription,
   type PushCategory,
   type PushEvent,
   type PushPreferences,
@@ -49,6 +47,7 @@ export {
 
 /** 單一使用者的訂閱數上限（避免單一帳號累積大量端點）。 */
 export const MAX_PUSH_SUBSCRIPTIONS = 20;
+export const WEB_PUSH_REQUEST_TIMEOUT_MS = 10_000;
 
 const PAYLOAD_MAX_BYTES = 4096;
 
@@ -61,7 +60,7 @@ export const PUSH_CATEGORY_COLUMNS: Record<PushCategory, string> = {
 
 interface SubscriptionRow {
   id: string | number;
-  user_id?: string | number;
+  user_id: string | number;
   endpoint?: string;
   p256dh?: string;
   auth?: string;
@@ -77,10 +76,17 @@ interface SubscriptionRow {
 // 讓模組圖只在使用推播時才展開（與 lib/transactionAttachments.ts 對 sharp 的處理相同）。
 type WebPushModule = typeof import('web-push');
 
-/** 發送單一訂閱的實作；抽換點讓測試能以假 transport 驗證失效清理與失敗計數。 */
+export interface PushTransportOptions {
+  TTL: number;
+  urgency: 'normal';
+  timeout: number;
+}
+
+/** 發送單一訂閱的實作；抽換點讓測試能以假 transport 驗證清理與發送選項。 */
 export type PushTransport = (
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
   payloadJson: string,
+  options: PushTransportOptions,
 ) => Promise<void>;
 
 let webPushPromise: Promise<WebPushModule> | null = null;
@@ -105,9 +111,116 @@ async function loadWebPush(): Promise<WebPushModule> {
 
 let pushTransport: PushTransport | null = null;
 
-const defaultPushTransport: PushTransport = async (subscription, payloadJson) => {
+interface WebPushRequestDetails {
+  endpoint: string;
+  method: string;
+  headers: Record<string, string>;
+  body: Buffer | null;
+  proxy?: string;
+  agent?: import('node:https').Agent;
+}
+
+export type WebPushRequestFactory = (
+  endpoint: URL,
+  options: import('node:https').RequestOptions,
+  onResponse: (response: import('node:http').IncomingMessage) => void,
+) => import('node:http').ClientRequest;
+
+/**
+ * Send a generated web-push request with a wall-clock deadline, not a socket-idle timeout.
+ * Response data is always consumed so keep-alive sockets are reusable; only a bounded sample
+ * is retained for error diagnostics. Exported for deterministic timeout/response-drain tests.
+ */
+export function __sendPushRequestWithDeadlineForTests(
+  details: WebPushRequestDetails,
+  timeoutMs: number,
+  requestFactory: WebPushRequestFactory,
+): Promise<void> {
+  const endpoint = new URL(details.endpoint);
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let responseText = '';
+    let request: import('node:http').ClientRequest | null = null;
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(absoluteTimeout);
+      if (error) reject(error);
+      else resolve();
+    };
+    const absoluteTimeout = setTimeout(() => {
+      const error = Object.assign(
+        new Error(`Web Push request exceeded ${timeoutMs}ms absolute deadline`),
+        { code: 'ETIMEDOUT' },
+      );
+      request?.destroy(error);
+      finish(error);
+    }, timeoutMs);
+
+    try {
+      request = requestFactory(endpoint, {
+        method: details.method,
+        headers: details.headers,
+        agent: details.agent,
+      }, (response) => {
+        response.on('data', (chunk: Buffer | string) => {
+          if (responseText.length < 8192) {
+            responseText += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk;
+            responseText = responseText.slice(0, 8192);
+          }
+        });
+        response.on('error', (error: Error) => finish(error));
+        response.on('aborted', () => finish(new Error('Push service response aborted')));
+        response.on('close', () => {
+          if (!response.complete) finish(new Error('Push service response closed before completion'));
+        });
+        response.on('end', () => {
+          const statusCode = Number(response.statusCode) || 0;
+          if (statusCode < 200 || statusCode > 299) {
+            finish(Object.assign(new Error('Received unexpected push service response'), {
+              statusCode,
+              headers: response.headers,
+              body: responseText,
+              endpoint: details.endpoint,
+            }));
+            return;
+          }
+          finish();
+        });
+      });
+      request.on('error', (error: Error) => finish(error));
+      if (details.body) request.write(details.body);
+      request.end();
+    } catch (error) {
+      finish(error instanceof Error ? error : new Error(String(error)));
+    }
+  });
+}
+
+const defaultPushTransport: PushTransport = async (subscription, payloadJson, options) => {
   const webpush = await loadWebPush();
-  await webpush.sendNotification(subscription, payloadJson, { TTL: 60 * 60 * 12, urgency: 'normal' });
+  const details = webpush.generateRequestDetails(
+    subscription,
+    payloadJson,
+    options,
+  ) as unknown as WebPushRequestDetails;
+  const https = await import('node:https');
+  let agent = details.agent;
+  if (details.proxy) {
+    const { HttpsProxyAgent } = await import('https-proxy-agent');
+    agent = new HttpsProxyAgent(details.proxy);
+  }
+  await __sendPushRequestWithDeadlineForTests(
+    { ...details, agent },
+    options.timeout,
+    (endpoint, requestOptions, onResponse) => https.request(endpoint, requestOptions, onResponse),
+  );
+};
+
+const PUSH_SEND_OPTIONS: PushTransportOptions = {
+  TTL: 60 * 60 * 12,
+  urgency: 'normal',
+  timeout: WEB_PUSH_REQUEST_TIMEOUT_MS,
 };
 
 async function sendToSubscription(
@@ -115,7 +228,7 @@ async function sendToSubscription(
   payloadJson: string,
 ): Promise<void> {
   const transport = pushTransport ?? defaultPushTransport;
-  await transport(subscription, payloadJson);
+  await transport(subscription, payloadJson, PUSH_SEND_OPTIONS);
 }
 
 /** 測試用：抽換發送實作（傳 null 還原為真正的 web-push）。 */
@@ -348,12 +461,19 @@ interface DeliveryResult {
   errors: string[];
 }
 
-async function deliverToSubscriptions(userId: string, payloadJson: string): Promise<DeliveryResult> {
-  const result: DeliveryResult = { delivered: 0, expired: 0, failed: 0, errors: [] };
-  const rows = queryAll(
-    'SELECT id, endpoint, p256dh, auth, failure_count FROM web_push_subscriptions WHERE user_id = ? AND disabled_at = 0',
+function loadActivePushSubscriptions(userId: string): SubscriptionRow[] {
+  return queryAll(
+    'SELECT id, user_id, endpoint, p256dh, auth FROM web_push_subscriptions WHERE user_id = ? AND disabled_at = 0',
     [userId],
   ) as unknown as SubscriptionRow[];
+}
+
+async function deliverToSubscriptions(
+  userId: string,
+  payloadJson: string,
+  rows: SubscriptionRow[] = loadActivePushSubscriptions(userId),
+): Promise<DeliveryResult> {
+  const result: DeliveryResult = { delivered: 0, expired: 0, failed: 0, errors: [] };
   if (rows.length === 0) return result;
   if (Buffer.byteLength(payloadJson, 'utf8') > PAYLOAD_MAX_BYTES) {
     result.errors.push('推播內容過大');
@@ -374,30 +494,41 @@ async function deliverToSubscriptions(userId: string, payloadJson: string): Prom
         payloadJson,
       );
       db.run(
-        'UPDATE web_push_subscriptions SET last_success_at = ?, failure_count = 0, updated_at = ? WHERE id = ?',
-        [now, now, subscriptionId],
+        'UPDATE web_push_subscriptions SET last_success_at = ?, failure_count = 0, disabled_at = 0, updated_at = ? WHERE id = ? AND user_id = ? AND endpoint = ? AND p256dh = ? AND auth = ?',
+        [now, now, subscriptionId, String(row.user_id), String(row.endpoint), String(row.p256dh), String(row.auth)],
       );
-      result.delivered += 1;
+      // A successful network response may race with account reassignment. Count it only
+      // while this row still belongs to the original recipient.
+      if (db.getRowsModified() > 0) result.delivered += 1;
     } catch (error) {
       const statusCode = (error as { statusCode?: unknown })?.statusCode;
       if (isExpiredSubscriptionStatus(statusCode)) {
         // push service 明確表示訂閱已失效 → 立即清除，避免持續重試。
-        db.run('DELETE FROM web_push_subscriptions WHERE endpoint = ?', [String(row.endpoint)]);
-        result.expired += 1;
+        db.run(
+          'DELETE FROM web_push_subscriptions WHERE id = ? AND user_id = ? AND endpoint = ? AND p256dh = ? AND auth = ?',
+          [subscriptionId, String(row.user_id), String(row.endpoint), String(row.p256dh), String(row.auth)],
+        );
+        if (db.getRowsModified() > 0) result.expired += 1;
         continue;
       }
-      const failures = nextFailureCount(row.failure_count, false);
-      if (shouldDisableSubscription(failures)) {
-        db.run(
-          'UPDATE web_push_subscriptions SET failure_count = ?, disabled_at = ?, updated_at = ? WHERE id = ?',
-          [failures, now, now, subscriptionId],
-        );
-      } else {
-        db.run(
-          'UPDATE web_push_subscriptions SET failure_count = ?, updated_at = ? WHERE id = ?',
-          [failures, now, subscriptionId],
-        );
-      }
+      db.run(
+        `UPDATE web_push_subscriptions
+         SET failure_count = failure_count + 1,
+             disabled_at = CASE WHEN failure_count + 1 >= ? THEN ? ELSE disabled_at END,
+             updated_at = ?
+         WHERE id = ? AND user_id = ? AND endpoint = ? AND p256dh = ? AND auth = ? AND disabled_at = 0`,
+        [
+          MAX_PUSH_FAILURES,
+          now,
+          now,
+          subscriptionId,
+          String(row.user_id),
+          String(row.endpoint),
+          String(row.p256dh),
+          String(row.auth),
+        ],
+      );
+      if (db.getRowsModified() === 0) continue;
       result.failed += 1;
       const message = error instanceof Error ? error.message : String(error);
       if (result.errors.length < 3) result.errors.push(message);
@@ -439,8 +570,22 @@ export async function dispatchPushEvent(
   if (!preferences[event.category]) {
     return { status: 'skipped_disabled', delivered: 0, expired: 0, failed: 0 };
   }
-  if (countActiveSubscriptions(userId) === 0) {
+  const subscriptions = loadActivePushSubscriptions(userId);
+  if (subscriptions.length === 0) {
     return { status: 'skipped_no_subscription', delivered: 0, expired: 0, failed: 0 };
+  }
+
+  const t = getTranslator(getUserLanguage(userId));
+  const payloadJson = serializePushPayload(buildPushPayload(event, t));
+  // Load VAPID/web-push before claiming the durable event key so module/configuration errors
+  // cannot leave a success-shaped dedup row without a network delivery attempt.
+  if (!pushTransport) {
+    try {
+      await loadWebPush();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { status: 'failed', delivered: 0, expired: 0, failed: 0, reason: message };
+    }
   }
 
   const claim = claimSendLog(userId, event.category, eventKeyOf(event));
@@ -448,12 +593,9 @@ export async function dispatchPushEvent(
     return { status: 'skipped_duplicate', delivered: 0, expired: 0, failed: 0 };
   }
 
-  const t = getTranslator(getUserLanguage(userId));
-  const payloadJson = serializePushPayload(buildPushPayload(event, t));
-
   let outcome: DeliveryResult;
   try {
-    outcome = await deliverToSubscriptions(userId, payloadJson);
+    outcome = await deliverToSubscriptions(userId, payloadJson, subscriptions);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     finalizeSendLog(claim.logId, false, message);
@@ -494,7 +636,6 @@ export async function sendTestNotification(userId: string): Promise<PushDispatch
     body: t('notifications.push.test.body'),
     tag: `test:${crypto.randomUUID()}`,
     url: '/settings/notifications',
-    category: 'test',
   });
   const outcome = await deliverToSubscriptions(userId, payloadJson);
   if (outcome.delivered === 0 && outcome.failed === 0 && outcome.expired === 0) {

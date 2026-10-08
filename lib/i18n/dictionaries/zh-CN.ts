@@ -1681,20 +1681,24 @@ export const zhCN = {
     fallbackUser: "用户",
     push: {
       billDue: {
-        title: "信用卡账单已结算",
-        body: "{account} 于 {date} 结算，本期消费 {amount}。",
+        title: "账单到期提醒",
+        body: "有账单到期，打开 AssetPilot 查看详情。",
       },
       budgetExceeded: {
-        title: "“{category}”预算超标",
-        body: "{month} 已用 {used}，预算 {budget}。",
+        title: "预算超标提醒",
+        body: "有预算超标，打开 AssetPilot 查看详情。",
       },
       dividend: {
         title: "股利发放提醒",
-        body: "{symbol} 于 {date} 发放股利：现金 {cash}、股票 {shares} 股。",
+        body: "有股利发放，打开 AssetPilot 查看详情。",
       },
       test: {
         title: "测试推送通知",
         body: "如果你看到这条通知，说明此设备的推送设置正确。",
+      },
+      generic: {
+        title: "AssetPilot 通知",
+        body: "有一条通知，打开 AssetPilot 查看详情。",
       },
     },
   },

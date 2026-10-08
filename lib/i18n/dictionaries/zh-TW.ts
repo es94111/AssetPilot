@@ -1679,20 +1679,24 @@ export const zhTW = {
     fallbackUser: "使用者",
     push: {
       billDue: {
-        title: "信用卡帳單已結帳",
-        body: "{account} 於 {date} 結帳，本期消費 {amount}。",
+        title: "帳單到期提醒",
+        body: "有帳單到期，開啟 AssetPilot 查看詳情。",
       },
       budgetExceeded: {
-        title: "「{category}」預算超標",
-        body: "{month} 已用 {used}，預算 {budget}。",
+        title: "預算超標提醒",
+        body: "有預算超標，開啟 AssetPilot 查看詳情。",
       },
       dividend: {
         title: "股利發放提醒",
-        body: "{symbol} 於 {date} 發放股利：現金 {cash}、股票 {shares} 股。",
+        body: "有股利發放，開啟 AssetPilot 查看詳情。",
       },
       test: {
         title: "測試推播通知",
         body: "如果你看到這則通知，代表此裝置的推播設定正確。",
+      },
+      generic: {
+        title: "AssetPilot 通知",
+        body: "有一則通知，開啟 AssetPilot 查看詳情。",
       },
     },
   },

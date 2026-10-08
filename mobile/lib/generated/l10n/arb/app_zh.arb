@@ -9564,54 +9564,35 @@
       "error": {}
     }
   },
-  "notificationsPushBillDueTitle": "信用卡帳單已結帳",
+  "notificationsPushBillDueTitle": "帳單到期提醒",
   "@notificationsPushBillDueTitle": {
     "description": "Web path: notifications.push.billDue.title",
     "x-webPath": "notifications.push.billDue.title"
   },
-  "notificationsPushBillDueBody": "{account} 於 {date} 結帳，本期消費 {amount}。",
+  "notificationsPushBillDueBody": "有帳單到期，開啟 AssetPilot 查看詳情。",
   "@notificationsPushBillDueBody": {
     "description": "Web path: notifications.push.billDue.body",
-    "x-webPath": "notifications.push.billDue.body",
-    "placeholders": {
-      "account": {},
-      "date": {},
-      "amount": {}
-    }
+    "x-webPath": "notifications.push.billDue.body"
   },
-  "notificationsPushBudgetExceededTitle": "「{category}」預算超標",
+  "notificationsPushBudgetExceededTitle": "預算超標提醒",
   "@notificationsPushBudgetExceededTitle": {
     "description": "Web path: notifications.push.budgetExceeded.title",
-    "x-webPath": "notifications.push.budgetExceeded.title",
-    "placeholders": {
-      "category": {}
-    }
+    "x-webPath": "notifications.push.budgetExceeded.title"
   },
-  "notificationsPushBudgetExceededBody": "{month} 已用 {used}，預算 {budget}。",
+  "notificationsPushBudgetExceededBody": "有預算超標，開啟 AssetPilot 查看詳情。",
   "@notificationsPushBudgetExceededBody": {
     "description": "Web path: notifications.push.budgetExceeded.body",
-    "x-webPath": "notifications.push.budgetExceeded.body",
-    "placeholders": {
-      "month": {},
-      "used": {},
-      "budget": {}
-    }
+    "x-webPath": "notifications.push.budgetExceeded.body"
   },
   "notificationsPushDividendTitle": "股利發放提醒",
   "@notificationsPushDividendTitle": {
     "description": "Web path: notifications.push.dividend.title",
     "x-webPath": "notifications.push.dividend.title"
   },
-  "notificationsPushDividendBody": "{symbol} 於 {date} 發放股利：現金 {cash}、股票 {shares} 股。",
+  "notificationsPushDividendBody": "有股利發放，開啟 AssetPilot 查看詳情。",
   "@notificationsPushDividendBody": {
     "description": "Web path: notifications.push.dividend.body",
-    "x-webPath": "notifications.push.dividend.body",
-    "placeholders": {
-      "symbol": {},
-      "date": {},
-      "cash": {},
-      "shares": {}
-    }
+    "x-webPath": "notifications.push.dividend.body"
   },
   "notificationsPushTestTitle": "測試推播通知",
   "@notificationsPushTestTitle": {
@@ -9627,5 +9608,15 @@
   "@navNotifications": {
     "description": "Web path: nav.notifications",
     "x-webPath": "nav.notifications"
+  },
+  "notificationsPushGenericTitle": "AssetPilot 通知",
+  "@notificationsPushGenericTitle": {
+    "description": "Web path: notifications.push.generic.title",
+    "x-webPath": "notifications.push.generic.title"
+  },
+  "notificationsPushGenericBody": "有一則通知，開啟 AssetPilot 查看詳情。",
+  "@notificationsPushGenericBody": {
+    "description": "Web path: notifications.push.generic.body",
+    "x-webPath": "notifications.push.generic.body"
   }
 }

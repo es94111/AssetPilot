@@ -9549,54 +9549,35 @@
       "error": {}
     }
   },
-  "notificationsPushBillDueTitle": "क्रेडिट कार्ड स्टेटमेंट बंद",
+  "notificationsPushBillDueTitle": "बिल देय अनुस्मारक",
   "@notificationsPushBillDueTitle": {
     "description": "Web path: notifications.push.billDue.title",
     "x-webPath": "notifications.push.billDue.title"
   },
-  "notificationsPushBillDueBody": "{account} ने {date} को क्लोज़ किया, इस चक्र में {amount}।",
+  "notificationsPushBillDueBody": "एक बिल देय है। विवरण देखने के लिए AssetPilot खोलें।",
   "@notificationsPushBillDueBody": {
     "description": "Web path: notifications.push.billDue.body",
-    "x-webPath": "notifications.push.billDue.body",
-    "placeholders": {
-      "account": {},
-      "date": {},
-      "amount": {}
-    }
+    "x-webPath": "notifications.push.billDue.body"
   },
-  "notificationsPushBudgetExceededTitle": "“{category}” बजट से अधिक",
+  "notificationsPushBudgetExceededTitle": "बजट से अधिक",
   "@notificationsPushBudgetExceededTitle": {
     "description": "Web path: notifications.push.budgetExceeded.title",
-    "x-webPath": "notifications.push.budgetExceeded.title",
-    "placeholders": {
-      "category": {}
-    }
+    "x-webPath": "notifications.push.budgetExceeded.title"
   },
-  "notificationsPushBudgetExceededBody": "{month}: {budget} में से {used} उपयोग।",
+  "notificationsPushBudgetExceededBody": "एक बजट पार हो गया। विवरण देखने के लिए AssetPilot खोलें।",
   "@notificationsPushBudgetExceededBody": {
     "description": "Web path: notifications.push.budgetExceeded.body",
-    "x-webPath": "notifications.push.budgetExceeded.body",
-    "placeholders": {
-      "month": {},
-      "budget": {},
-      "used": {}
-    }
+    "x-webPath": "notifications.push.budgetExceeded.body"
   },
   "notificationsPushDividendTitle": "लाभांश भुगतान अनुस्मारक",
   "@notificationsPushDividendTitle": {
     "description": "Web path: notifications.push.dividend.title",
     "x-webPath": "notifications.push.dividend.title"
   },
-  "notificationsPushDividendBody": "{symbol} ने {date} को लाभांश दिया: नकद {cash}, स्टॉक {shares} शेयर।",
+  "notificationsPushDividendBody": "लाभांश का भुगतान हुआ। विवरण देखने के लिए AssetPilot खोलें।",
   "@notificationsPushDividendBody": {
     "description": "Web path: notifications.push.dividend.body",
-    "x-webPath": "notifications.push.dividend.body",
-    "placeholders": {
-      "symbol": {},
-      "date": {},
-      "cash": {},
-      "shares": {}
-    }
+    "x-webPath": "notifications.push.dividend.body"
   },
   "notificationsPushTestTitle": "परीक्षण पुश सूचना",
   "@notificationsPushTestTitle": {
@@ -9612,5 +9593,15 @@
   "@navNotifications": {
     "description": "Web path: nav.notifications",
     "x-webPath": "nav.notifications"
+  },
+  "notificationsPushGenericTitle": "AssetPilot सूचना",
+  "@notificationsPushGenericTitle": {
+    "description": "Web path: notifications.push.generic.title",
+    "x-webPath": "notifications.push.generic.title"
+  },
+  "notificationsPushGenericBody": "आपके पास एक सूचना है। विवरण देखने के लिए AssetPilot खोलें।",
+  "@notificationsPushGenericBody": {
+    "description": "Web path: notifications.push.generic.body",
+    "x-webPath": "notifications.push.generic.body"
   }
 }

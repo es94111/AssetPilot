@@ -10,7 +10,7 @@
 // 每種事件都收斂成 lib/webPushCore.ts 的 PushEvent，event_key 由事件本身決定
 // （帳單週期／預算年月／股利列 id），因此重複偵測不會重複推播。
 
-import { queryAll, queryOne } from './db';
+import { queryAll, queryOne, getDB, saveDB } from './db';
 import { creditCardStatementCycle, categoryFromAccountType, normalizeStatementClosingDay } from './accountHelpers';
 import { isValidIanaTimezone, partsInTz } from './userTime';
 import { dispatchPushEvent, type PushDispatchResult } from './webPush';
@@ -24,6 +24,9 @@ import {
   type PushPreferences,
 } from './webPushCore';
 import { getUserPushPreferences } from './webPush';
+import { uid } from './userDefaults';
+import { createBoundedCooldownCache } from './ttlCooldown';
+import { isWebPushConfigured } from './webPushConfig';
 
 /** 事件來源資料列（欄位皆為 DB 原樣的字串／數字）。 */
 type Row = Record<string, string | number | null>;
@@ -281,7 +284,19 @@ export function scanPushEvents(
  * 真正防重複的是 web_push_send_log 的 UNIQUE 條件，冷卻僅為效能最佳化。
  */
 const DISPATCH_COOLDOWN_MS = 60 * 1000;
-const lastDispatchAt = new Map<string, number>();
+const DISPATCH_COOLDOWN_MAX_ENTRIES = 10_000;
+const dispatchCooldowns = createBoundedCooldownCache(
+  DISPATCH_COOLDOWN_MS,
+  DISPATCH_COOLDOWN_MAX_ENTRIES,
+);
+
+export function __getDispatchCooldownSizeForTests(now = Date.now()): number {
+  return dispatchCooldowns.size(now);
+}
+
+export function __resetDispatchCooldownsForTests(): void {
+  dispatchCooldowns.clear();
+}
 
 export async function dispatchDuePushEvents(
   userId: string,
@@ -289,11 +304,9 @@ export async function dispatchDuePushEvents(
   now: number = Date.now(),
 ): Promise<{ preferences: PushPreferences; results: PushDispatchResult[] }> {
   const key = String(userId);
-  if (now - Number(lastDispatchAt.get(key) || 0) < DISPATCH_COOLDOWN_MS) {
+  if (!dispatchCooldowns.tryAcquire(key, now)) {
     return { preferences: getUserPushPreferences(userId), results: [] };
   }
-  lastDispatchAt.set(key, now);
-
   const { preferences, events } = scanPushEvents(userId, timezone, now);
   const results: PushDispatchResult[] = [];
   for (const event of events) {
@@ -312,6 +325,145 @@ export async function dispatchDuePushEvents(
     }
   }
   return { preferences, results };
+}
+
+let scheduledPushScan: ReturnType<typeof setInterval> | null = null;
+let scheduledPushScanInFlight = false;
+const PUSH_SCHEDULE_SCAN_INTERVAL_MS = 5 * 60 * 1000;
+export const PUSH_SCHEDULE_LEASE_MS = 15 * 60 * 1000;
+const PUSH_SCHEDULE_HEARTBEAT_MS = 15 * 1000;
+export const PUSH_SCHEDULE_PAGE_SIZE = 100;
+export const PUSH_SCHEDULE_LOCK_NAME = 'event-scan';
+
+/** Atomically claim the shared lease; other replicas skip while it is unexpired. */
+export function acquirePushSchedulerLease(owner: string, now = Date.now()): boolean {
+  const db = getDB();
+  db.run(
+    `UPDATE web_push_scheduler_locks
+     SET lock_owner = ?, lock_until = ?
+     WHERE lock_name = ? AND (lock_until <= ? OR lock_owner = ?)`,
+    [owner, now + PUSH_SCHEDULE_LEASE_MS, PUSH_SCHEDULE_LOCK_NAME, now, owner],
+  );
+  return db.getRowsModified() > 0;
+}
+
+export function renewPushSchedulerLease(owner: string, now = Date.now()): boolean {
+  const db = getDB();
+  db.run(
+    `UPDATE web_push_scheduler_locks SET lock_until = ?
+     WHERE lock_name = ? AND lock_owner = ? AND lock_until > ?`,
+    [now + PUSH_SCHEDULE_LEASE_MS, PUSH_SCHEDULE_LOCK_NAME, owner, now],
+  );
+  return db.getRowsModified() > 0;
+}
+
+export function releasePushSchedulerLease(owner: string): void {
+  getDB().run(
+    `UPDATE web_push_scheduler_locks SET lock_owner = '', lock_until = 0
+     WHERE lock_name = ? AND lock_owner = ?`,
+    [PUSH_SCHEDULE_LOCK_NAME, owner],
+  );
+}
+
+function yieldToEventLoop(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+/**
+ * Scan active subscribers in bounded user-id pages. A PostgreSQL-backed lease allows
+ * recovery after process crashes while avoiding duplicate all-user sweeps across replicas.
+ * The heartbeat extends the lease during slow delivery; send-log UNIQUE constraints remain
+ * the final exactly-once guard if a lease expires or a process loses ownership mid-page.
+ */
+export async function runDuePushEventsForAllUsers(
+  now: number = Date.now(),
+  options: { onlyUserId?: string } = {},
+): Promise<number> {
+  // Skip the lease on a replica with VAPID keys that differ from the shared DB marker.
+  // Otherwise that replica could win the lease but cannot deliver with the cluster's key.
+  if (!isWebPushConfigured()) return 0;
+  const leaseOwner = uid();
+  if (!acquirePushSchedulerLease(leaseOwner)) return 0;
+
+  let leaseLost = false;
+  const heartbeat = setInterval(() => {
+    try {
+      if (!renewPushSchedulerLease(leaseOwner)) leaseLost = true;
+    } catch (error) {
+      leaseLost = true;
+      console.error('[web-push] scheduler lease renewal failed', error);
+    }
+  }, PUSH_SCHEDULE_HEARTBEAT_MS);
+  (heartbeat as unknown as { unref?: () => void }).unref?.();
+
+  let scanned = 0;
+  let afterUserId = '';
+  try {
+    while (!leaseLost) {
+      const users = queryAll(
+        `SELECT u.id, u.timezone
+         FROM users u
+         WHERE u.is_active = 1 AND u.id > ?
+           AND (? = '' OR u.id = ?)
+           AND EXISTS (
+             SELECT 1 FROM web_push_subscriptions s
+             WHERE s.user_id = u.id AND s.disabled_at = 0
+           )
+         ORDER BY u.id
+         LIMIT ?`,
+        [afterUserId, options.onlyUserId || '', options.onlyUserId || '', PUSH_SCHEDULE_PAGE_SIZE],
+      ) as unknown as Array<{ id: string | number; timezone?: string | number | null }>;
+      if (users.length === 0) break;
+
+      for (const user of users) {
+        if (leaseLost) break;
+        const userId = String(user.id);
+        afterUserId = userId;
+        try {
+          await dispatchDuePushEvents(
+            userId,
+            String(user.timezone || 'Asia/Taipei'),
+            now,
+          );
+          scanned += 1;
+        } catch (error) {
+          console.error('[web-push] scheduled user scan failed', {
+            userId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+      if (users.length < PUSH_SCHEDULE_PAGE_SIZE || leaseLost) break;
+      await yieldToEventLoop();
+    }
+    return scanned;
+  } finally {
+    clearInterval(heartbeat);
+    releasePushSchedulerLease(leaseOwner);
+  }
+}
+
+/**
+ * Start a low-frequency Node-runtime sweep so notifications still reach users who are
+ * not currently making authenticated requests. The timer is unref'ed to avoid keeping
+ * an otherwise idle process alive; the scan runs on startup and every five minutes while
+ * the application process is active. Multiple instances are safe because event delivery
+ * is idempotent in web_push_send_log.
+ */
+export function startWebPushScheduler(): void {
+  if (scheduledPushScan) return;
+
+  const run = () => {
+    if (scheduledPushScanInFlight) return;
+    scheduledPushScanInFlight = true;
+    void runDuePushEventsForAllUsers()
+      .catch((error) => console.error('[web-push] scheduled scan failed', error))
+      .finally(() => { scheduledPushScanInFlight = false; });
+  };
+
+  run();
+  scheduledPushScan = setInterval(run, PUSH_SCHEDULE_SCAN_INTERVAL_MS);
+  (scheduledPushScan as unknown as { unref?: () => void }).unref?.();
 }
 
 export { defaultPushPreferences };

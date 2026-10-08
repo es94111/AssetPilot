@@ -6250,4 +6250,216 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationsPushGenericBody =>
       'You have a notification. Open AssetPilot to view details.';
+
+  @override
+  String get navCloudInvoice => 'Cloud invoices';
+
+  @override
+  String get settingsInvoicesTitle => 'Cloud invoice carrier';
+
+  @override
+  String get settingsInvoicesDescription =>
+      'After linking your mobile barcode carrier, you can manually sync cloud invoices from the Ministry of Finance e-invoice platform into transaction drafts for review before posting.';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => 'Mobile barcode carrier';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      'The carrier verification code is stored encrypted with AES-256-GCM. Only the masked barcode is displayed, and no API ever returns the verification code.';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => 'Mobile barcode carrier';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      'Format: a slash followed by 7 uppercase alphanumeric characters, for example /ABC1234.';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => 'Verification code';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder =>
+      '6-20 alphanumeric characters';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      'The carrier verification code set on the Ministry of Finance e-invoice platform. It is used only to query your own cloud invoices.';
+
+  @override
+  String get settingsInvoicesBindButton => 'Link carrier';
+
+  @override
+  String get settingsInvoicesBinding => 'Linking…';
+
+  @override
+  String get settingsInvoicesBindSuccess => 'Carrier linked';
+
+  @override
+  String get settingsInvoicesBindFailed => 'Could not link carrier';
+
+  @override
+  String get settingsInvoicesUnbindButton => 'Unlink';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      'Unlink this mobile barcode carrier? Existing invoice drafts and posted transactions are kept.';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => 'Carrier unlinked';
+
+  @override
+  String get settingsInvoicesUnbindFailed => 'Could not unlink carrier';
+
+  @override
+  String get settingsInvoicesNoCarriers =>
+      'No mobile barcode carrier linked yet';
+
+  @override
+  String get settingsInvoicesSyncNow => 'Sync now';
+
+  @override
+  String get settingsInvoicesSyncing => 'Syncing…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return 'Added $created, duplicates $duplicates, skipped $skipped';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => 'Sync failed';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      'The Ministry of Finance e-invoice API is not configured, so syncing is unavailable.';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return 'Last synced: $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => 'Never synced';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return 'The last sync failed. Try again in $seconds seconds.';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => 'Cloud invoice drafts';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      'Only confirmed invoices create transactions. Unconfirmed drafts never affect your statistics.';
+
+  @override
+  String get settingsInvoicesNoDrafts => 'No cloud invoices yet';
+
+  @override
+  String get settingsInvoicesFilterStatus => 'Status';
+
+  @override
+  String get settingsInvoicesStatusAll => 'All';
+
+  @override
+  String get settingsInvoicesStatusDraft => 'Draft';
+
+  @override
+  String get settingsInvoicesStatusImported => 'Posted';
+
+  @override
+  String get settingsInvoicesStatusDismissed => 'Dismissed';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => 'Invoice number';
+
+  @override
+  String get settingsInvoicesColDate => 'Invoice date';
+
+  @override
+  String get settingsInvoicesColSeller => 'Store';
+
+  @override
+  String get settingsInvoicesColAmount => 'Amount';
+
+  @override
+  String get settingsInvoicesColStatus => 'Status';
+
+  @override
+  String get settingsInvoicesColActions => 'Actions';
+
+  @override
+  String get settingsInvoicesConfirmButton => 'Confirm';
+
+  @override
+  String get settingsInvoicesConfirmTitle => 'Confirm invoice';
+
+  @override
+  String get settingsInvoicesAccountLabel => 'Account';
+
+  @override
+  String get settingsInvoicesCategoryLabel => 'Category';
+
+  @override
+  String get settingsInvoicesNoteLabel => 'Note (optional)';
+
+  @override
+  String get settingsInvoicesSelectAccount => 'No account';
+
+  @override
+  String get settingsInvoicesSelectCategory => 'No category';
+
+  @override
+  String get settingsInvoicesSubmit => 'Create transaction';
+
+  @override
+  String get settingsInvoicesSubmitting => 'Creating…';
+
+  @override
+  String get settingsInvoicesDismissButton => 'Dismiss';
+
+  @override
+  String get settingsInvoicesDismissConfirm =>
+      'Dismiss this invoice? No transaction will be created.';
+
+  @override
+  String get settingsInvoicesDismissSuccess => 'Invoice dismissed';
+
+  @override
+  String get settingsInvoicesDismissFailed => 'Could not dismiss invoice';
+
+  @override
+  String get settingsInvoicesImportSuccess => 'Transaction created';
+
+  @override
+  String get settingsInvoicesImportFailed => 'Could not create transaction';
+
+  @override
+  String get settingsInvoicesLoadFailed => 'Failed to load';
+
+  @override
+  String get settingsInvoicesColLastSync => 'Last sync';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => 'Scheduled sync';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      'When enabled, invoices sync automatically at most once per hour while you use the app. Failed syncs keep their error state and back off instead of retrying automatically.';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed =>
+      'Could not update scheduled sync';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      'Query cloud e-invoices by mobile barcode through the configured provider API endpoint.';
 }

@@ -6222,4 +6222,215 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get notificationsPushGenericBody =>
       'لديك إشعار. افتح AssetPilot لعرض التفاصيل.';
+
+  @override
+  String get navCloudInvoice => 'الفواتير السحابية';
+
+  @override
+  String get settingsInvoicesTitle => 'حامل الفواتير السحابية';
+
+  @override
+  String get settingsInvoicesDescription =>
+      'بعد ربط حامل الرمز الشريطي للهاتف، يمكنك مزامنة الفواتير السحابية يدويًا من منصة الفاتورة الإلكترونية وتحويلها إلى مسودات معاملات لمراجعتها قبل ترحيلها.';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => 'حامل الرمز الشريطي للهاتف';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      'يُخزَّن رمز التحقق مشفَّرًا باستخدام AES-256-GCM. لا يظهر إلا الرمز الشريطي المقنَّع، ولا تُرجع أي واجهة برمجية رمز التحقق.';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => 'حامل الرمز الشريطي للهاتف';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      'الصيغة: شرطة مائلة متبوعة بـ 7 أحرف أبجدية رقمية كبيرة، مثل /ABC1234.';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => 'رمز التحقق';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder =>
+      '6 إلى 20 حرفًا أبجديًا رقميًا';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      'رمز التحقق المُعيَّن على منصة الفاتورة الإلكترونية، ويُستخدم فقط للاستعلام عن فواتيرك.';
+
+  @override
+  String get settingsInvoicesBindButton => 'ربط الحامل';
+
+  @override
+  String get settingsInvoicesBinding => 'جارٍ الربط…';
+
+  @override
+  String get settingsInvoicesBindSuccess => 'تم ربط الحامل';
+
+  @override
+  String get settingsInvoicesBindFailed => 'تعذّر ربط الحامل';
+
+  @override
+  String get settingsInvoicesUnbindButton => 'إلغاء الربط';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      'هل تريد إلغاء ربط حامل الرمز الشريطي؟ سيتم الاحتفاظ بالمسودات والمعاملات المرحّلة.';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => 'تم إلغاء ربط الحامل';
+
+  @override
+  String get settingsInvoicesUnbindFailed => 'تعذّر إلغاء ربط الحامل';
+
+  @override
+  String get settingsInvoicesNoCarriers => 'لم يتم ربط أي حامل بعد';
+
+  @override
+  String get settingsInvoicesSyncNow => 'مزامنة الآن';
+
+  @override
+  String get settingsInvoicesSyncing => 'جارٍ المزامنة…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return 'تمت الإضافة $created، مكررة $duplicates، متجاهلة $skipped';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => 'فشلت المزامنة';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      'لم يتم إعداد واجهة الفاتورة الإلكترونية، لذا لا تتوفر المزامنة حاليًا.';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return 'آخر مزامنة: $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => 'لم تتم المزامنة';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return 'فشلت المزامنة الأخيرة. أعد المحاولة بعد $seconds ثانية.';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => 'مسودات الفواتير السحابية';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      'لا تُنشئ المعاملات إلا من الفواتير المؤكَّدة، ولا تؤثر المسودات على إحصاءاتك.';
+
+  @override
+  String get settingsInvoicesNoDrafts => 'لا توجد فواتير سحابية بعد';
+
+  @override
+  String get settingsInvoicesFilterStatus => 'الحالة';
+
+  @override
+  String get settingsInvoicesStatusAll => 'الكل';
+
+  @override
+  String get settingsInvoicesStatusDraft => 'مسودة';
+
+  @override
+  String get settingsInvoicesStatusImported => 'مُرحَّلة';
+
+  @override
+  String get settingsInvoicesStatusDismissed => 'متجاهلة';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => 'رقم الفاتورة';
+
+  @override
+  String get settingsInvoicesColDate => 'تاريخ الفاتورة';
+
+  @override
+  String get settingsInvoicesColSeller => 'المتجر';
+
+  @override
+  String get settingsInvoicesColAmount => 'المبلغ';
+
+  @override
+  String get settingsInvoicesColStatus => 'الحالة';
+
+  @override
+  String get settingsInvoicesColActions => 'إجراءات';
+
+  @override
+  String get settingsInvoicesConfirmButton => 'تأكيد';
+
+  @override
+  String get settingsInvoicesConfirmTitle => 'تأكيد الفاتورة';
+
+  @override
+  String get settingsInvoicesAccountLabel => 'الحساب';
+
+  @override
+  String get settingsInvoicesCategoryLabel => 'الفئة';
+
+  @override
+  String get settingsInvoicesNoteLabel => 'ملاحظة (اختياري)';
+
+  @override
+  String get settingsInvoicesSelectAccount => 'بدون حساب';
+
+  @override
+  String get settingsInvoicesSelectCategory => 'بدون فئة';
+
+  @override
+  String get settingsInvoicesSubmit => 'إنشاء معاملة';
+
+  @override
+  String get settingsInvoicesSubmitting => 'جارٍ الإنشاء…';
+
+  @override
+  String get settingsInvoicesDismissButton => 'تجاهل';
+
+  @override
+  String get settingsInvoicesDismissConfirm =>
+      'هل تريد تجاهل هذه الفاتورة؟ لن تُنشأ أي معاملة.';
+
+  @override
+  String get settingsInvoicesDismissSuccess => 'تم تجاهل الفاتورة';
+
+  @override
+  String get settingsInvoicesDismissFailed => 'تعذّر تجاهل الفاتورة';
+
+  @override
+  String get settingsInvoicesImportSuccess => 'تم إنشاء المعاملة';
+
+  @override
+  String get settingsInvoicesImportFailed => 'تعذّر إنشاء المعاملة';
+
+  @override
+  String get settingsInvoicesLoadFailed => 'فشل التحميل';
+
+  @override
+  String get settingsInvoicesColLastSync => 'آخر مزامنة';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => 'مزامنة مجدولة';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      'عند التمكين، تتم مزامنة الفواتير تلقائيًا مرة واحدة على الأكثر كل ساعة أثناء استخدامك التطبيق. تحتفظ المزامنات الفاشلة بحالة الخطأ وتتوقف مؤقتًا بدلًا من إعادة المحاولة تلقائيًا.';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed =>
+      'تعذّر تحديث المزامنة المجدولة';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      'الاستعلام عن الفواتير الإلكترونية السحابية باستخدام باركود الهاتف عبر نقطة نهاية API للمزوّد المُعدّ.';
 }

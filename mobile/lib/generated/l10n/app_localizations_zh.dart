@@ -5958,6 +5958,211 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notificationsPushGenericBody => '有一則通知，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get navCloudInvoice => '雲端發票';
+
+  @override
+  String get settingsInvoicesTitle => '雲端發票載具';
+
+  @override
+  String get settingsInvoicesDescription =>
+      '綁定手機條碼載具後，可手動同步財政部電子發票平台的雲端發票，轉為交易草稿供您確認後入帳。';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => '手機條碼載具';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      '載具驗證碼以 AES-256-GCM 加密儲存，畫面上只會顯示遮罩後的條碼，任何 API 都不會回傳驗證碼。';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => '手機條碼載具';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint => '格式為斜線加上 7 碼大寫英數字，例如 /ABC1234。';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => '驗證碼';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder => '6~20 碼英數字';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      '於財政部電子發票整合服務平台設定的載具驗證碼，僅用於查詢您的雲端發票。';
+
+  @override
+  String get settingsInvoicesBindButton => '綁定載具';
+
+  @override
+  String get settingsInvoicesBinding => '綁定中…';
+
+  @override
+  String get settingsInvoicesBindSuccess => '載具綁定成功';
+
+  @override
+  String get settingsInvoicesBindFailed => '載具綁定失敗';
+
+  @override
+  String get settingsInvoicesUnbindButton => '解除綁定';
+
+  @override
+  String get settingsInvoicesUnbindConfirm => '確定解除此手機條碼載具？既有的發票草稿與已入帳交易會保留。';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => '已解除載具綁定';
+
+  @override
+  String get settingsInvoicesUnbindFailed => '解除綁定失敗';
+
+  @override
+  String get settingsInvoicesNoCarriers => '尚未綁定任何手機條碼載具';
+
+  @override
+  String get settingsInvoicesSyncNow => '立即同步';
+
+  @override
+  String get settingsInvoicesSyncing => '同步中…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return '新增 $created 筆、重複 $duplicates 筆、略過 $skipped 筆';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => '同步失敗';
+
+  @override
+  String get settingsInvoicesSyncDegraded => '財政部電子發票 API 尚未設定，暫時無法同步';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return '上次同步：$date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => '尚未同步';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return '上次同步失敗，請於 $seconds 秒後再試';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => '雲端發票草稿';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      '只有確認入帳的發票才會建立交易；未確認的草稿不會影響收支統計。';
+
+  @override
+  String get settingsInvoicesNoDrafts => '尚無雲端發票';
+
+  @override
+  String get settingsInvoicesFilterStatus => '狀態';
+
+  @override
+  String get settingsInvoicesStatusAll => '全部';
+
+  @override
+  String get settingsInvoicesStatusDraft => '草稿';
+
+  @override
+  String get settingsInvoicesStatusImported => '已入帳';
+
+  @override
+  String get settingsInvoicesStatusDismissed => '已略過';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => '發票號碼';
+
+  @override
+  String get settingsInvoicesColDate => '發票日期';
+
+  @override
+  String get settingsInvoicesColSeller => '店家';
+
+  @override
+  String get settingsInvoicesColAmount => '金額';
+
+  @override
+  String get settingsInvoicesColStatus => '狀態';
+
+  @override
+  String get settingsInvoicesColActions => '操作';
+
+  @override
+  String get settingsInvoicesConfirmButton => '確認入帳';
+
+  @override
+  String get settingsInvoicesConfirmTitle => '確認發票入帳';
+
+  @override
+  String get settingsInvoicesAccountLabel => '帳戶';
+
+  @override
+  String get settingsInvoicesCategoryLabel => '分類';
+
+  @override
+  String get settingsInvoicesNoteLabel => '備註（選填）';
+
+  @override
+  String get settingsInvoicesSelectAccount => '不指定帳戶';
+
+  @override
+  String get settingsInvoicesSelectCategory => '不指定分類';
+
+  @override
+  String get settingsInvoicesSubmit => '建立交易';
+
+  @override
+  String get settingsInvoicesSubmitting => '建立中…';
+
+  @override
+  String get settingsInvoicesDismissButton => '略過';
+
+  @override
+  String get settingsInvoicesDismissConfirm => '確定略過此發票？略過後不會建立交易。';
+
+  @override
+  String get settingsInvoicesDismissSuccess => '已略過此發票';
+
+  @override
+  String get settingsInvoicesDismissFailed => '略過失敗';
+
+  @override
+  String get settingsInvoicesImportSuccess => '已建立交易';
+
+  @override
+  String get settingsInvoicesImportFailed => '入帳失敗';
+
+  @override
+  String get settingsInvoicesLoadFailed => '載入失敗';
+
+  @override
+  String get settingsInvoicesColLastSync => '上次同步';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => '排程同步';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      '開啟後，使用本服務時最多每小時自動同步一次；同步失敗會保留錯誤狀態並暫停重試，不會自動重試。';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed => '更新排程同步設定失敗';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      '透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -11917,6 +12122,211 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get notificationsPushGenericBody => '有一条通知，打开 AssetPilot 查看详情。';
+
+  @override
+  String get navCloudInvoice => '云端发票';
+
+  @override
+  String get settingsInvoicesTitle => '云端发票载具';
+
+  @override
+  String get settingsInvoicesDescription =>
+      '绑定手机条码载具后，可手动同步财政部电子发票平台的云端发票，转为交易草稿供您确认后入账。';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => '手机条码载具';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      '载具验证码以 AES-256-GCM 加密存储，画面上只显示遮罩后的条码，任何 API 都不会返回验证码。';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => '手机条码载具';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint => '格式为斜线加 7 位大写英数字，例如 /ABC1234。';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => '验证码';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder => '6~20 位英数字';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      '在财政部电子发票整合服务平台设置的载具验证码，仅用于查询您的云端发票。';
+
+  @override
+  String get settingsInvoicesBindButton => '绑定载具';
+
+  @override
+  String get settingsInvoicesBinding => '绑定中…';
+
+  @override
+  String get settingsInvoicesBindSuccess => '载具绑定成功';
+
+  @override
+  String get settingsInvoicesBindFailed => '载具绑定失败';
+
+  @override
+  String get settingsInvoicesUnbindButton => '解除绑定';
+
+  @override
+  String get settingsInvoicesUnbindConfirm => '确定解除此手机条码载具？既有的发票草稿与已入账交易会保留。';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => '已解除载具绑定';
+
+  @override
+  String get settingsInvoicesUnbindFailed => '解除绑定失败';
+
+  @override
+  String get settingsInvoicesNoCarriers => '尚未绑定任何手机条码载具';
+
+  @override
+  String get settingsInvoicesSyncNow => '立即同步';
+
+  @override
+  String get settingsInvoicesSyncing => '同步中…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return '新增 $created 笔、重复 $duplicates 笔、略过 $skipped 笔';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => '同步失败';
+
+  @override
+  String get settingsInvoicesSyncDegraded => '财政部电子发票 API 尚未设置，暂时无法同步';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return '上次同步：$date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => '尚未同步';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return '上次同步失败，请在 $seconds 秒后重试';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => '云端发票草稿';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      '只有确认入账的发票才会创建交易；未确认的草稿不会影响收支统计。';
+
+  @override
+  String get settingsInvoicesNoDrafts => '尚无云端发票';
+
+  @override
+  String get settingsInvoicesFilterStatus => '状态';
+
+  @override
+  String get settingsInvoicesStatusAll => '全部';
+
+  @override
+  String get settingsInvoicesStatusDraft => '草稿';
+
+  @override
+  String get settingsInvoicesStatusImported => '已入账';
+
+  @override
+  String get settingsInvoicesStatusDismissed => '已略过';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => '发票号码';
+
+  @override
+  String get settingsInvoicesColDate => '发票日期';
+
+  @override
+  String get settingsInvoicesColSeller => '店家';
+
+  @override
+  String get settingsInvoicesColAmount => '金额';
+
+  @override
+  String get settingsInvoicesColStatus => '状态';
+
+  @override
+  String get settingsInvoicesColActions => '操作';
+
+  @override
+  String get settingsInvoicesConfirmButton => '确认入账';
+
+  @override
+  String get settingsInvoicesConfirmTitle => '确认发票入账';
+
+  @override
+  String get settingsInvoicesAccountLabel => '账户';
+
+  @override
+  String get settingsInvoicesCategoryLabel => '分类';
+
+  @override
+  String get settingsInvoicesNoteLabel => '备注（选填）';
+
+  @override
+  String get settingsInvoicesSelectAccount => '不指定账户';
+
+  @override
+  String get settingsInvoicesSelectCategory => '不指定分类';
+
+  @override
+  String get settingsInvoicesSubmit => '创建交易';
+
+  @override
+  String get settingsInvoicesSubmitting => '创建中…';
+
+  @override
+  String get settingsInvoicesDismissButton => '略过';
+
+  @override
+  String get settingsInvoicesDismissConfirm => '确定略过此发票？略过后不会创建交易。';
+
+  @override
+  String get settingsInvoicesDismissSuccess => '已略过此发票';
+
+  @override
+  String get settingsInvoicesDismissFailed => '略过失败';
+
+  @override
+  String get settingsInvoicesImportSuccess => '已创建交易';
+
+  @override
+  String get settingsInvoicesImportFailed => '入账失败';
+
+  @override
+  String get settingsInvoicesLoadFailed => '加载失败';
+
+  @override
+  String get settingsInvoicesColLastSync => '上次同步';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => '排程同步';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      '开启后，使用本服务时最多每小时自动同步一次；同步失败会保留错误状态并暂停重试，不会自动重试。';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed => '更新排程同步设置失败';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      '通过配置的供应商 API 端点，使用手机条码查询云端电子发票。';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -17873,4 +18283,209 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get notificationsPushGenericBody => '有一則通知，開啟 AssetPilot 查看詳情。';
+
+  @override
+  String get navCloudInvoice => '雲端發票';
+
+  @override
+  String get settingsInvoicesTitle => '雲端發票載具';
+
+  @override
+  String get settingsInvoicesDescription =>
+      '綁定手機條碼載具後，可手動同步財政部電子發票平台的雲端發票，轉為交易草稿供您確認後入帳。';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => '手機條碼載具';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      '載具驗證碼以 AES-256-GCM 加密儲存，畫面上只會顯示遮罩後的條碼，任何 API 都不會回傳驗證碼。';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => '手機條碼載具';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint => '格式為斜線加上 7 碼大寫英數字，例如 /ABC1234。';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => '驗證碼';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder => '6~20 碼英數字';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      '於財政部電子發票整合服務平台設定的載具驗證碼，僅用於查詢您的雲端發票。';
+
+  @override
+  String get settingsInvoicesBindButton => '綁定載具';
+
+  @override
+  String get settingsInvoicesBinding => '綁定中…';
+
+  @override
+  String get settingsInvoicesBindSuccess => '載具綁定成功';
+
+  @override
+  String get settingsInvoicesBindFailed => '載具綁定失敗';
+
+  @override
+  String get settingsInvoicesUnbindButton => '解除綁定';
+
+  @override
+  String get settingsInvoicesUnbindConfirm => '確定解除此手機條碼載具？既有的發票草稿與已入帳交易會保留。';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => '已解除載具綁定';
+
+  @override
+  String get settingsInvoicesUnbindFailed => '解除綁定失敗';
+
+  @override
+  String get settingsInvoicesNoCarriers => '尚未綁定任何手機條碼載具';
+
+  @override
+  String get settingsInvoicesSyncNow => '立即同步';
+
+  @override
+  String get settingsInvoicesSyncing => '同步中…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return '新增 $created 筆、重複 $duplicates 筆、略過 $skipped 筆';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => '同步失敗';
+
+  @override
+  String get settingsInvoicesSyncDegraded => '財政部電子發票 API 尚未設定，暫時無法同步';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return '上次同步：$date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => '尚未同步';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return '上次同步失敗，請於 $seconds 秒後再試';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => '雲端發票草稿';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      '只有確認入帳的發票才會建立交易；未確認的草稿不會影響收支統計。';
+
+  @override
+  String get settingsInvoicesNoDrafts => '尚無雲端發票';
+
+  @override
+  String get settingsInvoicesFilterStatus => '狀態';
+
+  @override
+  String get settingsInvoicesStatusAll => '全部';
+
+  @override
+  String get settingsInvoicesStatusDraft => '草稿';
+
+  @override
+  String get settingsInvoicesStatusImported => '已入帳';
+
+  @override
+  String get settingsInvoicesStatusDismissed => '已略過';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => '發票號碼';
+
+  @override
+  String get settingsInvoicesColDate => '發票日期';
+
+  @override
+  String get settingsInvoicesColSeller => '店家';
+
+  @override
+  String get settingsInvoicesColAmount => '金額';
+
+  @override
+  String get settingsInvoicesColStatus => '狀態';
+
+  @override
+  String get settingsInvoicesColActions => '操作';
+
+  @override
+  String get settingsInvoicesConfirmButton => '確認入帳';
+
+  @override
+  String get settingsInvoicesConfirmTitle => '確認發票入帳';
+
+  @override
+  String get settingsInvoicesAccountLabel => '帳戶';
+
+  @override
+  String get settingsInvoicesCategoryLabel => '分類';
+
+  @override
+  String get settingsInvoicesNoteLabel => '備註（選填）';
+
+  @override
+  String get settingsInvoicesSelectAccount => '不指定帳戶';
+
+  @override
+  String get settingsInvoicesSelectCategory => '不指定分類';
+
+  @override
+  String get settingsInvoicesSubmit => '建立交易';
+
+  @override
+  String get settingsInvoicesSubmitting => '建立中…';
+
+  @override
+  String get settingsInvoicesDismissButton => '略過';
+
+  @override
+  String get settingsInvoicesDismissConfirm => '確定略過此發票？略過後不會建立交易。';
+
+  @override
+  String get settingsInvoicesDismissSuccess => '已略過此發票';
+
+  @override
+  String get settingsInvoicesDismissFailed => '略過失敗';
+
+  @override
+  String get settingsInvoicesImportSuccess => '已建立交易';
+
+  @override
+  String get settingsInvoicesImportFailed => '入帳失敗';
+
+  @override
+  String get settingsInvoicesLoadFailed => '載入失敗';
+
+  @override
+  String get settingsInvoicesColLastSync => '上次同步';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => '排程同步';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      '開啟後，使用本服務時最多每小時自動同步一次；同步失敗會保留錯誤狀態並暫停重試，不會自動重試。';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed => '更新排程同步設定失敗';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      '透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。';
 }

@@ -28,13 +28,21 @@ export function activeLedgerFileUrl(url: string): string {
   return ledgerFileUrl(url, getActiveLedgerId());
 }
 
-export async function apiFetch(url: string, options: RequestInit = {}) {
-  const headers = new Headers(options.headers);
-  if (isLedgerDataPath(url.split('?')[0])) {
+export async function apiFetch(
+  url: string,
+  options: RequestInit & { skipActiveLedger?: boolean } = {},
+) {
+  const { skipActiveLedger = false, ...fetchOptions } = options;
+  const headers = new Headers(fetchOptions.headers);
+  if (!skipActiveLedger && isLedgerDataPath(url.split('?')[0])) {
     const ledgerId = getActiveLedgerHeaders()['x-ledger-id'];
     if (ledgerId && !headers.has('x-ledger-id')) headers.set('x-ledger-id', ledgerId);
   }
-  const res = await fetch(url, { ...options, credentials: options.credentials || 'include', headers });
+  const res = await fetch(url, {
+    ...fetchOptions,
+    credentials: fetchOptions.credentials || 'include',
+    headers,
+  });
   if (res.status === 401) { window.location.href = '/login'; throw new Error('請先登入'); }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -55,6 +63,11 @@ export function isNetworkError(error: unknown): boolean {
 
 export async function apiGet(url: string) {
   return apiFetch(url, { cache: 'no-store' });
+}
+
+/** Read a personal-scoped resource without inheriting the currently selected shared ledger. */
+export async function apiGetPersonal(url: string) {
+  return apiFetch(url, { cache: 'no-store', skipActiveLedger: true });
 }
 
 export async function apiPost(url: string, body?: any) {

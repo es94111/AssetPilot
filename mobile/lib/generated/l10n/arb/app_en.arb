@@ -9618,5 +9618,331 @@
   "@notificationsPushGenericBody": {
     "description": "Web path: notifications.push.generic.body",
     "x-webPath": "notifications.push.generic.body"
+  },
+  "navCloudInvoice": "Cloud invoices",
+  "@navCloudInvoice": {
+    "description": "Web path: nav.cloudInvoice",
+    "x-webPath": "nav.cloudInvoice"
+  },
+  "settingsInvoicesTitle": "Cloud invoice carrier",
+  "@settingsInvoicesTitle": {
+    "description": "Web path: settings.invoices.title",
+    "x-webPath": "settings.invoices.title"
+  },
+  "settingsInvoicesDescription": "After linking your mobile barcode carrier, you can manually sync cloud invoices from the Ministry of Finance e-invoice platform into transaction drafts for review before posting.",
+  "@settingsInvoicesDescription": {
+    "description": "Web path: settings.invoices.description",
+    "x-webPath": "settings.invoices.description"
+  },
+  "settingsInvoicesCarrierSectionTitle": "Mobile barcode carrier",
+  "@settingsInvoicesCarrierSectionTitle": {
+    "description": "Web path: settings.invoices.carrierSectionTitle",
+    "x-webPath": "settings.invoices.carrierSectionTitle"
+  },
+  "settingsInvoicesCarrierSectionDescription": "The carrier verification code is stored encrypted with AES-256-GCM. Only the masked barcode is displayed, and no API ever returns the verification code.",
+  "@settingsInvoicesCarrierSectionDescription": {
+    "description": "Web path: settings.invoices.carrierSectionDescription",
+    "x-webPath": "settings.invoices.carrierSectionDescription"
+  },
+  "settingsInvoicesBarcodeLabel": "Mobile barcode carrier",
+  "@settingsInvoicesBarcodeLabel": {
+    "description": "Web path: settings.invoices.barcodeLabel",
+    "x-webPath": "settings.invoices.barcodeLabel"
+  },
+  "settingsInvoicesBarcodePlaceholder": "/ABC1234",
+  "@settingsInvoicesBarcodePlaceholder": {
+    "description": "Web path: settings.invoices.barcodePlaceholder",
+    "x-webPath": "settings.invoices.barcodePlaceholder"
+  },
+  "settingsInvoicesBarcodeHint": "Format: a slash followed by 7 uppercase alphanumeric characters, for example /ABC1234.",
+  "@settingsInvoicesBarcodeHint": {
+    "description": "Web path: settings.invoices.barcodeHint",
+    "x-webPath": "settings.invoices.barcodeHint"
+  },
+  "settingsInvoicesVerifyCodeLabel": "Verification code",
+  "@settingsInvoicesVerifyCodeLabel": {
+    "description": "Web path: settings.invoices.verifyCodeLabel",
+    "x-webPath": "settings.invoices.verifyCodeLabel"
+  },
+  "settingsInvoicesVerifyCodePlaceholder": "6-20 alphanumeric characters",
+  "@settingsInvoicesVerifyCodePlaceholder": {
+    "description": "Web path: settings.invoices.verifyCodePlaceholder",
+    "x-webPath": "settings.invoices.verifyCodePlaceholder"
+  },
+  "settingsInvoicesVerifyCodeHint": "The carrier verification code set on the Ministry of Finance e-invoice platform. It is used only to query your own cloud invoices.",
+  "@settingsInvoicesVerifyCodeHint": {
+    "description": "Web path: settings.invoices.verifyCodeHint",
+    "x-webPath": "settings.invoices.verifyCodeHint"
+  },
+  "settingsInvoicesBindButton": "Link carrier",
+  "@settingsInvoicesBindButton": {
+    "description": "Web path: settings.invoices.bindButton",
+    "x-webPath": "settings.invoices.bindButton"
+  },
+  "settingsInvoicesBinding": "Linking…",
+  "@settingsInvoicesBinding": {
+    "description": "Web path: settings.invoices.binding",
+    "x-webPath": "settings.invoices.binding"
+  },
+  "settingsInvoicesBindSuccess": "Carrier linked",
+  "@settingsInvoicesBindSuccess": {
+    "description": "Web path: settings.invoices.bindSuccess",
+    "x-webPath": "settings.invoices.bindSuccess"
+  },
+  "settingsInvoicesBindFailed": "Could not link carrier",
+  "@settingsInvoicesBindFailed": {
+    "description": "Web path: settings.invoices.bindFailed",
+    "x-webPath": "settings.invoices.bindFailed"
+  },
+  "settingsInvoicesUnbindButton": "Unlink",
+  "@settingsInvoicesUnbindButton": {
+    "description": "Web path: settings.invoices.unbindButton",
+    "x-webPath": "settings.invoices.unbindButton"
+  },
+  "settingsInvoicesUnbindConfirm": "Unlink this mobile barcode carrier? Existing invoice drafts and posted transactions are kept.",
+  "@settingsInvoicesUnbindConfirm": {
+    "description": "Web path: settings.invoices.unbindConfirm",
+    "x-webPath": "settings.invoices.unbindConfirm"
+  },
+  "settingsInvoicesUnbindSuccess": "Carrier unlinked",
+  "@settingsInvoicesUnbindSuccess": {
+    "description": "Web path: settings.invoices.unbindSuccess",
+    "x-webPath": "settings.invoices.unbindSuccess"
+  },
+  "settingsInvoicesUnbindFailed": "Could not unlink carrier",
+  "@settingsInvoicesUnbindFailed": {
+    "description": "Web path: settings.invoices.unbindFailed",
+    "x-webPath": "settings.invoices.unbindFailed"
+  },
+  "settingsInvoicesNoCarriers": "No mobile barcode carrier linked yet",
+  "@settingsInvoicesNoCarriers": {
+    "description": "Web path: settings.invoices.noCarriers",
+    "x-webPath": "settings.invoices.noCarriers"
+  },
+  "settingsInvoicesSyncNow": "Sync now",
+  "@settingsInvoicesSyncNow": {
+    "description": "Web path: settings.invoices.syncNow",
+    "x-webPath": "settings.invoices.syncNow"
+  },
+  "settingsInvoicesSyncing": "Syncing…",
+  "@settingsInvoicesSyncing": {
+    "description": "Web path: settings.invoices.syncing",
+    "x-webPath": "settings.invoices.syncing"
+  },
+  "settingsInvoicesSyncSummary": "Added {created}, duplicates {duplicates}, skipped {skipped}",
+  "@settingsInvoicesSyncSummary": {
+    "description": "Web path: settings.invoices.syncSummary",
+    "x-webPath": "settings.invoices.syncSummary",
+    "placeholders": {
+      "created": {},
+      "duplicates": {},
+      "skipped": {}
+    }
+  },
+  "settingsInvoicesSyncFailed": "Sync failed",
+  "@settingsInvoicesSyncFailed": {
+    "description": "Web path: settings.invoices.syncFailed",
+    "x-webPath": "settings.invoices.syncFailed"
+  },
+  "settingsInvoicesSyncDegraded": "The Ministry of Finance e-invoice API is not configured, so syncing is unavailable.",
+  "@settingsInvoicesSyncDegraded": {
+    "description": "Web path: settings.invoices.syncDegraded",
+    "x-webPath": "settings.invoices.syncDegraded"
+  },
+  "settingsInvoicesLastSyncAt": "Last synced: {date}",
+  "@settingsInvoicesLastSyncAt": {
+    "description": "Web path: settings.invoices.lastSyncAt",
+    "x-webPath": "settings.invoices.lastSyncAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsInvoicesNeverSynced": "Never synced",
+  "@settingsInvoicesNeverSynced": {
+    "description": "Web path: settings.invoices.neverSynced",
+    "x-webPath": "settings.invoices.neverSynced"
+  },
+  "settingsInvoicesRetryAfter": "The last sync failed. Try again in {seconds} seconds.",
+  "@settingsInvoicesRetryAfter": {
+    "description": "Web path: settings.invoices.retryAfter",
+    "x-webPath": "settings.invoices.retryAfter",
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "settingsInvoicesDraftsTitle": "Cloud invoice drafts",
+  "@settingsInvoicesDraftsTitle": {
+    "description": "Web path: settings.invoices.draftsTitle",
+    "x-webPath": "settings.invoices.draftsTitle"
+  },
+  "settingsInvoicesDraftsDescription": "Only confirmed invoices create transactions. Unconfirmed drafts never affect your statistics.",
+  "@settingsInvoicesDraftsDescription": {
+    "description": "Web path: settings.invoices.draftsDescription",
+    "x-webPath": "settings.invoices.draftsDescription"
+  },
+  "settingsInvoicesNoDrafts": "No cloud invoices yet",
+  "@settingsInvoicesNoDrafts": {
+    "description": "Web path: settings.invoices.noDrafts",
+    "x-webPath": "settings.invoices.noDrafts"
+  },
+  "settingsInvoicesFilterStatus": "Status",
+  "@settingsInvoicesFilterStatus": {
+    "description": "Web path: settings.invoices.filterStatus",
+    "x-webPath": "settings.invoices.filterStatus"
+  },
+  "settingsInvoicesStatusAll": "All",
+  "@settingsInvoicesStatusAll": {
+    "description": "Web path: settings.invoices.statusAll",
+    "x-webPath": "settings.invoices.statusAll"
+  },
+  "settingsInvoicesStatusDraft": "Draft",
+  "@settingsInvoicesStatusDraft": {
+    "description": "Web path: settings.invoices.statusDraft",
+    "x-webPath": "settings.invoices.statusDraft"
+  },
+  "settingsInvoicesStatusImported": "Posted",
+  "@settingsInvoicesStatusImported": {
+    "description": "Web path: settings.invoices.statusImported",
+    "x-webPath": "settings.invoices.statusImported"
+  },
+  "settingsInvoicesStatusDismissed": "Dismissed",
+  "@settingsInvoicesStatusDismissed": {
+    "description": "Web path: settings.invoices.statusDismissed",
+    "x-webPath": "settings.invoices.statusDismissed"
+  },
+  "settingsInvoicesColInvoiceNumber": "Invoice number",
+  "@settingsInvoicesColInvoiceNumber": {
+    "description": "Web path: settings.invoices.colInvoiceNumber",
+    "x-webPath": "settings.invoices.colInvoiceNumber"
+  },
+  "settingsInvoicesColDate": "Invoice date",
+  "@settingsInvoicesColDate": {
+    "description": "Web path: settings.invoices.colDate",
+    "x-webPath": "settings.invoices.colDate"
+  },
+  "settingsInvoicesColSeller": "Store",
+  "@settingsInvoicesColSeller": {
+    "description": "Web path: settings.invoices.colSeller",
+    "x-webPath": "settings.invoices.colSeller"
+  },
+  "settingsInvoicesColAmount": "Amount",
+  "@settingsInvoicesColAmount": {
+    "description": "Web path: settings.invoices.colAmount",
+    "x-webPath": "settings.invoices.colAmount"
+  },
+  "settingsInvoicesColStatus": "Status",
+  "@settingsInvoicesColStatus": {
+    "description": "Web path: settings.invoices.colStatus",
+    "x-webPath": "settings.invoices.colStatus"
+  },
+  "settingsInvoicesColActions": "Actions",
+  "@settingsInvoicesColActions": {
+    "description": "Web path: settings.invoices.colActions",
+    "x-webPath": "settings.invoices.colActions"
+  },
+  "settingsInvoicesConfirmButton": "Confirm",
+  "@settingsInvoicesConfirmButton": {
+    "description": "Web path: settings.invoices.confirmButton",
+    "x-webPath": "settings.invoices.confirmButton"
+  },
+  "settingsInvoicesConfirmTitle": "Confirm invoice",
+  "@settingsInvoicesConfirmTitle": {
+    "description": "Web path: settings.invoices.confirmTitle",
+    "x-webPath": "settings.invoices.confirmTitle"
+  },
+  "settingsInvoicesAccountLabel": "Account",
+  "@settingsInvoicesAccountLabel": {
+    "description": "Web path: settings.invoices.accountLabel",
+    "x-webPath": "settings.invoices.accountLabel"
+  },
+  "settingsInvoicesCategoryLabel": "Category",
+  "@settingsInvoicesCategoryLabel": {
+    "description": "Web path: settings.invoices.categoryLabel",
+    "x-webPath": "settings.invoices.categoryLabel"
+  },
+  "settingsInvoicesNoteLabel": "Note (optional)",
+  "@settingsInvoicesNoteLabel": {
+    "description": "Web path: settings.invoices.noteLabel",
+    "x-webPath": "settings.invoices.noteLabel"
+  },
+  "settingsInvoicesSelectAccount": "No account",
+  "@settingsInvoicesSelectAccount": {
+    "description": "Web path: settings.invoices.selectAccount",
+    "x-webPath": "settings.invoices.selectAccount"
+  },
+  "settingsInvoicesSelectCategory": "No category",
+  "@settingsInvoicesSelectCategory": {
+    "description": "Web path: settings.invoices.selectCategory",
+    "x-webPath": "settings.invoices.selectCategory"
+  },
+  "settingsInvoicesSubmit": "Create transaction",
+  "@settingsInvoicesSubmit": {
+    "description": "Web path: settings.invoices.submit",
+    "x-webPath": "settings.invoices.submit"
+  },
+  "settingsInvoicesSubmitting": "Creating…",
+  "@settingsInvoicesSubmitting": {
+    "description": "Web path: settings.invoices.submitting",
+    "x-webPath": "settings.invoices.submitting"
+  },
+  "settingsInvoicesDismissButton": "Dismiss",
+  "@settingsInvoicesDismissButton": {
+    "description": "Web path: settings.invoices.dismissButton",
+    "x-webPath": "settings.invoices.dismissButton"
+  },
+  "settingsInvoicesDismissConfirm": "Dismiss this invoice? No transaction will be created.",
+  "@settingsInvoicesDismissConfirm": {
+    "description": "Web path: settings.invoices.dismissConfirm",
+    "x-webPath": "settings.invoices.dismissConfirm"
+  },
+  "settingsInvoicesDismissSuccess": "Invoice dismissed",
+  "@settingsInvoicesDismissSuccess": {
+    "description": "Web path: settings.invoices.dismissSuccess",
+    "x-webPath": "settings.invoices.dismissSuccess"
+  },
+  "settingsInvoicesDismissFailed": "Could not dismiss invoice",
+  "@settingsInvoicesDismissFailed": {
+    "description": "Web path: settings.invoices.dismissFailed",
+    "x-webPath": "settings.invoices.dismissFailed"
+  },
+  "settingsInvoicesImportSuccess": "Transaction created",
+  "@settingsInvoicesImportSuccess": {
+    "description": "Web path: settings.invoices.importSuccess",
+    "x-webPath": "settings.invoices.importSuccess"
+  },
+  "settingsInvoicesImportFailed": "Could not create transaction",
+  "@settingsInvoicesImportFailed": {
+    "description": "Web path: settings.invoices.importFailed",
+    "x-webPath": "settings.invoices.importFailed"
+  },
+  "settingsInvoicesLoadFailed": "Failed to load",
+  "@settingsInvoicesLoadFailed": {
+    "description": "Web path: settings.invoices.loadFailed",
+    "x-webPath": "settings.invoices.loadFailed"
+  },
+  "settingsInvoicesColLastSync": "Last sync",
+  "@settingsInvoicesColLastSync": {
+    "description": "Web path: settings.invoices.colLastSync",
+    "x-webPath": "settings.invoices.colLastSync"
+  },
+  "settingsInvoicesAutoSyncLabel": "Scheduled sync",
+  "@settingsInvoicesAutoSyncLabel": {
+    "description": "Web path: settings.invoices.autoSyncLabel",
+    "x-webPath": "settings.invoices.autoSyncLabel"
+  },
+  "settingsInvoicesAutoSyncHint": "When enabled, invoices sync automatically at most once per hour while you use the app. Failed syncs keep their error state and back off instead of retrying automatically.",
+  "@settingsInvoicesAutoSyncHint": {
+    "description": "Web path: settings.invoices.autoSyncHint",
+    "x-webPath": "settings.invoices.autoSyncHint"
+  },
+  "settingsInvoicesAutoSyncUpdateFailed": "Could not update scheduled sync",
+  "@settingsInvoicesAutoSyncUpdateFailed": {
+    "description": "Web path: settings.invoices.autoSyncUpdateFailed",
+    "x-webPath": "settings.invoices.autoSyncUpdateFailed"
+  },
+  "publicApiCreditsPageDescriptionsEinvoice": "Query cloud e-invoices by mobile barcode through the configured provider API endpoint.",
+  "@publicApiCreditsPageDescriptionsEinvoice": {
+    "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
+    "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
   }
 }

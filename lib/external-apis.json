@@ -78,5 +78,13 @@
     "attribution": null,
     "supportsFree": false,
     "supportsPaid": true
+  },
+  {
+    "name": "財政部電子發票整合服務平台",
+    "description": "依手機條碼載具查詢雲端發票並轉為交易草稿（端點可設定；未設定時停用）",
+    "url": "https://www.einvoice.nat.gov.tw/",
+    "attribution": null,
+    "supportsFree": true,
+    "supportsPaid": false
   }
 ]

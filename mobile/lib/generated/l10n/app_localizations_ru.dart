@@ -6320,4 +6320,215 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get notificationsPushGenericBody =>
       'У вас новое уведомление. Откройте AssetPilot, чтобы посмотреть подробности.';
+
+  @override
+  String get navCloudInvoice => 'Облачные счета';
+
+  @override
+  String get settingsInvoicesTitle => 'Носитель облачных счетов';
+
+  @override
+  String get settingsInvoicesDescription =>
+      'После привязки мобильного штрихкода вы можете вручную синхронизировать облачные счета с платформы электронных счетов в черновики транзакций для проверки перед проведением.';
+
+  @override
+  String get settingsInvoicesCarrierSectionTitle => 'Мобильный штрихкод';
+
+  @override
+  String get settingsInvoicesCarrierSectionDescription =>
+      'Код проверки хранится в зашифрованном виде (AES-256-GCM). Отображается только маскированный штрихкод, и ни один API не возвращает код проверки.';
+
+  @override
+  String get settingsInvoicesBarcodeLabel => 'Мобильный штрихкод';
+
+  @override
+  String get settingsInvoicesBarcodePlaceholder => '/ABC1234';
+
+  @override
+  String get settingsInvoicesBarcodeHint =>
+      'Формат: косая черта и 7 заглавных буквенно-цифровых символов, например /ABC1234.';
+
+  @override
+  String get settingsInvoicesVerifyCodeLabel => 'Код проверки';
+
+  @override
+  String get settingsInvoicesVerifyCodePlaceholder =>
+      '6–20 буквенно-цифровых символов';
+
+  @override
+  String get settingsInvoicesVerifyCodeHint =>
+      'Код проверки, заданный на платформе электронных счетов. Используется только для запроса ваших облачных счетов.';
+
+  @override
+  String get settingsInvoicesBindButton => 'Привязать носитель';
+
+  @override
+  String get settingsInvoicesBinding => 'Привязка…';
+
+  @override
+  String get settingsInvoicesBindSuccess => 'Носитель привязан';
+
+  @override
+  String get settingsInvoicesBindFailed => 'Не удалось привязать носитель';
+
+  @override
+  String get settingsInvoicesUnbindButton => 'Отвязать';
+
+  @override
+  String get settingsInvoicesUnbindConfirm =>
+      'Отвязать этот мобильный штрихкод? Существующие черновики и проведённые транзакции сохранятся.';
+
+  @override
+  String get settingsInvoicesUnbindSuccess => 'Носитель отвязан';
+
+  @override
+  String get settingsInvoicesUnbindFailed => 'Не удалось отвязать носитель';
+
+  @override
+  String get settingsInvoicesNoCarriers => 'Носитель ещё не привязан';
+
+  @override
+  String get settingsInvoicesSyncNow => 'Синхронизировать';
+
+  @override
+  String get settingsInvoicesSyncing => 'Синхронизация…';
+
+  @override
+  String settingsInvoicesSyncSummary(
+    Object created,
+    Object duplicates,
+    Object skipped,
+  ) {
+    return 'Добавлено $created, дубликатов $duplicates, пропущено $skipped';
+  }
+
+  @override
+  String get settingsInvoicesSyncFailed => 'Ошибка синхронизации';
+
+  @override
+  String get settingsInvoicesSyncDegraded =>
+      'API электронных счетов не настроен, синхронизация недоступна.';
+
+  @override
+  String settingsInvoicesLastSyncAt(Object date) {
+    return 'Последняя синхронизация: $date';
+  }
+
+  @override
+  String get settingsInvoicesNeverSynced => 'Синхронизация не выполнялась';
+
+  @override
+  String settingsInvoicesRetryAfter(Object seconds) {
+    return 'Последняя синхронизация не удалась. Повторите через $seconds с.';
+  }
+
+  @override
+  String get settingsInvoicesDraftsTitle => 'Черновики облачных счетов';
+
+  @override
+  String get settingsInvoicesDraftsDescription =>
+      'Транзакции создаются только из подтверждённых счетов; черновики не влияют на статистику.';
+
+  @override
+  String get settingsInvoicesNoDrafts => 'Облачных счетов пока нет';
+
+  @override
+  String get settingsInvoicesFilterStatus => 'Статус';
+
+  @override
+  String get settingsInvoicesStatusAll => 'Все';
+
+  @override
+  String get settingsInvoicesStatusDraft => 'Черновик';
+
+  @override
+  String get settingsInvoicesStatusImported => 'Проведён';
+
+  @override
+  String get settingsInvoicesStatusDismissed => 'Пропущен';
+
+  @override
+  String get settingsInvoicesColInvoiceNumber => 'Номер счета';
+
+  @override
+  String get settingsInvoicesColDate => 'Дата счета';
+
+  @override
+  String get settingsInvoicesColSeller => 'Магазин';
+
+  @override
+  String get settingsInvoicesColAmount => 'Сумма';
+
+  @override
+  String get settingsInvoicesColStatus => 'Статус';
+
+  @override
+  String get settingsInvoicesColActions => 'Действия';
+
+  @override
+  String get settingsInvoicesConfirmButton => 'Подтвердить';
+
+  @override
+  String get settingsInvoicesConfirmTitle => 'Подтвердить счёт';
+
+  @override
+  String get settingsInvoicesAccountLabel => 'Счёт';
+
+  @override
+  String get settingsInvoicesCategoryLabel => 'Категория';
+
+  @override
+  String get settingsInvoicesNoteLabel => 'Примечание (необязательно)';
+
+  @override
+  String get settingsInvoicesSelectAccount => 'Без счёта';
+
+  @override
+  String get settingsInvoicesSelectCategory => 'Без категории';
+
+  @override
+  String get settingsInvoicesSubmit => 'Создать транзакцию';
+
+  @override
+  String get settingsInvoicesSubmitting => 'Создание…';
+
+  @override
+  String get settingsInvoicesDismissButton => 'Пропустить';
+
+  @override
+  String get settingsInvoicesDismissConfirm =>
+      'Пропустить этот счёт? Транзакция не будет создана.';
+
+  @override
+  String get settingsInvoicesDismissSuccess => 'Счёт пропущен';
+
+  @override
+  String get settingsInvoicesDismissFailed => 'Не удалось пропустить счёт';
+
+  @override
+  String get settingsInvoicesImportSuccess => 'Транзакция создана';
+
+  @override
+  String get settingsInvoicesImportFailed => 'Не удалось создать транзакцию';
+
+  @override
+  String get settingsInvoicesLoadFailed => 'Ошибка загрузки';
+
+  @override
+  String get settingsInvoicesColLastSync => 'Последняя синхронизация';
+
+  @override
+  String get settingsInvoicesAutoSyncLabel => 'Плановая синхронизация';
+
+  @override
+  String get settingsInvoicesAutoSyncHint =>
+      'Когда включено, счета синхронизируются автоматически не чаще раза в час во время использования приложения. Неудачные синхронизации сохраняют состояние ошибки и ждут вместо автоматического повтора.';
+
+  @override
+  String get settingsInvoicesAutoSyncUpdateFailed =>
+      'Не удалось обновить плановую синхронизацию';
+
+  @override
+  String get publicApiCreditsPageDescriptionsEinvoice =>
+      'Запрос облачных электронных счетов по мобильному штрихкоду через настроенную конечную точку API поставщика.';
 }

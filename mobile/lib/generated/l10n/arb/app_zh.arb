@@ -9618,5 +9618,331 @@
   "@notificationsPushGenericBody": {
     "description": "Web path: notifications.push.generic.body",
     "x-webPath": "notifications.push.generic.body"
+  },
+  "navCloudInvoice": "雲端發票",
+  "@navCloudInvoice": {
+    "description": "Web path: nav.cloudInvoice",
+    "x-webPath": "nav.cloudInvoice"
+  },
+  "settingsInvoicesTitle": "雲端發票載具",
+  "@settingsInvoicesTitle": {
+    "description": "Web path: settings.invoices.title",
+    "x-webPath": "settings.invoices.title"
+  },
+  "settingsInvoicesDescription": "綁定手機條碼載具後，可手動同步財政部電子發票平台的雲端發票，轉為交易草稿供您確認後入帳。",
+  "@settingsInvoicesDescription": {
+    "description": "Web path: settings.invoices.description",
+    "x-webPath": "settings.invoices.description"
+  },
+  "settingsInvoicesCarrierSectionTitle": "手機條碼載具",
+  "@settingsInvoicesCarrierSectionTitle": {
+    "description": "Web path: settings.invoices.carrierSectionTitle",
+    "x-webPath": "settings.invoices.carrierSectionTitle"
+  },
+  "settingsInvoicesCarrierSectionDescription": "載具驗證碼以 AES-256-GCM 加密儲存，畫面上只會顯示遮罩後的條碼，任何 API 都不會回傳驗證碼。",
+  "@settingsInvoicesCarrierSectionDescription": {
+    "description": "Web path: settings.invoices.carrierSectionDescription",
+    "x-webPath": "settings.invoices.carrierSectionDescription"
+  },
+  "settingsInvoicesBarcodeLabel": "手機條碼載具",
+  "@settingsInvoicesBarcodeLabel": {
+    "description": "Web path: settings.invoices.barcodeLabel",
+    "x-webPath": "settings.invoices.barcodeLabel"
+  },
+  "settingsInvoicesBarcodePlaceholder": "/ABC1234",
+  "@settingsInvoicesBarcodePlaceholder": {
+    "description": "Web path: settings.invoices.barcodePlaceholder",
+    "x-webPath": "settings.invoices.barcodePlaceholder"
+  },
+  "settingsInvoicesBarcodeHint": "格式為斜線加上 7 碼大寫英數字，例如 /ABC1234。",
+  "@settingsInvoicesBarcodeHint": {
+    "description": "Web path: settings.invoices.barcodeHint",
+    "x-webPath": "settings.invoices.barcodeHint"
+  },
+  "settingsInvoicesVerifyCodeLabel": "驗證碼",
+  "@settingsInvoicesVerifyCodeLabel": {
+    "description": "Web path: settings.invoices.verifyCodeLabel",
+    "x-webPath": "settings.invoices.verifyCodeLabel"
+  },
+  "settingsInvoicesVerifyCodePlaceholder": "6~20 碼英數字",
+  "@settingsInvoicesVerifyCodePlaceholder": {
+    "description": "Web path: settings.invoices.verifyCodePlaceholder",
+    "x-webPath": "settings.invoices.verifyCodePlaceholder"
+  },
+  "settingsInvoicesVerifyCodeHint": "於財政部電子發票整合服務平台設定的載具驗證碼，僅用於查詢您的雲端發票。",
+  "@settingsInvoicesVerifyCodeHint": {
+    "description": "Web path: settings.invoices.verifyCodeHint",
+    "x-webPath": "settings.invoices.verifyCodeHint"
+  },
+  "settingsInvoicesBindButton": "綁定載具",
+  "@settingsInvoicesBindButton": {
+    "description": "Web path: settings.invoices.bindButton",
+    "x-webPath": "settings.invoices.bindButton"
+  },
+  "settingsInvoicesBinding": "綁定中…",
+  "@settingsInvoicesBinding": {
+    "description": "Web path: settings.invoices.binding",
+    "x-webPath": "settings.invoices.binding"
+  },
+  "settingsInvoicesBindSuccess": "載具綁定成功",
+  "@settingsInvoicesBindSuccess": {
+    "description": "Web path: settings.invoices.bindSuccess",
+    "x-webPath": "settings.invoices.bindSuccess"
+  },
+  "settingsInvoicesBindFailed": "載具綁定失敗",
+  "@settingsInvoicesBindFailed": {
+    "description": "Web path: settings.invoices.bindFailed",
+    "x-webPath": "settings.invoices.bindFailed"
+  },
+  "settingsInvoicesUnbindButton": "解除綁定",
+  "@settingsInvoicesUnbindButton": {
+    "description": "Web path: settings.invoices.unbindButton",
+    "x-webPath": "settings.invoices.unbindButton"
+  },
+  "settingsInvoicesUnbindConfirm": "確定解除此手機條碼載具？既有的發票草稿與已入帳交易會保留。",
+  "@settingsInvoicesUnbindConfirm": {
+    "description": "Web path: settings.invoices.unbindConfirm",
+    "x-webPath": "settings.invoices.unbindConfirm"
+  },
+  "settingsInvoicesUnbindSuccess": "已解除載具綁定",
+  "@settingsInvoicesUnbindSuccess": {
+    "description": "Web path: settings.invoices.unbindSuccess",
+    "x-webPath": "settings.invoices.unbindSuccess"
+  },
+  "settingsInvoicesUnbindFailed": "解除綁定失敗",
+  "@settingsInvoicesUnbindFailed": {
+    "description": "Web path: settings.invoices.unbindFailed",
+    "x-webPath": "settings.invoices.unbindFailed"
+  },
+  "settingsInvoicesNoCarriers": "尚未綁定任何手機條碼載具",
+  "@settingsInvoicesNoCarriers": {
+    "description": "Web path: settings.invoices.noCarriers",
+    "x-webPath": "settings.invoices.noCarriers"
+  },
+  "settingsInvoicesSyncNow": "立即同步",
+  "@settingsInvoicesSyncNow": {
+    "description": "Web path: settings.invoices.syncNow",
+    "x-webPath": "settings.invoices.syncNow"
+  },
+  "settingsInvoicesSyncing": "同步中…",
+  "@settingsInvoicesSyncing": {
+    "description": "Web path: settings.invoices.syncing",
+    "x-webPath": "settings.invoices.syncing"
+  },
+  "settingsInvoicesSyncSummary": "新增 {created} 筆、重複 {duplicates} 筆、略過 {skipped} 筆",
+  "@settingsInvoicesSyncSummary": {
+    "description": "Web path: settings.invoices.syncSummary",
+    "x-webPath": "settings.invoices.syncSummary",
+    "placeholders": {
+      "created": {},
+      "duplicates": {},
+      "skipped": {}
+    }
+  },
+  "settingsInvoicesSyncFailed": "同步失敗",
+  "@settingsInvoicesSyncFailed": {
+    "description": "Web path: settings.invoices.syncFailed",
+    "x-webPath": "settings.invoices.syncFailed"
+  },
+  "settingsInvoicesSyncDegraded": "財政部電子發票 API 尚未設定，暫時無法同步",
+  "@settingsInvoicesSyncDegraded": {
+    "description": "Web path: settings.invoices.syncDegraded",
+    "x-webPath": "settings.invoices.syncDegraded"
+  },
+  "settingsInvoicesLastSyncAt": "上次同步：{date}",
+  "@settingsInvoicesLastSyncAt": {
+    "description": "Web path: settings.invoices.lastSyncAt",
+    "x-webPath": "settings.invoices.lastSyncAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsInvoicesNeverSynced": "尚未同步",
+  "@settingsInvoicesNeverSynced": {
+    "description": "Web path: settings.invoices.neverSynced",
+    "x-webPath": "settings.invoices.neverSynced"
+  },
+  "settingsInvoicesRetryAfter": "上次同步失敗，請於 {seconds} 秒後再試",
+  "@settingsInvoicesRetryAfter": {
+    "description": "Web path: settings.invoices.retryAfter",
+    "x-webPath": "settings.invoices.retryAfter",
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "settingsInvoicesDraftsTitle": "雲端發票草稿",
+  "@settingsInvoicesDraftsTitle": {
+    "description": "Web path: settings.invoices.draftsTitle",
+    "x-webPath": "settings.invoices.draftsTitle"
+  },
+  "settingsInvoicesDraftsDescription": "只有確認入帳的發票才會建立交易；未確認的草稿不會影響收支統計。",
+  "@settingsInvoicesDraftsDescription": {
+    "description": "Web path: settings.invoices.draftsDescription",
+    "x-webPath": "settings.invoices.draftsDescription"
+  },
+  "settingsInvoicesNoDrafts": "尚無雲端發票",
+  "@settingsInvoicesNoDrafts": {
+    "description": "Web path: settings.invoices.noDrafts",
+    "x-webPath": "settings.invoices.noDrafts"
+  },
+  "settingsInvoicesFilterStatus": "狀態",
+  "@settingsInvoicesFilterStatus": {
+    "description": "Web path: settings.invoices.filterStatus",
+    "x-webPath": "settings.invoices.filterStatus"
+  },
+  "settingsInvoicesStatusAll": "全部",
+  "@settingsInvoicesStatusAll": {
+    "description": "Web path: settings.invoices.statusAll",
+    "x-webPath": "settings.invoices.statusAll"
+  },
+  "settingsInvoicesStatusDraft": "草稿",
+  "@settingsInvoicesStatusDraft": {
+    "description": "Web path: settings.invoices.statusDraft",
+    "x-webPath": "settings.invoices.statusDraft"
+  },
+  "settingsInvoicesStatusImported": "已入帳",
+  "@settingsInvoicesStatusImported": {
+    "description": "Web path: settings.invoices.statusImported",
+    "x-webPath": "settings.invoices.statusImported"
+  },
+  "settingsInvoicesStatusDismissed": "已略過",
+  "@settingsInvoicesStatusDismissed": {
+    "description": "Web path: settings.invoices.statusDismissed",
+    "x-webPath": "settings.invoices.statusDismissed"
+  },
+  "settingsInvoicesColInvoiceNumber": "發票號碼",
+  "@settingsInvoicesColInvoiceNumber": {
+    "description": "Web path: settings.invoices.colInvoiceNumber",
+    "x-webPath": "settings.invoices.colInvoiceNumber"
+  },
+  "settingsInvoicesColDate": "發票日期",
+  "@settingsInvoicesColDate": {
+    "description": "Web path: settings.invoices.colDate",
+    "x-webPath": "settings.invoices.colDate"
+  },
+  "settingsInvoicesColSeller": "店家",
+  "@settingsInvoicesColSeller": {
+    "description": "Web path: settings.invoices.colSeller",
+    "x-webPath": "settings.invoices.colSeller"
+  },
+  "settingsInvoicesColAmount": "金額",
+  "@settingsInvoicesColAmount": {
+    "description": "Web path: settings.invoices.colAmount",
+    "x-webPath": "settings.invoices.colAmount"
+  },
+  "settingsInvoicesColStatus": "狀態",
+  "@settingsInvoicesColStatus": {
+    "description": "Web path: settings.invoices.colStatus",
+    "x-webPath": "settings.invoices.colStatus"
+  },
+  "settingsInvoicesColActions": "操作",
+  "@settingsInvoicesColActions": {
+    "description": "Web path: settings.invoices.colActions",
+    "x-webPath": "settings.invoices.colActions"
+  },
+  "settingsInvoicesConfirmButton": "確認入帳",
+  "@settingsInvoicesConfirmButton": {
+    "description": "Web path: settings.invoices.confirmButton",
+    "x-webPath": "settings.invoices.confirmButton"
+  },
+  "settingsInvoicesConfirmTitle": "確認發票入帳",
+  "@settingsInvoicesConfirmTitle": {
+    "description": "Web path: settings.invoices.confirmTitle",
+    "x-webPath": "settings.invoices.confirmTitle"
+  },
+  "settingsInvoicesAccountLabel": "帳戶",
+  "@settingsInvoicesAccountLabel": {
+    "description": "Web path: settings.invoices.accountLabel",
+    "x-webPath": "settings.invoices.accountLabel"
+  },
+  "settingsInvoicesCategoryLabel": "分類",
+  "@settingsInvoicesCategoryLabel": {
+    "description": "Web path: settings.invoices.categoryLabel",
+    "x-webPath": "settings.invoices.categoryLabel"
+  },
+  "settingsInvoicesNoteLabel": "備註（選填）",
+  "@settingsInvoicesNoteLabel": {
+    "description": "Web path: settings.invoices.noteLabel",
+    "x-webPath": "settings.invoices.noteLabel"
+  },
+  "settingsInvoicesSelectAccount": "不指定帳戶",
+  "@settingsInvoicesSelectAccount": {
+    "description": "Web path: settings.invoices.selectAccount",
+    "x-webPath": "settings.invoices.selectAccount"
+  },
+  "settingsInvoicesSelectCategory": "不指定分類",
+  "@settingsInvoicesSelectCategory": {
+    "description": "Web path: settings.invoices.selectCategory",
+    "x-webPath": "settings.invoices.selectCategory"
+  },
+  "settingsInvoicesSubmit": "建立交易",
+  "@settingsInvoicesSubmit": {
+    "description": "Web path: settings.invoices.submit",
+    "x-webPath": "settings.invoices.submit"
+  },
+  "settingsInvoicesSubmitting": "建立中…",
+  "@settingsInvoicesSubmitting": {
+    "description": "Web path: settings.invoices.submitting",
+    "x-webPath": "settings.invoices.submitting"
+  },
+  "settingsInvoicesDismissButton": "略過",
+  "@settingsInvoicesDismissButton": {
+    "description": "Web path: settings.invoices.dismissButton",
+    "x-webPath": "settings.invoices.dismissButton"
+  },
+  "settingsInvoicesDismissConfirm": "確定略過此發票？略過後不會建立交易。",
+  "@settingsInvoicesDismissConfirm": {
+    "description": "Web path: settings.invoices.dismissConfirm",
+    "x-webPath": "settings.invoices.dismissConfirm"
+  },
+  "settingsInvoicesDismissSuccess": "已略過此發票",
+  "@settingsInvoicesDismissSuccess": {
+    "description": "Web path: settings.invoices.dismissSuccess",
+    "x-webPath": "settings.invoices.dismissSuccess"
+  },
+  "settingsInvoicesDismissFailed": "略過失敗",
+  "@settingsInvoicesDismissFailed": {
+    "description": "Web path: settings.invoices.dismissFailed",
+    "x-webPath": "settings.invoices.dismissFailed"
+  },
+  "settingsInvoicesImportSuccess": "已建立交易",
+  "@settingsInvoicesImportSuccess": {
+    "description": "Web path: settings.invoices.importSuccess",
+    "x-webPath": "settings.invoices.importSuccess"
+  },
+  "settingsInvoicesImportFailed": "入帳失敗",
+  "@settingsInvoicesImportFailed": {
+    "description": "Web path: settings.invoices.importFailed",
+    "x-webPath": "settings.invoices.importFailed"
+  },
+  "settingsInvoicesLoadFailed": "載入失敗",
+  "@settingsInvoicesLoadFailed": {
+    "description": "Web path: settings.invoices.loadFailed",
+    "x-webPath": "settings.invoices.loadFailed"
+  },
+  "settingsInvoicesColLastSync": "上次同步",
+  "@settingsInvoicesColLastSync": {
+    "description": "Web path: settings.invoices.colLastSync",
+    "x-webPath": "settings.invoices.colLastSync"
+  },
+  "settingsInvoicesAutoSyncLabel": "排程同步",
+  "@settingsInvoicesAutoSyncLabel": {
+    "description": "Web path: settings.invoices.autoSyncLabel",
+    "x-webPath": "settings.invoices.autoSyncLabel"
+  },
+  "settingsInvoicesAutoSyncHint": "開啟後，使用本服務時最多每小時自動同步一次；同步失敗會保留錯誤狀態並暫停重試，不會自動重試。",
+  "@settingsInvoicesAutoSyncHint": {
+    "description": "Web path: settings.invoices.autoSyncHint",
+    "x-webPath": "settings.invoices.autoSyncHint"
+  },
+  "settingsInvoicesAutoSyncUpdateFailed": "更新排程同步設定失敗",
+  "@settingsInvoicesAutoSyncUpdateFailed": {
+    "description": "Web path: settings.invoices.autoSyncUpdateFailed",
+    "x-webPath": "settings.invoices.autoSyncUpdateFailed"
+  },
+  "publicApiCreditsPageDescriptionsEinvoice": "透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。",
+  "@publicApiCreditsPageDescriptionsEinvoice": {
+    "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
+    "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
   }
 }

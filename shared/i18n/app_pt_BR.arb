@@ -9603,5 +9603,331 @@
   "@notificationsPushGenericBody": {
     "description": "Web path: notifications.push.generic.body",
     "x-webPath": "notifications.push.generic.body"
+  },
+  "navCloudInvoice": "Faturas na nuvem",
+  "@navCloudInvoice": {
+    "description": "Web path: nav.cloudInvoice",
+    "x-webPath": "nav.cloudInvoice"
+  },
+  "settingsInvoicesTitle": "Portador de faturas na nuvem",
+  "@settingsInvoicesTitle": {
+    "description": "Web path: settings.invoices.title",
+    "x-webPath": "settings.invoices.title"
+  },
+  "settingsInvoicesDescription": "Depois de vincular seu portador de código de barras móvel, você pode sincronizar manualmente as faturas em nuvem da plataforma de nota fiscal eletrônica em rascunhos de transações para revisão antes de lançar.",
+  "@settingsInvoicesDescription": {
+    "description": "Web path: settings.invoices.description",
+    "x-webPath": "settings.invoices.description"
+  },
+  "settingsInvoicesCarrierSectionTitle": "Portador de código de barras móvel",
+  "@settingsInvoicesCarrierSectionTitle": {
+    "description": "Web path: settings.invoices.carrierSectionTitle",
+    "x-webPath": "settings.invoices.carrierSectionTitle"
+  },
+  "settingsInvoicesCarrierSectionDescription": "O código de verificação é armazenado criptografado com AES-256-GCM. Apenas o código de barras mascarado é exibido e nenhuma API retorna o código de verificação.",
+  "@settingsInvoicesCarrierSectionDescription": {
+    "description": "Web path: settings.invoices.carrierSectionDescription",
+    "x-webPath": "settings.invoices.carrierSectionDescription"
+  },
+  "settingsInvoicesBarcodeLabel": "Portador de código de barras móvel",
+  "@settingsInvoicesBarcodeLabel": {
+    "description": "Web path: settings.invoices.barcodeLabel",
+    "x-webPath": "settings.invoices.barcodeLabel"
+  },
+  "settingsInvoicesBarcodePlaceholder": "/ABC1234",
+  "@settingsInvoicesBarcodePlaceholder": {
+    "description": "Web path: settings.invoices.barcodePlaceholder",
+    "x-webPath": "settings.invoices.barcodePlaceholder"
+  },
+  "settingsInvoicesBarcodeHint": "Formato: uma barra seguida de 7 caracteres alfanuméricos maiúsculos, por exemplo /ABC1234.",
+  "@settingsInvoicesBarcodeHint": {
+    "description": "Web path: settings.invoices.barcodeHint",
+    "x-webPath": "settings.invoices.barcodeHint"
+  },
+  "settingsInvoicesVerifyCodeLabel": "Código de verificação",
+  "@settingsInvoicesVerifyCodeLabel": {
+    "description": "Web path: settings.invoices.verifyCodeLabel",
+    "x-webPath": "settings.invoices.verifyCodeLabel"
+  },
+  "settingsInvoicesVerifyCodePlaceholder": "6 a 20 caracteres alfanuméricos",
+  "@settingsInvoicesVerifyCodePlaceholder": {
+    "description": "Web path: settings.invoices.verifyCodePlaceholder",
+    "x-webPath": "settings.invoices.verifyCodePlaceholder"
+  },
+  "settingsInvoicesVerifyCodeHint": "O código de verificação definido na plataforma de nota fiscal eletrônica. Usado apenas para consultar suas próprias faturas.",
+  "@settingsInvoicesVerifyCodeHint": {
+    "description": "Web path: settings.invoices.verifyCodeHint",
+    "x-webPath": "settings.invoices.verifyCodeHint"
+  },
+  "settingsInvoicesBindButton": "Vincular portador",
+  "@settingsInvoicesBindButton": {
+    "description": "Web path: settings.invoices.bindButton",
+    "x-webPath": "settings.invoices.bindButton"
+  },
+  "settingsInvoicesBinding": "Vinculando…",
+  "@settingsInvoicesBinding": {
+    "description": "Web path: settings.invoices.binding",
+    "x-webPath": "settings.invoices.binding"
+  },
+  "settingsInvoicesBindSuccess": "Portador vinculado",
+  "@settingsInvoicesBindSuccess": {
+    "description": "Web path: settings.invoices.bindSuccess",
+    "x-webPath": "settings.invoices.bindSuccess"
+  },
+  "settingsInvoicesBindFailed": "Falha ao vincular o portador",
+  "@settingsInvoicesBindFailed": {
+    "description": "Web path: settings.invoices.bindFailed",
+    "x-webPath": "settings.invoices.bindFailed"
+  },
+  "settingsInvoicesUnbindButton": "Desvincular",
+  "@settingsInvoicesUnbindButton": {
+    "description": "Web path: settings.invoices.unbindButton",
+    "x-webPath": "settings.invoices.unbindButton"
+  },
+  "settingsInvoicesUnbindConfirm": "Desvincular este portador de código de barras? Os rascunhos e lançamentos existentes serão mantidos.",
+  "@settingsInvoicesUnbindConfirm": {
+    "description": "Web path: settings.invoices.unbindConfirm",
+    "x-webPath": "settings.invoices.unbindConfirm"
+  },
+  "settingsInvoicesUnbindSuccess": "Portador desvinculado",
+  "@settingsInvoicesUnbindSuccess": {
+    "description": "Web path: settings.invoices.unbindSuccess",
+    "x-webPath": "settings.invoices.unbindSuccess"
+  },
+  "settingsInvoicesUnbindFailed": "Falha ao desvincular o portador",
+  "@settingsInvoicesUnbindFailed": {
+    "description": "Web path: settings.invoices.unbindFailed",
+    "x-webPath": "settings.invoices.unbindFailed"
+  },
+  "settingsInvoicesNoCarriers": "Nenhum portador vinculado ainda",
+  "@settingsInvoicesNoCarriers": {
+    "description": "Web path: settings.invoices.noCarriers",
+    "x-webPath": "settings.invoices.noCarriers"
+  },
+  "settingsInvoicesSyncNow": "Sincronizar agora",
+  "@settingsInvoicesSyncNow": {
+    "description": "Web path: settings.invoices.syncNow",
+    "x-webPath": "settings.invoices.syncNow"
+  },
+  "settingsInvoicesSyncing": "Sincronizando…",
+  "@settingsInvoicesSyncing": {
+    "description": "Web path: settings.invoices.syncing",
+    "x-webPath": "settings.invoices.syncing"
+  },
+  "settingsInvoicesSyncSummary": "Adicionadas {created}, duplicadas {duplicates}, ignoradas {skipped}",
+  "@settingsInvoicesSyncSummary": {
+    "description": "Web path: settings.invoices.syncSummary",
+    "x-webPath": "settings.invoices.syncSummary",
+    "placeholders": {
+      "created": {},
+      "duplicates": {},
+      "skipped": {}
+    }
+  },
+  "settingsInvoicesSyncFailed": "Falha na sincronização",
+  "@settingsInvoicesSyncFailed": {
+    "description": "Web path: settings.invoices.syncFailed",
+    "x-webPath": "settings.invoices.syncFailed"
+  },
+  "settingsInvoicesSyncDegraded": "A API de nota fiscal eletrônica não está configurada; a sincronização está indisponível.",
+  "@settingsInvoicesSyncDegraded": {
+    "description": "Web path: settings.invoices.syncDegraded",
+    "x-webPath": "settings.invoices.syncDegraded"
+  },
+  "settingsInvoicesLastSyncAt": "Última sincronização: {date}",
+  "@settingsInvoicesLastSyncAt": {
+    "description": "Web path: settings.invoices.lastSyncAt",
+    "x-webPath": "settings.invoices.lastSyncAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsInvoicesNeverSynced": "Nunca sincronizado",
+  "@settingsInvoicesNeverSynced": {
+    "description": "Web path: settings.invoices.neverSynced",
+    "x-webPath": "settings.invoices.neverSynced"
+  },
+  "settingsInvoicesRetryAfter": "A última sincronização falhou. Tente novamente em {seconds} segundos.",
+  "@settingsInvoicesRetryAfter": {
+    "description": "Web path: settings.invoices.retryAfter",
+    "x-webPath": "settings.invoices.retryAfter",
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "settingsInvoicesDraftsTitle": "Rascunhos de faturas",
+  "@settingsInvoicesDraftsTitle": {
+    "description": "Web path: settings.invoices.draftsTitle",
+    "x-webPath": "settings.invoices.draftsTitle"
+  },
+  "settingsInvoicesDraftsDescription": "Somente faturas confirmadas criam transações. Rascunhos não afetam suas estatísticas.",
+  "@settingsInvoicesDraftsDescription": {
+    "description": "Web path: settings.invoices.draftsDescription",
+    "x-webPath": "settings.invoices.draftsDescription"
+  },
+  "settingsInvoicesNoDrafts": "Nenhuma fatura ainda",
+  "@settingsInvoicesNoDrafts": {
+    "description": "Web path: settings.invoices.noDrafts",
+    "x-webPath": "settings.invoices.noDrafts"
+  },
+  "settingsInvoicesFilterStatus": "Status",
+  "@settingsInvoicesFilterStatus": {
+    "description": "Web path: settings.invoices.filterStatus",
+    "x-webPath": "settings.invoices.filterStatus"
+  },
+  "settingsInvoicesStatusAll": "Todas",
+  "@settingsInvoicesStatusAll": {
+    "description": "Web path: settings.invoices.statusAll",
+    "x-webPath": "settings.invoices.statusAll"
+  },
+  "settingsInvoicesStatusDraft": "Rascunho",
+  "@settingsInvoicesStatusDraft": {
+    "description": "Web path: settings.invoices.statusDraft",
+    "x-webPath": "settings.invoices.statusDraft"
+  },
+  "settingsInvoicesStatusImported": "Lançada",
+  "@settingsInvoicesStatusImported": {
+    "description": "Web path: settings.invoices.statusImported",
+    "x-webPath": "settings.invoices.statusImported"
+  },
+  "settingsInvoicesStatusDismissed": "Ignorada",
+  "@settingsInvoicesStatusDismissed": {
+    "description": "Web path: settings.invoices.statusDismissed",
+    "x-webPath": "settings.invoices.statusDismissed"
+  },
+  "settingsInvoicesColInvoiceNumber": "Número da fatura",
+  "@settingsInvoicesColInvoiceNumber": {
+    "description": "Web path: settings.invoices.colInvoiceNumber",
+    "x-webPath": "settings.invoices.colInvoiceNumber"
+  },
+  "settingsInvoicesColDate": "Data da fatura",
+  "@settingsInvoicesColDate": {
+    "description": "Web path: settings.invoices.colDate",
+    "x-webPath": "settings.invoices.colDate"
+  },
+  "settingsInvoicesColSeller": "Estabelecimento",
+  "@settingsInvoicesColSeller": {
+    "description": "Web path: settings.invoices.colSeller",
+    "x-webPath": "settings.invoices.colSeller"
+  },
+  "settingsInvoicesColAmount": "Valor",
+  "@settingsInvoicesColAmount": {
+    "description": "Web path: settings.invoices.colAmount",
+    "x-webPath": "settings.invoices.colAmount"
+  },
+  "settingsInvoicesColStatus": "Status",
+  "@settingsInvoicesColStatus": {
+    "description": "Web path: settings.invoices.colStatus",
+    "x-webPath": "settings.invoices.colStatus"
+  },
+  "settingsInvoicesColActions": "Ações",
+  "@settingsInvoicesColActions": {
+    "description": "Web path: settings.invoices.colActions",
+    "x-webPath": "settings.invoices.colActions"
+  },
+  "settingsInvoicesConfirmButton": "Confirmar",
+  "@settingsInvoicesConfirmButton": {
+    "description": "Web path: settings.invoices.confirmButton",
+    "x-webPath": "settings.invoices.confirmButton"
+  },
+  "settingsInvoicesConfirmTitle": "Confirmar fatura",
+  "@settingsInvoicesConfirmTitle": {
+    "description": "Web path: settings.invoices.confirmTitle",
+    "x-webPath": "settings.invoices.confirmTitle"
+  },
+  "settingsInvoicesAccountLabel": "Conta",
+  "@settingsInvoicesAccountLabel": {
+    "description": "Web path: settings.invoices.accountLabel",
+    "x-webPath": "settings.invoices.accountLabel"
+  },
+  "settingsInvoicesCategoryLabel": "Categoria",
+  "@settingsInvoicesCategoryLabel": {
+    "description": "Web path: settings.invoices.categoryLabel",
+    "x-webPath": "settings.invoices.categoryLabel"
+  },
+  "settingsInvoicesNoteLabel": "Observação (opcional)",
+  "@settingsInvoicesNoteLabel": {
+    "description": "Web path: settings.invoices.noteLabel",
+    "x-webPath": "settings.invoices.noteLabel"
+  },
+  "settingsInvoicesSelectAccount": "Sem conta",
+  "@settingsInvoicesSelectAccount": {
+    "description": "Web path: settings.invoices.selectAccount",
+    "x-webPath": "settings.invoices.selectAccount"
+  },
+  "settingsInvoicesSelectCategory": "Sem categoria",
+  "@settingsInvoicesSelectCategory": {
+    "description": "Web path: settings.invoices.selectCategory",
+    "x-webPath": "settings.invoices.selectCategory"
+  },
+  "settingsInvoicesSubmit": "Criar transação",
+  "@settingsInvoicesSubmit": {
+    "description": "Web path: settings.invoices.submit",
+    "x-webPath": "settings.invoices.submit"
+  },
+  "settingsInvoicesSubmitting": "Criando…",
+  "@settingsInvoicesSubmitting": {
+    "description": "Web path: settings.invoices.submitting",
+    "x-webPath": "settings.invoices.submitting"
+  },
+  "settingsInvoicesDismissButton": "Ignorar",
+  "@settingsInvoicesDismissButton": {
+    "description": "Web path: settings.invoices.dismissButton",
+    "x-webPath": "settings.invoices.dismissButton"
+  },
+  "settingsInvoicesDismissConfirm": "Ignorar esta fatura? Nenhuma transação será criada.",
+  "@settingsInvoicesDismissConfirm": {
+    "description": "Web path: settings.invoices.dismissConfirm",
+    "x-webPath": "settings.invoices.dismissConfirm"
+  },
+  "settingsInvoicesDismissSuccess": "Fatura ignorada",
+  "@settingsInvoicesDismissSuccess": {
+    "description": "Web path: settings.invoices.dismissSuccess",
+    "x-webPath": "settings.invoices.dismissSuccess"
+  },
+  "settingsInvoicesDismissFailed": "Falha ao ignorar a fatura",
+  "@settingsInvoicesDismissFailed": {
+    "description": "Web path: settings.invoices.dismissFailed",
+    "x-webPath": "settings.invoices.dismissFailed"
+  },
+  "settingsInvoicesImportSuccess": "Transação criada",
+  "@settingsInvoicesImportSuccess": {
+    "description": "Web path: settings.invoices.importSuccess",
+    "x-webPath": "settings.invoices.importSuccess"
+  },
+  "settingsInvoicesImportFailed": "Falha ao criar a transação",
+  "@settingsInvoicesImportFailed": {
+    "description": "Web path: settings.invoices.importFailed",
+    "x-webPath": "settings.invoices.importFailed"
+  },
+  "settingsInvoicesLoadFailed": "Falha ao carregar",
+  "@settingsInvoicesLoadFailed": {
+    "description": "Web path: settings.invoices.loadFailed",
+    "x-webPath": "settings.invoices.loadFailed"
+  },
+  "settingsInvoicesColLastSync": "Última sincronização",
+  "@settingsInvoicesColLastSync": {
+    "description": "Web path: settings.invoices.colLastSync",
+    "x-webPath": "settings.invoices.colLastSync"
+  },
+  "settingsInvoicesAutoSyncLabel": "Sincronização agendada",
+  "@settingsInvoicesAutoSyncLabel": {
+    "description": "Web path: settings.invoices.autoSyncLabel",
+    "x-webPath": "settings.invoices.autoSyncLabel"
+  },
+  "settingsInvoicesAutoSyncHint": "Quando ativado, as faturas sincronizam automaticamente no máximo uma vez por hora enquanto você usa o aplicativo. Sincronizações com falha mantêm o estado de erro e aguardam em vez de tentar novamente.",
+  "@settingsInvoicesAutoSyncHint": {
+    "description": "Web path: settings.invoices.autoSyncHint",
+    "x-webPath": "settings.invoices.autoSyncHint"
+  },
+  "settingsInvoicesAutoSyncUpdateFailed": "Falha ao atualizar a sincronização agendada",
+  "@settingsInvoicesAutoSyncUpdateFailed": {
+    "description": "Web path: settings.invoices.autoSyncUpdateFailed",
+    "x-webPath": "settings.invoices.autoSyncUpdateFailed"
+  },
+  "publicApiCreditsPageDescriptionsEinvoice": "Consulte faturas eletrônicas na nuvem pelo código de barras móvel usando o endpoint de API do provedor configurado.",
+  "@publicApiCreditsPageDescriptionsEinvoice": {
+    "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
+    "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
   }
 }

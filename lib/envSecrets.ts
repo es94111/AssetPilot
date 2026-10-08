@@ -142,6 +142,14 @@ function initializeEnvSecrets(envPath: string): void {
     process.env.API_TOKEN_ENCRYPTION_KEY = updates.API_TOKEN_ENCRYPTION_KEY;
   }
 
+  // 雲端發票載具憑證（驗證碼）的加密主金鑰（issue #253），同樣以 AES-256-GCM 加密
+  // 後存入 invoice_carriers（見 lib/einvoiceSecret.ts）。與 Webhook 主金鑰分開，
+  // 避免不同用途共用同一把金鑰；缺少時自動產生，一旦有載具綁定後即不可更換。
+  if (!process.env.EINVOICE_ENCRYPTION_KEY) {
+    updates.EINVOICE_ENCRYPTION_KEY = generateSecret(64);
+    process.env.EINVOICE_ENCRYPTION_KEY = updates.EINVOICE_ENCRYPTION_KEY;
+  }
+
   // Web Push VAPID 金鑰（issue #257）首啟產生並寫入同一個 ENV_PATH 持久化 Volume。
   // ENV_PATH lock 串行化 replica cold-start，後續啟動會先讀到勝出者寫入的同一組金鑰。
   const vapidPublic = String(process.env.VAPID_PUBLIC_KEY || '').trim();

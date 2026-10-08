@@ -488,16 +488,32 @@ XLSX 具備欄位標題列，日期寫入為 UTC 午夜對應的 Excel 日期序
 - Google Identity Services
 - 寄信服務：SMTP（Nodemailer）、Zeabur Email（ZSend，`https://zeabur.com/docs/en-US/email/quick-start`）、Resend
 - MEGA S4 Object Storage：`https://mega.io/zh-hant/objectstorage`（管理員手動上傳完整 SQLite 備份時使用；S3 相容端點預設 `https://s3.<region>.s4.mega.io`）
+- 財政部電子發票整合服務平台：`https://www.einvoice.nat.gov.tw/`（雲端發票載具查詢；API endpoint 與憑證由環境變數設定）
 
 #### 交易照片附件
 
 新增交易時可附加最多 5 張照片，每張預設上限 10 MB。使用者可在新增 Modal 中選擇照片儲存位置：Server 本機儲存或 S3 相容物件儲存；S3 未設定時該選項停用。手機網頁需提供「拍照」與「選擇圖片」兩個入口，前者使用 `capture="environment"` 呼叫相機，後者允許從相簿或檔案上傳。LINE 新增記錄 wizard 中可於確認前傳送照片，系統先暫存 LINE image message id，確認新增後透過 LINE message content API 下載並附到該筆交易；LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。系統新增 `transaction_attachments` metadata 表，實際檔案不放 public 目錄，讀取照片需經 `/api/transactions/{txId}/attachments/{attachmentId}/file` 驗證交易與附件皆屬於目前使用者。本機儲存預設位於 `uploads/transaction-photos`，S3 設定可使用 `TRANSACTION_PHOTO_S3_*`，未設定時可 fallback 使用 `MEGA_S4_*`。
+
+#### 雲端發票載具匯入（#253）
+
+於「系統設定 → 雲端發票」頁面綁定手機條碼載具（`/` + 7 碼英數字），最多 5 組；輸出的載具清單一律為遮蔽值（`/ABC••••`），驗證碼以 AES-256-GCM 加密後才落地，主金鑰為 `EINVOICE_ENCRYPTION_KEY`（未設定時自動產生，比照 `API_TOKEN_ENCRYPTION_KEY`）。
+
+- **匯入為草稿、確認後才入帳**：使用者按「立即同步」或由登入時的排程（`lib/requestMaintenance.ts` 掛載、每載具至少間隔 1 小時，冷卻依 `last_sync_at` 存於資料庫並跨實例共用）拉取發票，寫入 `invoice_imports` 交易草稿（發票號碼／店家／金額／日期／時間）；草稿本身不建立交易，須由使用者選定帳戶與分類並確認後才呼叫既有 `insertIncomeExpenseTransaction()` 入帳。查詢區間預設近 30 天、上限 90 天，並自該載具上次最新發票日續拉。
+- **去重**：以發票號碼為唯一鍵（`UNIQUE(user_id, invoice_number)`），重複同步不產生第二筆草稿；確認入帳另以 `client_ref = sha256('einvoice:' + userId + ':' + invoiceNumber)[:32]` 冪等，重送不會重複記帳。
+- **失敗不重試風暴**：比照 `monthly_report_send_log` 的保留錯誤狀態設計，載具列記錄 `last_sync_status`、`last_error`、`consecutive_failures`、`next_retry_at` 與 `last_sync_retryable`；退避為指數成長（30 秒起、上限 1 小時），退避期間不發出請求，同步回覆 `skipped` 與剩餘秒數。網路／408／429／5xx 暫時錯誤僅於下一次排程檢查且退避到期後重試；憑證失效（401/403）、無法解密與格式錯誤標記為不可排程重試，保留錯誤並提示重新綁定／處理。不可重試錯誤仍套用短退避以防手動連點，退避到期後可手動重試，重新綁定會立即重置。成功的同步重置退避。
+- **並行保護**：`sync_lock_until` 為每載具原子租約，同一載具同時最多一個供應商請求；租約於程序中止後 60 秒到期。
+- **供應商可設定與優雅降級**：端點與憑證全部來自環境變數 `EINVOICE_API_ENDPOINT`（必須 HTTPS）、`EINVOICE_API_APP_ID`、`EINVOICE_API_KEY`；三者未齊備時同步為 `skipped`（不呼叫網路、不計入連續失敗、不設退避），UI 仍可操作。憑證僅以 `X-App-Id`／`X-Api-Key` 標頭送出。測試全程以注入的 stub fetch 覆蓋，不連線真實財政部 API。
+- **稽核與帳本邊界**：綁定、解除綁定、同步、入帳與略過皆寫入 `data_operation_audit_log`，metadata 不含任何憑證明文。載具憑證與發票匯入屬個人整合（比照 MCP／API Token 等既有慣例，見 `asset_openapi.yaml` 與 1.4 共享帳本角色），端點不採納 `X-Ledger-Id`；前端也固定讀取登入者的個人帳戶／分類，確認後只會建立個人交易，不讀寫共享帳本。
+- **端點**：`GET/POST /api/imports/invoice-carriers`、`DELETE/POST/PATCH /api/imports/invoice-carriers/:id`、`GET /api/imports/invoices`、`POST/DELETE /api/imports/invoices/:id`。
+- **資料表**：`invoice_carriers`（憑證密文、遮蔽條碼、退避狀態、`auto_sync`）、`invoice_imports`（發票欄位、狀態 draft/imported/dismissed、對應交易 ID）。
 
 #### 不做什麼
 
 - 不做 Excel (.xlsx) 匯出／匯入，僅提供 CSV
 - 不做 QIF 格式匯入（OFX 1.x／2.x 已支援，見 §2.7.1）
 - 不做自動雲端同步（Google Drive、Dropbox 等）
+- 不內建財政部電子發票 API 憑證；未設定供應商時載具管理與草稿檢視仍可用，僅同步停用
+- 不自動將發票入帳；不可重試錯誤不會由排程重試，可重試的暫時錯誤只於退避到期後、下一次已登入請求觸發的排程檢查重試（服務閒置時不建立背景計時器）
 
 ---
 
@@ -1114,6 +1130,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.137.0 | 2026-10-08 | 新增 #253 雲端發票載具自動匯入：手機條碼載具綁定與憑證加密、手動／排程同步、發票草稿確認入帳及發票號碼去重；依可重試性保存錯誤與退避、限制併發供應商請求，並稽核綁定／同步／入帳。 |
 | 4.134.0 | 2026-10-08 | 新增 #260 目標儲蓄與還款計畫：建立可綁定帳戶餘額或分類支出的儲蓄目標，追蹤進度、預估達成日與落後提醒；建立本息平均攤還計畫與逐期攤還表，金額以 decimal.js 計算。新增個人化儀表板提醒、帳本授權 API、PostgreSQL schema、10 語言介面與自動化測試。 |
 | 4.133.0 | 2026-10-07 | 修補 #285 Webhook 重新導向 SSRF 弱點：投遞前驗證 URL 與 DNS 解析位址，以已驗證公開 IP 連線並拒絕 3xx，避免簽章 payload 被轉送至內部或特殊保留目的地。 |
 | 4.131.0 | 2026-10-07 | #255 多幣別報表基準幣別切換：報表可切換 ISO 4217 基準幣別，採 decimal.js 全精度換算，顯示匯率來源與實際時間戳，並以相同幣別匯出 CSV。 |
@@ -1347,7 +1364,6 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 - AI 智慧分類建議（依摘要與歷史紀錄自動推薦分類）
 - 自動預算建議與超支預警（依過去消費趨勢產生建議）
 - 固定收支智慧偵測（自動辨識可轉為固定收支的交易）
-- 發票載具與雲端發票自動匯入整合
 - 銀行/券商對帳匯入（CSV/OFX）與對帳差異提示
 - 自訂儀表板小工具（可拖曳排序、顯示/隱藏卡片）
 - 目標儲蓄與還款計畫（目標追蹤與進度提醒）

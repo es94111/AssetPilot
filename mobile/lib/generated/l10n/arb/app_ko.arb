@@ -9603,5 +9603,331 @@
   "@notificationsPushGenericBody": {
     "description": "Web path: notifications.push.generic.body",
     "x-webPath": "notifications.push.generic.body"
+  },
+  "navCloudInvoice": "클라우드 인보이스",
+  "@navCloudInvoice": {
+    "description": "Web path: nav.cloudInvoice",
+    "x-webPath": "nav.cloudInvoice"
+  },
+  "settingsInvoicesTitle": "클라우드 인보이스 캐리어",
+  "@settingsInvoicesTitle": {
+    "description": "Web path: settings.invoices.title",
+    "x-webPath": "settings.invoices.title"
+  },
+  "settingsInvoicesDescription": "휴대전화 바코드 캐리어를 연동하면 재정부 전자세금계산서 플랫폼의 클라우드 인보이스를 수동으로 동기화하여 거래 초안으로 만들고 확인 후 반영할 수 있습니다.",
+  "@settingsInvoicesDescription": {
+    "description": "Web path: settings.invoices.description",
+    "x-webPath": "settings.invoices.description"
+  },
+  "settingsInvoicesCarrierSectionTitle": "휴대전화 바코드 캐리어",
+  "@settingsInvoicesCarrierSectionTitle": {
+    "description": "Web path: settings.invoices.carrierSectionTitle",
+    "x-webPath": "settings.invoices.carrierSectionTitle"
+  },
+  "settingsInvoicesCarrierSectionDescription": "캐리어 인증 코드는 AES-256-GCM으로 암호화되어 저장되며, 화면에는 마스킹된 바코드만 표시되고 어떤 API도 인증 코드를 반환하지 않습니다.",
+  "@settingsInvoicesCarrierSectionDescription": {
+    "description": "Web path: settings.invoices.carrierSectionDescription",
+    "x-webPath": "settings.invoices.carrierSectionDescription"
+  },
+  "settingsInvoicesBarcodeLabel": "휴대전화 바코드 캐리어",
+  "@settingsInvoicesBarcodeLabel": {
+    "description": "Web path: settings.invoices.barcodeLabel",
+    "x-webPath": "settings.invoices.barcodeLabel"
+  },
+  "settingsInvoicesBarcodePlaceholder": "/ABC1234",
+  "@settingsInvoicesBarcodePlaceholder": {
+    "description": "Web path: settings.invoices.barcodePlaceholder",
+    "x-webPath": "settings.invoices.barcodePlaceholder"
+  },
+  "settingsInvoicesBarcodeHint": "형식은 슬래시와 대문자 영숫자 7자리입니다(예: /ABC1234).",
+  "@settingsInvoicesBarcodeHint": {
+    "description": "Web path: settings.invoices.barcodeHint",
+    "x-webPath": "settings.invoices.barcodeHint"
+  },
+  "settingsInvoicesVerifyCodeLabel": "인증 코드",
+  "@settingsInvoicesVerifyCodeLabel": {
+    "description": "Web path: settings.invoices.verifyCodeLabel",
+    "x-webPath": "settings.invoices.verifyCodeLabel"
+  },
+  "settingsInvoicesVerifyCodePlaceholder": "영숫자 6~20자리",
+  "@settingsInvoicesVerifyCodePlaceholder": {
+    "description": "Web path: settings.invoices.verifyCodePlaceholder",
+    "x-webPath": "settings.invoices.verifyCodePlaceholder"
+  },
+  "settingsInvoicesVerifyCodeHint": "전자세금계산서 플랫폼에서 설정한 캐리어 인증 코드로, 본인의 클라우드 인보이스 조회에만 사용됩니다.",
+  "@settingsInvoicesVerifyCodeHint": {
+    "description": "Web path: settings.invoices.verifyCodeHint",
+    "x-webPath": "settings.invoices.verifyCodeHint"
+  },
+  "settingsInvoicesBindButton": "캐리어 연동",
+  "@settingsInvoicesBindButton": {
+    "description": "Web path: settings.invoices.bindButton",
+    "x-webPath": "settings.invoices.bindButton"
+  },
+  "settingsInvoicesBinding": "연동 중…",
+  "@settingsInvoicesBinding": {
+    "description": "Web path: settings.invoices.binding",
+    "x-webPath": "settings.invoices.binding"
+  },
+  "settingsInvoicesBindSuccess": "캐리어가 연동되었습니다",
+  "@settingsInvoicesBindSuccess": {
+    "description": "Web path: settings.invoices.bindSuccess",
+    "x-webPath": "settings.invoices.bindSuccess"
+  },
+  "settingsInvoicesBindFailed": "캐리어 연동에 실패했습니다",
+  "@settingsInvoicesBindFailed": {
+    "description": "Web path: settings.invoices.bindFailed",
+    "x-webPath": "settings.invoices.bindFailed"
+  },
+  "settingsInvoicesUnbindButton": "연동 해제",
+  "@settingsInvoicesUnbindButton": {
+    "description": "Web path: settings.invoices.unbindButton",
+    "x-webPath": "settings.invoices.unbindButton"
+  },
+  "settingsInvoicesUnbindConfirm": "이 휴대전화 바코드 캐리어를 연동 해제할까요? 기존 인보이스 초안과 반영된 거래는 유지됩니다.",
+  "@settingsInvoicesUnbindConfirm": {
+    "description": "Web path: settings.invoices.unbindConfirm",
+    "x-webPath": "settings.invoices.unbindConfirm"
+  },
+  "settingsInvoicesUnbindSuccess": "캐리어 연동이 해제되었습니다",
+  "@settingsInvoicesUnbindSuccess": {
+    "description": "Web path: settings.invoices.unbindSuccess",
+    "x-webPath": "settings.invoices.unbindSuccess"
+  },
+  "settingsInvoicesUnbindFailed": "연동 해제에 실패했습니다",
+  "@settingsInvoicesUnbindFailed": {
+    "description": "Web path: settings.invoices.unbindFailed",
+    "x-webPath": "settings.invoices.unbindFailed"
+  },
+  "settingsInvoicesNoCarriers": "아직 연동된 휴대전화 바코드 캐리어가 없습니다",
+  "@settingsInvoicesNoCarriers": {
+    "description": "Web path: settings.invoices.noCarriers",
+    "x-webPath": "settings.invoices.noCarriers"
+  },
+  "settingsInvoicesSyncNow": "지금 동기화",
+  "@settingsInvoicesSyncNow": {
+    "description": "Web path: settings.invoices.syncNow",
+    "x-webPath": "settings.invoices.syncNow"
+  },
+  "settingsInvoicesSyncing": "동기화 중…",
+  "@settingsInvoicesSyncing": {
+    "description": "Web path: settings.invoices.syncing",
+    "x-webPath": "settings.invoices.syncing"
+  },
+  "settingsInvoicesSyncSummary": "신규 {created}건, 중복 {duplicates}건, 건너뜀 {skipped}건",
+  "@settingsInvoicesSyncSummary": {
+    "description": "Web path: settings.invoices.syncSummary",
+    "x-webPath": "settings.invoices.syncSummary",
+    "placeholders": {
+      "created": {},
+      "duplicates": {},
+      "skipped": {}
+    }
+  },
+  "settingsInvoicesSyncFailed": "동기화 실패",
+  "@settingsInvoicesSyncFailed": {
+    "description": "Web path: settings.invoices.syncFailed",
+    "x-webPath": "settings.invoices.syncFailed"
+  },
+  "settingsInvoicesSyncDegraded": "전자세금계산서 API가 설정되지 않아 동기화할 수 없습니다.",
+  "@settingsInvoicesSyncDegraded": {
+    "description": "Web path: settings.invoices.syncDegraded",
+    "x-webPath": "settings.invoices.syncDegraded"
+  },
+  "settingsInvoicesLastSyncAt": "마지막 동기화: {date}",
+  "@settingsInvoicesLastSyncAt": {
+    "description": "Web path: settings.invoices.lastSyncAt",
+    "x-webPath": "settings.invoices.lastSyncAt",
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "settingsInvoicesNeverSynced": "동기화한 적 없음",
+  "@settingsInvoicesNeverSynced": {
+    "description": "Web path: settings.invoices.neverSynced",
+    "x-webPath": "settings.invoices.neverSynced"
+  },
+  "settingsInvoicesRetryAfter": "지난 동기화가 실패했습니다. {seconds}초 후 다시 시도하세요.",
+  "@settingsInvoicesRetryAfter": {
+    "description": "Web path: settings.invoices.retryAfter",
+    "x-webPath": "settings.invoices.retryAfter",
+    "placeholders": {
+      "seconds": {}
+    }
+  },
+  "settingsInvoicesDraftsTitle": "클라우드 인보이스 초안",
+  "@settingsInvoicesDraftsTitle": {
+    "description": "Web path: settings.invoices.draftsTitle",
+    "x-webPath": "settings.invoices.draftsTitle"
+  },
+  "settingsInvoicesDraftsDescription": "확인한 인보이스만 거래로 생성되며, 미확인 초안은 통계에 영향을 주지 않습니다.",
+  "@settingsInvoicesDraftsDescription": {
+    "description": "Web path: settings.invoices.draftsDescription",
+    "x-webPath": "settings.invoices.draftsDescription"
+  },
+  "settingsInvoicesNoDrafts": "아직 클라우드 인보이스가 없습니다",
+  "@settingsInvoicesNoDrafts": {
+    "description": "Web path: settings.invoices.noDrafts",
+    "x-webPath": "settings.invoices.noDrafts"
+  },
+  "settingsInvoicesFilterStatus": "상태",
+  "@settingsInvoicesFilterStatus": {
+    "description": "Web path: settings.invoices.filterStatus",
+    "x-webPath": "settings.invoices.filterStatus"
+  },
+  "settingsInvoicesStatusAll": "전체",
+  "@settingsInvoicesStatusAll": {
+    "description": "Web path: settings.invoices.statusAll",
+    "x-webPath": "settings.invoices.statusAll"
+  },
+  "settingsInvoicesStatusDraft": "초안",
+  "@settingsInvoicesStatusDraft": {
+    "description": "Web path: settings.invoices.statusDraft",
+    "x-webPath": "settings.invoices.statusDraft"
+  },
+  "settingsInvoicesStatusImported": "반영됨",
+  "@settingsInvoicesStatusImported": {
+    "description": "Web path: settings.invoices.statusImported",
+    "x-webPath": "settings.invoices.statusImported"
+  },
+  "settingsInvoicesStatusDismissed": "건너뜀",
+  "@settingsInvoicesStatusDismissed": {
+    "description": "Web path: settings.invoices.statusDismissed",
+    "x-webPath": "settings.invoices.statusDismissed"
+  },
+  "settingsInvoicesColInvoiceNumber": "인보이스 번호",
+  "@settingsInvoicesColInvoiceNumber": {
+    "description": "Web path: settings.invoices.colInvoiceNumber",
+    "x-webPath": "settings.invoices.colInvoiceNumber"
+  },
+  "settingsInvoicesColDate": "인보이스 날짜",
+  "@settingsInvoicesColDate": {
+    "description": "Web path: settings.invoices.colDate",
+    "x-webPath": "settings.invoices.colDate"
+  },
+  "settingsInvoicesColSeller": "상점",
+  "@settingsInvoicesColSeller": {
+    "description": "Web path: settings.invoices.colSeller",
+    "x-webPath": "settings.invoices.colSeller"
+  },
+  "settingsInvoicesColAmount": "금액",
+  "@settingsInvoicesColAmount": {
+    "description": "Web path: settings.invoices.colAmount",
+    "x-webPath": "settings.invoices.colAmount"
+  },
+  "settingsInvoicesColStatus": "상태",
+  "@settingsInvoicesColStatus": {
+    "description": "Web path: settings.invoices.colStatus",
+    "x-webPath": "settings.invoices.colStatus"
+  },
+  "settingsInvoicesColActions": "작업",
+  "@settingsInvoicesColActions": {
+    "description": "Web path: settings.invoices.colActions",
+    "x-webPath": "settings.invoices.colActions"
+  },
+  "settingsInvoicesConfirmButton": "확인",
+  "@settingsInvoicesConfirmButton": {
+    "description": "Web path: settings.invoices.confirmButton",
+    "x-webPath": "settings.invoices.confirmButton"
+  },
+  "settingsInvoicesConfirmTitle": "인보이스 확인",
+  "@settingsInvoicesConfirmTitle": {
+    "description": "Web path: settings.invoices.confirmTitle",
+    "x-webPath": "settings.invoices.confirmTitle"
+  },
+  "settingsInvoicesAccountLabel": "계좌",
+  "@settingsInvoicesAccountLabel": {
+    "description": "Web path: settings.invoices.accountLabel",
+    "x-webPath": "settings.invoices.accountLabel"
+  },
+  "settingsInvoicesCategoryLabel": "분류",
+  "@settingsInvoicesCategoryLabel": {
+    "description": "Web path: settings.invoices.categoryLabel",
+    "x-webPath": "settings.invoices.categoryLabel"
+  },
+  "settingsInvoicesNoteLabel": "메모(선택)",
+  "@settingsInvoicesNoteLabel": {
+    "description": "Web path: settings.invoices.noteLabel",
+    "x-webPath": "settings.invoices.noteLabel"
+  },
+  "settingsInvoicesSelectAccount": "계좌 선택 안 함",
+  "@settingsInvoicesSelectAccount": {
+    "description": "Web path: settings.invoices.selectAccount",
+    "x-webPath": "settings.invoices.selectAccount"
+  },
+  "settingsInvoicesSelectCategory": "분류 선택 안 함",
+  "@settingsInvoicesSelectCategory": {
+    "description": "Web path: settings.invoices.selectCategory",
+    "x-webPath": "settings.invoices.selectCategory"
+  },
+  "settingsInvoicesSubmit": "거래 생성",
+  "@settingsInvoicesSubmit": {
+    "description": "Web path: settings.invoices.submit",
+    "x-webPath": "settings.invoices.submit"
+  },
+  "settingsInvoicesSubmitting": "생성 중…",
+  "@settingsInvoicesSubmitting": {
+    "description": "Web path: settings.invoices.submitting",
+    "x-webPath": "settings.invoices.submitting"
+  },
+  "settingsInvoicesDismissButton": "건너뛰기",
+  "@settingsInvoicesDismissButton": {
+    "description": "Web path: settings.invoices.dismissButton",
+    "x-webPath": "settings.invoices.dismissButton"
+  },
+  "settingsInvoicesDismissConfirm": "이 인보이스를 건너뛸까요? 거래는 생성되지 않습니다.",
+  "@settingsInvoicesDismissConfirm": {
+    "description": "Web path: settings.invoices.dismissConfirm",
+    "x-webPath": "settings.invoices.dismissConfirm"
+  },
+  "settingsInvoicesDismissSuccess": "인보이스를 건너뛰었습니다",
+  "@settingsInvoicesDismissSuccess": {
+    "description": "Web path: settings.invoices.dismissSuccess",
+    "x-webPath": "settings.invoices.dismissSuccess"
+  },
+  "settingsInvoicesDismissFailed": "건너뛰기에 실패했습니다",
+  "@settingsInvoicesDismissFailed": {
+    "description": "Web path: settings.invoices.dismissFailed",
+    "x-webPath": "settings.invoices.dismissFailed"
+  },
+  "settingsInvoicesImportSuccess": "거래가 생성되었습니다",
+  "@settingsInvoicesImportSuccess": {
+    "description": "Web path: settings.invoices.importSuccess",
+    "x-webPath": "settings.invoices.importSuccess"
+  },
+  "settingsInvoicesImportFailed": "거래 생성에 실패했습니다",
+  "@settingsInvoicesImportFailed": {
+    "description": "Web path: settings.invoices.importFailed",
+    "x-webPath": "settings.invoices.importFailed"
+  },
+  "settingsInvoicesLoadFailed": "불러오지 못했습니다",
+  "@settingsInvoicesLoadFailed": {
+    "description": "Web path: settings.invoices.loadFailed",
+    "x-webPath": "settings.invoices.loadFailed"
+  },
+  "settingsInvoicesColLastSync": "마지막 동기화",
+  "@settingsInvoicesColLastSync": {
+    "description": "Web path: settings.invoices.colLastSync",
+    "x-webPath": "settings.invoices.colLastSync"
+  },
+  "settingsInvoicesAutoSyncLabel": "예약 동기화",
+  "@settingsInvoicesAutoSyncLabel": {
+    "description": "Web path: settings.invoices.autoSyncLabel",
+    "x-webPath": "settings.invoices.autoSyncLabel"
+  },
+  "settingsInvoicesAutoSyncHint": "사용 중 최대 1시간에 한 번 자동으로 동기화합니다. 동기화에 실패하면 오류 상태를 유지하고 자동 재시도 없이 잠시 대기합니다.",
+  "@settingsInvoicesAutoSyncHint": {
+    "description": "Web path: settings.invoices.autoSyncHint",
+    "x-webPath": "settings.invoices.autoSyncHint"
+  },
+  "settingsInvoicesAutoSyncUpdateFailed": "예약 동기화 설정을 업데이트하지 못했습니다",
+  "@settingsInvoicesAutoSyncUpdateFailed": {
+    "description": "Web path: settings.invoices.autoSyncUpdateFailed",
+    "x-webPath": "settings.invoices.autoSyncUpdateFailed"
+  },
+  "publicApiCreditsPageDescriptionsEinvoice": "설정된 공급자 API 엔드포인트를 통해 모바일 바코드로 클라우드 전자 영수증을 조회합니다.",
+  "@publicApiCreditsPageDescriptionsEinvoice": {
+    "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
+    "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
   }
 }

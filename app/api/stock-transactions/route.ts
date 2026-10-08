@@ -10,6 +10,8 @@ import {
   calcStockFeeForTrade,
   calcStockTaxForTrade,
   canMarkDayTrade,
+  hasQualifyingDayTradePurchase,
+  hasValidDayTradeCoverageAfterChanges,
   normalizeDayTradeFlag,
   getSharesAtDate,
   validateChainConstraint,
@@ -130,7 +132,7 @@ async function handlePOST(request) {
 
   // 現股當沖僅適用台股股票類型（證券交易稅條例第 2 條之 2）；ETF／權證不適用。
   const dayTrade = normalizeDayTradeFlag(body.dayTrade);
-  if (dayTrade && !canMarkDayTrade(stock.stock_type, stock.market)) {
+  if (dayTrade && !canMarkDayTrade(stock.stock_type, stock.market, date)) {
     return NextResponse.json(
       { error: "現股當沖僅適用台股一般股票（ETF／權證不適用）" },
       { status: 400 },
@@ -143,16 +145,38 @@ async function handlePOST(request) {
     );
   }
 
+  let selectedAccount = null;
   if (accountId) {
-    const acc = queryOne(
-      "SELECT id FROM accounts WHERE id = ? AND user_id = ?",
+    selectedAccount = queryOne(
+      "SELECT id, category, account_type FROM accounts WHERE id = ? AND user_id = ?",
       [accountId, auth.userId],
     );
-    if (!acc)
+    if (!selectedAccount)
       return NextResponse.json(
         { error: "帳戶不存在或無權限" },
         { status: 400 },
       );
+  }
+  if (dayTrade && selectedAccount?.category !== "securities" && selectedAccount?.account_type !== "證券帳戶") {
+    return NextResponse.json(
+      { error: "現股當沖需指定證券帳戶類型的帳戶" },
+      { status: 400 },
+    );
+  }
+  if (
+    dayTrade &&
+    !hasQualifyingDayTradePurchase(
+      auth.userId,
+      stockId,
+      date,
+      shareNum,
+      String(accountId || ""),
+    )
+  ) {
+    return NextResponse.json(
+      { error: "現股當沖需有同帳戶、同日、同標的且股數足夠的現款買進交易" },
+      { status: 400 },
+    );
   }
 
   if (type === "sell") {
@@ -202,11 +226,33 @@ async function handlePOST(request) {
             settings,
             stock.market || "TW",
             dayTrade,
+            date,
           )
       : taxProvided
         ? manualTax
         : 0;
   const id = uid();
+  if (
+    type === "sell" &&
+    !hasValidDayTradeCoverageAfterChanges(auth.userId, [
+      {
+        id,
+        stockId: String(stockId),
+        date,
+        type,
+        shares: shareNum,
+        price: priceNum,
+        accountId: String(accountId || ""),
+        dayTrade,
+        note: note || "",
+      },
+    ])
+  ) {
+    return NextResponse.json(
+      { error: "此賣出會使同日現股當沖賣出超出現款買進股數" },
+      { status: 400 },
+    );
+  }
   const db = getDB();
   db.run(
     "INSERT INTO stock_transactions (id,user_id,stock_id,date,type,shares,price,fee,tax,account_id,note,created_at,tax_auto_calculated,day_trade) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",

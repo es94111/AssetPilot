@@ -1069,6 +1069,7 @@ export const en = {
     accounts: {
       title: "Account management",
       typeLabels: {
+        securities: "Securities account",
         bank: "Bank account",
         credit_card: "Credit card",
         cash: "Cash",
@@ -1359,6 +1360,8 @@ export const en = {
         dayTradeLabel: "Day trade (half tax rate)",
         dayTradeHint: "Same account, same business day, cash buy and sell of the same security quantity; the sell tax uses the 0.15% rate under Article 2-2 of the Securities Transaction Tax Act.",
         dayTradeBadge: "Day trade",
+        accountLabel: "Trading account",
+        accountUnspecified: "Unspecified",
       },
       dividends: {
         title: "Dividends",

@@ -1069,6 +1069,7 @@ export const ru = {
     accounts: {
       title: "Счета",
       typeLabels: {
+        securities: "Брокерский счет",
         bank: "Банковский счет",
         credit_card: "Кредитная карта",
         cash: "Наличные",
@@ -1359,6 +1360,8 @@ export const ru = {
         dayTradeLabel: "Дей-трейд (половинная ставка налога)",
         dayTradeHint: "Тот же счёт и рабочий день, покупка за наличные и продажа того же объёма; налог продажи 0,15% (ст. 2-2).",
         dayTradeBadge: "Дей-трейд",
+        accountLabel: "Торговый счёт",
+        accountUnspecified: "Не указан",
       },
       dividends: {
         title: "Дивиденды",

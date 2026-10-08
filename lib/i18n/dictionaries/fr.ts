@@ -1069,6 +1069,7 @@ export const fr = {
     accounts: {
       title: "Comptes",
       typeLabels: {
+        securities: "Compte-titres",
         bank: "Compte bancaire",
         credit_card: "Carte de crédit",
         cash: "Espèces",
@@ -1359,6 +1360,8 @@ export const fr = {
         dayTradeLabel: "Day trade (taux réduit de moitié)",
         dayTradeHint: "Même compte, même jour ouvré, achat au comptant et vente de la même quantité ; taxe de vente à 0,15 % (art. 2-2).",
         dayTradeBadge: "Day trade",
+        accountLabel: "Compte de courtage",
+        accountUnspecified: "Non spécifié",
       },
       dividends: {
         title: "Dividendes",

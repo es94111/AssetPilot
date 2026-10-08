@@ -1802,6 +1802,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresAccountsTitle => 'खाते';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'प्रतिभूति खाता';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'बैंक खाता';
 
   @override
@@ -6484,4 +6487,10 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'कॉन्फ़िगर किए गए प्रदाता API endpoint के माध्यम से मोबाइल बारकोड से क्लाउड ई-चालान खोजें।';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'ट्रेडिंग खाता';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'निर्दिष्ट नहीं';
 }

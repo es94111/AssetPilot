@@ -9,6 +9,7 @@ import {
 } from "./stockMarket";
 import {
   TW_DAY_TRADE_SELL_TAX_RATE,
+  isDayTradeTaxEffective,
   isDayTradeEligibleStockType,
   resolveSellTaxRate,
 } from "./twStockTaxRules";
@@ -20,6 +21,9 @@ export {
   TW_DAY_TRADE_SELL_TAX_RATE,
   TW_STOCK_SELL_TAX_RATE,
   TW_DAY_TRADE_ELIGIBLE_STOCK_TYPES,
+  TW_DAY_TRADE_TAX_EFFECTIVE_FROM,
+  TW_DAY_TRADE_TAX_EFFECTIVE_UNTIL,
+  isDayTradeTaxEffective,
   isDayTradeEligibleStockType,
   resolveSellTaxRate,
 } from "./twStockTaxRules";
@@ -134,6 +138,7 @@ export function calcStockTax(
   settings: StockSettings,
   market: StockMarket | string = "TW",
   dayTrade = false,
+  transactionDate = "",
 ): number {
   const decimalAmount = new Decimal(amount || 0);
   if (normalizeStockMarket(market) === "US" || !decimalAmount.gt(0)) return 0;
@@ -143,6 +148,7 @@ export function calcStockTax(
     stockType,
     getSellTaxRateByType(stockType, settings),
     dayTrade,
+    transactionDate,
   );
   const tax = decimalAmount.times(String(rate)).floor().toNumber();
   return Math.max(settings.sellTaxMin, tax);
@@ -156,20 +162,134 @@ export function calcStockTaxForTrade(
   settings: StockSettings,
   market: StockMarket | string = "TW",
   dayTrade = false,
+  transactionDate = "",
 ): number {
   const amount = new Decimal(String(shares || 0)).times(String(price || 0));
-  return calcStockTax(amount, stockType, settings, market, dayTrade);
+  return calcStockTax(amount, stockType, settings, market, dayTrade, transactionDate);
 }
 
 /** 該筆交易是否可由使用者標記為現股當沖（僅台股股票類型）。 */
 export function canMarkDayTrade(
   stockType: string,
   market: StockMarket | string = "TW",
+  transactionDate = "",
 ): boolean {
   return (
     normalizeStockMarket(market) === "TW" &&
-    isDayTradeEligibleStockType(stockType || "stock")
+    isDayTradeEligibleStockType(stockType || "stock") &&
+    isDayTradeTaxEffective(transactionDate)
   );
+}
+
+/**
+ * Confirm available same-account, same-day cash purchases cover this tagged
+ * day-trade sale. Multiple buy lots may be combined; all other same-day sells
+ * consume available purchase quantity so buys cannot back more than one sale.
+ */
+export function hasQualifyingDayTradePurchase(
+  userId: string,
+  stockId: string,
+  date: string,
+  shares: Decimal.Value,
+  accountId: string,
+  excludeTransactionId = "",
+): boolean {
+  if (!accountId) return false;
+  const rows = queryAll(
+    "SELECT id, type, shares, day_trade, price, note, linked_dividend_id FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ? AND account_id = ?",
+    [userId, stockId, date, accountId],
+  );
+  let purchased = new Decimal(0);
+  let alreadySold = new Decimal(0);
+  for (const row of rows) {
+    const quantity = new Decimal(String(row.shares || 0));
+    if (
+      row.type === "buy" &&
+      new Decimal(String(row.price || 0)).gt(0) &&
+      !row.linked_dividend_id &&
+      !isProtectedSyntheticTransaction(row.note)
+    ) {
+      purchased = purchased.plus(quantity);
+    } else if (row.type === "sell" && String(row.id) !== excludeTransactionId) {
+      alreadySold = alreadySold.plus(quantity);
+    }
+  }
+  return purchased.minus(alreadySold).gte(new Decimal(String(shares || 0)));
+}
+
+export interface DayTradeTransactionChange {
+  id: string;
+  stockId: string;
+  date: string;
+  type: string;
+  shares: Decimal.Value;
+  price: Decimal.Value;
+  accountId: string;
+  dayTrade: boolean;
+  note?: string | null;
+  linkedDividendId?: string | null;
+}
+
+/** Ensure pending writes do not leave a day-trade sale under-backed by cash purchases. */
+export function hasValidDayTradeCoverageAfterChanges(
+  userId: string,
+  changes: DayTradeTransactionChange[] = [],
+  deletedIds: string[] = [],
+): boolean {
+  const changesById = new Map(changes.map((change) => [String(change.id), change]));
+  const replacedIds = new Set([...changesById.keys(), ...deletedIds.map(String)]);
+  const groups = new Map<string, { stockId: string; date: string; accountId: string }>();
+  const addGroup = (stockId: string, date: string, accountId: string) => {
+    const key = JSON.stringify([stockId, date, accountId]);
+    groups.set(key, { stockId, date, accountId });
+  };
+
+  for (const id of replacedIds) {
+    const existing = queryOne(
+      "SELECT stock_id, date, account_id FROM stock_transactions WHERE id = ? AND user_id = ?",
+      [id, userId],
+    );
+    if (existing) addGroup(String(existing.stock_id), String(existing.date), String(existing.account_id || ""));
+    const change = changesById.get(id);
+    if (change) addGroup(change.stockId, change.date, change.accountId || "");
+  }
+
+  for (const group of groups.values()) {
+    const rows = queryAll(
+      "SELECT id, type, shares, day_trade, price, note, linked_dividend_id FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ? AND account_id = ?",
+      [userId, group.stockId, group.date, group.accountId],
+    ).filter((row) => !replacedIds.has(String(row.id)));
+    const projected = [
+      ...rows,
+      ...changes.filter(
+        (change) =>
+          change.stockId === group.stockId &&
+          change.date === group.date &&
+          (change.accountId || "") === group.accountId,
+      ),
+    ];
+    let hasDayTradeSale = false;
+    let purchases = new Decimal(0);
+    let sales = new Decimal(0);
+    for (const row of projected) {
+      const legacyFields = row as Record<string, unknown>;
+      const quantity = new Decimal(String(row.shares || 0));
+      if (
+        row.type === "buy" &&
+        new Decimal(String(row.price || 0)).gt(0) &&
+        !legacyFields.linked_dividend_id &&
+        !legacyFields.linkedDividendId &&
+        !isProtectedSyntheticTransaction(row.note)
+      ) {
+        purchases = purchases.plus(quantity);
+      } else if (row.type === "sell") {
+        sales = sales.plus(quantity);
+        if (normalizeDayTradeFlag(legacyFields.dayTrade ?? legacyFields.day_trade)) hasDayTradeSale = true;
+      }
+    }
+    if (hasDayTradeSale && purchases.lt(sales)) return false;
+  }
+  return true;
 }
 
 /**

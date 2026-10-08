@@ -1820,6 +1820,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresAccountsTitle => 'Contas';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Conta de investimentos';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Conta bancária';
 
   @override
@@ -6569,6 +6572,12 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Consulte faturas eletrônicas na nuvem pelo código de barras móvel usando o endpoint de API do provedor configurado.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Conta de negociação';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Não especificada';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -8385,6 +8394,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresAccountsTitle => 'Contas';
+
+  @override
+  String get featuresAccountsTypeLabelsSecurities => 'Conta de investimentos';
 
   @override
   String get featuresAccountsTypeLabelsBank => 'Conta bancária';
@@ -13127,4 +13139,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Consulte faturas eletrônicas na nuvem pelo código de barras móvel usando o endpoint de API do provedor configurado.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Conta de negociação';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Não especificada';
 }

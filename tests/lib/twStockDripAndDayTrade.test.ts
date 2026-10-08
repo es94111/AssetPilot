@@ -25,6 +25,7 @@ if (!DB_URL) {
   process.env.STOCK_AUTO_UPDATE_ENABLED = 'false';
   const { initDB, getDB, queryOne, queryAll } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
+  const { accountTypeFromCategory, categoryFromAccountType } = await import('../../lib/accountHelpers.ts');
   const { createLoginSession } = await import('../../lib/sessionHelpers.ts');
   const { NextRequest } = await import('next/server');
   const {
@@ -50,6 +51,8 @@ if (!DB_URL) {
   const dividendIdRoute = await import('../../app/api/stock-dividends/[id]/route.ts');
   const txRoute = await import('../../app/api/stock-transactions/route.ts');
   const txIdRoute = await import('../../app/api/stock-transactions/[id]/route.ts');
+  const txBatchDeleteRoute = await import('../../app/api/stock-transactions/batch-delete/route.ts');
+  const accountIdRoute = await import('../../app/api/accounts/[id]/route.ts');
   const txImportRoute = await import('../../app/api/stock-transactions/import/route.ts');
   const dividendImportRoute = await import('../../app/api/stock-dividends/import/route.ts');
   const dividendExportRoute = await import('../../app/api/stock-dividends/export/route.ts');
@@ -87,11 +90,11 @@ if (!DB_URL) {
     );
   }
 
-  function seedAccount(): string {
+  function seedAccount(category = 'securities'): string {
     const id = uid();
     getDB().run(
-      'INSERT INTO accounts (id, user_id, name, category, initial_balance, currency, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)',
-      [id, userId, '證券帳戶', 'cash', 0, 'TWD', Date.now(), Date.now()],
+      'INSERT INTO accounts (id, user_id, name, category, account_type, initial_balance, currency, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [id, userId, category === 'securities' ? '證券帳戶' : '一般帳戶', category, category === 'securities' ? '證券帳戶' : '現金', 0, 'TWD', Date.now(), Date.now()],
     );
     return id;
   }
@@ -105,11 +108,11 @@ if (!DB_URL) {
     return id;
   }
 
-  function seedTx(stockId: string, opts: { type: string; shares: number; price: number; fee?: number; tax?: number; date: string; dayTrade?: boolean }) {
+  function seedTx(stockId: string, opts: { type: string; shares: number; price: number; fee?: number; tax?: number; date: string; dayTrade?: boolean; accountId?: string }) {
     const id = uid();
     getDB().run(
-      'INSERT INTO stock_transactions (id, user_id, stock_id, type, shares, price, fee, tax, date, note, created_at, day_trade) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-      [id, userId, stockId, opts.type, opts.shares, opts.price, opts.fee || 0, opts.tax || 0, opts.date, '', Date.now(), opts.dayTrade ? 1 : 0],
+      'INSERT INTO stock_transactions (id, user_id, stock_id, type, shares, price, fee, tax, date, note, created_at, day_trade, account_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      [id, userId, stockId, opts.type, opts.shares, opts.price, opts.fee || 0, opts.tax || 0, opts.date, '', Date.now(), opts.dayTrade ? 1 : 0, opts.accountId || ''],
     );
     return id;
   }
@@ -123,6 +126,11 @@ if (!DB_URL) {
     assert.deepEqual(queryAll('SELECT reinvest, reinvest_shares, reinvest_price FROM stock_dividends LIMIT 0'), []);
   });
 
+  test('A0.1. 證券帳戶類別與舊 account_type 欄位相容', () => {
+    assert.equal(accountTypeFromCategory('securities'), '證券帳戶');
+    assert.equal(categoryFromAccountType('證券帳戶'), 'securities');
+  });
+
   test('A1. 稅率集中管理：一般股票 0.3%、當沖 0.15%，當沖為法定半數稅率', () => {
     assert.equal(TW_STOCK_SELL_TAX_RATE, 0.003, '證交稅條例第 2 條第 1 款為千分之三');
     assert.equal(TW_DAY_TRADE_SELL_TAX_RATE, 0.0015, '證交稅條例第 2 條之 2 為千分之一點五');
@@ -130,11 +138,13 @@ if (!DB_URL) {
   });
 
   test('A2. resolveSellTaxRate：僅股票類型且 dayTrade 時套用減半稅率', () => {
-    assert.equal(resolveSellTaxRate('stock', 0.003, false), 0.003);
-    assert.equal(resolveSellTaxRate('stock', 0.003, true), 0.0015);
+    assert.equal(resolveSellTaxRate('stock', 0.003, false, '2026-01-01'), 0.003);
+    assert.equal(resolveSellTaxRate('stock', 0.003, true, '2026-01-01'), 0.0015);
+    assert.equal(resolveSellTaxRate('stock', 0.003, true, '2028-01-01'), 0.003);
+    assert.equal(resolveSellTaxRate('stock', 0.003, true, '2017-04-27'), 0.003);
     // ETF／權證不適用第 2 條之 2（條文限「股票」）
-    assert.equal(resolveSellTaxRate('etf', 0.001, true), 0.001);
-    assert.equal(resolveSellTaxRate('warrant', 0.001, true), 0.001);
+    assert.equal(resolveSellTaxRate('etf', 0.001, true, '2026-01-01'), 0.001);
+    assert.equal(resolveSellTaxRate('warrant', 0.001, true, '2026-01-01'), 0.001);
     assert.equal(isDayTradeEligibleStockType('stock'), true);
     assert.equal(isDayTradeEligibleStockType('etf'), false);
     assert.equal(isDayTradeEligibleStockType('warrant'), false);
@@ -142,15 +152,16 @@ if (!DB_URL) {
 
   test('A3. calcStockTax：100,000 元當沖賣出稅額為 150 元（一般為 300 元）', () => {
     const settings = getStockSettings(userId);
-    assert.equal(calcStockTax(100000, 'stock', settings, 'TW', false), 300);
-    assert.equal(calcStockTax(100000, 'stock', settings, 'TW', true), 150);
+    assert.equal(calcStockTax(100000, 'stock', settings, 'TW', false, '2026-01-01'), 300);
+    assert.equal(calcStockTax(100000, 'stock', settings, 'TW', true, '2026-01-01'), 150);
+    assert.equal(calcStockTax(100000, 'stock', settings, 'TW', true, '2028-01-01'), 300);
     // 美股不課證交稅
-    assert.equal(calcStockTax(100000, 'stock', settings, 'US', true), 0);
+    assert.equal(calcStockTax(100000, 'stock', settings, 'US', true, '2026-01-01'), 0);
     // 最低稅額 1 元仍適用
-    assert.equal(calcStockTax(1, 'stock', settings, 'TW', true), 1);
+    assert.equal(calcStockTax(1, 'stock', settings, 'TW', true, '2026-01-01'), 1);
     // Decimal share × price prevents binary-float boundary changes to FLOOR tax.
     assert.equal(
-      calcStockTaxForTrade('1', '666.6666666666666', 'stock', { ...settings, sellTaxMin: 0 }, 'TW', true),
+      calcStockTaxForTrade('1', '666.6666666666666', 'stock', { ...settings, sellTaxMin: 0 }, 'TW', true, '2026-01-01'),
       0,
     );
   });
@@ -167,10 +178,15 @@ if (!DB_URL) {
     assert.equal(normalizeDayTradeFlag(undefined), false);
   });
 
-  test('A5. canMarkDayTrade：僅台股一般股票可標記', () => {
-    assert.equal(canMarkDayTrade('stock', 'TW'), true);
-    assert.equal(canMarkDayTrade('etf', 'TW'), false);
-    assert.equal(canMarkDayTrade('stock', 'US'), false);
+  test('A5. canMarkDayTrade：僅有效期間內的台股一般股票可標記，且日期必須真實存在', () => {
+    assert.equal(canMarkDayTrade('stock', 'TW', '2017-04-27'), false);
+    assert.equal(canMarkDayTrade('stock', 'TW', '2017-04-28'), true);
+    assert.equal(canMarkDayTrade('stock', 'TW', '2026-01-01'), true);
+    assert.equal(canMarkDayTrade('stock', 'TW', '2027-12-31'), true);
+    assert.equal(canMarkDayTrade('stock', 'TW', '2028-01-01'), false);
+    assert.equal(canMarkDayTrade('stock', 'TW', '2026-02-31'), false);
+    assert.equal(canMarkDayTrade('etf', 'TW', '2026-01-01'), false);
+    assert.equal(canMarkDayTrade('stock', 'US', '2026-01-01'), false);
   });
 
   test('A6. chain simulation puts NULL created_at rows last like PostgreSQL FIFO reads', () => {
@@ -237,7 +253,9 @@ if (!DB_URL) {
   // ── C. API 端到端：當沖標記與稅額 ─────────────────────────────
   test('C1. POST 賣出標記當沖：自動稅額採 0.15%，並寫入 day_trade = 1', async () => {
     const stockId = seedStock('2317');
-    seedTx(stockId, { type: 'buy', shares: 2000, price: 100, date: '2026-01-05' });
+    seedTx(stockId, { type: 'buy', shares: 600, price: 100, date: '2026-01-05', accountId });
+    seedTx(stockId, { type: 'buy', shares: 400, price: 100, date: '2026-01-05', accountId });
+    seedTx(stockId, { type: 'buy', shares: 1000, price: 100, date: '2026-01-05' });
 
     const res = await txRoute.POST(
       authedRequest('POST', 'http://localhost/api/stock-transactions', {
@@ -250,6 +268,12 @@ if (!DB_URL) {
     assert.equal(Number(row?.tax), 150, '100,000 × 0.15% = 150');
     assert.equal(Number(row?.day_trade), 1);
     assert.equal(Number(row?.tax_auto_calculated), 1);
+    const overAllocatedSale = await txRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions', {
+        stockId, type: 'sell', date: '2026-01-05', shares: 1, price: 100, dayTrade: true, accountId,
+      }),
+    );
+    assert.equal(overAllocatedSale.status, 400, 'same-account purchase quantity cannot qualify more than one tagged sale');
     // 對照組：同日同股不標當沖的另一筆賣出應為 300 元
     const res2 = await txRoute.POST(
       authedRequest('POST', 'http://localhost/api/stock-transactions', {
@@ -273,6 +297,18 @@ if (!DB_URL) {
     assert.equal(etfRes.status, 400);
     assert.match((await etfRes.json()).error, /僅適用台股一般股票/);
 
+    const cashAccountId = seedAccount('cash');
+    const cashAccountStock = seedStock('2304');
+    seedTx(cashAccountStock, { type: 'buy', shares: 1000, price: 50, date: '2026-01-06', accountId: cashAccountId });
+    const cashAccountSale = await txRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions', {
+        stockId: cashAccountStock, type: 'sell', date: '2026-01-06', shares: 1000,
+        price: 55, dayTrade: true, accountId: cashAccountId,
+      }),
+    );
+    assert.equal(cashAccountSale.status, 400);
+    assert.match((await cashAccountSale.json()).error, /證券帳戶類型/);
+
     const stockId = seedStock('2301');
     const buyRes = await txRoute.POST(
       authedRequest('POST', 'http://localhost/api/stock-transactions', {
@@ -281,14 +317,41 @@ if (!DB_URL) {
     );
     assert.equal(buyRes.status, 400);
     assert.match((await buyRes.json()).error, /僅適用於賣出交易/);
+
+    const noMatchStock = seedStock('2302');
+    seedTx(noMatchStock, { type: 'buy', shares: 1000, price: 50, date: '2026-01-06' });
+    const noAccountSale = await txRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions', {
+        stockId: noMatchStock, type: 'sell', date: '2026-01-06', shares: 1000, price: 55, dayTrade: true,
+      }),
+    );
+    assert.equal(noAccountSale.status, 400);
+    assert.match((await noAccountSale.json()).error, /證券帳戶/);
+    const noMatchSale = await txRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions', {
+        stockId: noMatchStock, type: 'sell', date: '2026-01-06', shares: 1000, price: 55, dayTrade: true, accountId,
+      }),
+    );
+    assert.equal(noMatchSale.status, 400);
+    assert.match((await noMatchSale.json()).error, /同帳戶、同日/);
+
+    const expiredStock = seedStock('2303');
+    seedTx(expiredStock, { type: 'buy', shares: 1000, price: 50, date: '2028-01-01', accountId });
+    const expiredSale = await txRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions', {
+        stockId: expiredStock, type: 'sell', date: '2028-01-01', shares: 1000,
+        price: 55, dayTrade: true, accountId,
+      }),
+    );
+    assert.equal(expiredSale.status, 400, 'the statutory reduced rate expires after 2027-12-31');
   });
 
   test('C3. PUT 切換當沖標記會重算自動稅額；手動稅額不因標記切換被覆蓋', async () => {
     const stockId = seedStock('2412');
-    seedTx(stockId, { type: 'buy', shares: 1000, price: 100, date: '2026-01-05' });
+    seedTx(stockId, { type: 'buy', shares: 1000, price: 100, date: '2026-01-05', accountId });
     const created = await txRoute.POST(
       authedRequest('POST', 'http://localhost/api/stock-transactions', {
-        stockId, type: 'sell', date: '2026-01-05', shares: 1000, price: 100,
+        stockId, type: 'sell', date: '2026-01-05', shares: 1000, price: 100, accountId,
       }),
     );
     const { id } = await created.json();
@@ -350,18 +413,40 @@ if (!DB_URL) {
   });
 
   test('C5. CSV 匯入接受當沖是值，但拒絕 ETF 或買進交易標記', async () => {
-    const common = { date: '2026-08-01', shares: 100, price: 10, dayTrade: '是' };
+    const common = { date: '2026-08-01', shares: 100, price: 10, dayTrade: '是', accountName: '證券帳戶' };
     const validStock = seedStock('2354', 'stock');
+    seedTx(validStock, { type: 'buy', shares: 100, price: 10, date: common.date, accountId });
     const valid = await txImportRoute.POST(
       authedRequest('POST', 'http://localhost/api/stock-transactions/import', {
         rows: [{ ...common, market: 'TW', symbol: '2354', type: '賣出' }],
       }),
     );
     assert.equal(valid.status, 200);
-    assert.equal((await valid.json()).imported, 1);
-    const imported = queryOne('SELECT day_trade, type FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ?', [userId, validStock, common.date]);
+    const validBody = await valid.json();
+    assert.equal(validBody.imported, 1, JSON.stringify(validBody));
+    const imported = queryOne('SELECT day_trade, type, tax, tax_auto_calculated FROM stock_transactions WHERE user_id = ? AND stock_id = ? AND date = ? AND type = ?', [userId, validStock, common.date, 'sell']);
     assert.equal(Number(imported?.day_trade), 1);
     assert.equal(imported?.type, 'sell');
+    assert.equal(Number(imported?.tax), 1, 'automatic day-trade tax should be 0.15% of 1,000');
+    assert.equal(Number(imported?.tax_auto_calculated), 1);
+    const invalidCalendarDate = await txImportRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions/import', {
+        rows: [{ ...common, date: '2026-02-31', market: 'TW', symbol: '2356', type: '賣出' }],
+      }),
+    );
+    assert.equal(invalidCalendarDate.status, 200);
+    assert.equal((await invalidCalendarDate.json()).imported, 0, 'invalid calendar dates cannot receive the reduced rate');
+
+    const cashAccountId = seedAccount('cash');
+    const cashAccountStock = seedStock('2355');
+    seedTx(cashAccountStock, { type: 'buy', shares: 100, price: 10, date: '2026-08-03', accountId: cashAccountId });
+    const invalidAccount = await txImportRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions/import', {
+        rows: [{ ...common, date: '2026-08-03', accountName: '一般帳戶', market: 'TW', symbol: '2355', type: '賣出' }],
+      }),
+    );
+    assert.equal(invalidAccount.status, 200);
+    assert.equal((await invalidAccount.json()).imported, 0, 'CSV day-trade sales must use a designated securities account');
 
     const etfStock = seedStock('0056', 'etf');
     const invalidEtf = await txImportRoute.POST(
@@ -394,10 +479,10 @@ if (!DB_URL) {
 
   test('C6. 舊客戶未傳 dayTrade 時可將當沖賣出改為買進，旗標會清除', async () => {
     const stockId = seedStock('2382');
-    seedTx(stockId, { type: 'buy', shares: 1000, price: 100, date: '2026-01-05' });
+    seedTx(stockId, { type: 'buy', shares: 1000, price: 100, date: '2026-01-05', accountId });
     const created = await txRoute.POST(
       authedRequest('POST', 'http://localhost/api/stock-transactions', {
-        stockId, type: 'sell', date: '2026-01-05', shares: 1000, price: 100, dayTrade: true,
+        stockId, type: 'sell', date: '2026-01-05', shares: 1000, price: 100, dayTrade: true, accountId,
       }),
     );
     assert.equal(created.status, 201);
@@ -412,6 +497,55 @@ if (!DB_URL) {
     const row = queryOne('SELECT type, day_trade FROM stock_transactions WHERE id = ?', [id]);
     assert.equal(row?.type, 'buy');
     assert.equal(Number(row?.day_trade), 0);
+  });
+
+  test('C7. 不可刪改當沖必要買進、增加同日賣出或取消證券帳戶資格', async () => {
+    const stockId = seedStock('2383');
+    seedTx(stockId, { type: 'buy', shares: 1000, price: 100, date: '2026-01-05' });
+    const supportBuyId = seedTx(stockId, { type: 'buy', shares: 1000, price: 100, date: '2026-01-06', accountId });
+    const sale = await txRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions', {
+        stockId, type: 'sell', date: '2026-01-06', shares: 1000, price: 110, dayTrade: true, accountId,
+      }),
+    );
+    assert.equal(sale.status, 201);
+    const { id: saleId } = await sale.json();
+
+    const extraSale = await txRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions', {
+        stockId, type: 'sell', date: '2026-01-06', shares: 1, price: 110, accountId,
+      }),
+    );
+    assert.equal(extraSale.status, 400, 'ordinary same-day sells also consume eligible purchase quantity');
+
+    const reduceSupportBuy = await txIdRoute.PUT(
+      authedRequest('PUT', `http://localhost/api/stock-transactions/${supportBuyId}`, {
+        type: 'buy', date: '2026-01-06', shares: 1, price: 100, accountId,
+      }),
+      { params: Promise.resolve({ id: supportBuyId }) },
+    );
+    assert.equal(reduceSupportBuy.status, 400);
+    const deleteSupportBuy = await txIdRoute.DELETE(
+      authedRequest('DELETE', `http://localhost/api/stock-transactions/${supportBuyId}`),
+      { params: Promise.resolve({ id: supportBuyId }) },
+    );
+    assert.equal(deleteSupportBuy.status, 400);
+    const batchDeleteSupportBuy = await txBatchDeleteRoute.POST(
+      authedRequest('POST', 'http://localhost/api/stock-transactions/batch-delete', { ids: [supportBuyId] }),
+    );
+    assert.equal(batchDeleteSupportBuy.status, 400);
+
+    const changeAccountType = await accountIdRoute.PUT(
+      authedRequest('PUT', `http://localhost/api/accounts/${accountId}`, { category: 'cash' }),
+      { params: Promise.resolve({ id: accountId }) },
+    );
+    assert.equal(changeAccountType.status, 400, 'securities account cannot lose its designation while tagged sales refer to it');
+    const deleteAccount = await accountIdRoute.DELETE(
+      authedRequest('DELETE', `http://localhost/api/accounts/${accountId}`),
+      { params: Promise.resolve({ id: accountId }) },
+    );
+    assert.equal(deleteAccount.status, 400, 'securities account cannot be deleted while tagged sales refer to it');
+    assert.ok(queryOne('SELECT id FROM stock_transactions WHERE id = ?', [saleId]));
   });
 
   // ── D. API 端到端：DRIP 與 FIFO ──────────────────────────────

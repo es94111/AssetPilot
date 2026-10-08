@@ -15,7 +15,7 @@ import {
   lockErrorResponse,
 } from "../../../../lib/resourceHelpers";
 
-type AccountCategory = "bank" | "credit_card" | "cash" | "virtual_wallet";
+type AccountCategory = "bank" | "credit_card" | "cash" | "virtual_wallet" | "securities";
 type RouteContext = { params: Promise<{ id: string }> };
 
 interface AccountRow {
@@ -63,6 +63,7 @@ const VALID_CATEGORIES: AccountCategory[] = [
   "credit_card",
   "cash",
   "virtual_wallet",
+  "securities",
 ];
 
 function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
@@ -194,6 +195,18 @@ async function updateAccount(request: NextRequest, id: string) {
       ? toAccountCategory(existing.category, existing.account_type)
       : toAccountCategory(body.category, body.accountType);
   const safeAccountType = accountTypeFromCategory(category);
+  if (category !== "securities") {
+    const linkedDayTrade = queryOne(
+      "SELECT id FROM stock_transactions WHERE user_id = ? AND account_id = ? AND day_trade = 1 LIMIT 1",
+      [auth.userId, id],
+    );
+    if (linkedDayTrade) {
+      return NextResponse.json(
+        { error: "此帳戶仍有現股當沖交易，請先移除相關當沖標記後再變更帳戶類型" },
+        { status: 400 },
+      );
+    }
+  }
   const safeExclude =
     excludeFromTotal === undefined
       ? Number(existing.exclude_from_total)
@@ -413,6 +426,16 @@ async function handleDELETE(request: NextRequest, { params }: RouteContext) {
         referenceCount: refCount,
       },
       { status: 422 },
+    );
+  }
+  const linkedDayTrade = queryOne(
+    "SELECT id FROM stock_transactions WHERE user_id = ? AND account_id = ? AND day_trade = 1 LIMIT 1",
+    [auth.userId, id],
+  );
+  if (linkedDayTrade) {
+    return NextResponse.json(
+      { error: "此帳戶仍有現股當沖交易，請先移除相關當沖標記後再刪除帳戶" },
+      { status: 400 },
     );
   }
 

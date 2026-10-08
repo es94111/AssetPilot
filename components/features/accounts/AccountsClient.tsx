@@ -12,6 +12,7 @@ import { Plus, Trash2, Edit3, Landmark, DollarSign, CreditCard, Wallet, CircleDo
 import CreditCardRepaymentDialog from './CreditCardRepaymentDialog';
 
 const ACCOUNT_TYPES = [
+  { value: 'securities', labelKey: 'features.accounts.typeLabels.securities', icon: Landmark },
   { value: 'bank', labelKey: 'features.accounts.typeLabels.bank', icon: Landmark },
   { value: 'credit_card', labelKey: 'features.accounts.typeLabels.credit_card', icon: CreditCard },
   { value: 'cash', labelKey: 'features.accounts.typeLabels.cash', icon: DollarSign },

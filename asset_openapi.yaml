@@ -405,7 +405,7 @@ components:
           type: number
         dayTrade:
           type: boolean
-          description: 現股當沖（僅台股一般股票賣出適用）；賣出證交稅依證券交易稅條例第 2 條之 2 以 0.15% 計算。
+          description: 現股當沖（僅 2017-04-28 至 2027-12-31 的台股一般股票賣出適用）；需有同證券帳戶、同日、同標的且股數足夠的現款買進，證交稅依證券交易稅條例第 2 條之 2 以 0.15% 計算。
         accountId:
           type: string
         note:
@@ -2493,7 +2493,7 @@ paths:
                   type: number
                 dayTrade:
                   type: boolean
-                  description: 現股當沖（僅台股一般股票賣出適用）；賣出證交稅依證券交易稅條例第 2 條之 2 以 0.15% 計算。
+                  description: 現股當沖（僅 2017-04-28 至 2027-12-31 的台股一般股票賣出適用）；需有同證券帳戶、同日、同標的且股數足夠的現款買進，證交稅依證券交易稅條例第 2 條之 2 以 0.15% 計算。
                 accountId:
                   type: string
                 note:

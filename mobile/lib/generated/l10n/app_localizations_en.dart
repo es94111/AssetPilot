@@ -1795,6 +1795,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresAccountsTitle => 'Account management';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Securities account';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Bank account';
 
   @override
@@ -6490,4 +6493,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Query cloud e-invoices by mobile barcode through the configured provider API endpoint.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Trading account';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Unspecified';
 }

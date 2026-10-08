@@ -1069,6 +1069,7 @@ export const es = {
     accounts: {
       title: "Cuentas",
       typeLabels: {
+        securities: "Cuenta de valores",
         bank: "Cuenta bancaria",
         credit_card: "Tarjeta de crédito",
         cash: "Efectivo",
@@ -1359,6 +1360,8 @@ export const es = {
         dayTradeLabel: "Day trade (tipo impositivo reducido)",
         dayTradeHint: "Misma cuenta, mismo día, compra en efectivo y venta del mismo valor; el impuesto usa el tipo del 0,15 % (art. 2-2 de la Securities Transaction Tax Act).",
         dayTradeBadge: "Day trade",
+        accountLabel: "Trading account",
+        accountUnspecified: "Sin especificar",
       },
       dividends: {
         title: "Dividendos",

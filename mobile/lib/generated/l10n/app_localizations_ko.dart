@@ -1735,6 +1735,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresAccountsTitle => '계좌';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => '증권 계좌';
+
+  @override
   String get featuresAccountsTypeLabelsBank => '은행 계좌';
 
   @override
@@ -6287,4 +6290,10 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '설정된 공급자 API 엔드포인트를 통해 모바일 바코드로 클라우드 전자 영수증을 조회합니다.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '거래 계좌';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '미지정';
 }

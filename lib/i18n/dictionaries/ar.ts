@@ -1069,6 +1069,7 @@ export const ar = {
     accounts: {
       title: "الحسابات",
       typeLabels: {
+        securities: "حساب أوراق مالية",
         bank: "حساب بنكي",
         credit_card: "بطاقة ائتمان",
         cash: "نقد",
@@ -1359,6 +1360,8 @@ export const ar = {
         dayTradeLabel: "التداول اليومي (نصف معدل الضريبة)",
         dayTradeHint: "نفس الحساب، نفس يوم العمل، شراء نقدي وبيع لنفس الكمية؛ تُطبَّق ضريبة البيع بنسبة 0.15% وفق المادة 2-2.",
         dayTradeBadge: "تداول يومي",
+        accountLabel: "حساب التداول",
+        accountUnspecified: "غير محدد",
       },
       dividends: {
         title: "التوزيعات",

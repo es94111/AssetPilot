@@ -3343,6 +3343,12 @@ abstract class AppLocalizations {
   /// **'帳戶管理'**
   String get featuresAccountsTitle;
 
+  /// Web path: features.accounts.typeLabels.securities
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'證券帳戶'**
+  String get featuresAccountsTypeLabelsSecurities;
+
   /// Web path: features.accounts.typeLabels.bank
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -11348,6 +11354,18 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。'**
   String get publicApiCreditsPageDescriptionsEinvoice;
+
+  /// Web path: features.stocks.transactions.accountLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易帳戶'**
+  String get featuresStocksTransactionsAccountLabel;
+
+  /// Web path: features.stocks.transactions.accountUnspecified
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未指定'**
+  String get featuresStocksTransactionsAccountUnspecified;
 }
 
 class _AppLocalizationsDelegate

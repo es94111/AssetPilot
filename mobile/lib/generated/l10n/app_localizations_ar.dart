@@ -1788,6 +1788,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresAccountsTitle => 'الحسابات';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'حساب أوراق مالية';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'حساب بنكي';
 
   @override
@@ -6463,4 +6466,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'الاستعلام عن الفواتير الإلكترونية السحابية باستخدام باركود الهاتف عبر نقطة نهاية API للمزوّد المُعدّ.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'حساب التداول';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'غير محدد';
 }

@@ -1069,6 +1069,7 @@ export const ptBR = {
     accounts: {
       title: "Contas",
       typeLabels: {
+        securities: "Conta de investimentos",
         bank: "Conta bancária",
         credit_card: "Cartão de crédito",
         cash: "Dinheiro",
@@ -1359,6 +1360,8 @@ export const ptBR = {
         dayTradeLabel: "Day trade (taxa reduzida à metade)",
         dayTradeHint: "Mesma conta, mesmo dia útil, compra à vista e venda da mesma quantidade; imposto de venda a 0,15% (art. 2-2).",
         dayTradeBadge: "Day trade",
+        accountLabel: "Conta de negociação",
+        accountUnspecified: "Não especificada",
       },
       dividends: {
         title: "Dividendos",

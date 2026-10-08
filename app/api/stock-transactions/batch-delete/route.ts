@@ -3,7 +3,10 @@ import { withLedgerWriteAudit } from "../../../../lib/ledgerContext";
 import { NextResponse } from 'next/server';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../lib/db';
-import { isProtectedSyntheticTransaction } from '../../../../lib/stockHelpers';
+import {
+  hasValidDayTradeCoverageAfterChanges,
+  isProtectedSyntheticTransaction,
+} from '../../../../lib/stockHelpers';
 
 async function handlePOST(request) {
   const auth = await requireAuth(request);
@@ -25,6 +28,13 @@ async function handlePOST(request) {
         { status: 400 }
       );
     }
+  }
+
+  if (!hasValidDayTradeCoverageAfterChanges(auth.userId, [], ids.map(String))) {
+    return NextResponse.json(
+      { error: '不可刪除這些交易，因為它們包含現股當沖賣出的必要同日買進數量' },
+      { status: 400 }
+    );
   }
 
   const db = getDB();

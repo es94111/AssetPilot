@@ -1069,6 +1069,7 @@ export const ko = {
     accounts: {
       title: "계좌",
       typeLabels: {
+        securities: "증권 계좌",
         bank: "은행 계좌",
         credit_card: "신용카드",
         cash: "현금",
@@ -1359,6 +1360,8 @@ export const ko = {
         dayTradeLabel: "데이트레이드 (세율 절반)",
         dayTradeHint: "동일 계좌, 동일 영업일, 동일 수량 현금 매수·매도; 매도세는 0.15% 적용(제2조의2).",
         dayTradeBadge: "데이트레이드",
+        accountLabel: "거래 계좌",
+        accountUnspecified: "미지정",
       },
       dividends: {
         title: "배당",

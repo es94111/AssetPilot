@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../credit_card_repayment_allocation.dart';
 
 Map<String, String> get _accountCategories => {
+  'securities': trKey('featuresAccountsTypeLabelsSecurities'),
   'bank': trKey('mobileLegacyBank'),
   'credit_card': trKey('featuresAccountsTypeLabelsCredit_card'),
   'cash': trKey('featuresAccountsTypeLabelsCash'),

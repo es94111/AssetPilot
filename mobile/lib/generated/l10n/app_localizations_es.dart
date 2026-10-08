@@ -1835,6 +1835,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresAccountsTitle => 'Cuentas';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Cuenta de valores';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Cuenta bancaria';
 
   @override
@@ -6609,4 +6612,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Consulta facturas electrónicas en la nube por código de barras móvil mediante el endpoint API del proveedor configurado.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Trading account';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Sin especificar';
 }

@@ -1069,6 +1069,7 @@ export const hi = {
     accounts: {
       title: "खाते",
       typeLabels: {
+        securities: "प्रतिभूति खाता",
         bank: "बैंक खाता",
         credit_card: "क्रेडिट कार्ड",
         cash: "नकद",
@@ -1359,6 +1360,8 @@ export const hi = {
         dayTradeLabel: "डे ट्रेड (आधी कर दर)",
         dayTradeHint: "एक ही खाता, एक ही कारोबारी दिन, समान मात्रा की नकद खरीद और बिक्री; बिक्री कर 0.15% दर पर (धारा 2-2)।",
         dayTradeBadge: "डे ट्रेड",
+        accountLabel: "ट्रेडिंग खाता",
+        accountUnspecified: "निर्दिष्ट नहीं",
       },
       dividends: {
         title: "डिविडेंड",

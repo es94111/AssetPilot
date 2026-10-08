@@ -1069,6 +1069,7 @@ export const zhCN = {
     accounts: {
       title: "账户管理",
       typeLabels: {
+        securities: "证券账户",
         bank: "银行账户",
         credit_card: "信用卡",
         cash: "现金",
@@ -1359,6 +1360,8 @@ export const zhCN = {
         dayTradeLabel: "现股当冲（税率减半）",
         dayTradeHint: "同一账户同日现款买进与现券卖出同种类同数量，卖出证交税依证交税条例第 2 条之 2 以 0.15% 计算。",
         dayTradeBadge: "当冲",
+        accountLabel: "交易账户",
+        accountUnspecified: "未指定",
       },
       dividends: {
         title: "股利",

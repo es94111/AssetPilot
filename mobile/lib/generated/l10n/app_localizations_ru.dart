@@ -1817,6 +1817,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresAccountsTitle => 'Счета';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => 'Брокерский счет';
+
+  @override
   String get featuresAccountsTypeLabelsBank => 'Банковский счет';
 
   @override
@@ -6561,4 +6564,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       'Запрос облачных электронных счетов по мобильному штрихкоду через настроенную конечную точку API поставщика.';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => 'Торговый счёт';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => 'Не указан';
 }

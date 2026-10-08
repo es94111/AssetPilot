@@ -2771,6 +2771,11 @@
     "description": "Web path: features.accounts.title",
     "x-webPath": "features.accounts.title"
   },
+  "featuresAccountsTypeLabelsSecurities": "Securities account",
+  "@featuresAccountsTypeLabelsSecurities": {
+    "description": "Web path: features.accounts.typeLabels.securities",
+    "x-webPath": "features.accounts.typeLabels.securities"
+  },
   "featuresAccountsTypeLabelsBank": "Bank account",
   "@featuresAccountsTypeLabelsBank": {
     "description": "Web path: features.accounts.typeLabels.bank",
@@ -9984,5 +9989,15 @@
   "@publicApiCreditsPageDescriptionsEinvoice": {
     "description": "Web path: public.apiCreditsPage.descriptions.einvoice",
     "x-webPath": "public.apiCreditsPage.descriptions.einvoice"
+  },
+  "featuresStocksTransactionsAccountLabel": "Trading account",
+  "@featuresStocksTransactionsAccountLabel": {
+    "description": "Web path: features.stocks.transactions.accountLabel",
+    "x-webPath": "features.stocks.transactions.accountLabel"
+  },
+  "featuresStocksTransactionsAccountUnspecified": "Unspecified",
+  "@featuresStocksTransactionsAccountUnspecified": {
+    "description": "Web path: features.stocks.transactions.accountUnspecified",
+    "x-webPath": "features.stocks.transactions.accountUnspecified"
   }
 }

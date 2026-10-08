@@ -92,7 +92,8 @@ function normalizeImportedCategory(
   accountType: string,
 ): string {
   const s = String(value || "").trim();
-  if (["bank", "credit_card", "cash", "virtual_wallet"].includes(s)) return s;
+  if (["bank", "credit_card", "cash", "virtual_wallet", "securities"].includes(s)) return s;
+  if (s === "證券帳戶") return "securities";
   if (s === "銀行") return "bank";
   if (s === "信用卡") return "credit_card";
   if (s === "現金") return "cash";

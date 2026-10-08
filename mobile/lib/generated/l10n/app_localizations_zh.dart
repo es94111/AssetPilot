@@ -1701,6 +1701,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresAccountsTitle => '帳戶管理';
 
   @override
+  String get featuresAccountsTypeLabelsSecurities => '證券帳戶';
+
+  @override
   String get featuresAccountsTypeLabelsBank => '銀行帳戶';
 
   @override
@@ -6189,6 +6192,12 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '交易帳戶';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '未指定';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -7888,6 +7897,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresAccountsTitle => '账户管理';
+
+  @override
+  String get featuresAccountsTypeLabelsSecurities => '证券账户';
 
   @override
   String get featuresAccountsTypeLabelsBank => '银行账户';
@@ -12379,6 +12391,12 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '通过配置的供应商 API 端点，使用手机条码查询云端电子发票。';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '交易账户';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '未指定';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -14076,6 +14094,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresAccountsTitle => '帳戶管理';
+
+  @override
+  String get featuresAccountsTypeLabelsSecurities => '證券帳戶';
 
   @override
   String get featuresAccountsTypeLabelsBank => '銀行帳戶';
@@ -18566,4 +18587,10 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get publicApiCreditsPageDescriptionsEinvoice =>
       '透過已設定的供應商 API endpoint，以手機條碼查詢雲端電子發票。';
+
+  @override
+  String get featuresStocksTransactionsAccountLabel => '交易帳戶';
+
+  @override
+  String get featuresStocksTransactionsAccountUnspecified => '未指定';
 }

@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.141.0",
+  "currentVersion": "4.141.1",
   "releases": [
+    {
+      "version": "4.141.1",
+      "date": "2026-10-09",
+      "title": "修補 Next.js 相依套件安全漏洞",
+      "type": "security",
+      "changes": [
+        {
+          "tag": "security",
+          "text": "將 next 升級至 16.3.8，修補 6 項安全性弱點：Image Optimization 伺服器端請求偽造（GHSA-cjq9-62q9-8jv4，高風險）、SSG/ISR 快取污染導致跨使用者內容替換與持續性服務中斷（GHSA-mcj8-r9mp-w47p）、自架環境 SSG/ISR 快取污染（GHSA-4jqv-mc3x-m676）、App Router Metadata 圖片路由資訊洩漏（GHSA-f87g-xv8r-7p7x）、開發伺服器 MCP 端點資訊洩漏（GHSA-39w2-rjm5-chcv）、以及 Draft Mode 內容洩漏至一般回應（GHSA-3w37-wq28-93x7）。同步更新根專案與三個行銷截圖子專案的鎖定版本，npm audit 均為 0 漏洞。"
+        }
+      ]
+    },
     {
       "version": "4.141.0",
       "date": "2026-10-08",

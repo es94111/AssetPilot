@@ -4778,6 +4778,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return '收入 $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return '支出 $amount';
+  }
+
+  @override
   String get featuresCalendarTransaction => '交易';
 
   @override
@@ -11029,6 +11039,16 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String featuresCalendarRecurringCount(Object count) {
     return '$count 个计划';
+  }
+
+  @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return '收入 $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return '支出 $amount';
   }
 
   @override
@@ -17294,6 +17314,16 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String featuresCalendarRecurringCount(Object count) {
     return '$count 筆排程';
+  }
+
+  @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return '收入 $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return '支出 $amount';
   }
 
   @override

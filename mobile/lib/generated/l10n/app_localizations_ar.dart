@@ -4990,6 +4990,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return 'دخل $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return 'مصروف $amount';
+  }
+
+  @override
   String get featuresCalendarTransaction => 'معاملة';
 
   @override

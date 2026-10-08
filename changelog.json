@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.139.0",
+  "currentVersion": "4.140.0",
   "releases": [
+    {
+      "version": "4.140.0",
+      "date": "2026-10-08",
+      "title": "行事曆新增每日收支金額加總",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "行事曆日期格在既有交易／股利／排程筆數徽章之外，新增顯示當日收入與支出金額加總（台幣，收入綠字 +、支出紅字 −）。"
+        },
+        {
+          "tag": "new",
+          "text": "金額加總口徑與 Dashboard 一致：只計實際交易（type 為收入／支出，排除轉帳），並排除標記「不計入統計」的交易；股利與固定收支排程（僅為預計金額）維持現有筆數徽章，不併入加總。"
+        },
+        {
+          "tag": "new",
+          "text": "`/api/calendar` 新增 `dailyTotals` 欄位；`lib/calendarEvents.ts` 新增零相依 `buildCalendarDailyTotals()` 純函式並補上測試，新增 2 個行事曆多語系鍵（收入／支出金額）。"
+        }
+      ]
+    },
     {
       "version": "4.139.0",
       "date": "2026-10-08",

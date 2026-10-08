@@ -5004,6 +5004,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return 'Income $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return 'Expense $amount';
+  }
+
+  @override
   String get featuresCalendarTransaction => 'Transaction';
 
   @override

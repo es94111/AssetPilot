@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/apiHelpers';
 import { queryAll } from '@/lib/db';
-import { buildCalendarEvents, getTodayInTimezone } from '@/lib/calendarEvents';
+import { buildCalendarDailyTotals, buildCalendarEvents, getTodayInTimezone } from '@/lib/calendarEvents';
 import { getCalendarRange, isCalendarIsoDate, type CalendarView } from '@/lib/calendarDates';
 import { isValidIanaTimezone } from '@/lib/userTime';
 
@@ -56,10 +56,20 @@ export async function GET(request: NextRequest) {
      ORDER BY r.start_date, r.id`,
     [auth.userId],
   );
+  // 每日收支金額（台幣）：與 Dashboard 統計口徑一致，只算實際交易、排除轉帳與「不計入統計」。
+  const dailyTotalRows = queryAll(
+    `SELECT t.date, t.type, COALESCE(SUM(t.amount), 0) AS total
+     FROM transactions t
+     WHERE t.user_id = ? AND t.date >= ? AND t.date <= ?
+       AND t.type IN ('income', 'expense') AND COALESCE(t.exclude_from_stats, 0) = 0
+     GROUP BY t.date, t.type`,
+    [auth.userId, range.from, range.to],
+  );
 
   const events = buildCalendarEvents({ range, transactions, dividends, recurringSchedules });
+  const dailyTotals = buildCalendarDailyTotals(range, dailyTotalRows);
   return NextResponse.json(
-    { anchor, view, range, timezone, today, events },
+    { anchor, view, range, timezone, today, events, dailyTotals },
     { headers: { 'Cache-Control': 'private, no-store' } },
   );
 }

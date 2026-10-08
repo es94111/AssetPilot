@@ -5067,6 +5067,16 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return 'Receita $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return 'Despesa $amount';
+  }
+
+  @override
   String get featuresCalendarTransaction => 'Transação';
 
   @override
@@ -11697,6 +11707,16 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String featuresCalendarRecurringCount(Object count) {
     return '$count agendamentos';
+  }
+
+  @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return 'Receita $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return 'Despesa $amount';
   }
 
   @override

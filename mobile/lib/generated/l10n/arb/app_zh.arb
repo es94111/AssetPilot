@@ -7708,6 +7708,22 @@
       "count": {}
     }
   },
+  "featuresCalendarIncomeAmount": "收入 {amount}",
+  "@featuresCalendarIncomeAmount": {
+    "description": "Web path: features.calendar.incomeAmount",
+    "x-webPath": "features.calendar.incomeAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresCalendarExpenseAmount": "支出 {amount}",
+  "@featuresCalendarExpenseAmount": {
+    "description": "Web path: features.calendar.expenseAmount",
+    "x-webPath": "features.calendar.expenseAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "featuresCalendarTransaction": "交易",
   "@featuresCalendarTransaction": {
     "description": "Web path: features.calendar.transaction",

@@ -7693,6 +7693,22 @@
       "count": {}
     }
   },
+  "featuresCalendarIncomeAmount": "Ingreso {amount}",
+  "@featuresCalendarIncomeAmount": {
+    "description": "Web path: features.calendar.incomeAmount",
+    "x-webPath": "features.calendar.incomeAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresCalendarExpenseAmount": "Gasto {amount}",
+  "@featuresCalendarExpenseAmount": {
+    "description": "Web path: features.calendar.expenseAmount",
+    "x-webPath": "features.calendar.expenseAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "featuresCalendarTransaction": "Transacción",
   "@featuresCalendarTransaction": {
     "description": "Web path: features.calendar.transaction",

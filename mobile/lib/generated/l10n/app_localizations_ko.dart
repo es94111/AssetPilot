@@ -4850,6 +4850,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return '수입 $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return '지출 $amount';
+  }
+
+  @override
   String get featuresCalendarTransaction => '거래';
 
   @override

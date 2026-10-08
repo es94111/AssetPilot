@@ -5068,6 +5068,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return 'Доход $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return 'Расход $amount';
+  }
+
+  @override
   String get featuresCalendarTransaction => 'Операция';
 
   @override

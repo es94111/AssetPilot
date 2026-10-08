@@ -7693,6 +7693,22 @@
       "count": {}
     }
   },
+  "featuresCalendarIncomeAmount": "Доход {amount}",
+  "@featuresCalendarIncomeAmount": {
+    "description": "Web path: features.calendar.incomeAmount",
+    "x-webPath": "features.calendar.incomeAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresCalendarExpenseAmount": "Расход {amount}",
+  "@featuresCalendarExpenseAmount": {
+    "description": "Web path: features.calendar.expenseAmount",
+    "x-webPath": "features.calendar.expenseAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "featuresCalendarTransaction": "Операция",
   "@featuresCalendarTransaction": {
     "description": "Web path: features.calendar.transaction",

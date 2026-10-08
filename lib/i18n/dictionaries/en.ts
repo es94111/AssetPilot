@@ -1477,6 +1477,8 @@ export const en = {
       transactionCount: "{count} transactions",
       dividendCount: "{count} dividends",
       recurringCount: "{count} schedules",
+      incomeAmount: "Income {amount}",
+      expenseAmount: "Expense {amount}",
       transaction: "Transaction",
       dividend: "Dividend",
       readOnlySchedule: "Recurring (read-only)",

@@ -7693,6 +7693,22 @@
       "count": {}
     }
   },
+  "featuresCalendarIncomeAmount": "आय {amount}",
+  "@featuresCalendarIncomeAmount": {
+    "description": "Web path: features.calendar.incomeAmount",
+    "x-webPath": "features.calendar.incomeAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresCalendarExpenseAmount": "खर्च {amount}",
+  "@featuresCalendarExpenseAmount": {
+    "description": "Web path: features.calendar.expenseAmount",
+    "x-webPath": "features.calendar.expenseAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "featuresCalendarTransaction": "लेन-देन",
   "@featuresCalendarTransaction": {
     "description": "Web path: features.calendar.transaction",

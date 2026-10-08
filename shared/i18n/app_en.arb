@@ -7708,6 +7708,22 @@
       "count": {}
     }
   },
+  "featuresCalendarIncomeAmount": "Income {amount}",
+  "@featuresCalendarIncomeAmount": {
+    "description": "Web path: features.calendar.incomeAmount",
+    "x-webPath": "features.calendar.incomeAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "featuresCalendarExpenseAmount": "Expense {amount}",
+  "@featuresCalendarExpenseAmount": {
+    "description": "Web path: features.calendar.expenseAmount",
+    "x-webPath": "features.calendar.expenseAmount",
+    "placeholders": {
+      "amount": {}
+    }
+  },
   "featuresCalendarTransaction": "Transaction",
   "@featuresCalendarTransaction": {
     "description": "Web path: features.calendar.transaction",

@@ -1477,6 +1477,8 @@ export const ptBR = {
       transactionCount: "{count} transações",
       dividendCount: "{count} dividendos",
       recurringCount: "{count} agendamentos",
+      incomeAmount: "Receita {amount}",
+      expenseAmount: "Despesa {amount}",
       transaction: "Transação",
       dividend: "Dividendo",
       readOnlySchedule: "Recorrente (somente leitura)",

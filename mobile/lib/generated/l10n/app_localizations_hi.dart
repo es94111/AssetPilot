@@ -5000,6 +5000,16 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String featuresCalendarIncomeAmount(Object amount) {
+    return 'आय $amount';
+  }
+
+  @override
+  String featuresCalendarExpenseAmount(Object amount) {
+    return 'खर्च $amount';
+  }
+
+  @override
   String get featuresCalendarTransaction => 'लेन-देन';
 
   @override

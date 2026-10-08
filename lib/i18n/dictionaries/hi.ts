@@ -1477,6 +1477,8 @@ export const hi = {
       transactionCount: "{count} लेन-देन",
       dividendCount: "{count} लाभांश",
       recurringCount: "{count} अनुसूचियाँ",
+      incomeAmount: "आय {amount}",
+      expenseAmount: "खर्च {amount}",
       transaction: "लेन-देन",
       dividend: "लाभांश",
       readOnlySchedule: "आवर्ती (केवल-पढ़ने योग्य)",

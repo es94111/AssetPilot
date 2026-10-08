@@ -1477,6 +1477,8 @@ export const ko = {
       transactionCount: "거래 {count}건",
       dividendCount: "배당 {count}건",
       recurringCount: "반복 일정 {count}건",
+      incomeAmount: "수입 {amount}",
+      expenseAmount: "지출 {amount}",
       transaction: "거래",
       dividend: "배당",
       readOnlySchedule: "반복 일정 (읽기 전용)",

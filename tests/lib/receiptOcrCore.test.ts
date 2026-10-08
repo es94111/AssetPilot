@@ -336,7 +336,7 @@ try {
     await assert.rejects(() => provider.recognize({ image: Buffer.from([0xff, 0xd8, 0xff]), mimeType: 'image/jpeg' }));
   });
   await test('http 供應商以 stub fetch 傳送憑證但不回傳憑證', async () => {
-    const credential = 'OCR_SECRET_CANARY_9f4d2';
+    const credential = 'OCR_SECRET_CANARY_9f4d2'; // gitleaks:allow (測試用假值，驗證不外洩，非真實密鑰)
     let capturedUrl = '';
     let capturedAuthorization = '';
     const fetchImpl = (async (url: string | URL, init?: RequestInit) => {

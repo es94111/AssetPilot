@@ -223,8 +223,10 @@ function lineValue(text: string, labels: string[]): string | null {
   for (const label of labels) {
     const isEnglishLabel = /^[a-z ]+$/i.test(label);
     const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    // label 僅來自內部固定常數（AMOUNT_LABELS/DATE_LABELS/MERCHANT_LABELS），且所有正規表示式
+    // 特殊字元已逐一跳脫，不會受使用者輸入影響，無 ReDoS 風險。
     const labelPattern = isEnglishLabel
-      ? new RegExp(`(^|[^a-z])${escapedLabel}(?=$|[^a-z])`, 'i')
+      ? new RegExp(`(^|[^a-z])${escapedLabel}(?=$|[^a-z])`, 'i') // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
       : null;
     for (const line of lines) {
       const idx = labelPattern
@@ -248,7 +250,8 @@ function isCompactRocDateToken(value: string): boolean {
 function stripCompactRocDatesFromLabeledLines(text: string): string {
   return String(text || '').split(/\r?\n/).map((line) => {
     const hasDateLabel = DATE_LABELS.some((label) => {
-      if (/^[a-z]+$/i.test(label)) return new RegExp(`(^|[^a-z])${label}(?=$|[^a-z])`, 'i').test(line);
+      // label 來自內部固定常數 DATE_LABELS，且已驗證僅含 a-z 字元，不含正規表示式特殊字元，無 ReDoS 風險。
+      if (/^[a-z]+$/i.test(label)) return new RegExp(`(^|[^a-z])${label}(?=$|[^a-z])`, 'i').test(line); // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
       return line.includes(label);
     });
     return hasDateLabel ? line.replace(/\b1\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\b/g, ' ') : line;

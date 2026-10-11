@@ -62,6 +62,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   String? _accountId;
   String? _toAccountId;
   bool _saving = false;
+  bool _ocrRunning = false;
   final _picker = ImagePicker();
   final List<XFile> _photos = [];
   // 編輯模式下，後端已存在的照片附件（含 id，供檢視／刪除）。
@@ -349,6 +350,73 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       );
       if (picked.isEmpty) return;
       setState(() => _photos.addAll(picked.take(remaining)));
+    }
+  }
+
+  /// 收據 OCR：只預填表單草稿，使用者確認後才儲存。已手動填寫的金額／備註不覆寫。
+  Future<void> _scanReceipt() async {
+    if (_ocrRunning) return;
+    final String? localPath = _photos.isNotEmpty ? _photos.first.path : null;
+    final String? existingId =
+        localPath == null && _existingPhotos.isNotEmpty && _isEdit
+        ? '${_existingPhotos.first['id']}'
+        : null;
+    if (localPath == null && existingId == null) return;
+    setState(() => _ocrRunning = true);
+    try {
+      final result = await ApiClient.instance.receiptOcr(
+        imagePath: localPath,
+        transactionId: existingId == null ? null : widget.existing!.id,
+        attachmentId: existingId,
+      );
+      if (!mounted) return;
+      final status = result['status'];
+      final draft = result['draft'];
+      final d = draft is Map ? draft : const {};
+      final amount = d['amount'];
+      final date = d['date'] is String
+          ? DateTime.tryParse(d['date'] as String)
+          : null;
+      final merchant = d['merchant'] is String
+          ? (d['merchant'] as String).trim()
+          : '';
+      final hasAny = amount is num || date != null || merchant.isNotEmpty;
+      if (status == 'ok' && hasAny) {
+        setState(() {
+          if (amount is num && amount > 0 && _amount.text.trim().isEmpty) {
+            _amount.text = amount == amount.roundToDouble()
+                ? amount.toInt().toString()
+                : amount.toString();
+          }
+          if (date != null) _date = date;
+          if (merchant.isNotEmpty && _note.text.trim().isEmpty) {
+            _note.text = merchant.length > 200
+                ? merchant.substring(0, 200)
+                : merchant;
+          }
+        });
+        toast(context, trKey('featuresTransactionsOcrApplied'));
+      } else if (status == 'unavailable') {
+        toast(context, trKey('featuresTransactionsOcrUnavailable'));
+      } else if (status == 'ok') {
+        toast(context, trKey('featuresTransactionsOcrNoFields'));
+      } else {
+        toast(
+          context,
+          trKey('featuresTransactionsOcrFailed', {
+            'message': '${result['message'] ?? ''}',
+          }),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        toast(
+          context,
+          trKey('featuresTransactionsOcrFailed', {'message': '$e'}),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _ocrRunning = false);
     }
   }
 
@@ -995,6 +1063,26 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       }),
               ),
             ),
+            if (_type != 'transfer' &&
+                (_photos.isNotEmpty ||
+                    (_isEdit && _existingPhotos.isNotEmpty))) ...[
+              SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _saving || _ocrRunning ? null : _scanReceipt,
+                icon: _ocrRunning
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(Icons.document_scanner_outlined),
+                label: Text(
+                  _ocrRunning
+                      ? trKey('featuresTransactionsScanningReceipt')
+                      : trKey('featuresTransactionsScanReceipt'),
+                ),
+              ),
+            ],
             if (_photos.isNotEmpty) ...[
               SizedBox(height: 12),
               Wrap(

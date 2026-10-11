@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.141.1",
+  "currentVersion": "4.142.0",
   "releases": [
+    {
+      "version": "4.142.0",
+      "date": "2026-10-11",
+      "title": "收據 OCR 支援 OCR.space",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "收據 OCR 新增內建 OCR.space 供應商：設定 RECEIPT_OCR_PROVIDER=ocrspace 與 RECEIPT_OCR_API_KEY 即可使用（可用 RECEIPT_OCR_LANGUAGE 指定辨識語言，預設 cht）。API 金鑰僅經 apikey header 以 HTTPS 送出，不會出現在回應中；未設定或辨識失敗時仍降級為手動輸入。"
+        }
+      ]
+    },
     {
       "version": "4.141.1",
       "date": "2026-10-09",

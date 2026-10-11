@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform, SocketException;
+import 'dart:io' show File, Platform, SocketException;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -763,6 +763,30 @@ class ApiClient {
   Future<List<dynamic>> listTransactionAttachments(String txId) async {
     final r = await _send('GET', '/api/transactions/$txId/attachments');
     return r is Map && r['attachments'] is List ? r['attachments'] as List : [];
+  }
+
+  /// 收據 OCR：只回傳草稿（status / draft / message），不寫入任何資料。
+  /// 傳入本機影像 [imagePath]，或已上傳的 [transactionId] + [attachmentId]。
+  Future<Map<String, dynamic>> receiptOcr({
+    String? imagePath,
+    String? transactionId,
+    String? attachmentId,
+  }) async {
+    final body = <String, dynamic>{};
+    if (imagePath != null) {
+      body['imageBase64'] = base64Encode(await File(imagePath).readAsBytes());
+      body['mimeType'] = _imageContentType(imagePath).mimeType;
+    } else {
+      body['transactionId'] = transactionId;
+      body['attachmentId'] = attachmentId;
+    }
+    final r = await _send(
+      'POST',
+      '/api/transactions/receipt-ocr',
+      body: body,
+      timeout: const Duration(seconds: 60),
+    );
+    return r is Map<String, dynamic> ? r : <String, dynamic>{};
   }
 
   /// 刪除某筆交易的一張照片附件。

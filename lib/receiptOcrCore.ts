@@ -16,7 +16,7 @@
 import Decimal from 'decimal.js';
 import { isValidIsoDate, todayInUserTz } from './userTime';
 
-export type ReceiptOcrProviderName = 'none' | 'http';
+export type ReceiptOcrProviderName = 'none' | 'http' | 'ocrspace';
 
 /** 從圖片辨識出的原始文字（供應商只需回傳文字，解析留在本檔以確保一致性）。 */
 export interface ReceiptOcrRawResult {
@@ -424,6 +424,71 @@ export function createHttpProvider(options: HttpProviderOptions): ReceiptOcrProv
   };
 }
 
+export const OCR_SPACE_DEFAULT_ENDPOINT = 'https://api.ocr.space/parse/image';
+
+export interface OcrSpaceProviderOptions {
+  apiKey?: string;
+  endpoint?: string;
+  language?: string;
+  timeoutMs?: number;
+  fetchImpl?: typeof fetch;
+  maxBytes?: number;
+}
+
+/**
+ * OCR.space 供應商（https://ocr.space/ocrapi）：以 multipart 上傳影像，API 金鑰放在 `apikey` header。
+ * 只取回辨識文字，欄位解析仍由 parseReceiptOcrResult 統一處理。必須使用 HTTPS 並提供 API 金鑰。
+ */
+export function createOcrSpaceProvider(options: OcrSpaceProviderOptions): ReceiptOcrProvider {
+  const endpoint = String(options.endpoint || '').trim() || OCR_SPACE_DEFAULT_ENDPOINT;
+  const apiKey = String(options.apiKey || '').trim();
+  const language = String(options.language || '').trim() || 'cht';
+  const timeoutMs = Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : RECEIPT_OCR_DEFAULT_TIMEOUT_MS;
+  const maxBytes = Number(options.maxBytes) > 0 ? Number(options.maxBytes) : RECEIPT_OCR_MAX_IMAGE_BYTES;
+
+  return {
+    name: 'ocrspace',
+    isConfigured: () => !!apiKey && isValidEndpoint(endpoint, true),
+    async recognize({ image, mimeType }) {
+      if (!apiKey || !isValidEndpoint(endpoint, true)) throw new Error('OCR.space 需要 API 金鑰與 HTTPS 端點');
+      if (image.length === 0) throw new Error('影像內容為空');
+      if (image.length > maxBytes) throw new Error('影像超過 OCR 上限');
+      const doFetch = options.fetchImpl || fetch;
+      const form = new FormData();
+      form.append('file', new Blob([new Uint8Array(image)], { type: mimeType || 'application/octet-stream' }), 'receipt');
+      form.append('language', language);
+      form.append('OCREngine', '2');
+      form.append('scale', 'true');
+      form.append('detectOrientation', 'true');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await doFetch(endpoint, {
+          method: 'POST',
+          headers: { apikey: apiKey },
+          body: form,
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`OCR 供應商回應 ${response.status}`);
+        const payload = (await response.json()) as Record<string, unknown> | null;
+        if (!payload || typeof payload !== 'object') return { text: '' };
+        if (payload.IsErroredOnProcessing) {
+          const msg = Array.isArray(payload.ErrorMessage) ? payload.ErrorMessage.join(' ') : String(payload.ErrorMessage || '');
+          throw new Error(msg.slice(0, 120) || 'OCR.space 處理失敗');
+        }
+        const results = Array.isArray(payload.ParsedResults) ? payload.ParsedResults : [];
+        const text = results
+          .map((r) => (r && typeof (r as Record<string, unknown>).ParsedText === 'string' ? (r as Record<string, string>).ParsedText : ''))
+          .filter(Boolean)
+          .join('\n');
+        return { text };
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+  };
+}
+
 /**
  * 只挑出已知欄位，避免把供應商回應中的其他內容（可能含憑證或個資）帶進流程。
  * 同時接受 `total` 作為 `amount` 的別名。
@@ -475,9 +540,20 @@ export function resolveReceiptOcrProvider(input: {
   apiKey?: string | null;
   timeoutMs?: number | null;
   maxBytes?: number | null;
+  language?: string | null;
   fetchImpl?: typeof fetch;
 }): ReceiptOcrProvider {
   const name = String(input.provider || '').trim().toLowerCase();
+  if (name === 'ocrspace') {
+    return createOcrSpaceProvider({
+      apiKey: input.apiKey ? String(input.apiKey) : undefined,
+      endpoint: input.endpoint ? String(input.endpoint) : undefined,
+      language: input.language ? String(input.language) : undefined,
+      timeoutMs: Number(input.timeoutMs) || undefined,
+      maxBytes: Number(input.maxBytes) || undefined,
+      fetchImpl: input.fetchImpl,
+    });
+  }
   if (name === 'http') {
     const endpoint = String(input.endpoint || '').trim();
     return createHttpProvider({

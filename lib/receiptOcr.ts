@@ -61,6 +61,7 @@ export function getReceiptOcrProvider(): ReceiptOcrProvider {
     provider: config.provider,
     endpoint: config.endpoint,
     apiKey: process.env.RECEIPT_OCR_API_KEY || null,
+    language: process.env.RECEIPT_OCR_LANGUAGE || null,
     timeoutMs: config.timeoutMs,
     maxBytes: config.maxBytes,
   });

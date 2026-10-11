@@ -10,6 +10,7 @@ import {
   RECEIPT_OCR_MAX_IMAGE_BYTES,
   createHttpProvider,
   createNoneProvider,
+  createOcrSpaceProvider,
   normalizeReceiptAmount,
   normalizeReceiptCurrency,
   normalizeReceiptDate,
@@ -380,6 +381,45 @@ try {
       /HTTPS/,
     );
     assert.equal(called, false);
+  });
+  await test('ocrspace 供應商以 multipart + apikey header 呼叫並取出 ParsedText', async () => {
+    let capturedUrl = '';
+    let capturedKey = '';
+    let capturedBody: unknown;
+    const fetchImpl = (async (url: string, init?: RequestInit) => {
+      capturedUrl = url;
+      capturedKey = String((init?.headers as Record<string, string>)?.apikey || '');
+      capturedBody = init?.body;
+      return new Response(JSON.stringify({
+        IsErroredOnProcessing: false,
+        ParsedResults: [{ ParsedText: '全家便利商店\n日期: 2026-10-01\n總計 NT$ 128' }],
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }) as unknown as typeof fetch;
+    const provider = createOcrSpaceProvider({ apiKey: 'OCRSPACE_CANARY', fetchImpl });
+    assert.equal(provider.name, 'ocrspace');
+    assert.equal(provider.isConfigured(), true);
+    const result = await provider.recognize({ image: Buffer.from([1, 2, 3]), mimeType: 'image/png' });
+    assert.equal(capturedUrl, 'https://api.ocr.space/parse/image');
+    assert.equal(capturedKey, 'OCRSPACE_CANARY');
+    assert.ok(capturedBody instanceof FormData);
+    assert.equal((capturedBody as FormData).get('language'), 'cht');
+    assert.ok((capturedBody as FormData).get('file'));
+    assert.ok(result.text.includes('全家便利商店'));
+    assert.ok(!JSON.stringify(result).includes('OCRSPACE_CANARY'));
+  });
+  await test('ocrspace 供應商：缺金鑰或非 HTTPS 時未啟用，處理失敗時拋錯', async () => {
+    assert.equal(createOcrSpaceProvider({}).isConfigured(), false);
+    assert.equal(createOcrSpaceProvider({ apiKey: 'k', endpoint: 'http://api.ocr.space/parse/image' }).isConfigured(), false);
+    const fetchImpl = (async () => new Response(JSON.stringify({
+      IsErroredOnProcessing: true,
+      ErrorMessage: ['Invalid API key'],
+    }), { status: 200, headers: { 'content-type': 'application/json' } })) as unknown as typeof fetch;
+    const provider = createOcrSpaceProvider({ apiKey: 'k', fetchImpl });
+    await assert.rejects(() => provider.recognize({ image: Buffer.from([1]), mimeType: 'image/png' }), /Invalid API key/);
+  });
+  await test('resolveReceiptOcrProvider 支援 ocrspace', () => {
+    assert.equal(resolveReceiptOcrProvider({ provider: 'ocrspace', apiKey: 'k' }).isConfigured(), true);
+    assert.equal(resolveReceiptOcrProvider({ provider: 'ocrspace' }).isConfigured(), false);
   });
   await test('不含 API key 的 HTTP 測試端點仍可使用', () => {
     assert.equal(createHttpProvider({ endpoint: 'http://127.0.0.1:9000/ocr' }).isConfigured(), true);

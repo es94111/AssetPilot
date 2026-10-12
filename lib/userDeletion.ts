@@ -62,6 +62,8 @@ const USER_OWNED_DELETE_STATEMENTS = [
   "DELETE FROM login_sessions WHERE user_id = ?",
   // 交易憑證照片（實體檔案另由 purgeUserPhotoFiles 處理）
   "DELETE FROM transaction_attachments WHERE user_id = ?",
+  "DELETE FROM transaction_tag_links WHERE user_id = ?",
+  "DELETE FROM transaction_tags WHERE user_id = ?",
   // 照片金鑰（刪除即密碼學銷毀殘留密文）
   "DELETE FROM user_photo_keys WHERE user_id = ?",
   // 稽核

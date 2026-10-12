@@ -10379,5 +10379,231 @@
   "@setupBackToLogin": {
     "description": "Web path: setup.backToLogin",
     "x-webPath": "setup.backToLogin"
+  },
+  "navTags": "標籤管理",
+  "@navTags": {
+    "description": "Web path: nav.tags",
+    "x-webPath": "nav.tags"
+  },
+  "featuresTagsTitle": "標籤管理",
+  "@featuresTagsTitle": {
+    "description": "Web path: features.tags.title",
+    "x-webPath": "features.tags.title"
+  },
+  "featuresTagsSubtitle": "為收入與支出交易加上多個標籤，跨分類篩選與統計",
+  "@featuresTagsSubtitle": {
+    "description": "Web path: features.tags.subtitle",
+    "x-webPath": "features.tags.subtitle"
+  },
+  "featuresTagsAdd": "新增標籤",
+  "@featuresTagsAdd": {
+    "description": "Web path: features.tags.add",
+    "x-webPath": "features.tags.add"
+  },
+  "featuresTagsEdit": "編輯標籤",
+  "@featuresTagsEdit": {
+    "description": "Web path: features.tags.edit",
+    "x-webPath": "features.tags.edit"
+  },
+  "featuresTagsName": "標籤名稱",
+  "@featuresTagsName": {
+    "description": "Web path: features.tags.name",
+    "x-webPath": "features.tags.name"
+  },
+  "featuresTagsColor": "顏色",
+  "@featuresTagsColor": {
+    "description": "Web path: features.tags.color",
+    "x-webPath": "features.tags.color"
+  },
+  "featuresTagsUsage": "使用 {count} 筆",
+  "@featuresTagsUsage": {
+    "description": "Web path: features.tags.usage",
+    "x-webPath": "features.tags.usage",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresTagsDisabled": "已停用",
+  "@featuresTagsDisabled": {
+    "description": "Web path: features.tags.disabled",
+    "x-webPath": "features.tags.disabled"
+  },
+  "featuresTagsDisable": "停用",
+  "@featuresTagsDisable": {
+    "description": "Web path: features.tags.disable",
+    "x-webPath": "features.tags.disable"
+  },
+  "featuresTagsEnable": "啟用",
+  "@featuresTagsEnable": {
+    "description": "Web path: features.tags.enable",
+    "x-webPath": "features.tags.enable"
+  },
+  "featuresTagsEmpty": "尚無標籤",
+  "@featuresTagsEmpty": {
+    "description": "Web path: features.tags.empty",
+    "x-webPath": "features.tags.empty"
+  },
+  "featuresTagsSave": "儲存",
+  "@featuresTagsSave": {
+    "description": "Web path: features.tags.save",
+    "x-webPath": "features.tags.save"
+  },
+  "featuresTagsNameRequired": "請輸入標籤名稱",
+  "@featuresTagsNameRequired": {
+    "description": "Web path: features.tags.nameRequired",
+    "x-webPath": "features.tags.nameRequired"
+  },
+  "featuresTagsDeleteTitle": "刪除標籤",
+  "@featuresTagsDeleteTitle": {
+    "description": "Web path: features.tags.deleteTitle",
+    "x-webPath": "features.tags.deleteTitle"
+  },
+  "featuresTagsDeleteConfirm": "刪除「{name}」只會移除 {count} 筆交易上的標籤，不會刪除任何交易。",
+  "@featuresTagsDeleteConfirm": {
+    "description": "Web path: features.tags.deleteConfirm",
+    "x-webPath": "features.tags.deleteConfirm",
+    "placeholders": {
+      "name": {},
+      "count": {}
+    }
+  },
+  "featuresTagsLoadFailed": "載入標籤失敗",
+  "@featuresTagsLoadFailed": {
+    "description": "Web path: features.tags.loadFailed",
+    "x-webPath": "features.tags.loadFailed"
+  },
+  "featuresTagsV1Note": "v1 僅支援收入與支出交易；轉帳、信用卡還款與股利不支援標籤。",
+  "@featuresTagsV1Note": {
+    "description": "Web path: features.tags.v1Note",
+    "x-webPath": "features.tags.v1Note"
+  },
+  "featuresTagsPicker": "標籤",
+  "@featuresTagsPicker": {
+    "description": "Web path: features.tags.picker",
+    "x-webPath": "features.tags.picker"
+  },
+  "featuresTagsPickerEmpty": "尚無可用標籤，請先至標籤管理建立",
+  "@featuresTagsPickerEmpty": {
+    "description": "Web path: features.tags.pickerEmpty",
+    "x-webPath": "features.tags.pickerEmpty"
+  },
+  "featuresTagsFilterLabel": "標籤篩選",
+  "@featuresTagsFilterLabel": {
+    "description": "Web path: features.tags.filterLabel",
+    "x-webPath": "features.tags.filterLabel"
+  },
+  "featuresTagsModeAny": "符合任一（Any）",
+  "@featuresTagsModeAny": {
+    "description": "Web path: features.tags.modeAny",
+    "x-webPath": "features.tags.modeAny"
+  },
+  "featuresTagsModeAll": "同時符合（All）",
+  "@featuresTagsModeAll": {
+    "description": "Web path: features.tags.modeAll",
+    "x-webPath": "features.tags.modeAll"
+  },
+  "featuresTagsFilterSummary": "標籤條件：{tags}（{mode}），共 {count} 筆",
+  "@featuresTagsFilterSummary": {
+    "description": "Web path: features.tags.filterSummary",
+    "x-webPath": "features.tags.filterSummary",
+    "placeholders": {
+      "tags": {},
+      "mode": {},
+      "count": {}
+    }
+  },
+  "featuresTagsBatchAdd": "加標籤",
+  "@featuresTagsBatchAdd": {
+    "description": "Web path: features.tags.batchAdd",
+    "x-webPath": "features.tags.batchAdd"
+  },
+  "featuresTagsBatchRemove": "移除標籤",
+  "@featuresTagsBatchRemove": {
+    "description": "Web path: features.tags.batchRemove",
+    "x-webPath": "features.tags.batchRemove"
+  },
+  "featuresTagsBatchTitle": "批次標籤",
+  "@featuresTagsBatchTitle": {
+    "description": "Web path: features.tags.batchTitle",
+    "x-webPath": "features.tags.batchTitle"
+  },
+  "featuresTagsBatchApply": "套用",
+  "@featuresTagsBatchApply": {
+    "description": "Web path: features.tags.batchApply",
+    "x-webPath": "features.tags.batchApply"
+  },
+  "featuresTagsBatchResult": "已更新 {changed} 筆，略過 {skipped} 筆（不支援的交易類型）",
+  "@featuresTagsBatchResult": {
+    "description": "Web path: features.tags.batchResult",
+    "x-webPath": "features.tags.batchResult",
+    "placeholders": {
+      "changed": {},
+      "skipped": {}
+    }
+  },
+  "featuresTagsStatsTitle": "標籤統計",
+  "@featuresTagsStatsTitle": {
+    "description": "Web path: features.tags.stats.title",
+    "x-webPath": "features.tags.stats.title"
+  },
+  "featuresTagsStatsDateFrom": "起始日期",
+  "@featuresTagsStatsDateFrom": {
+    "description": "Web path: features.tags.stats.dateFrom",
+    "x-webPath": "features.tags.stats.dateFrom"
+  },
+  "featuresTagsStatsDateTo": "結束日期",
+  "@featuresTagsStatsDateTo": {
+    "description": "Web path: features.tags.stats.dateTo",
+    "x-webPath": "features.tags.stats.dateTo"
+  },
+  "featuresTagsStatsRun": "查詢",
+  "@featuresTagsStatsRun": {
+    "description": "Web path: features.tags.stats.run",
+    "x-webPath": "features.tags.stats.run"
+  },
+  "featuresTagsStatsPerTag": "各標籤小計",
+  "@featuresTagsStatsPerTag": {
+    "description": "Web path: features.tags.stats.perTag",
+    "x-webPath": "features.tags.stats.perTag"
+  },
+  "featuresTagsStatsCombined": "去重合計",
+  "@featuresTagsStatsCombined": {
+    "description": "Web path: features.tags.stats.combined",
+    "x-webPath": "features.tags.stats.combined"
+  },
+  "featuresTagsStatsCount": "筆數",
+  "@featuresTagsStatsCount": {
+    "description": "Web path: features.tags.stats.count",
+    "x-webPath": "features.tags.stats.count"
+  },
+  "featuresTagsStatsExpense": "支出",
+  "@featuresTagsStatsExpense": {
+    "description": "Web path: features.tags.stats.expense",
+    "x-webPath": "features.tags.stats.expense"
+  },
+  "featuresTagsStatsIncome": "收入",
+  "@featuresTagsStatsIncome": {
+    "description": "Web path: features.tags.stats.income",
+    "x-webPath": "features.tags.stats.income"
+  },
+  "featuresTagsStatsCross": "月份 × 分類",
+  "@featuresTagsStatsCross": {
+    "description": "Web path: features.tags.stats.cross",
+    "x-webPath": "features.tags.stats.cross"
+  },
+  "featuresTagsStatsMonth": "月份",
+  "@featuresTagsStatsMonth": {
+    "description": "Web path: features.tags.stats.month",
+    "x-webPath": "features.tags.stats.month"
+  },
+  "featuresTagsStatsCategory": "分類",
+  "@featuresTagsStatsCategory": {
+    "description": "Web path: features.tags.stats.category",
+    "x-webPath": "features.tags.stats.category"
+  },
+  "featuresTagsStatsNote": "各標籤小計中，同一筆交易會在它的每個標籤各計一次；去重合計以交易為單位只計一次，因此不等於各標籤小計相加。已排除「不計入統計」的交易。",
+  "@featuresTagsStatsNote": {
+    "description": "Web path: features.tags.stats.note",
+    "x-webPath": "features.tags.stats.note"
   }
 }

@@ -4,6 +4,8 @@ import { requireAuth } from "../../../../lib/apiHelpers";
 import { getDB, queryAll, queryOne, saveDB } from "../../../../lib/db";
 import { normalizeDate } from "../../../../lib/accountHelpers";
 import { uid } from "../../../../lib/userDefaults";
+import { createTag, findTagByName, setTransactionTags } from "../../../../lib/transactionTags";
+import { tagNameKey, parseTagCell, validateTagName, TAGGABLE_TYPES, TAG_DEFAULT_COLOR, TAG_MAX_PER_TRANSACTION } from "../../../../lib/transactionTagRules";
 import {
   writeOperationAudit,
   makeTxHash,
@@ -91,6 +93,7 @@ interface ParsedTransactionImportRow {
   fxFee: number;
   transferToAccountId: string;
   tags: string;
+  tagNames: string[];
   excludeFromStats: 0 | 1;
   txId?: string;
 }
@@ -349,6 +352,7 @@ async function handlePOST(request: NextRequest) {
 
     failureStage = "writing";
     updateProgress(0, "writing");
+    const tagByName = new Map<string, ReturnType<typeof createTag>>();
 
     const now = Date.now();
     const parsedRows: ParsedTransactionImportRow[] = [];
@@ -467,6 +471,7 @@ async function handlePOST(request: NextRequest) {
         fxFee,
         transferToAccountId,
         tags,
+        tagNames: parseTagCell(tags).slice(0, TAG_MAX_PER_TRANSACTION),
         excludeFromStats: excludeFromStats ? 1 : 0,
       });
     });
@@ -537,6 +542,20 @@ async function handlePOST(request: NextRequest) {
           now,
         ],
       );
+      if (p.tagNames.length > 0 && TAGGABLE_TYPES.has(p.dbType)) {
+        const ids: string[] = [];
+        for (const raw of p.tagNames) {
+          const v = validateTagName(raw);
+          if (!v.ok) continue;
+          const name = v.name;
+          const key = tagNameKey(name);
+          let tag = tagByName.get(key) || findTagByName(auth.userId, name);
+          if (!tag) tag = createTag(auth.userId, name, TAG_DEFAULT_COLOR);
+          tagByName.set(key, tag);
+          if (tag.isActive) ids.push(tag.id);
+        }
+        if (ids.length > 0) setTransactionTags(auth.userId, txId, ids);
+      }
       imported++;
       if ((i + 1) % 500 === 0) updateProgress(i + 1, "writing");
     });

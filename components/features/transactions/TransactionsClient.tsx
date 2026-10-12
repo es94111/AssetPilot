@@ -17,7 +17,7 @@ import { applyReceiptOcrPrefill, createReceiptOcrRequestGate } from '@/lib/recei
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
-const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '', excludeTransfer: '' };
+const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '', excludeTransfer: '', tagIds: '', tagMode: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];
 
@@ -116,6 +116,8 @@ function readFilters(searchParams: QueryParams) {
     dateTo: searchParams.get('dateTo') || '',
     keyword: searchParams.get('keyword') || '',
     excludeTransfer,
+    tagIds: searchParams.get('tagIds') || '',
+    tagMode: searchParams.get('tagIds') && searchParams.get('tagMode') === 'all' ? 'all' : '',
   };
 }
 
@@ -158,7 +160,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [modal, setModal] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [transferModal, setTransferModal] = useState(false);
-  const [batchModal, setBatchModal] = useState<'category' | 'date' | null>(null);
+  const [batchModal, setBatchModal] = useState<'category' | 'date' | 'tags' | null>(null);
+  const [allTags, setAllTags] = useState<Array<{ id: string; name: string; color: string; isActive: boolean }>>([]);
+  const [formTagIds, setFormTagIds] = useState<string[]>([]);
+  const [batchTagIds, setBatchTagIds] = useState<string[]>([]);
+  const [batchTagAction, setBatchTagAction] = useState<'add' | 'remove'>('add');
   const [form, setForm] = useState({ ...EMPTY_FORM, date: today() });
   const [transferForm, setTransferForm] = useState({ ...EMPTY_TRANSFER_FORM, date: today() });
   const [batchCategoryId, setBatchCategoryId] = useState('');
@@ -212,6 +218,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
         ...(filters.keyword ? { keyword: filters.keyword } : {}),
         ...(filters.excludeTransfer ? { excludeTransfer: '1' } : {}),
+        ...(filters.tagIds ? { tagIds: filters.tagIds, tagMode: filters.tagMode || 'any' } : {}),
       });
       const data = await apiGet(`/api/transactions?${params}`);
       if (loadId === latestLoadId.current) {
@@ -228,11 +235,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, [page, pageSize, filters]);
 
   const loadMeta = useCallback(async () => {
-    const [accts, cats, pinned] = await Promise.all([
+    const [accts, cats, pinned, tagList] = await Promise.all([
       apiGet('/api/accounts').catch(() => []),
       apiGet('/api/categories').catch(() => []),
       apiGet('/api/user/settings/pinned-currencies').catch(() => ({ pinnedCurrencies: ['TWD'] })),
+      apiGet('/api/tags').catch(() => []),
     ]);
+    setAllTags(Array.isArray(tagList) ? tagList : []);
     setAccounts(accts);
     setCategories(cats);
     const pinnedCurrencies = Array.isArray(pinned?.pinnedCurrencies) ? pinned.pinnedCurrencies : ['TWD'];
@@ -340,6 +349,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const selectedDate = dateOverride && isCalendarIsoDate(dateOverride) ? dateOverride : today();
     manuallyEditedOcrFields.current = new Set(dateOverride && isCalendarIsoDate(dateOverride) ? ['date'] : []);
     setForm({ ...EMPTY_FORM, date: selectedDate, accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
+    setFormTagIds([]);
     setEditId(null);
     setFxFeeEdited(false);
     setFormError('');
@@ -473,6 +483,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       fxRate: tx.fxRate ? String(tx.fxRate) : '',
       fxFee: Number(tx.fxFee) > 0 ? String(Math.round(Number(tx.fxFee))) : '',
     });
+    setFormTagIds(Array.isArray(tx.tags) ? tx.tags.map((tag: any) => tag.id) : []);
     setEditId(tx.id);
     setFxFeeEdited(Number(tx.fxFee) > 0);
     setFormError('');
@@ -624,6 +635,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       accountId: form.accountId || null,
       note: form.note,
       excludeFromStats: form.excludeFromStats,
+      ...(form.type === 'income' || form.type === 'expense' ? { tagIds: formTagIds } : {}),
       currency: form.currency || 'TWD',
       ...(isForex && { originalAmount: Number(form.amount) }),
       ...(isForex && form.fxRate ? { fxRate: Number(form.fxRate) } : {}),
@@ -828,6 +840,47 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     }
   }
 
+  async function handleBatchTags() {
+    const ids = [...selected];
+    if (ids.length === 0 || batchTagIds.length === 0) return;
+    try {
+      const result = await apiPost('/api/transactions/batch-tags', { ids, tagIds: batchTagIds, action: batchTagAction });
+      setBatchModal(null);
+      setSelected(new Set());
+      showToast(t('features.tags.batchResult', { changed: result?.changed ?? 0, skipped: result?.skippedIds?.length ?? 0 }));
+      await load(page);
+      notifyDataChanged('transactions');
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+
+  const toggleId = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+  const filterTagIds = filters.tagIds ? filters.tagIds.split(',').filter(Boolean) : [];
+  const renderTagChips = (ids: string[], onToggle: (id: string) => void, includeInactive: boolean) => {
+    const visible = allTags.filter((tag) => includeInactive || tag.isActive || ids.includes(tag.id));
+    if (visible.length === 0) return <p className="text-xs text-slate-500">{t('features.tags.pickerEmpty')}</p>;
+    return (
+      <div className="flex flex-wrap gap-2">
+        {visible.map((tag) => {
+          const on = ids.includes(tag.id);
+          return (
+            <button
+              key={tag.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onToggle(tag.id)}
+              className="min-h-8 rounded-full border px-3 text-xs"
+              style={{ borderColor: tag.color, background: on ? tag.color : 'transparent', color: on ? '#fff' : undefined }}
+            >
+              {tag.name}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const parentIds = new Set(categories.filter((c: any) => c.parentId).map((c: any) => c.parentId));
   const filteredCats = categories.filter((c: any) => !form.type || c.type === form.type);
   const filteredStandalone = filteredCats.filter((c: any) => !c.parentId && !parentIds.has(c.id));
@@ -889,7 +942,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, [modal, overseasApplies, autoFxFee, fxFeeEdited]);
 
   const activeFilterCount = Object.entries(filters)
-    .filter(([key, value]) => key !== 'keyword' && Boolean(value)).length;
+    .filter(([key, value]) => key !== 'keyword' && key !== 'tagMode' && Boolean(value)).length;
   const filterControlClass = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
   const renderFilterFields = (scope: string) => (
     <>
@@ -932,6 +985,24 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         {t('features.transactions.endDateTitle')}
         <input id={`${scope}-date-to`} type="date" className={filterControlClass} value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} />
       </label>
+      {allTags.length > 0 && (
+        <div className="flex min-w-0 basis-full flex-col gap-1 text-xs font-medium text-slate-500">
+          <span>{t('features.tags.filterLabel')}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {renderTagChips(filterTagIds, (id) => { const next = toggleId(filterTagIds, id); updateFilters({ tagIds: next.join(','), tagMode: next.length ? filters.tagMode : '' }); }, true)}
+            <select
+              aria-label={t('features.tags.filterLabel')}
+              className="min-h-8 rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+              value={filters.tagMode || 'any'}
+              disabled={filterTagIds.length < 2}
+              onChange={(e) => updateFilters({ tagMode: e.target.value === 'all' ? 'all' : '' })}
+            >
+              <option value="any">{t('features.tags.modeAny')}</option>
+              <option value="all">{t('features.tags.modeAll')}</option>
+            </select>
+          </div>
+        </div>
+      )}
       <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300" htmlFor={`${scope}-exclude-transfer`}>
         <input
           id={`${scope}-exclude-transfer`}
@@ -985,11 +1056,20 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         {selected.size > 0 && (
           <>
             <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={() => setBatchModal('category')}><Tags size={17} aria-hidden="true" /> {t('features.transactions.batchCategory')}</Button>
+            <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={() => { setBatchTagIds([]); setBatchTagAction('add'); setBatchModal('tags'); }}><Tags size={17} aria-hidden="true" /> {t('features.tags.batchTitle')}</Button>
             <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={() => setBatchModal('date')}><CalendarDays size={17} aria-hidden="true" /> {t('features.transactions.batchDate')}</Button>
             <Button type="button" variant="destructive" className="min-h-11 gap-2" onClick={handleBatchDelete}><Trash2 size={17} aria-hidden="true" /> {t('features.transactions.deleteSelected', { count: selected.size })}</Button>
           </>
         )}
-        <span className="tx-count" aria-live="polite">{t('common.totalRecords', { count: total })}</span>
+        <span className="tx-count" aria-live="polite">
+          {filterTagIds.length > 0
+            ? t('features.tags.filterSummary', {
+                tags: filterTagIds.map((id) => allTags.find((tag) => tag.id === id)?.name || id).join(', '),
+                mode: filters.tagMode === 'all' ? t('features.tags.modeAll') : t('features.tags.modeAny'),
+                count: total,
+              })
+            : t('common.totalRecords', { count: total })}
+        </span>
         <label className="ms-auto flex items-center gap-2 text-sm text-slate-500">
           {t('common.perPage')}
           <select
@@ -1158,6 +1238,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     <td>{getAcctName(tx)}{tx.toAccountId ? ` -> ${accounts.find((account: any) => account.id === tx.toAccountId)?.name || t('features.common.notRecorded')}` : ''}</td>
                     <td>
                       <div>{tx.note || t('features.common.notRecorded')}</div>
+                      {Array.isArray(tx.tags) && tx.tags.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {tx.tags.map((tag: any) => (
+                            <span key={tag.id} className="rounded-full border px-2 text-xs" style={{ borderColor: tag.color }}>{tag.name}</span>
+                          ))}
+                        </div>
+                      )}
                       {tx.isFxFee && <div className="text-xs text-amber-600">{t('features.transactions.fxFee')}</div>}
                       {tx.aiCreated && <div className="text-xs text-emerald-600">{t('features.transactions.aiCreated')}</div>}
                       {tx.noteAiModified && <div className="text-xs text-sky-600">{t('features.transactions.noteAiModified')}</div>}
@@ -1384,6 +1471,12 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               <label htmlFor="transaction-note" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.note')}</label>
               <input id="transaction-note" type="text" maxLength={TRANSACTION_NOTE_MAX_LENGTH} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.note} onChange={(e) => { manuallyEditedOcrFields.current.add('note'); setForm((current) => ({ ...current, note: e.target.value })); }} />
             </div>
+            {(form.type === 'income' || form.type === 'expense') && (
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.tags.picker')}</span>
+                {renderTagChips(formTagIds, (id) => setFormTagIds((list) => toggleId(list, id)), false)}
+              </div>
+            )}
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> {t('features.common.excludeFromStats')}
             </label>
@@ -1606,7 +1699,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         <div className="modal-overlay active" onClick={() => setBatchModal(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{batchModal === 'category' ? t('features.transactions.batchCategoryTitle') : t('features.transactions.batchDateTitle')}</h3>
+              <h3>{batchModal === 'category' ? t('features.transactions.batchCategoryTitle') : batchModal === 'tags' ? t('features.tags.batchTitle') : t('features.transactions.batchDateTitle')}</h3>
               <button className="btn-icon" onClick={() => setBatchModal(null)}><X size={15} strokeWidth={1.8} aria-hidden="true" /></button>
             </div>
             <div className="modal-body">
@@ -1625,6 +1718,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                     ))}
                   </select>
                 </div>
+              ) : batchModal === 'tags' ? (
+                <div className="form-row space-y-3">
+                  <div className="flex gap-2">
+                    <button type="button" aria-pressed={batchTagAction === 'add'} className={`btn ${batchTagAction === 'add' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setBatchTagAction('add')}>{t('features.tags.batchAdd')}</button>
+                    <button type="button" aria-pressed={batchTagAction === 'remove'} className={`btn ${batchTagAction === 'remove' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setBatchTagAction('remove')}>{t('features.tags.batchRemove')}</button>
+                  </div>
+                  {renderTagChips(batchTagIds, (id) => setBatchTagIds((list) => toggleId(list, id)), batchTagAction === 'remove')}
+                </div>
               ) : (
                 <div className="form-row">
                   <label>{t('features.transactions.newDate')}</label>
@@ -1633,7 +1734,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
               )}
               <div className="modal-footer">
                 <button className="btn btn-ghost" onClick={() => setBatchModal(null)}>{t('common.cancel')}</button>
-                <button className="btn btn-primary" onClick={handleBatchUpdate}>{t('features.transactions.applyTo', { count: selected.size })}</button>
+                <button className="btn btn-primary" onClick={batchModal === 'tags' ? handleBatchTags : handleBatchUpdate} disabled={batchModal === 'tags' && batchTagIds.length === 0}>{t('features.transactions.applyTo', { count: selected.size })}</button>
               </div>
             </div>
           </div>

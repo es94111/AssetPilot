@@ -11797,6 +11797,258 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'返回登入'**
   String get setupBackToLogin;
+
+  /// Web path: nav.tags
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標籤管理'**
+  String get navTags;
+
+  /// Web path: features.tags.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標籤管理'**
+  String get featuresTagsTitle;
+
+  /// Web path: features.tags.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'為收入與支出交易加上多個標籤，跨分類篩選與統計'**
+  String get featuresTagsSubtitle;
+
+  /// Web path: features.tags.add
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增標籤'**
+  String get featuresTagsAdd;
+
+  /// Web path: features.tags.edit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'編輯標籤'**
+  String get featuresTagsEdit;
+
+  /// Web path: features.tags.name
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標籤名稱'**
+  String get featuresTagsName;
+
+  /// Web path: features.tags.color
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'顏色'**
+  String get featuresTagsColor;
+
+  /// Web path: features.tags.usage
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'使用 {count} 筆'**
+  String featuresTagsUsage(Object count);
+
+  /// Web path: features.tags.disabled
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已停用'**
+  String get featuresTagsDisabled;
+
+  /// Web path: features.tags.disable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'停用'**
+  String get featuresTagsDisable;
+
+  /// Web path: features.tags.enable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'啟用'**
+  String get featuresTagsEnable;
+
+  /// Web path: features.tags.empty
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無標籤'**
+  String get featuresTagsEmpty;
+
+  /// Web path: features.tags.save
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲存'**
+  String get featuresTagsSave;
+
+  /// Web path: features.tags.nameRequired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請輸入標籤名稱'**
+  String get featuresTagsNameRequired;
+
+  /// Web path: features.tags.deleteTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除標籤'**
+  String get featuresTagsDeleteTitle;
+
+  /// Web path: features.tags.deleteConfirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'刪除「{name}」只會移除 {count} 筆交易上的標籤，不會刪除任何交易。'**
+  String featuresTagsDeleteConfirm(Object name, Object count);
+
+  /// Web path: features.tags.loadFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'載入標籤失敗'**
+  String get featuresTagsLoadFailed;
+
+  /// Web path: features.tags.v1Note
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'v1 僅支援收入與支出交易；轉帳、信用卡還款與股利不支援標籤。'**
+  String get featuresTagsV1Note;
+
+  /// Web path: features.tags.picker
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標籤'**
+  String get featuresTagsPicker;
+
+  /// Web path: features.tags.pickerEmpty
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚無可用標籤，請先至標籤管理建立'**
+  String get featuresTagsPickerEmpty;
+
+  /// Web path: features.tags.filterLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標籤篩選'**
+  String get featuresTagsFilterLabel;
+
+  /// Web path: features.tags.modeAny
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'符合任一（Any）'**
+  String get featuresTagsModeAny;
+
+  /// Web path: features.tags.modeAll
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'同時符合（All）'**
+  String get featuresTagsModeAll;
+
+  /// Web path: features.tags.filterSummary
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標籤條件：{tags}（{mode}），共 {count} 筆'**
+  String featuresTagsFilterSummary(Object tags, Object mode, Object count);
+
+  /// Web path: features.tags.batchAdd
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'加標籤'**
+  String get featuresTagsBatchAdd;
+
+  /// Web path: features.tags.batchRemove
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'移除標籤'**
+  String get featuresTagsBatchRemove;
+
+  /// Web path: features.tags.batchTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'批次標籤'**
+  String get featuresTagsBatchTitle;
+
+  /// Web path: features.tags.batchApply
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'套用'**
+  String get featuresTagsBatchApply;
+
+  /// Web path: features.tags.batchResult
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已更新 {changed} 筆，略過 {skipped} 筆（不支援的交易類型）'**
+  String featuresTagsBatchResult(Object changed, Object skipped);
+
+  /// Web path: features.tags.stats.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標籤統計'**
+  String get featuresTagsStatsTitle;
+
+  /// Web path: features.tags.stats.dateFrom
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'起始日期'**
+  String get featuresTagsStatsDateFrom;
+
+  /// Web path: features.tags.stats.dateTo
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'結束日期'**
+  String get featuresTagsStatsDateTo;
+
+  /// Web path: features.tags.stats.run
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查詢'**
+  String get featuresTagsStatsRun;
+
+  /// Web path: features.tags.stats.perTag
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'各標籤小計'**
+  String get featuresTagsStatsPerTag;
+
+  /// Web path: features.tags.stats.combined
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'去重合計'**
+  String get featuresTagsStatsCombined;
+
+  /// Web path: features.tags.stats.count
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'筆數'**
+  String get featuresTagsStatsCount;
+
+  /// Web path: features.tags.stats.expense
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'支出'**
+  String get featuresTagsStatsExpense;
+
+  /// Web path: features.tags.stats.income
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收入'**
+  String get featuresTagsStatsIncome;
+
+  /// Web path: features.tags.stats.cross
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'月份 × 分類'**
+  String get featuresTagsStatsCross;
+
+  /// Web path: features.tags.stats.month
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'月份'**
+  String get featuresTagsStatsMonth;
+
+  /// Web path: features.tags.stats.category
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'分類'**
+  String get featuresTagsStatsCategory;
+
+  /// Web path: features.tags.stats.note
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'各標籤小計中，同一筆交易會在它的每個標籤各計一次；去重合計以交易為單位只計一次，因此不等於各標籤小計相加。已排除「不計入統計」的交易。'**
+  String get featuresTagsStatsNote;
 }
 
 class _AppLocalizationsDelegate

@@ -10206,5 +10206,231 @@
   "@setupBackToLogin": {
     "description": "Web path: setup.backToLogin",
     "x-webPath": "setup.backToLogin"
+  },
+  "navTags": "Tags",
+  "@navTags": {
+    "description": "Web path: nav.tags",
+    "x-webPath": "nav.tags"
+  },
+  "featuresTagsTitle": "Tags",
+  "@featuresTagsTitle": {
+    "description": "Web path: features.tags.title",
+    "x-webPath": "features.tags.title"
+  },
+  "featuresTagsSubtitle": "Attach multiple tags to income and expense transactions to filter and analyze across categories",
+  "@featuresTagsSubtitle": {
+    "description": "Web path: features.tags.subtitle",
+    "x-webPath": "features.tags.subtitle"
+  },
+  "featuresTagsAdd": "Add tag",
+  "@featuresTagsAdd": {
+    "description": "Web path: features.tags.add",
+    "x-webPath": "features.tags.add"
+  },
+  "featuresTagsEdit": "Edit tag",
+  "@featuresTagsEdit": {
+    "description": "Web path: features.tags.edit",
+    "x-webPath": "features.tags.edit"
+  },
+  "featuresTagsName": "Tag name",
+  "@featuresTagsName": {
+    "description": "Web path: features.tags.name",
+    "x-webPath": "features.tags.name"
+  },
+  "featuresTagsColor": "Color",
+  "@featuresTagsColor": {
+    "description": "Web path: features.tags.color",
+    "x-webPath": "features.tags.color"
+  },
+  "featuresTagsUsage": "{count} used",
+  "@featuresTagsUsage": {
+    "description": "Web path: features.tags.usage",
+    "x-webPath": "features.tags.usage",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "featuresTagsDisabled": "Disabled",
+  "@featuresTagsDisabled": {
+    "description": "Web path: features.tags.disabled",
+    "x-webPath": "features.tags.disabled"
+  },
+  "featuresTagsDisable": "Disable",
+  "@featuresTagsDisable": {
+    "description": "Web path: features.tags.disable",
+    "x-webPath": "features.tags.disable"
+  },
+  "featuresTagsEnable": "Enable",
+  "@featuresTagsEnable": {
+    "description": "Web path: features.tags.enable",
+    "x-webPath": "features.tags.enable"
+  },
+  "featuresTagsEmpty": "No tags yet",
+  "@featuresTagsEmpty": {
+    "description": "Web path: features.tags.empty",
+    "x-webPath": "features.tags.empty"
+  },
+  "featuresTagsSave": "Save",
+  "@featuresTagsSave": {
+    "description": "Web path: features.tags.save",
+    "x-webPath": "features.tags.save"
+  },
+  "featuresTagsNameRequired": "Enter a tag name",
+  "@featuresTagsNameRequired": {
+    "description": "Web path: features.tags.nameRequired",
+    "x-webPath": "features.tags.nameRequired"
+  },
+  "featuresTagsDeleteTitle": "Delete tag",
+  "@featuresTagsDeleteTitle": {
+    "description": "Web path: features.tags.deleteTitle",
+    "x-webPath": "features.tags.deleteTitle"
+  },
+  "featuresTagsDeleteConfirm": "Deleting \"{name}\" only removes it from {count} transactions. No transaction is deleted.",
+  "@featuresTagsDeleteConfirm": {
+    "description": "Web path: features.tags.deleteConfirm",
+    "x-webPath": "features.tags.deleteConfirm",
+    "placeholders": {
+      "name": {},
+      "count": {}
+    }
+  },
+  "featuresTagsLoadFailed": "Failed to load tags",
+  "@featuresTagsLoadFailed": {
+    "description": "Web path: features.tags.loadFailed",
+    "x-webPath": "features.tags.loadFailed"
+  },
+  "featuresTagsV1Note": "v1 supports income and expense transactions only; transfers, credit card repayments and dividends cannot be tagged.",
+  "@featuresTagsV1Note": {
+    "description": "Web path: features.tags.v1Note",
+    "x-webPath": "features.tags.v1Note"
+  },
+  "featuresTagsPicker": "Tags",
+  "@featuresTagsPicker": {
+    "description": "Web path: features.tags.picker",
+    "x-webPath": "features.tags.picker"
+  },
+  "featuresTagsPickerEmpty": "No tags available. Create some in Tags first.",
+  "@featuresTagsPickerEmpty": {
+    "description": "Web path: features.tags.pickerEmpty",
+    "x-webPath": "features.tags.pickerEmpty"
+  },
+  "featuresTagsFilterLabel": "Tag filter",
+  "@featuresTagsFilterLabel": {
+    "description": "Web path: features.tags.filterLabel",
+    "x-webPath": "features.tags.filterLabel"
+  },
+  "featuresTagsModeAny": "Match any",
+  "@featuresTagsModeAny": {
+    "description": "Web path: features.tags.modeAny",
+    "x-webPath": "features.tags.modeAny"
+  },
+  "featuresTagsModeAll": "Match all",
+  "@featuresTagsModeAll": {
+    "description": "Web path: features.tags.modeAll",
+    "x-webPath": "features.tags.modeAll"
+  },
+  "featuresTagsFilterSummary": "Tags: {tags} ({mode}), {count} results",
+  "@featuresTagsFilterSummary": {
+    "description": "Web path: features.tags.filterSummary",
+    "x-webPath": "features.tags.filterSummary",
+    "placeholders": {
+      "tags": {},
+      "mode": {},
+      "count": {}
+    }
+  },
+  "featuresTagsBatchAdd": "Add tags",
+  "@featuresTagsBatchAdd": {
+    "description": "Web path: features.tags.batchAdd",
+    "x-webPath": "features.tags.batchAdd"
+  },
+  "featuresTagsBatchRemove": "Remove tags",
+  "@featuresTagsBatchRemove": {
+    "description": "Web path: features.tags.batchRemove",
+    "x-webPath": "features.tags.batchRemove"
+  },
+  "featuresTagsBatchTitle": "Batch tags",
+  "@featuresTagsBatchTitle": {
+    "description": "Web path: features.tags.batchTitle",
+    "x-webPath": "features.tags.batchTitle"
+  },
+  "featuresTagsBatchApply": "Apply",
+  "@featuresTagsBatchApply": {
+    "description": "Web path: features.tags.batchApply",
+    "x-webPath": "features.tags.batchApply"
+  },
+  "featuresTagsBatchResult": "Updated {changed}, skipped {skipped} (unsupported transaction types)",
+  "@featuresTagsBatchResult": {
+    "description": "Web path: features.tags.batchResult",
+    "x-webPath": "features.tags.batchResult",
+    "placeholders": {
+      "changed": {},
+      "skipped": {}
+    }
+  },
+  "featuresTagsStatsTitle": "Tag statistics",
+  "@featuresTagsStatsTitle": {
+    "description": "Web path: features.tags.stats.title",
+    "x-webPath": "features.tags.stats.title"
+  },
+  "featuresTagsStatsDateFrom": "From",
+  "@featuresTagsStatsDateFrom": {
+    "description": "Web path: features.tags.stats.dateFrom",
+    "x-webPath": "features.tags.stats.dateFrom"
+  },
+  "featuresTagsStatsDateTo": "To",
+  "@featuresTagsStatsDateTo": {
+    "description": "Web path: features.tags.stats.dateTo",
+    "x-webPath": "features.tags.stats.dateTo"
+  },
+  "featuresTagsStatsRun": "Run",
+  "@featuresTagsStatsRun": {
+    "description": "Web path: features.tags.stats.run",
+    "x-webPath": "features.tags.stats.run"
+  },
+  "featuresTagsStatsPerTag": "Per-tag subtotals",
+  "@featuresTagsStatsPerTag": {
+    "description": "Web path: features.tags.stats.perTag",
+    "x-webPath": "features.tags.stats.perTag"
+  },
+  "featuresTagsStatsCombined": "De-duplicated total",
+  "@featuresTagsStatsCombined": {
+    "description": "Web path: features.tags.stats.combined",
+    "x-webPath": "features.tags.stats.combined"
+  },
+  "featuresTagsStatsCount": "Count",
+  "@featuresTagsStatsCount": {
+    "description": "Web path: features.tags.stats.count",
+    "x-webPath": "features.tags.stats.count"
+  },
+  "featuresTagsStatsExpense": "Expense",
+  "@featuresTagsStatsExpense": {
+    "description": "Web path: features.tags.stats.expense",
+    "x-webPath": "features.tags.stats.expense"
+  },
+  "featuresTagsStatsIncome": "Income",
+  "@featuresTagsStatsIncome": {
+    "description": "Web path: features.tags.stats.income",
+    "x-webPath": "features.tags.stats.income"
+  },
+  "featuresTagsStatsCross": "Month × category",
+  "@featuresTagsStatsCross": {
+    "description": "Web path: features.tags.stats.cross",
+    "x-webPath": "features.tags.stats.cross"
+  },
+  "featuresTagsStatsMonth": "Month",
+  "@featuresTagsStatsMonth": {
+    "description": "Web path: features.tags.stats.month",
+    "x-webPath": "features.tags.stats.month"
+  },
+  "featuresTagsStatsCategory": "Category",
+  "@featuresTagsStatsCategory": {
+    "description": "Web path: features.tags.stats.category",
+    "x-webPath": "features.tags.stats.category"
+  },
+  "featuresTagsStatsNote": "In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.",
+  "@featuresTagsStatsNote": {
+    "description": "Web path: features.tags.stats.note",
+    "x-webPath": "features.tags.stats.note"
   }
 }

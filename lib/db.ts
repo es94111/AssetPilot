@@ -1940,5 +1940,30 @@ END $$`);
     "ALTER TABLE reconciliation_items ADD COLUMN confidence TEXT NOT NULL DEFAULT 'exact'",
   );
 
+  // Issue #312：交易多標籤。user_id 為帳本資料擁有者；name_key 為正規化後的唯一鍵。
+  db.run(`CREATE TABLE IF NOT EXISTS transaction_tags (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    name_key TEXT NOT NULL,
+    color TEXT NOT NULL DEFAULT '#94a3b8',
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`);
+  db.run(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_transaction_tags_name ON transaction_tags(user_id, name_key)",
+  );
+  db.run(`CREATE TABLE IF NOT EXISTS transaction_tag_links (
+    transaction_id TEXT NOT NULL,
+    tag_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (transaction_id, tag_id)
+  )`);
+  db.run(
+    "CREATE INDEX IF NOT EXISTS idx_transaction_tag_links_tag ON transaction_tag_links(user_id, tag_id)",
+  );
+
   saveDB();
 }

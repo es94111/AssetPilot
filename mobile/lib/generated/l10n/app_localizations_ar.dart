@@ -6719,4 +6719,142 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get setupBackToLogin => 'العودة إلى تسجيل الدخول';
+
+  @override
+  String get navTags => 'Tags';
+
+  @override
+  String get featuresTagsTitle => 'Tags';
+
+  @override
+  String get featuresTagsSubtitle =>
+      'Attach multiple tags to income and expense transactions to filter and analyze across categories';
+
+  @override
+  String get featuresTagsAdd => 'Add tag';
+
+  @override
+  String get featuresTagsEdit => 'Edit tag';
+
+  @override
+  String get featuresTagsName => 'Tag name';
+
+  @override
+  String get featuresTagsColor => 'Color';
+
+  @override
+  String featuresTagsUsage(Object count) {
+    return '$count used';
+  }
+
+  @override
+  String get featuresTagsDisabled => 'Disabled';
+
+  @override
+  String get featuresTagsDisable => 'Disable';
+
+  @override
+  String get featuresTagsEnable => 'Enable';
+
+  @override
+  String get featuresTagsEmpty => 'No tags yet';
+
+  @override
+  String get featuresTagsSave => 'Save';
+
+  @override
+  String get featuresTagsNameRequired => 'Enter a tag name';
+
+  @override
+  String get featuresTagsDeleteTitle => 'Delete tag';
+
+  @override
+  String featuresTagsDeleteConfirm(Object name, Object count) {
+    return 'Deleting \"$name\" only removes it from $count transactions. No transaction is deleted.';
+  }
+
+  @override
+  String get featuresTagsLoadFailed => 'Failed to load tags';
+
+  @override
+  String get featuresTagsV1Note =>
+      'v1 supports income and expense transactions only; transfers, credit card repayments and dividends cannot be tagged.';
+
+  @override
+  String get featuresTagsPicker => 'Tags';
+
+  @override
+  String get featuresTagsPickerEmpty =>
+      'No tags available. Create some in Tags first.';
+
+  @override
+  String get featuresTagsFilterLabel => 'Tag filter';
+
+  @override
+  String get featuresTagsModeAny => 'Match any';
+
+  @override
+  String get featuresTagsModeAll => 'Match all';
+
+  @override
+  String featuresTagsFilterSummary(Object tags, Object mode, Object count) {
+    return 'Tags: $tags ($mode), $count results';
+  }
+
+  @override
+  String get featuresTagsBatchAdd => 'Add tags';
+
+  @override
+  String get featuresTagsBatchRemove => 'Remove tags';
+
+  @override
+  String get featuresTagsBatchTitle => 'Batch tags';
+
+  @override
+  String get featuresTagsBatchApply => 'Apply';
+
+  @override
+  String featuresTagsBatchResult(Object changed, Object skipped) {
+    return 'Updated $changed, skipped $skipped (unsupported transaction types)';
+  }
+
+  @override
+  String get featuresTagsStatsTitle => 'Tag statistics';
+
+  @override
+  String get featuresTagsStatsDateFrom => 'From';
+
+  @override
+  String get featuresTagsStatsDateTo => 'To';
+
+  @override
+  String get featuresTagsStatsRun => 'Run';
+
+  @override
+  String get featuresTagsStatsPerTag => 'Per-tag subtotals';
+
+  @override
+  String get featuresTagsStatsCombined => 'De-duplicated total';
+
+  @override
+  String get featuresTagsStatsCount => 'Count';
+
+  @override
+  String get featuresTagsStatsExpense => 'Expense';
+
+  @override
+  String get featuresTagsStatsIncome => 'Income';
+
+  @override
+  String get featuresTagsStatsCross => 'Month × category';
+
+  @override
+  String get featuresTagsStatsMonth => 'Month';
+
+  @override
+  String get featuresTagsStatsCategory => 'Category';
+
+  @override
+  String get featuresTagsStatsNote =>
+      'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
 }

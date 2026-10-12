@@ -14,6 +14,7 @@ import {
   type TransactionAttachmentRow,
 } from "./transactionAttachments";
 import changelog from "../changelog.json";
+import { tagNameKey } from "./transactionTagRules";
 import { resolveBundleLedger } from "./ledgerScope";
 
 export const BUNDLE_FORMAT = "assetpilot-user-bundle";
@@ -321,6 +322,8 @@ export async function restoreUserBundle(
     }
 
     db.run("BEGIN");
+    // 同名（name_key）但 id 不同的既有標籤：沿用既有標籤，並把備份連結改指向它。
+    const tagIdMap = new Map<string, string>();
     for (const { table, keys } of DATA_TABLES) {
       perTable[table] = { inserted: 0, skipped: 0 };
       const rows = tableRows.get(table);
@@ -328,6 +331,29 @@ export async function restoreUserBundle(
       for (const raw of rows) {
         if (!isJsonObject(raw)) continue;
         const row: Row = { ...raw, user_id: targetUserId };
+        if (table === "transaction_tags") {
+          if (!row.name_key) row.name_key = tagNameKey(row.name);
+          const same = queryOne(
+            "SELECT id FROM transaction_tags WHERE user_id = ? AND name_key = ?",
+            [targetUserId, String(row.name_key)],
+          );
+          if (same && String(same.id) !== String(row.id)) {
+            tagIdMap.set(String(row.id), String(same.id));
+            perTable[table].skipped += 1;
+            continue;
+          }
+        } else if (table === "transaction_tag_links") {
+          const mapped = tagIdMap.get(String(row.tag_id));
+          if (mapped) row.tag_id = mapped;
+          const tagExists = queryOne(
+            "SELECT id FROM transaction_tags WHERE id = ? AND user_id = ?",
+            [String(row.tag_id), targetUserId],
+          );
+          if (!tagExists) {
+            perTable[table].skipped += 1;
+            continue;
+          }
+        }
         if (rowExists(table, keys, row)) {
           perTable[table].skipped += 1;
           continue;

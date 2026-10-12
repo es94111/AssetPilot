@@ -11707,6 +11707,96 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'重新驗證失敗'**
   String get settingsAccountRecoveryReauthFailed;
+
+  /// Web path: setup.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'初始化 AssetPilot'**
+  String get setupTitle;
+
+  /// Web path: setup.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立第一位管理員並註冊 Passkey。請輸入啟動日誌中顯示的一次性初始化憑證。'**
+  String get setupSubtitle;
+
+  /// Web path: setup.token
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'初始化憑證'**
+  String get setupToken;
+
+  /// Web path: setup.email
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'管理員 Email'**
+  String get setupEmail;
+
+  /// Web path: setup.displayName
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'顯示名稱'**
+  String get setupDisplayName;
+
+  /// Web path: setup.deviceName
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'Passkey 裝置名稱（選填）'**
+  String get setupDeviceName;
+
+  /// Web path: setup.backupReminder
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'完成後請至設定頁新增備用 Passkey 或復原碼，避免遺失裝置後無法登入。'**
+  String get setupBackupReminder;
+
+  /// Web path: setup.submit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'建立管理員並註冊 Passkey'**
+  String get setupSubmit;
+
+  /// Web path: setup.submitting
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'初始化中…'**
+  String get setupSubmitting;
+
+  /// Web path: setup.invalidToken
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'初始化憑證不正確或已失效'**
+  String get setupInvalidToken;
+
+  /// Web path: setup.tooMany
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'嘗試次數過多，請稍後再試'**
+  String get setupTooMany;
+
+  /// Web path: setup.failed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'初始化失敗，請重試'**
+  String get setupFailed;
+
+  /// Web path: setup.unsupported
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此瀏覽器或裝置不支援 Passkey'**
+  String get setupUnsupported;
+
+  /// Web path: setup.closed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'系統已完成初始化'**
+  String get setupClosed;
+
+  /// Web path: setup.backToLogin
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'返回登入'**
+  String get setupBackToLogin;
 }
 
 class _AppLocalizationsDelegate

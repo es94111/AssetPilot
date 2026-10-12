@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6820,4 +6821,53 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => 'Configurar AssetPilot';
+
+  @override
+  String get setupSubtitle =>
+      'Crea el primer administrador y registra una Passkey. Introduce el token de arranque de un solo uso que aparece en el registro de inicio.';
+
+  @override
+  String get setupToken => 'Token de arranque';
+
+  @override
+  String get setupEmail => 'Correo del administrador';
+
+  @override
+  String get setupDisplayName => 'Nombre visible';
+
+  @override
+  String get setupDeviceName => 'Nombre del dispositivo Passkey (opcional)';
+
+  @override
+  String get setupBackupReminder =>
+      'Después de la configuración, añade una Passkey de respaldo u otra opción de recuperación en Ajustes para no perder el acceso si pierdes este dispositivo.';
+
+  @override
+  String get setupSubmit => 'Crear administrador y registrar Passkey';
+
+  @override
+  String get setupSubmitting => 'Configurando…';
+
+  @override
+  String get setupInvalidToken =>
+      'El token de arranque no es válido o ha caducado';
+
+  @override
+  String get setupTooMany => 'Demasiados intentos. Inténtalo más tarde.';
+
+  @override
+  String get setupFailed => 'La configuración falló. Inténtalo de nuevo.';
+
+  @override
+  String get setupUnsupported =>
+      'Este navegador o dispositivo no admite Passkeys';
+
+  @override
+  String get setupClosed => 'Esta instancia ya está inicializada';
+
+  @override
+  String get setupBackToLogin => 'Volver a iniciar sesión';
 }

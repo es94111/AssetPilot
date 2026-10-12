@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6693,4 +6694,53 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => 'AssetPilot सेट अप करें';
+
+  @override
+  String get setupSubtitle =>
+      'पहला एडमिन बनाएँ और Passkey पंजीकृत करें। स्टार्टअप लॉग में दिखाया गया एक-बार वाला बूटस्ट्रैप टोकन दर्ज करें।';
+
+  @override
+  String get setupToken => 'बूटस्ट्रैप टोकन';
+
+  @override
+  String get setupEmail => 'एडमिन ईमेल';
+
+  @override
+  String get setupDisplayName => 'प्रदर्शित नाम';
+
+  @override
+  String get setupDeviceName => 'Passkey डिवाइस का नाम (वैकल्पिक)';
+
+  @override
+  String get setupBackupReminder =>
+      'सेटअप के बाद, इस डिवाइस के खो जाने पर पहुँच न खोने के लिए सेटिंग्स में बैकअप Passkey या रिकवरी विकल्प जोड़ें।';
+
+  @override
+  String get setupSubmit => 'एडमिन बनाएँ और Passkey पंजीकृत करें';
+
+  @override
+  String get setupSubmitting => 'सेटअप हो रहा है…';
+
+  @override
+  String get setupInvalidToken => 'बूटस्ट्रैप टोकन अमान्य या समाप्त है';
+
+  @override
+  String get setupTooMany =>
+      'बहुत अधिक प्रयास। कृपया बाद में पुनः प्रयास करें।';
+
+  @override
+  String get setupFailed => 'सेटअप विफल रहा। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get setupUnsupported =>
+      'यह ब्राउज़र या डिवाइस Passkey का समर्थन नहीं करता';
+
+  @override
+  String get setupClosed => 'यह इंस्टेंस पहले से प्रारंभ हो चुका है';
+
+  @override
+  String get setupBackToLogin => 'साइन इन पर वापस जाएँ';
 }

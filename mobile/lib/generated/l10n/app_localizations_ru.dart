@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6772,4 +6773,54 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => 'Настройка AssetPilot';
+
+  @override
+  String get setupSubtitle =>
+      'Создайте первого администратора и зарегистрируйте Passkey. Введите одноразовый токен инициализации из журнала запуска.';
+
+  @override
+  String get setupToken => 'Токен инициализации';
+
+  @override
+  String get setupEmail => 'Email администратора';
+
+  @override
+  String get setupDisplayName => 'Отображаемое имя';
+
+  @override
+  String get setupDeviceName => 'Название устройства Passkey (необязательно)';
+
+  @override
+  String get setupBackupReminder =>
+      'После настройки добавьте резервный Passkey или способ восстановления в настройках, чтобы не потерять доступ при утере этого устройства.';
+
+  @override
+  String get setupSubmit => 'Создать администратора и зарегистрировать Passkey';
+
+  @override
+  String get setupSubmitting => 'Настройка…';
+
+  @override
+  String get setupInvalidToken =>
+      'Токен инициализации недействителен или истёк';
+
+  @override
+  String get setupTooMany => 'Слишком много попыток. Повторите позже.';
+
+  @override
+  String get setupFailed =>
+      'Не удалось выполнить настройку. Повторите попытку.';
+
+  @override
+  String get setupUnsupported =>
+      'Этот браузер или устройство не поддерживает Passkey';
+
+  @override
+  String get setupClosed => 'Этот экземпляр уже инициализирован';
+
+  @override
+  String get setupBackToLogin => 'Назад ко входу';
 }

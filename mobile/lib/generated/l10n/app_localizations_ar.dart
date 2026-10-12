@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6672,4 +6673,51 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => 'إعداد AssetPilot';
+
+  @override
+  String get setupSubtitle =>
+      'أنشئ أول مسؤول وسجّل Passkey. أدخل رمز التهيئة لمرة واحدة الظاهر في سجل بدء التشغيل.';
+
+  @override
+  String get setupToken => 'رمز التهيئة';
+
+  @override
+  String get setupEmail => 'البريد الإلكتروني للمسؤول';
+
+  @override
+  String get setupDisplayName => 'الاسم المعروض';
+
+  @override
+  String get setupDeviceName => 'اسم جهاز Passkey (اختياري)';
+
+  @override
+  String get setupBackupReminder =>
+      'بعد الإعداد، أضف Passkey احتياطيًا أو خيار استرداد من الإعدادات حتى لا تفقد الوصول عند فقدان هذا الجهاز.';
+
+  @override
+  String get setupSubmit => 'إنشاء المسؤول وتسجيل Passkey';
+
+  @override
+  String get setupSubmitting => 'جارٍ الإعداد…';
+
+  @override
+  String get setupInvalidToken => 'رمز التهيئة غير صالح أو منتهي';
+
+  @override
+  String get setupTooMany => 'محاولات كثيرة جدًا. حاول لاحقًا.';
+
+  @override
+  String get setupFailed => 'فشل الإعداد. حاول مرة أخرى.';
+
+  @override
+  String get setupUnsupported => 'هذا المتصفح أو الجهاز لا يدعم Passkey';
+
+  @override
+  String get setupClosed => 'تمت تهيئة هذا النظام بالفعل';
+
+  @override
+  String get setupBackToLogin => 'العودة إلى تسجيل الدخول';
 }

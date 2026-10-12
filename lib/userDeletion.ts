@@ -57,6 +57,8 @@ const USER_OWNED_DELETE_STATEMENTS = [
   "DELETE FROM web_push_send_log WHERE user_id = ?",
   // 驗證 / 工作階段
   "DELETE FROM passkey_credentials WHERE user_id = ?",
+  "DELETE FROM account_recovery_codes WHERE user_id = ?",
+  "DELETE FROM account_recovery_sessions WHERE user_id = ?",
   "DELETE FROM login_sessions WHERE user_id = ?",
   // 交易憑證照片（實體檔案另由 purgeUserPhotoFiles 處理）
   "DELETE FROM transaction_attachments WHERE user_id = ?",

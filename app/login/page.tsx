@@ -316,6 +316,9 @@ export default function LoginPage() {
               ? t("auth.passkeyVerifying")
               : t("auth.passkeyButton")}
           </button>
+          <Link href="/login/recovery" className="login-subtitle">
+            {t("auth.recoveryLink")}
+          </Link>
           {googleEnabled && (
             <button
               type="button"

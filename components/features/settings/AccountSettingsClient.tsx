@@ -48,6 +48,13 @@ export default function AccountSettingsClient({
   const [passkeys, setPasskeys] = useState<any[]>([]);
   const [pkLoading, setPkLoading] = useState(false);
   const [pkError, setPkError] = useState("");
+  const [rcStatus, setRcStatus] = useState<{
+    generated: boolean;
+    remaining: number;
+  } | null>(null);
+  const [rcCodes, setRcCodes] = useState<string[]>([]);
+  const [rcBusy, setRcBusy] = useState(false);
+  const [rcError, setRcError] = useState("");
 
   const [loginAudit, setLoginAudit] = useState<any[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -206,6 +213,77 @@ export default function AccountSettingsClient({
       await loadSessions();
     } catch (e: any) {
       setSessionsMsg(e.message || ta("messages.sessionLogoutFailed"));
+    }
+  }
+
+  const loadRecoveryStatus = useCallback(async () => {
+    try {
+      const s = (await apiGet("/api/account/recovery-codes")) as {
+        generated: boolean;
+        remaining: number;
+      };
+      setRcStatus(s);
+    } catch {
+      setRcStatus(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRecoveryStatus();
+  }, [loadRecoveryStatus]);
+
+  async function handleGenerateRecoveryCodes() {
+    setRcError("");
+    if (rcStatus?.generated && !window.confirm(ta("recovery.confirmRegenerate")))
+      return;
+    setRcBusy(true);
+    try {
+      let res: { codes: string[] };
+      try {
+        res = (await apiPost("/api/account/recovery-codes", {})) as {
+          codes: string[];
+        };
+      } catch {
+        // 登入已逾近期窗口時，改以 Passkey（UV）重新驗證後再試。
+        if (!webauthnClient.isAvailable()) throw new Error(ta("recovery.reauthFailed"));
+        const { key, challenge } = (await apiGet(
+          "/api/account/passkey/challenge",
+        )) as { key: string; challenge: string };
+        const authentication = await webauthnClient.authenticate({
+          challenge,
+          userVerification: "required",
+          timeout: 60000,
+        });
+        res = (await apiPost("/api/account/recovery-codes", {
+          authentication,
+          challengeKey: key,
+        })) as { codes: string[] };
+      }
+      setRcCodes(res.codes);
+      await loadRecoveryStatus();
+    } catch (e: any) {
+      setRcError(e.message || ta("recovery.failed"));
+    } finally {
+      setRcBusy(false);
+    }
+  }
+
+  function downloadRecoveryCodes() {
+    const blob = new Blob([rcCodes.join("\n") + "\n"], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "assetpilot-recovery-codes.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyRecoveryCodes() {
+    try {
+      await navigator.clipboard.writeText(rcCodes.join("\n"));
+      setRcError(ta("recovery.copied"));
+    } catch {
+      setRcError(ta("recovery.failed"));
     }
   }
 
@@ -491,6 +569,51 @@ export default function AccountSettingsClient({
         </div>
         <Button className="mt-4" onClick={handleRegisterPasskey}>
           {ta("addPasskey")}
+        </Button>
+      </div>
+
+      {/* Recovery codes */}
+      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+        <h3 className="text-lg font-semibold mb-2">{ta("recovery.title")}</h3>
+        <p className="text-sm text-slate-500 mb-4">{ta("recovery.desc")}</p>
+        {rcError && <div className="text-red-500 text-sm mb-4">{rcError}</div>}
+        <p className="text-sm mb-4">
+          {rcStatus?.generated
+            ? ta("recovery.remaining", { count: rcStatus.remaining })
+            : ta("recovery.notGenerated")}
+        </p>
+        {rcCodes.length > 0 && (
+          <div className="mb-4">
+            <p className="text-sm text-amber-600 mb-2">
+              {ta("recovery.shownOnce")}
+            </p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-sm p-3 border rounded-md">
+              {rcCodes.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+            <div className="flex gap-2 mt-3">
+              <Button variant="outline" onClick={copyRecoveryCodes}>
+                {ta("recovery.copy")}
+              </Button>
+              <Button variant="outline" onClick={downloadRecoveryCodes}>
+                {ta("recovery.download")}
+              </Button>
+              <Button
+                onClick={() => {
+                  setRcCodes([]);
+                  setRcError("");
+                }}
+              >
+                {ta("recovery.done")}
+              </Button>
+            </div>
+          </div>
+        )}
+        <Button onClick={handleGenerateRecoveryCodes} disabled={rcBusy}>
+          {rcStatus?.generated
+            ? ta("recovery.regenerate")
+            : ta("recovery.generate")}
         </Button>
       </div>
 

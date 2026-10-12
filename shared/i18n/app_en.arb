@@ -10146,5 +10146,163 @@
     "placeholders": {
       "message": {}
     }
+  },
+  "authRecoveryLink": "Lost your Passkey? Use a recovery code",
+  "@authRecoveryLink": {
+    "description": "Web path: auth.recoveryLink",
+    "x-webPath": "auth.recoveryLink"
+  },
+  "authRecoveryTitle": "Account recovery",
+  "@authRecoveryTitle": {
+    "description": "Web path: auth.recovery.title",
+    "x-webPath": "auth.recovery.title"
+  },
+  "authRecoverySubtitle": "Enter your email and a recovery code, then register a new Passkey.",
+  "@authRecoverySubtitle": {
+    "description": "Web path: auth.recovery.subtitle",
+    "x-webPath": "auth.recovery.subtitle"
+  },
+  "authRecoveryEmail": "Email",
+  "@authRecoveryEmail": {
+    "description": "Web path: auth.recovery.email",
+    "x-webPath": "auth.recovery.email"
+  },
+  "authRecoveryCode": "Recovery code",
+  "@authRecoveryCode": {
+    "description": "Web path: auth.recovery.code",
+    "x-webPath": "auth.recovery.code"
+  },
+  "authRecoveryVerify": "Verify code",
+  "@authRecoveryVerify": {
+    "description": "Web path: auth.recovery.verify",
+    "x-webPath": "auth.recovery.verify"
+  },
+  "authRecoveryVerifying": "Verifying…",
+  "@authRecoveryVerifying": {
+    "description": "Web path: auth.recovery.verifying",
+    "x-webPath": "auth.recovery.verifying"
+  },
+  "authRecoveryRegisterTitle": "Register a new Passkey",
+  "@authRecoveryRegisterTitle": {
+    "description": "Web path: auth.recovery.registerTitle",
+    "x-webPath": "auth.recovery.registerTitle"
+  },
+  "authRecoveryRegisterHint": "The recovery code is only consumed after the new Passkey is registered. All previous sessions will be signed out.",
+  "@authRecoveryRegisterHint": {
+    "description": "Web path: auth.recovery.registerHint",
+    "x-webPath": "auth.recovery.registerHint"
+  },
+  "authRecoveryDeviceName": "Device name",
+  "@authRecoveryDeviceName": {
+    "description": "Web path: auth.recovery.deviceName",
+    "x-webPath": "auth.recovery.deviceName"
+  },
+  "authRecoveryRemoveOthers": "Also remove my other Passkeys (e.g. from the lost device)",
+  "@authRecoveryRemoveOthers": {
+    "description": "Web path: auth.recovery.removeOthers",
+    "x-webPath": "auth.recovery.removeOthers"
+  },
+  "authRecoveryRegister": "Register Passkey and finish recovery",
+  "@authRecoveryRegister": {
+    "description": "Web path: auth.recovery.register",
+    "x-webPath": "auth.recovery.register"
+  },
+  "authRecoveryRegistering": "Working…",
+  "@authRecoveryRegistering": {
+    "description": "Web path: auth.recovery.registering",
+    "x-webPath": "auth.recovery.registering"
+  },
+  "authRecoveryInvalid": "Incorrect account or recovery code",
+  "@authRecoveryInvalid": {
+    "description": "Web path: auth.recovery.invalid",
+    "x-webPath": "auth.recovery.invalid"
+  },
+  "authRecoveryFailed": "Recovery failed. Please start over.",
+  "@authRecoveryFailed": {
+    "description": "Web path: auth.recovery.failed",
+    "x-webPath": "auth.recovery.failed"
+  },
+  "authRecoveryUnsupported": "This browser does not support Passkeys",
+  "@authRecoveryUnsupported": {
+    "description": "Web path: auth.recovery.unsupported",
+    "x-webPath": "auth.recovery.unsupported"
+  },
+  "authRecoveryBack": "Back to sign in",
+  "@authRecoveryBack": {
+    "description": "Web path: auth.recovery.back",
+    "x-webPath": "auth.recovery.back"
+  },
+  "settingsAccountRecoveryTitle": "Account recovery codes",
+  "@settingsAccountRecoveryTitle": {
+    "description": "Web path: settings.account.recovery.title",
+    "x-webPath": "settings.account.recovery.title"
+  },
+  "settingsAccountRecoveryDesc": "If you lose all your Passkeys, use a recovery code to register a new one. Each code works once.",
+  "@settingsAccountRecoveryDesc": {
+    "description": "Web path: settings.account.recovery.desc",
+    "x-webPath": "settings.account.recovery.desc"
+  },
+  "settingsAccountRecoveryNotGenerated": "No recovery codes generated yet",
+  "@settingsAccountRecoveryNotGenerated": {
+    "description": "Web path: settings.account.recovery.notGenerated",
+    "x-webPath": "settings.account.recovery.notGenerated"
+  },
+  "settingsAccountRecoveryRemaining": "{count} codes remaining",
+  "@settingsAccountRecoveryRemaining": {
+    "description": "Web path: settings.account.recovery.remaining",
+    "x-webPath": "settings.account.recovery.remaining",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "settingsAccountRecoveryGenerate": "Generate codes",
+  "@settingsAccountRecoveryGenerate": {
+    "description": "Web path: settings.account.recovery.generate",
+    "x-webPath": "settings.account.recovery.generate"
+  },
+  "settingsAccountRecoveryRegenerate": "Regenerate",
+  "@settingsAccountRecoveryRegenerate": {
+    "description": "Web path: settings.account.recovery.regenerate",
+    "x-webPath": "settings.account.recovery.regenerate"
+  },
+  "settingsAccountRecoveryConfirmRegenerate": "Regenerating immediately invalidates your old codes. Continue?",
+  "@settingsAccountRecoveryConfirmRegenerate": {
+    "description": "Web path: settings.account.recovery.confirmRegenerate",
+    "x-webPath": "settings.account.recovery.confirmRegenerate"
+  },
+  "settingsAccountRecoveryShownOnce": "Save these now — they are shown only once.",
+  "@settingsAccountRecoveryShownOnce": {
+    "description": "Web path: settings.account.recovery.shownOnce",
+    "x-webPath": "settings.account.recovery.shownOnce"
+  },
+  "settingsAccountRecoveryCopy": "Copy",
+  "@settingsAccountRecoveryCopy": {
+    "description": "Web path: settings.account.recovery.copy",
+    "x-webPath": "settings.account.recovery.copy"
+  },
+  "settingsAccountRecoveryDownload": "Download",
+  "@settingsAccountRecoveryDownload": {
+    "description": "Web path: settings.account.recovery.download",
+    "x-webPath": "settings.account.recovery.download"
+  },
+  "settingsAccountRecoveryCopied": "Copied",
+  "@settingsAccountRecoveryCopied": {
+    "description": "Web path: settings.account.recovery.copied",
+    "x-webPath": "settings.account.recovery.copied"
+  },
+  "settingsAccountRecoveryDone": "I saved them",
+  "@settingsAccountRecoveryDone": {
+    "description": "Web path: settings.account.recovery.done",
+    "x-webPath": "settings.account.recovery.done"
+  },
+  "settingsAccountRecoveryFailed": "Operation failed. Please try again.",
+  "@settingsAccountRecoveryFailed": {
+    "description": "Web path: settings.account.recovery.failed",
+    "x-webPath": "settings.account.recovery.failed"
+  },
+  "settingsAccountRecoveryReauthFailed": "Re-authentication failed",
+  "@settingsAccountRecoveryReauthFailed": {
+    "description": "Web path: settings.account.recovery.reauthFailed",
+    "x-webPath": "settings.account.recovery.reauthFailed"
   }
 }

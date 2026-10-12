@@ -98,6 +98,9 @@ async function handlePOST(request: NextRequest) {
   try {
     db.run("BEGIN");
     [...all].forEach((id) =>
+      db.run("DELETE FROM transaction_tag_links WHERE transaction_id = ? AND user_id = ?", [id, auth.userId]),
+    );
+    [...all].forEach((id) =>
       db.run("DELETE FROM transactions WHERE id = ? AND user_id = ?", [
         id,
         auth.userId,

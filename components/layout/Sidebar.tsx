@@ -30,6 +30,7 @@ const NAV_SECTIONS = [
       { path: '/finance/goals',        labelKey: 'nav.goals',              icon: Target },
       { path: '/finance/accounts',     labelKey: 'nav.accounts',           icon: Building2 },
       { path: '/finance/categories',   labelKey: 'nav.categories',         icon: Tags },
+      { path: '/finance/tags',         labelKey: 'nav.tags',               icon: Tags },
       { path: '/finance/recurring',    labelKey: 'nav.recurring',          icon: Repeat },
       { path: '/finance/reconciliation', labelKey: 'nav.reconciliation',   icon: Landmark },
     ],

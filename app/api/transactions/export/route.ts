@@ -25,6 +25,7 @@ interface TransactionExportRow {
   fx_fee: number | string | null;
   exclude_from_stats: number | string | null;
   tags: string | null;
+  tag_names?: string | null;
   note: string | null;
   cat_name: string | null;
   cat_parent_id: string | null;
@@ -56,7 +57,7 @@ function transactionExportCells(r: TransactionExportRow): CsvCell[] {
     r.date || '', txTypeToChinese(r.type), category, r.amount,
     r.currency || 'TWD', r.original_amount || r.amount || '', r.fx_rate || '1',
     r.twd_amount || '', r.fx_fee || 0, r.account_name || '', r.transfer_to_account_name || '',
-    Number(r.exclude_from_stats) ? '是' : '否', r.tags || '[]', r.note || '',
+    Number(r.exclude_from_stats) ? '是' : '否', r.tag_names || r.tags || '[]', r.note || '',
   ];
 }
 
@@ -77,6 +78,8 @@ export async function GET(request: NextRequest) {
 
     const baseSql = `SELECT t.date, t.type, t.amount, t.currency, t.original_amount, t.fx_rate,
       t.twd_amount, t.fx_fee, t.exclude_from_stats, t.tags, t.note,
+      (SELECT string_agg(tg.name, '|' ORDER BY tg.name) FROM transaction_tag_links l JOIN transaction_tags tg ON tg.id = l.tag_id
+        WHERE l.transaction_id = t.id AND l.user_id = t.user_id) AS tag_names,
       c.name AS cat_name, c.parent_id AS cat_parent_id,
       pc.name AS parent_cat_name,
       a.name AS account_name,

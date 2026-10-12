@@ -358,6 +358,9 @@ export async function deleteTransactionCascade(
   const ids = linkedId ? [txId, linkedId] : [txId];
   await deleteTransactionAttachments(userId, ids);
   const db = getDB();
+  for (const id of ids) {
+    db.run('DELETE FROM transaction_tag_links WHERE transaction_id = ? AND user_id = ?', [id, userId]);
+  }
   db.run("DELETE FROM transactions WHERE id = ? AND user_id = ?", [
     txId,
     userId,

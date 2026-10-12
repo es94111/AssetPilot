@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -6437,6 +6438,141 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get setupBackToLogin => '返回登入';
+
+  @override
+  String get navTags => '標籤管理';
+
+  @override
+  String get featuresTagsTitle => '標籤管理';
+
+  @override
+  String get featuresTagsSubtitle => '為收入與支出交易加上多個標籤，跨分類篩選與統計';
+
+  @override
+  String get featuresTagsAdd => '新增標籤';
+
+  @override
+  String get featuresTagsEdit => '編輯標籤';
+
+  @override
+  String get featuresTagsName => '標籤名稱';
+
+  @override
+  String get featuresTagsColor => '顏色';
+
+  @override
+  String featuresTagsUsage(Object count) {
+    return '使用 $count 筆';
+  }
+
+  @override
+  String get featuresTagsDisabled => '已停用';
+
+  @override
+  String get featuresTagsDisable => '停用';
+
+  @override
+  String get featuresTagsEnable => '啟用';
+
+  @override
+  String get featuresTagsEmpty => '尚無標籤';
+
+  @override
+  String get featuresTagsSave => '儲存';
+
+  @override
+  String get featuresTagsNameRequired => '請輸入標籤名稱';
+
+  @override
+  String get featuresTagsDeleteTitle => '刪除標籤';
+
+  @override
+  String featuresTagsDeleteConfirm(Object name, Object count) {
+    return '刪除「$name」只會移除 $count 筆交易上的標籤，不會刪除任何交易。';
+  }
+
+  @override
+  String get featuresTagsLoadFailed => '載入標籤失敗';
+
+  @override
+  String get featuresTagsV1Note => 'v1 僅支援收入與支出交易；轉帳、信用卡還款與股利不支援標籤。';
+
+  @override
+  String get featuresTagsPicker => '標籤';
+
+  @override
+  String get featuresTagsPickerEmpty => '尚無可用標籤，請先至標籤管理建立';
+
+  @override
+  String get featuresTagsFilterLabel => '標籤篩選';
+
+  @override
+  String get featuresTagsModeAny => '符合任一（Any）';
+
+  @override
+  String get featuresTagsModeAll => '同時符合（All）';
+
+  @override
+  String featuresTagsFilterSummary(Object tags, Object mode, Object count) {
+    return '標籤條件：$tags（$mode），共 $count 筆';
+  }
+
+  @override
+  String get featuresTagsBatchAdd => '加標籤';
+
+  @override
+  String get featuresTagsBatchRemove => '移除標籤';
+
+  @override
+  String get featuresTagsBatchTitle => '批次標籤';
+
+  @override
+  String get featuresTagsBatchApply => '套用';
+
+  @override
+  String featuresTagsBatchResult(Object changed, Object skipped) {
+    return '已更新 $changed 筆，略過 $skipped 筆（不支援的交易類型）';
+  }
+
+  @override
+  String get featuresTagsStatsTitle => '標籤統計';
+
+  @override
+  String get featuresTagsStatsDateFrom => '起始日期';
+
+  @override
+  String get featuresTagsStatsDateTo => '結束日期';
+
+  @override
+  String get featuresTagsStatsRun => '查詢';
+
+  @override
+  String get featuresTagsStatsPerTag => '各標籤小計';
+
+  @override
+  String get featuresTagsStatsCombined => '去重合計';
+
+  @override
+  String get featuresTagsStatsCount => '筆數';
+
+  @override
+  String get featuresTagsStatsExpense => '支出';
+
+  @override
+  String get featuresTagsStatsIncome => '收入';
+
+  @override
+  String get featuresTagsStatsCross => '月份 × 分類';
+
+  @override
+  String get featuresTagsStatsMonth => '月份';
+
+  @override
+  String get featuresTagsStatsCategory => '分類';
+
+  @override
+  String get featuresTagsStatsNote =>
+      '各標籤小計中，同一筆交易會在它的每個標籤各計一次；去重合計以交易為單位只計一次，因此不等於各標籤小計相加。已排除「不計入統計」的交易。';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -12777,6 +12913,144 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get setupBackToLogin => '返回登录';
+
+  @override
+  String get navTags => 'Tags';
+
+  @override
+  String get featuresTagsTitle => 'Tags';
+
+  @override
+  String get featuresTagsSubtitle =>
+      'Attach multiple tags to income and expense transactions to filter and analyze across categories';
+
+  @override
+  String get featuresTagsAdd => 'Add tag';
+
+  @override
+  String get featuresTagsEdit => 'Edit tag';
+
+  @override
+  String get featuresTagsName => 'Tag name';
+
+  @override
+  String get featuresTagsColor => 'Color';
+
+  @override
+  String featuresTagsUsage(Object count) {
+    return '$count used';
+  }
+
+  @override
+  String get featuresTagsDisabled => 'Disabled';
+
+  @override
+  String get featuresTagsDisable => 'Disable';
+
+  @override
+  String get featuresTagsEnable => 'Enable';
+
+  @override
+  String get featuresTagsEmpty => 'No tags yet';
+
+  @override
+  String get featuresTagsSave => 'Save';
+
+  @override
+  String get featuresTagsNameRequired => 'Enter a tag name';
+
+  @override
+  String get featuresTagsDeleteTitle => 'Delete tag';
+
+  @override
+  String featuresTagsDeleteConfirm(Object name, Object count) {
+    return 'Deleting \"$name\" only removes it from $count transactions. No transaction is deleted.';
+  }
+
+  @override
+  String get featuresTagsLoadFailed => 'Failed to load tags';
+
+  @override
+  String get featuresTagsV1Note =>
+      'v1 supports income and expense transactions only; transfers, credit card repayments and dividends cannot be tagged.';
+
+  @override
+  String get featuresTagsPicker => 'Tags';
+
+  @override
+  String get featuresTagsPickerEmpty =>
+      'No tags available. Create some in Tags first.';
+
+  @override
+  String get featuresTagsFilterLabel => 'Tag filter';
+
+  @override
+  String get featuresTagsModeAny => 'Match any';
+
+  @override
+  String get featuresTagsModeAll => 'Match all';
+
+  @override
+  String featuresTagsFilterSummary(Object tags, Object mode, Object count) {
+    return 'Tags: $tags ($mode), $count results';
+  }
+
+  @override
+  String get featuresTagsBatchAdd => 'Add tags';
+
+  @override
+  String get featuresTagsBatchRemove => 'Remove tags';
+
+  @override
+  String get featuresTagsBatchTitle => 'Batch tags';
+
+  @override
+  String get featuresTagsBatchApply => 'Apply';
+
+  @override
+  String featuresTagsBatchResult(Object changed, Object skipped) {
+    return 'Updated $changed, skipped $skipped (unsupported transaction types)';
+  }
+
+  @override
+  String get featuresTagsStatsTitle => 'Tag statistics';
+
+  @override
+  String get featuresTagsStatsDateFrom => 'From';
+
+  @override
+  String get featuresTagsStatsDateTo => 'To';
+
+  @override
+  String get featuresTagsStatsRun => 'Run';
+
+  @override
+  String get featuresTagsStatsPerTag => 'Per-tag subtotals';
+
+  @override
+  String get featuresTagsStatsCombined => 'De-duplicated total';
+
+  @override
+  String get featuresTagsStatsCount => 'Count';
+
+  @override
+  String get featuresTagsStatsExpense => 'Expense';
+
+  @override
+  String get featuresTagsStatsIncome => 'Income';
+
+  @override
+  String get featuresTagsStatsCross => 'Month × category';
+
+  @override
+  String get featuresTagsStatsMonth => 'Month';
+
+  @override
+  String get featuresTagsStatsCategory => 'Category';
+
+  @override
+  String get featuresTagsStatsNote =>
+      'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -19212,4 +19486,139 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get setupBackToLogin => '返回登入';
+
+  @override
+  String get navTags => '標籤管理';
+
+  @override
+  String get featuresTagsTitle => '標籤管理';
+
+  @override
+  String get featuresTagsSubtitle => '為收入與支出交易加上多個標籤，跨分類篩選與統計';
+
+  @override
+  String get featuresTagsAdd => '新增標籤';
+
+  @override
+  String get featuresTagsEdit => '編輯標籤';
+
+  @override
+  String get featuresTagsName => '標籤名稱';
+
+  @override
+  String get featuresTagsColor => '顏色';
+
+  @override
+  String featuresTagsUsage(Object count) {
+    return '使用 $count 筆';
+  }
+
+  @override
+  String get featuresTagsDisabled => '已停用';
+
+  @override
+  String get featuresTagsDisable => '停用';
+
+  @override
+  String get featuresTagsEnable => '啟用';
+
+  @override
+  String get featuresTagsEmpty => '尚無標籤';
+
+  @override
+  String get featuresTagsSave => '儲存';
+
+  @override
+  String get featuresTagsNameRequired => '請輸入標籤名稱';
+
+  @override
+  String get featuresTagsDeleteTitle => '刪除標籤';
+
+  @override
+  String featuresTagsDeleteConfirm(Object name, Object count) {
+    return '刪除「$name」只會移除 $count 筆交易上的標籤，不會刪除任何交易。';
+  }
+
+  @override
+  String get featuresTagsLoadFailed => '載入標籤失敗';
+
+  @override
+  String get featuresTagsV1Note => 'v1 僅支援收入與支出交易；轉帳、信用卡還款與股利不支援標籤。';
+
+  @override
+  String get featuresTagsPicker => '標籤';
+
+  @override
+  String get featuresTagsPickerEmpty => '尚無可用標籤，請先至標籤管理建立';
+
+  @override
+  String get featuresTagsFilterLabel => '標籤篩選';
+
+  @override
+  String get featuresTagsModeAny => '符合任一（Any）';
+
+  @override
+  String get featuresTagsModeAll => '同時符合（All）';
+
+  @override
+  String featuresTagsFilterSummary(Object tags, Object mode, Object count) {
+    return '標籤條件：$tags（$mode），共 $count 筆';
+  }
+
+  @override
+  String get featuresTagsBatchAdd => '加標籤';
+
+  @override
+  String get featuresTagsBatchRemove => '移除標籤';
+
+  @override
+  String get featuresTagsBatchTitle => '批次標籤';
+
+  @override
+  String get featuresTagsBatchApply => '套用';
+
+  @override
+  String featuresTagsBatchResult(Object changed, Object skipped) {
+    return '已更新 $changed 筆，略過 $skipped 筆（不支援的交易類型）';
+  }
+
+  @override
+  String get featuresTagsStatsTitle => '標籤統計';
+
+  @override
+  String get featuresTagsStatsDateFrom => '起始日期';
+
+  @override
+  String get featuresTagsStatsDateTo => '結束日期';
+
+  @override
+  String get featuresTagsStatsRun => '查詢';
+
+  @override
+  String get featuresTagsStatsPerTag => '各標籤小計';
+
+  @override
+  String get featuresTagsStatsCombined => '去重合計';
+
+  @override
+  String get featuresTagsStatsCount => '筆數';
+
+  @override
+  String get featuresTagsStatsExpense => '支出';
+
+  @override
+  String get featuresTagsStatsIncome => '收入';
+
+  @override
+  String get featuresTagsStatsCross => '月份 × 分類';
+
+  @override
+  String get featuresTagsStatsMonth => '月份';
+
+  @override
+  String get featuresTagsStatsCategory => '分類';
+
+  @override
+  String get featuresTagsStatsNote =>
+      '各標籤小計中，同一筆交易會在它的每個標籤各計一次；去重合計以交易為單位只計一次，因此不等於各標籤小計相加。已排除「不計入統計」的交易。';
 }

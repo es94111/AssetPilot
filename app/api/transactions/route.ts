@@ -1,12 +1,14 @@
 import { withLedgerWriteAudit } from '../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../lib/apiHelpers';
-import { queryAll, queryOne } from '../../../lib/db';
+import { queryAll, queryOne, saveDB } from '../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from '../../../lib/accountHelpers';
 import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { computeTwdAmount } from '../../../lib/moneyDecimal';
 import { insertIncomeExpenseTransaction } from '../../../lib/transactionWriteCore';
 import { emitTransactionEvent } from '../../../lib/transactionWebhooks';
+import { assertTagsUsable, buildTagFilter, getTagsForTransactions, setTransactionTags, TagError, type TagDto } from '../../../lib/transactionTags';
+import { dedupeIds, parseTagMode } from '../../../lib/transactionTagRules';
 
 type TransactionType = 'income' | 'expense' | 'transfer_in' | 'transfer_out';
 type SortField = 'date' | 'amount' | 'account' | 'category' | 'type';
@@ -62,6 +64,7 @@ interface TransactionListItem extends TransactionRow {
   updatedAt: string | number | null;
   attachmentCount: number;
   firstAttachmentId: string | null;
+  tags: TagDto[];
 }
 
 interface TransactionListResponse {
@@ -88,6 +91,7 @@ interface CreateTransactionRequest {
   excludeFromStats?: boolean;
   /** 離線記帳的 idempotency key（007）；線上直接新增時省略。 */
   clientRef?: string | null;
+  tagIds?: string[];
 }
 
 /** 離線 idempotency key 形狀驗證：限 32 碼十六進位，避免使用者塞任意長字串。 */
@@ -182,6 +186,18 @@ export async function GET(request: NextRequest) {
   }
   if (accountId && accountId !== 'all') { where += ' AND t.account_id = ?'; params.push(accountId); }
   if (keyword) { where += ' AND LOWER(t.note) LIKE LOWER(?)'; params.push(`%${keyword}%`); }
+  const tagIds = dedupeIds((searchParams.get('tagIds') || '').split(','));
+  if (tagIds.length > 0) {
+    try {
+      assertTagsUsable(auth.userId, tagIds, false);
+    } catch (e) {
+      if (e instanceof TagError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
+      throw e;
+    }
+    const tf = buildTagFilter(tagIds, parseTagMode(searchParams.get('tagMode')));
+    where += tf.sql;
+    params.push(...tf.params);
+  }
 
   const countSql = `SELECT COUNT(*) as cnt FROM ${baseTable} WHERE ${where}`;
   const total = Number(asRow<{ cnt: number }>(queryOne(countSql, params))?.cnt) || 0;
@@ -200,7 +216,9 @@ export async function GET(request: NextRequest) {
     (SELECT COUNT(*) FROM transaction_attachments ta WHERE ta.transaction_id = t.id AND ta.user_id = t.user_id) AS attachment_count,
     (SELECT ta.id FROM transaction_attachments ta WHERE ta.transaction_id = t.id AND ta.user_id = t.user_id ORDER BY ta.created_at ASC LIMIT 1) AS first_attachment_id`;
   const sql = `SELECT ${selectCols} FROM ${baseTable} WHERE ${where} ${orderClause} LIMIT ${pageSize} OFFSET ${offset}`;
-  const items = asRows<TransactionRow>(queryAll(sql, params)).map((r): TransactionListItem => ({
+  const pageRows = asRows<TransactionRow>(queryAll(sql, params));
+  const tagMap = getTagsForTransactions(auth.userId, pageRows.map((r) => r.id));
+  const items = pageRows.map((r): TransactionListItem => ({
     ...r,
     categoryId: r.category_id,
     accountId: r.account_id,
@@ -223,6 +241,7 @@ export async function GET(request: NextRequest) {
     updatedAt: r.updated_at,
     attachmentCount: Number(r.attachment_count) || 0,
     firstAttachmentId: typeof r.first_attachment_id === 'string' ? r.first_attachment_id : null,
+    tags: tagMap.get(r.id) || [],
   }));
 
   const response: TransactionListResponse = {
@@ -298,6 +317,19 @@ async function handlePOST(request: NextRequest) {
     0
   );
 
+  const tagIdsInput = dedupeIds(body.tagIds);
+  if (tagIdsInput.length > 0) {
+    if (type !== 'income' && type !== 'expense') {
+      return NextResponse.json({ error: '標籤僅支援收入與支出交易', code: 'TagUnsupportedType' }, { status: 422 });
+    }
+    try {
+      assertTagsUsable(auth.userId, tagIdsInput, true);
+    } catch (e) {
+      if (e instanceof TagError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
+      throw e;
+    }
+  }
+
   const result = insertIncomeExpenseTransaction({
     userId: auth.userId,
     type,
@@ -313,6 +345,15 @@ async function handlePOST(request: NextRequest) {
     excludeFromStats: !!excludeFromStats,
     clientRef: typeof body.clientRef === 'string' && CLIENT_REF_REGEX.test(body.clientRef) ? body.clientRef : undefined,
   });
+
+  if (result.inserted && tagIdsInput.length > 0) {
+    try {
+      setTransactionTags(auth.userId, result.id, tagIdsInput);
+      saveDB();
+    } catch (e) {
+      if (!(e instanceof TagError)) throw e;
+    }
+  }
 
   // Webhook：交易新增事件（issue #258）。僅在本次真的新增列時發出，
   // 離線重送（client_ref 去重，inserted=false）不重複發出，維持事件冪等。

@@ -20,6 +20,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   '/finance/goals':        'nav.goals',
   '/finance/accounts':     'nav.accounts',
   '/finance/categories':   'nav.categories',
+  '/finance/tags':         'nav.tags',
   '/finance/recurring':    'nav.recurring',
   '/finance/reconciliation': 'nav.reconciliation',
   '/stocks':               'nav.titleStocks',

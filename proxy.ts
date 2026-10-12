@@ -6,6 +6,7 @@ import { checkRateLimit as checkRateLimitSafe } from './lib/rateLimit';
 // ── 公開端點（不需驗證）──
 const PUBLIC_PATHS = new Set([
   '/login',
+  '/login/recovery',
   '/mcp',
   '/privacy',
   '/terms',
@@ -27,7 +28,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 // passkey / MCP OAuth 端點前綴
-const PUBLIC_PREFIXES = ['/api/auth/passkey/', '/api/oauth/'];
+const PUBLIC_PREFIXES = ['/api/auth/passkey/', '/api/auth/recovery/', '/api/oauth/'];
 
 // API Token（第三方自動化整合，issue #258）端點前綴：
 // 這組路由不使用 authToken Cookie，改以 `Authorization: Bearer ap_api_…` 驗證，
@@ -53,6 +54,8 @@ const OAUTH_REGISTRATION_WINDOW_MS = 60 * 60 * 1000;
 const OAUTH_REGISTRATION_RATE_LIMIT_MAX = 20; // DCR：每 IP 每小時最多 20 次
 
 const AUTH_RATE_LIMITED_PATHS = new Set([
+  '/api/auth/recovery/verify',
+  '/api/auth/recovery/complete',
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/google',

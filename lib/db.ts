@@ -343,6 +343,40 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_passkey_credentials_user ON passkey_credentials(user_id)`,
   );
 
+  // Passkey 遺失復原碼（issue #308）：只存單向雜湊，不存明文。
+  db.run(`CREATE TABLE IF NOT EXISTS account_recovery_codes (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    code_hash TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    used_at INTEGER DEFAULT 0,
+    revoked_at INTEGER DEFAULT 0
+  )`);
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_account_recovery_codes_user ON account_recovery_codes(user_id, revoked_at, used_at)`,
+  );
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_account_recovery_codes_hash ON account_recovery_codes(code_hash)`,
+  );
+  // 受限復原工作階段：僅能用於綁定新 Passkey，與 login_sessions 完全分離。
+  db.run(`CREATE TABLE IF NOT EXISTS account_recovery_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    code_id TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    ip_address TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    consumed_at INTEGER DEFAULT 0,
+    revoked_at INTEGER DEFAULT 0
+  )`);
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_account_recovery_sessions_token ON account_recovery_sessions(token_hash)`,
+  );
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_account_recovery_sessions_user ON account_recovery_sessions(user_id)`,
+  );
+
   db.run(`CREATE TABLE IF NOT EXISTS system_settings (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     public_registration INTEGER DEFAULT 1,

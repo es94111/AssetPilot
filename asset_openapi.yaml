@@ -1194,6 +1194,98 @@ paths:
         "400":
           description: Challenge 過期或驗證失敗
 
+  /api/account/recovery-codes:
+    get:
+      operationId: getRecoveryCodeStatus
+      tags: [Account]
+      summary: 取得帳號復原碼狀態（不含明文）
+      responses:
+        "200":
+          description: 是否已產生與剩餘可用數量
+    post:
+      operationId: generateRecoveryCodes
+      tags: [Account]
+      summary: 產生或重新產生一次性復原碼（舊碼立即失效，明文僅回傳一次）
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                authentication:
+                  type: object
+                  description: 近期登入逾時時，以 Passkey（UV）重新驗證
+                challengeKey:
+                  type: string
+      responses:
+        "200":
+          description: 回傳 codes（僅此一次）
+        "403":
+          description: 需要重新驗證（reauthRequired）
+
+  /api/auth/recovery/verify:
+    post:
+      operationId: verifyRecoveryCode
+      tags: [Auth]
+      summary: 驗證復原碼並建立受限復原工作階段（不消耗復原碼，不可存取財務資料）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "200":
+          description: 設定 httpOnly recoveryToken Cookie（10 分鐘）
+        "401":
+          description: 帳號或復原碼不正確（不洩漏帳號是否存在）
+        "429":
+          description: 嘗試次數過多
+
+  /api/auth/recovery/challenge:
+    get:
+      operationId: getRecoveryChallenge
+      tags: [Auth]
+      summary: 取得復原流程註冊新 Passkey 的 challenge
+      responses:
+        "200":
+          description: key、challenge 與 user
+        "401":
+          description: 復原工作階段無效或過期
+
+  /api/auth/recovery/complete:
+    post:
+      operationId: completeRecovery
+      tags: [Auth]
+      summary: 註冊新 Passkey 後消耗復原碼並登入（可選擇移除其他 Passkey，並登出所有既有工作階段）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [registration, challengeKey]
+              properties:
+                registration:
+                  type: object
+                challengeKey:
+                  type: string
+                deviceName:
+                  type: string
+                removeOtherPasskeys:
+                  type: boolean
+      responses:
+        "200":
+          description: 完成並登入
+        "409":
+          description: 復原碼已被使用
+
   /api/account/passkey/{id}:
     delete:
       operationId: deletePasskey

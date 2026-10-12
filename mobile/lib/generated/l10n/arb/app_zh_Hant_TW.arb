@@ -10146,5 +10146,163 @@
     "placeholders": {
       "message": {}
     }
+  },
+  "authRecoveryLink": "無法使用 Passkey？改用復原碼",
+  "@authRecoveryLink": {
+    "description": "Web path: auth.recoveryLink",
+    "x-webPath": "auth.recoveryLink"
+  },
+  "authRecoveryTitle": "帳號復原",
+  "@authRecoveryTitle": {
+    "description": "Web path: auth.recovery.title",
+    "x-webPath": "auth.recovery.title"
+  },
+  "authRecoverySubtitle": "輸入電子郵件與復原碼，驗證後綁定新的 Passkey。",
+  "@authRecoverySubtitle": {
+    "description": "Web path: auth.recovery.subtitle",
+    "x-webPath": "auth.recovery.subtitle"
+  },
+  "authRecoveryEmail": "電子郵件",
+  "@authRecoveryEmail": {
+    "description": "Web path: auth.recovery.email",
+    "x-webPath": "auth.recovery.email"
+  },
+  "authRecoveryCode": "復原碼",
+  "@authRecoveryCode": {
+    "description": "Web path: auth.recovery.code",
+    "x-webPath": "auth.recovery.code"
+  },
+  "authRecoveryVerify": "驗證復原碼",
+  "@authRecoveryVerify": {
+    "description": "Web path: auth.recovery.verify",
+    "x-webPath": "auth.recovery.verify"
+  },
+  "authRecoveryVerifying": "驗證中…",
+  "@authRecoveryVerifying": {
+    "description": "Web path: auth.recovery.verifying",
+    "x-webPath": "auth.recovery.verifying"
+  },
+  "authRecoveryRegisterTitle": "綁定新的 Passkey",
+  "@authRecoveryRegisterTitle": {
+    "description": "Web path: auth.recovery.registerTitle",
+    "x-webPath": "auth.recovery.registerTitle"
+  },
+  "authRecoveryRegisterHint": "復原碼在新 Passkey 註冊成功後才會失效。完成後所有舊的登入階段會被登出。",
+  "@authRecoveryRegisterHint": {
+    "description": "Web path: auth.recovery.registerHint",
+    "x-webPath": "auth.recovery.registerHint"
+  },
+  "authRecoveryDeviceName": "裝置名稱",
+  "@authRecoveryDeviceName": {
+    "description": "Web path: auth.recovery.deviceName",
+    "x-webPath": "auth.recovery.deviceName"
+  },
+  "authRecoveryRemoveOthers": "同時移除其他（可能遺失裝置上的）Passkey",
+  "@authRecoveryRemoveOthers": {
+    "description": "Web path: auth.recovery.removeOthers",
+    "x-webPath": "auth.recovery.removeOthers"
+  },
+  "authRecoveryRegister": "註冊 Passkey 並完成復原",
+  "@authRecoveryRegister": {
+    "description": "Web path: auth.recovery.register",
+    "x-webPath": "auth.recovery.register"
+  },
+  "authRecoveryRegistering": "處理中…",
+  "@authRecoveryRegistering": {
+    "description": "Web path: auth.recovery.registering",
+    "x-webPath": "auth.recovery.registering"
+  },
+  "authRecoveryInvalid": "帳號或復原碼不正確",
+  "@authRecoveryInvalid": {
+    "description": "Web path: auth.recovery.invalid",
+    "x-webPath": "auth.recovery.invalid"
+  },
+  "authRecoveryFailed": "復原失敗，請重新開始",
+  "@authRecoveryFailed": {
+    "description": "Web path: auth.recovery.failed",
+    "x-webPath": "auth.recovery.failed"
+  },
+  "authRecoveryUnsupported": "此瀏覽器不支援 Passkey",
+  "@authRecoveryUnsupported": {
+    "description": "Web path: auth.recovery.unsupported",
+    "x-webPath": "auth.recovery.unsupported"
+  },
+  "authRecoveryBack": "返回登入",
+  "@authRecoveryBack": {
+    "description": "Web path: auth.recovery.back",
+    "x-webPath": "auth.recovery.back"
+  },
+  "settingsAccountRecoveryTitle": "帳號復原碼",
+  "@settingsAccountRecoveryTitle": {
+    "description": "Web path: settings.account.recovery.title",
+    "x-webPath": "settings.account.recovery.title"
+  },
+  "settingsAccountRecoveryDesc": "當所有 Passkey 遺失時，可用復原碼重新綁定新的 Passkey。每組碼僅能使用一次。",
+  "@settingsAccountRecoveryDesc": {
+    "description": "Web path: settings.account.recovery.desc",
+    "x-webPath": "settings.account.recovery.desc"
+  },
+  "settingsAccountRecoveryNotGenerated": "尚未產生復原碼",
+  "@settingsAccountRecoveryNotGenerated": {
+    "description": "Web path: settings.account.recovery.notGenerated",
+    "x-webPath": "settings.account.recovery.notGenerated"
+  },
+  "settingsAccountRecoveryRemaining": "剩餘 {count} 組可用",
+  "@settingsAccountRecoveryRemaining": {
+    "description": "Web path: settings.account.recovery.remaining",
+    "x-webPath": "settings.account.recovery.remaining",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "settingsAccountRecoveryGenerate": "產生復原碼",
+  "@settingsAccountRecoveryGenerate": {
+    "description": "Web path: settings.account.recovery.generate",
+    "x-webPath": "settings.account.recovery.generate"
+  },
+  "settingsAccountRecoveryRegenerate": "重新產生",
+  "@settingsAccountRecoveryRegenerate": {
+    "description": "Web path: settings.account.recovery.regenerate",
+    "x-webPath": "settings.account.recovery.regenerate"
+  },
+  "settingsAccountRecoveryConfirmRegenerate": "重新產生後，舊的復原碼會立即失效。確定繼續？",
+  "@settingsAccountRecoveryConfirmRegenerate": {
+    "description": "Web path: settings.account.recovery.confirmRegenerate",
+    "x-webPath": "settings.account.recovery.confirmRegenerate"
+  },
+  "settingsAccountRecoveryShownOnce": "請立即妥善保存，這些復原碼只會顯示這一次。",
+  "@settingsAccountRecoveryShownOnce": {
+    "description": "Web path: settings.account.recovery.shownOnce",
+    "x-webPath": "settings.account.recovery.shownOnce"
+  },
+  "settingsAccountRecoveryCopy": "複製",
+  "@settingsAccountRecoveryCopy": {
+    "description": "Web path: settings.account.recovery.copy",
+    "x-webPath": "settings.account.recovery.copy"
+  },
+  "settingsAccountRecoveryDownload": "下載",
+  "@settingsAccountRecoveryDownload": {
+    "description": "Web path: settings.account.recovery.download",
+    "x-webPath": "settings.account.recovery.download"
+  },
+  "settingsAccountRecoveryCopied": "已複製",
+  "@settingsAccountRecoveryCopied": {
+    "description": "Web path: settings.account.recovery.copied",
+    "x-webPath": "settings.account.recovery.copied"
+  },
+  "settingsAccountRecoveryDone": "我已保存",
+  "@settingsAccountRecoveryDone": {
+    "description": "Web path: settings.account.recovery.done",
+    "x-webPath": "settings.account.recovery.done"
+  },
+  "settingsAccountRecoveryFailed": "操作失敗，請重試",
+  "@settingsAccountRecoveryFailed": {
+    "description": "Web path: settings.account.recovery.failed",
+    "x-webPath": "settings.account.recovery.failed"
+  },
+  "settingsAccountRecoveryReauthFailed": "重新驗證失敗",
+  "@settingsAccountRecoveryReauthFailed": {
+    "description": "Web path: settings.account.recovery.reauthFailed",
+    "x-webPath": "settings.account.recovery.reauthFailed"
   }
 }

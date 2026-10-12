@@ -42,6 +42,8 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'carrier_id', 'carrier_barcode_masked', 'invoice_import_id',
   'invoice_number', 'invoice_count', 'synced_count', 'skipped_count',
   'provider', 'sync_status',
+  // Passkey 遺失復原碼稽核（issue #308）。只記錄筆數，絕不記錄復原碼明文或雜湊。
+  'recovery_code_count', 'removed_passkey_count', 'revoked_session_count',
 ]);
 
 export interface WriteAuditArgs {

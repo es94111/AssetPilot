@@ -11521,6 +11521,192 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'辨識失敗，請手動輸入（{message}）'**
   String featuresTransactionsOcrFailed(Object message);
+
+  /// Web path: auth.recoveryLink
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法使用 Passkey？改用復原碼'**
+  String get authRecoveryLink;
+
+  /// Web path: auth.recovery.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳號復原'**
+  String get authRecoveryTitle;
+
+  /// Web path: auth.recovery.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'輸入電子郵件與復原碼，驗證後綁定新的 Passkey。'**
+  String get authRecoverySubtitle;
+
+  /// Web path: auth.recovery.email
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'電子郵件'**
+  String get authRecoveryEmail;
+
+  /// Web path: auth.recovery.code
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'復原碼'**
+  String get authRecoveryCode;
+
+  /// Web path: auth.recovery.verify
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'驗證復原碼'**
+  String get authRecoveryVerify;
+
+  /// Web path: auth.recovery.verifying
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'驗證中…'**
+  String get authRecoveryVerifying;
+
+  /// Web path: auth.recovery.registerTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'綁定新的 Passkey'**
+  String get authRecoveryRegisterTitle;
+
+  /// Web path: auth.recovery.registerHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'復原碼在新 Passkey 註冊成功後才會失效。完成後所有舊的登入階段會被登出。'**
+  String get authRecoveryRegisterHint;
+
+  /// Web path: auth.recovery.deviceName
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'裝置名稱'**
+  String get authRecoveryDeviceName;
+
+  /// Web path: auth.recovery.removeOthers
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'同時移除其他（可能遺失裝置上的）Passkey'**
+  String get authRecoveryRemoveOthers;
+
+  /// Web path: auth.recovery.register
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'註冊 Passkey 並完成復原'**
+  String get authRecoveryRegister;
+
+  /// Web path: auth.recovery.registering
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'處理中…'**
+  String get authRecoveryRegistering;
+
+  /// Web path: auth.recovery.invalid
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳號或復原碼不正確'**
+  String get authRecoveryInvalid;
+
+  /// Web path: auth.recovery.failed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'復原失敗，請重新開始'**
+  String get authRecoveryFailed;
+
+  /// Web path: auth.recovery.unsupported
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此瀏覽器不支援 Passkey'**
+  String get authRecoveryUnsupported;
+
+  /// Web path: auth.recovery.back
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'返回登入'**
+  String get authRecoveryBack;
+
+  /// Web path: settings.account.recovery.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳號復原碼'**
+  String get settingsAccountRecoveryTitle;
+
+  /// Web path: settings.account.recovery.desc
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'當所有 Passkey 遺失時，可用復原碼重新綁定新的 Passkey。每組碼僅能使用一次。'**
+  String get settingsAccountRecoveryDesc;
+
+  /// Web path: settings.account.recovery.notGenerated
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未產生復原碼'**
+  String get settingsAccountRecoveryNotGenerated;
+
+  /// Web path: settings.account.recovery.remaining
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'剩餘 {count} 組可用'**
+  String settingsAccountRecoveryRemaining(Object count);
+
+  /// Web path: settings.account.recovery.generate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'產生復原碼'**
+  String get settingsAccountRecoveryGenerate;
+
+  /// Web path: settings.account.recovery.regenerate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重新產生'**
+  String get settingsAccountRecoveryRegenerate;
+
+  /// Web path: settings.account.recovery.confirmRegenerate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重新產生後，舊的復原碼會立即失效。確定繼續？'**
+  String get settingsAccountRecoveryConfirmRegenerate;
+
+  /// Web path: settings.account.recovery.shownOnce
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請立即妥善保存，這些復原碼只會顯示這一次。'**
+  String get settingsAccountRecoveryShownOnce;
+
+  /// Web path: settings.account.recovery.copy
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'複製'**
+  String get settingsAccountRecoveryCopy;
+
+  /// Web path: settings.account.recovery.download
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'下載'**
+  String get settingsAccountRecoveryDownload;
+
+  /// Web path: settings.account.recovery.copied
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已複製'**
+  String get settingsAccountRecoveryCopied;
+
+  /// Web path: settings.account.recovery.done
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'我已保存'**
+  String get settingsAccountRecoveryDone;
+
+  /// Web path: settings.account.recovery.failed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'操作失敗，請重試'**
+  String get settingsAccountRecoveryFailed;
+
+  /// Web path: settings.account.recovery.reauthFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'重新驗證失敗'**
+  String get settingsAccountRecoveryReauthFailed;
 }
 
 class _AppLocalizationsDelegate

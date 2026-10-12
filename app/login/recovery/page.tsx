@@ -1,15 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Script from "next/script";
 import { client as webauthnClient } from "@passwordless-id/webauthn";
 import { useT } from "@/components/i18n/I18nProvider";
 
 type Step = "verify" | "register";
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: Record<string, any>,
+      ) => string;
+      reset: (widgetId?: string) => void;
+      remove?: (widgetId: string) => void;
+    };
+  }
+}
+
 export default function RecoveryPage() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const router = useRouter();
   const [step, setStep] = useState<Step>("verify");
   const [email, setEmail] = useState("");
@@ -18,19 +32,73 @@ export default function RecoveryPage() {
   const [removeOthers, setRemoveOthers] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [config, setConfig] = useState<any>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef<HTMLDivElement | null>(null);
+  const widgetId = useRef<string | null>(null);
+
+  const turnstileEnabled =
+    !!config?.turnstileEnabled && !!config?.turnstileSiteKey;
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then(setConfig)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (
+      step !== "verify" ||
+      !turnstileEnabled ||
+      !scriptLoaded ||
+      !window.turnstile ||
+      !turnstileRef.current ||
+      widgetId.current
+    )
+      return;
+    const id = window.turnstile.render(turnstileRef.current, {
+      sitekey: config.turnstileSiteKey,
+      action: "login",
+      theme: "auto",
+      language: locale,
+      callback: (token: string) => setTurnstileToken(token || ""),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+    widgetId.current = id;
+    return () => {
+      window.turnstile?.remove?.(id);
+      if (widgetId.current === id) widgetId.current = null;
+      setTurnstileToken("");
+    };
+  }, [step, turnstileEnabled, scriptLoaded, config?.turnstileSiteKey, locale]);
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (turnstileEnabled && !turnstileToken) {
+      setError(t("auth.errors.turnstileRequired"));
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/auth/recovery/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email, code, turnstileToken }),
       });
       if (!res.ok) {
-        setError(t("auth.recovery.invalid"));
+        setError(
+          res.status === 403
+            ? t("auth.errors.turnstileRequired")
+            : t("auth.recovery.invalid"),
+        );
+        if (turnstileEnabled && widgetId.current) {
+          window.turnstile?.reset(widgetId.current);
+          setTurnstileToken("");
+        }
         return;
       }
       setCode("");
@@ -83,6 +151,13 @@ export default function RecoveryPage() {
 
   return (
     <div className="login-bg">
+      {turnstileEnabled && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={() => setScriptLoaded(true)}
+        />
+      )}
       <div className="login-card">
         <h1 className="login-title">{t("auth.recovery.title")}</h1>
         {step === "verify" ? (
@@ -105,6 +180,13 @@ export default function RecoveryPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
+            {turnstileEnabled && (
+              <div
+                className="login-turnstile"
+                ref={turnstileRef}
+                aria-label={t("auth.turnstileAria")}
+              />
+            )}
             {error && (
               <p className="login-error" role="alert">
                 {error}

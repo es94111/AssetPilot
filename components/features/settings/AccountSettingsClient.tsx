@@ -239,11 +239,16 @@ export default function AccountSettingsClient({
     setRcBusy(true);
     try {
       let res: { codes: string[] };
-      try {
-        res = (await apiPost("/api/account/recovery-codes", {})) as {
-          codes: string[];
-        };
-      } catch {
+      const first = await fetch("/api/account/recovery-codes", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const firstData = await first.json().catch(() => ({}));
+      if (first.ok) {
+        res = firstData as { codes: string[] };
+      } else if (first.status === 403 && firstData.reauthRequired) {
         // 登入已逾近期窗口時，改以 Passkey（UV）重新驗證後再試。
         if (!webauthnClient.isAvailable()) throw new Error(ta("recovery.reauthFailed"));
         const { key, challenge } = (await apiGet(
@@ -258,6 +263,8 @@ export default function AccountSettingsClient({
           authentication,
           challengeKey: key,
         })) as { codes: string[] };
+      } else {
+        throw new Error(firstData.error || ta("recovery.failed"));
       }
       setRcCodes(res.codes);
       await loadRecoveryStatus();

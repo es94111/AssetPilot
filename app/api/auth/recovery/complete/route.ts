@@ -60,12 +60,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '此 Passkey 已註冊過' }, { status: 400, headers: NO_STORE });
   }
 
-  // 驗證通過後才原子消耗復原碼；並發重放只會有一個成功。
-  if (!consumeRecoveryCode(session)) {
-    auditRecovery(request.headers, session.userId, 'recovery_complete', 'failure');
-    return NextResponse.json({ error: '復原碼已被使用或失效' }, { status: 409, headers: NO_STORE });
-  }
-
   try {
     getDB().run(
       'INSERT INTO passkey_credentials (credential_id, user_id, public_key, algorithm, transports, counter, device_name, created_at) VALUES (?,?,?,?,?,?,?,?)',
@@ -82,9 +76,15 @@ export async function POST(request: NextRequest) {
     );
   } catch (e) {
     console.error('[recovery] passkey insert failed', e instanceof Error ? e.message : 'unknown');
-    getDB().run('UPDATE account_recovery_codes SET used_at = 0, revoked_at = 0 WHERE id = ?', [session.codeId]);
-    saveDB();
     return NextResponse.json({ error: '註冊失敗，請重試' }, { status: 500, headers: NO_STORE });
+  }
+
+  // Passkey 寫入成功後才原子消耗復原碼（並發重放只有一個成功）；失敗則撤回剛註冊的 Passkey，復原碼維持原狀。
+  if (!consumeRecoveryCode(session)) {
+    getDB().run('DELETE FROM passkey_credentials WHERE credential_id = ? AND user_id = ?', [credential.id, session.userId]);
+    saveDB();
+    auditRecovery(request.headers, session.userId, 'recovery_complete', 'failure');
+    return NextResponse.json({ error: '復原碼已被使用或失效' }, { status: 409, headers: NO_STORE });
   }
 
   const removed = removeOtherPasskeys ? removePasskeysExcept(session.userId, credential.id) : 0;

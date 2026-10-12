@@ -11,7 +11,7 @@ import { ledgerFileUrl } from '../../../../lib/ledgerPolicy';
 import { findTransactionEditBlock } from '../../../../lib/transactionEditRules';
 import { deleteTransactionCascade, isDisabledCreditCard } from '../../../../lib/transactionWriteCore';
 import { emitTransactionEvent } from '../../../../lib/transactionWebhooks';
-import { assertTagsUsable, deleteLinksForTransactions, getTagsForTransactions, setTransactionTags, TagError } from '../../../../lib/transactionTags';
+import { assertTagsUsable, deleteLinksForTransactions, getTagIdsForTransaction, getTagsForTransactions, setTransactionTags, TagError } from '../../../../lib/transactionTags';
 import { dedupeIds, TAGGABLE_TYPES, TAG_MAX_PER_TRANSACTION } from '../../../../lib/transactionTagRules';
 
 type RouteContext = { params: Promise<{ txId: string }> };
@@ -223,7 +223,13 @@ async function updateHandler(request: NextRequest, txId: string, auth: Auth) {
       return NextResponse.json({ error: '標籤僅支援收入與支出交易', code: 'TagUnsupportedType' }, { status: 422 });
     }
     try {
-      assertTagsUsable(auth.userId, tagIdsInput, false);
+      // 寫入前完整驗證，避免 UPDATE 已套用後才因標籤錯誤回傳失敗
+      if (tagIdsInput.length > 0 && Number(existing.is_fx_fee) === 1) {
+        return NextResponse.json({ error: '標籤僅支援收入與支出交易', code: 'TagUnsupportedType' }, { status: 422 });
+      }
+      const currentTagIds = new Set(getTagIdsForTransaction(auth.userId, txId));
+      assertTagsUsable(auth.userId, tagIdsInput.filter((i) => !currentTagIds.has(i)), true);
+      assertTagsUsable(auth.userId, tagIdsInput.filter((i) => currentTagIds.has(i)), false);
     } catch (e) {
       if (e instanceof TagError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
       throw e;

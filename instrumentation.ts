@@ -12,6 +12,20 @@ export async function register() {
     const db = await import('./lib/db');
     flushOnExit = db.flushOnExit;
     await db.initDB();
+
+    try {
+      const { ensureSetupBootstrapToken } = await import('./lib/setupBootstrap');
+      const boot = ensureSetupBootstrapToken();
+      if (boot) {
+        const expires = new Date(boot.expiresAt).toISOString();
+        const lines = boot.token
+          ? ['[setup] 尚未初始化：請開啟 /setup 並輸入下列一次性初始化憑證（僅顯示一次，請妥善保存）', '[setup] token: ' + boot.token, '[setup] 到期時間: ' + expires]
+          : ['[setup] 尚未初始化：請開啟 /setup 並輸入環境變數 SETUP_BOOTSTRAP_TOKEN 設定的憑證', '[setup] 到期時間: ' + expires];
+        console.warn(lines.join('\n'));
+      }
+    } catch (error) {
+      console.error('[setup] bootstrap token initialisation failed', error instanceof Error ? error.message : 'unknown');
+    }
   } catch (error) {
     // Database availability is a runtime dependency, not a reason to make
     // Next.js fail its instrumentation hook. lib/db.ts keeps retrying with an

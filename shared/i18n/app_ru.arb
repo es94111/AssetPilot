@@ -10131,5 +10131,80 @@
     "placeholders": {
       "message": {}
     }
+  },
+  "setupTitle": "Настройка AssetPilot",
+  "@setupTitle": {
+    "description": "Web path: setup.title",
+    "x-webPath": "setup.title"
+  },
+  "setupSubtitle": "Создайте первого администратора и зарегистрируйте Passkey. Введите одноразовый токен инициализации из журнала запуска.",
+  "@setupSubtitle": {
+    "description": "Web path: setup.subtitle",
+    "x-webPath": "setup.subtitle"
+  },
+  "setupToken": "Токен инициализации",
+  "@setupToken": {
+    "description": "Web path: setup.token",
+    "x-webPath": "setup.token"
+  },
+  "setupEmail": "Email администратора",
+  "@setupEmail": {
+    "description": "Web path: setup.email",
+    "x-webPath": "setup.email"
+  },
+  "setupDisplayName": "Отображаемое имя",
+  "@setupDisplayName": {
+    "description": "Web path: setup.displayName",
+    "x-webPath": "setup.displayName"
+  },
+  "setupDeviceName": "Название устройства Passkey (необязательно)",
+  "@setupDeviceName": {
+    "description": "Web path: setup.deviceName",
+    "x-webPath": "setup.deviceName"
+  },
+  "setupBackupReminder": "После настройки добавьте резервный Passkey или способ восстановления в настройках, чтобы не потерять доступ при утере этого устройства.",
+  "@setupBackupReminder": {
+    "description": "Web path: setup.backupReminder",
+    "x-webPath": "setup.backupReminder"
+  },
+  "setupSubmit": "Создать администратора и зарегистрировать Passkey",
+  "@setupSubmit": {
+    "description": "Web path: setup.submit",
+    "x-webPath": "setup.submit"
+  },
+  "setupSubmitting": "Настройка…",
+  "@setupSubmitting": {
+    "description": "Web path: setup.submitting",
+    "x-webPath": "setup.submitting"
+  },
+  "setupInvalidToken": "Токен инициализации недействителен или истёк",
+  "@setupInvalidToken": {
+    "description": "Web path: setup.invalidToken",
+    "x-webPath": "setup.invalidToken"
+  },
+  "setupTooMany": "Слишком много попыток. Повторите позже.",
+  "@setupTooMany": {
+    "description": "Web path: setup.tooMany",
+    "x-webPath": "setup.tooMany"
+  },
+  "setupFailed": "Не удалось выполнить настройку. Повторите попытку.",
+  "@setupFailed": {
+    "description": "Web path: setup.failed",
+    "x-webPath": "setup.failed"
+  },
+  "setupUnsupported": "Этот браузер или устройство не поддерживает Passkey",
+  "@setupUnsupported": {
+    "description": "Web path: setup.unsupported",
+    "x-webPath": "setup.unsupported"
+  },
+  "setupClosed": "Этот экземпляр уже инициализирован",
+  "@setupClosed": {
+    "description": "Web path: setup.closed",
+    "x-webPath": "setup.closed"
+  },
+  "setupBackToLogin": "Назад ко входу",
+  "@setupBackToLogin": {
+    "description": "Web path: setup.backToLogin",
+    "x-webPath": "setup.backToLogin"
   }
 }

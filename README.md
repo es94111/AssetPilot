@@ -322,6 +322,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `LINE_CHANNEL_SECRET` | SSO | LINE Login Channel Secret | — |
 | `ALLOWED_ORIGINS` | 安全 | CORS 白名單，逗號分隔（正式環境建議設定） | — |
 | `ADMIN_IP_ALLOWLIST` | 安全 | 管理員 IP 白名單，逗號分隔 | — |
+| `SETUP_BOOTSTRAP_TOKEN` / `SETUP_BOOTSTRAP_TTL_MINUTES` | 安全 | 首次部署 Passkey 初始化憑證（至少 32 字元；留空則啟動時自動產生並於日誌顯示一次）與有效分鐘數 | `1440` |
 | `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
 | `IPINFO_TOKEN` | 選配 | ipinfo.io Token，提升 IP 查詢配額 | — |
 | `STOCK_AUTO_UPDATE_ENABLED` | 選配 | 股價自動更新總開關 | — |
@@ -344,8 +345,19 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 
 支援三種登入方式，皆可同時啟用。**AssetPilot 不提供本機 Email／密碼登入**——使用者只能透過 Google、LINE、Passkey 等外部或無密碼方式建立帳號；第一位完成外部登入的使用者自動成為管理員。
 
-### Google SSO（建議）
+### Passkey-first 首次部署初始化（Setup Wizard）
 
+全新實例（使用者數為 0 且尚未初始化）不需設定 Google／LINE OAuth 即可完成首次部署：
+
+1. 啟動服務後，於啟動日誌取得一次性初始化憑證（或以 `SETUP_BOOTSTRAP_TOKEN` 指定，至少 32 字元；僅儲存雜湊與到期時間，預設 24 小時有效）。
+2. 開啟 `/setup`（未登入時 `/login` 會自動導向），輸入憑證、管理員 Email 與顯示名稱後註冊 Passkey（需使用者驗證）。
+3. 建立管理員、Passkey、預設資料與憑證消耗在單一資料庫交易內完成，並發請求僅一者成功；失敗不留殘餘資料，可重試。
+4. 初始化完成後 `/setup` 與 `/api/setup/*` 永久關閉（即使日後刪除所有使用者）；既有實例升級後視為已初始化。
+5. 失敗嘗試受到每 IP／全域節流，且事件寫入稽核紀錄。請於完成後新增備用 Passkey 或復原碼。
+
+API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api/setup/passkey/register`。
+
+### Google SSO（建議）
 1. 至 [Google Cloud Console](https://console.cloud.google.com/) 建立 OAuth 2.0 用戶端 ID（類型：網頁應用程式）
 2. **已授權 JavaScript 來源**：本機 `http://localhost:3000`、正式 `https://your-domain.com`
 3. **已授權重新導向 URI**：本機 `http://localhost:3000/`、正式 `https://your-domain.com/`（含尾端 `/`）；Android App 另需加入 `https://your-domain.com/app/google-callback`

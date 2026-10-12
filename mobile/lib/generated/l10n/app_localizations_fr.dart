@@ -6723,4 +6723,102 @@ class AppLocalizationsFr extends AppLocalizations {
   String featuresTransactionsOcrFailed(Object message) {
     return 'Échec de l’analyse. Saisissez les valeurs manuellement. ($message)';
   }
+
+  @override
+  String get authRecoveryLink => '無法使用 Passkey？改用復原碼';
+
+  @override
+  String get authRecoveryTitle => '帳號復原';
+
+  @override
+  String get authRecoverySubtitle => '輸入電子郵件與復原碼，驗證後綁定新的 Passkey。';
+
+  @override
+  String get authRecoveryEmail => '電子郵件';
+
+  @override
+  String get authRecoveryCode => '復原碼';
+
+  @override
+  String get authRecoveryVerify => '驗證復原碼';
+
+  @override
+  String get authRecoveryVerifying => '驗證中…';
+
+  @override
+  String get authRecoveryRegisterTitle => '綁定新的 Passkey';
+
+  @override
+  String get authRecoveryRegisterHint =>
+      '復原碼在新 Passkey 註冊成功後才會失效。完成後所有舊的登入階段會被登出。';
+
+  @override
+  String get authRecoveryDeviceName => '裝置名稱';
+
+  @override
+  String get authRecoveryRemoveOthers => '同時移除其他（可能遺失裝置上的）Passkey';
+
+  @override
+  String get authRecoveryRegister => '註冊 Passkey 並完成復原';
+
+  @override
+  String get authRecoveryRegistering => '處理中…';
+
+  @override
+  String get authRecoveryInvalid => '帳號或復原碼不正確';
+
+  @override
+  String get authRecoveryFailed => '復原失敗，請重新開始';
+
+  @override
+  String get authRecoveryUnsupported => '此瀏覽器不支援 Passkey';
+
+  @override
+  String get authRecoveryBack => '返回登入';
+
+  @override
+  String get settingsAccountRecoveryTitle => '帳號復原碼';
+
+  @override
+  String get settingsAccountRecoveryDesc =>
+      '當所有 Passkey 遺失時，可用復原碼重新綁定新的 Passkey。每組碼僅能使用一次。';
+
+  @override
+  String get settingsAccountRecoveryNotGenerated => '尚未產生復原碼';
+
+  @override
+  String settingsAccountRecoveryRemaining(Object count) {
+    return '剩餘 $count 組可用';
+  }
+
+  @override
+  String get settingsAccountRecoveryGenerate => '產生復原碼';
+
+  @override
+  String get settingsAccountRecoveryRegenerate => '重新產生';
+
+  @override
+  String get settingsAccountRecoveryConfirmRegenerate =>
+      '重新產生後，舊的復原碼會立即失效。確定繼續？';
+
+  @override
+  String get settingsAccountRecoveryShownOnce => '請立即妥善保存，這些復原碼只會顯示這一次。';
+
+  @override
+  String get settingsAccountRecoveryCopy => '複製';
+
+  @override
+  String get settingsAccountRecoveryDownload => '下載';
+
+  @override
+  String get settingsAccountRecoveryCopied => '已複製';
+
+  @override
+  String get settingsAccountRecoveryDone => '我已保存';
+
+  @override
+  String get settingsAccountRecoveryFailed => '操作失敗，請重試';
+
+  @override
+  String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
 }

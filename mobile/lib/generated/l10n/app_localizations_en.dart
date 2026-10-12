@@ -6602,4 +6602,108 @@ class AppLocalizationsEn extends AppLocalizations {
   String featuresTransactionsOcrFailed(Object message) {
     return 'Scanning failed. Please enter values manually. ($message)';
   }
+
+  @override
+  String get authRecoveryLink => 'Lost your Passkey? Use a recovery code';
+
+  @override
+  String get authRecoveryTitle => 'Account recovery';
+
+  @override
+  String get authRecoverySubtitle =>
+      'Enter your email and a recovery code, then register a new Passkey.';
+
+  @override
+  String get authRecoveryEmail => 'Email';
+
+  @override
+  String get authRecoveryCode => 'Recovery code';
+
+  @override
+  String get authRecoveryVerify => 'Verify code';
+
+  @override
+  String get authRecoveryVerifying => 'Verifying…';
+
+  @override
+  String get authRecoveryRegisterTitle => 'Register a new Passkey';
+
+  @override
+  String get authRecoveryRegisterHint =>
+      'The recovery code is only consumed after the new Passkey is registered. All previous sessions will be signed out.';
+
+  @override
+  String get authRecoveryDeviceName => 'Device name';
+
+  @override
+  String get authRecoveryRemoveOthers =>
+      'Also remove my other Passkeys (e.g. from the lost device)';
+
+  @override
+  String get authRecoveryRegister => 'Register Passkey and finish recovery';
+
+  @override
+  String get authRecoveryRegistering => 'Working…';
+
+  @override
+  String get authRecoveryInvalid => 'Incorrect account or recovery code';
+
+  @override
+  String get authRecoveryFailed => 'Recovery failed. Please start over.';
+
+  @override
+  String get authRecoveryUnsupported =>
+      'This browser does not support Passkeys';
+
+  @override
+  String get authRecoveryBack => 'Back to sign in';
+
+  @override
+  String get settingsAccountRecoveryTitle => 'Account recovery codes';
+
+  @override
+  String get settingsAccountRecoveryDesc =>
+      'If you lose all your Passkeys, use a recovery code to register a new one. Each code works once.';
+
+  @override
+  String get settingsAccountRecoveryNotGenerated =>
+      'No recovery codes generated yet';
+
+  @override
+  String settingsAccountRecoveryRemaining(Object count) {
+    return '$count codes remaining';
+  }
+
+  @override
+  String get settingsAccountRecoveryGenerate => 'Generate codes';
+
+  @override
+  String get settingsAccountRecoveryRegenerate => 'Regenerate';
+
+  @override
+  String get settingsAccountRecoveryConfirmRegenerate =>
+      'Regenerating immediately invalidates your old codes. Continue?';
+
+  @override
+  String get settingsAccountRecoveryShownOnce =>
+      'Save these now — they are shown only once.';
+
+  @override
+  String get settingsAccountRecoveryCopy => 'Copy';
+
+  @override
+  String get settingsAccountRecoveryDownload => 'Download';
+
+  @override
+  String get settingsAccountRecoveryCopied => 'Copied';
+
+  @override
+  String get settingsAccountRecoveryDone => 'I saved them';
+
+  @override
+  String get settingsAccountRecoveryFailed =>
+      'Operation failed. Please try again.';
+
+  @override
+  String get settingsAccountRecoveryReauthFailed => 'Re-authentication failed';
 }

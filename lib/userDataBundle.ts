@@ -36,6 +36,8 @@ const DATA_TABLES: BundleTable[] = [
   { table: "deleted_defaults", keys: ["user_id", "default_key"] },
   { table: "accounts", keys: ["id"] },
   { table: "transactions", keys: ["id"] },
+  { table: "transaction_tags", keys: ["id"] },
+  { table: "transaction_tag_links", keys: ["transaction_id", "tag_id"] },
   { table: "credit_card_repayment_summaries", keys: ["id"] },
   { table: "exchange_rates", keys: ["user_id", "currency"] },
   { table: "exchange_rate_settings", keys: ["user_id"] },

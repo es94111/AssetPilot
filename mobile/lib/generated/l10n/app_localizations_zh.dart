@@ -6392,6 +6392,51 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => '初始化 AssetPilot';
+
+  @override
+  String get setupSubtitle => '建立第一位管理員並註冊 Passkey。請輸入啟動日誌中顯示的一次性初始化憑證。';
+
+  @override
+  String get setupToken => '初始化憑證';
+
+  @override
+  String get setupEmail => '管理員 Email';
+
+  @override
+  String get setupDisplayName => '顯示名稱';
+
+  @override
+  String get setupDeviceName => 'Passkey 裝置名稱（選填）';
+
+  @override
+  String get setupBackupReminder => '完成後請至設定頁新增備用 Passkey 或復原碼，避免遺失裝置後無法登入。';
+
+  @override
+  String get setupSubmit => '建立管理員並註冊 Passkey';
+
+  @override
+  String get setupSubmitting => '初始化中…';
+
+  @override
+  String get setupInvalidToken => '初始化憑證不正確或已失效';
+
+  @override
+  String get setupTooMany => '嘗試次數過多，請稍後再試';
+
+  @override
+  String get setupFailed => '初始化失敗，請重試';
+
+  @override
+  String get setupUnsupported => '此瀏覽器或裝置不支援 Passkey';
+
+  @override
+  String get setupClosed => '系統已完成初始化';
+
+  @override
+  String get setupBackToLogin => '返回登入';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -12687,6 +12732,51 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String featuresTransactionsOcrFailed(Object message) {
     return '识别失败，请手动输入（$message）';
   }
+
+  @override
+  String get setupTitle => '初始化 AssetPilot';
+
+  @override
+  String get setupSubtitle => '创建第一位管理员并注册 Passkey。请输入启动日志中显示的一次性初始化凭证。';
+
+  @override
+  String get setupToken => '初始化凭证';
+
+  @override
+  String get setupEmail => '管理员 Email';
+
+  @override
+  String get setupDisplayName => '显示名称';
+
+  @override
+  String get setupDeviceName => 'Passkey 设备名称（选填）';
+
+  @override
+  String get setupBackupReminder => '完成后请到设置页添加备用 Passkey 或恢复码，避免丢失设备后无法登录。';
+
+  @override
+  String get setupSubmit => '创建管理员并注册 Passkey';
+
+  @override
+  String get setupSubmitting => '初始化中…';
+
+  @override
+  String get setupInvalidToken => '初始化凭证不正确或已失效';
+
+  @override
+  String get setupTooMany => '尝试次数过多，请稍后再试';
+
+  @override
+  String get setupFailed => '初始化失败，请重试';
+
+  @override
+  String get setupUnsupported => '此浏览器或设备不支持 Passkey';
+
+  @override
+  String get setupClosed => '系统已完成初始化';
+
+  @override
+  String get setupBackToLogin => '返回登录';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -19077,4 +19167,49 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => '初始化 AssetPilot';
+
+  @override
+  String get setupSubtitle => '建立第一位管理員並註冊 Passkey。請輸入啟動日誌中顯示的一次性初始化憑證。';
+
+  @override
+  String get setupToken => '初始化憑證';
+
+  @override
+  String get setupEmail => '管理員 Email';
+
+  @override
+  String get setupDisplayName => '顯示名稱';
+
+  @override
+  String get setupDeviceName => 'Passkey 裝置名稱（選填）';
+
+  @override
+  String get setupBackupReminder => '完成後請至設定頁新增備用 Passkey 或復原碼，避免遺失裝置後無法登入。';
+
+  @override
+  String get setupSubmit => '建立管理員並註冊 Passkey';
+
+  @override
+  String get setupSubmitting => '初始化中…';
+
+  @override
+  String get setupInvalidToken => '初始化憑證不正確或已失效';
+
+  @override
+  String get setupTooMany => '嘗試次數過多，請稍後再試';
+
+  @override
+  String get setupFailed => '初始化失敗，請重試';
+
+  @override
+  String get setupUnsupported => '此瀏覽器或裝置不支援 Passkey';
+
+  @override
+  String get setupClosed => '系統已完成初始化';
+
+  @override
+  String get setupBackToLogin => '返回登入';
 }

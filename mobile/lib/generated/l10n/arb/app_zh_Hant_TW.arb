@@ -10304,5 +10304,80 @@
   "@settingsAccountRecoveryReauthFailed": {
     "description": "Web path: settings.account.recovery.reauthFailed",
     "x-webPath": "settings.account.recovery.reauthFailed"
+  },
+  "setupTitle": "初始化 AssetPilot",
+  "@setupTitle": {
+    "description": "Web path: setup.title",
+    "x-webPath": "setup.title"
+  },
+  "setupSubtitle": "建立第一位管理員並註冊 Passkey。請輸入啟動日誌中顯示的一次性初始化憑證。",
+  "@setupSubtitle": {
+    "description": "Web path: setup.subtitle",
+    "x-webPath": "setup.subtitle"
+  },
+  "setupToken": "初始化憑證",
+  "@setupToken": {
+    "description": "Web path: setup.token",
+    "x-webPath": "setup.token"
+  },
+  "setupEmail": "管理員 Email",
+  "@setupEmail": {
+    "description": "Web path: setup.email",
+    "x-webPath": "setup.email"
+  },
+  "setupDisplayName": "顯示名稱",
+  "@setupDisplayName": {
+    "description": "Web path: setup.displayName",
+    "x-webPath": "setup.displayName"
+  },
+  "setupDeviceName": "Passkey 裝置名稱（選填）",
+  "@setupDeviceName": {
+    "description": "Web path: setup.deviceName",
+    "x-webPath": "setup.deviceName"
+  },
+  "setupBackupReminder": "完成後請至設定頁新增備用 Passkey 或復原碼，避免遺失裝置後無法登入。",
+  "@setupBackupReminder": {
+    "description": "Web path: setup.backupReminder",
+    "x-webPath": "setup.backupReminder"
+  },
+  "setupSubmit": "建立管理員並註冊 Passkey",
+  "@setupSubmit": {
+    "description": "Web path: setup.submit",
+    "x-webPath": "setup.submit"
+  },
+  "setupSubmitting": "初始化中…",
+  "@setupSubmitting": {
+    "description": "Web path: setup.submitting",
+    "x-webPath": "setup.submitting"
+  },
+  "setupInvalidToken": "初始化憑證不正確或已失效",
+  "@setupInvalidToken": {
+    "description": "Web path: setup.invalidToken",
+    "x-webPath": "setup.invalidToken"
+  },
+  "setupTooMany": "嘗試次數過多，請稍後再試",
+  "@setupTooMany": {
+    "description": "Web path: setup.tooMany",
+    "x-webPath": "setup.tooMany"
+  },
+  "setupFailed": "初始化失敗，請重試",
+  "@setupFailed": {
+    "description": "Web path: setup.failed",
+    "x-webPath": "setup.failed"
+  },
+  "setupUnsupported": "此瀏覽器或裝置不支援 Passkey",
+  "@setupUnsupported": {
+    "description": "Web path: setup.unsupported",
+    "x-webPath": "setup.unsupported"
+  },
+  "setupClosed": "系統已完成初始化",
+  "@setupClosed": {
+    "description": "Web path: setup.closed",
+    "x-webPath": "setup.closed"
+  },
+  "setupBackToLogin": "返回登入",
+  "@setupBackToLogin": {
+    "description": "Web path: setup.backToLogin",
+    "x-webPath": "setup.backToLogin"
   }
 }

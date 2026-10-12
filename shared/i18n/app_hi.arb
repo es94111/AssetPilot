@@ -10131,5 +10131,80 @@
     "placeholders": {
       "message": {}
     }
+  },
+  "setupTitle": "AssetPilot सेट अप करें",
+  "@setupTitle": {
+    "description": "Web path: setup.title",
+    "x-webPath": "setup.title"
+  },
+  "setupSubtitle": "पहला एडमिन बनाएँ और Passkey पंजीकृत करें। स्टार्टअप लॉग में दिखाया गया एक-बार वाला बूटस्ट्रैप टोकन दर्ज करें।",
+  "@setupSubtitle": {
+    "description": "Web path: setup.subtitle",
+    "x-webPath": "setup.subtitle"
+  },
+  "setupToken": "बूटस्ट्रैप टोकन",
+  "@setupToken": {
+    "description": "Web path: setup.token",
+    "x-webPath": "setup.token"
+  },
+  "setupEmail": "एडमिन ईमेल",
+  "@setupEmail": {
+    "description": "Web path: setup.email",
+    "x-webPath": "setup.email"
+  },
+  "setupDisplayName": "प्रदर्शित नाम",
+  "@setupDisplayName": {
+    "description": "Web path: setup.displayName",
+    "x-webPath": "setup.displayName"
+  },
+  "setupDeviceName": "Passkey डिवाइस का नाम (वैकल्पिक)",
+  "@setupDeviceName": {
+    "description": "Web path: setup.deviceName",
+    "x-webPath": "setup.deviceName"
+  },
+  "setupBackupReminder": "सेटअप के बाद, इस डिवाइस के खो जाने पर पहुँच न खोने के लिए सेटिंग्स में बैकअप Passkey या रिकवरी विकल्प जोड़ें।",
+  "@setupBackupReminder": {
+    "description": "Web path: setup.backupReminder",
+    "x-webPath": "setup.backupReminder"
+  },
+  "setupSubmit": "एडमिन बनाएँ और Passkey पंजीकृत करें",
+  "@setupSubmit": {
+    "description": "Web path: setup.submit",
+    "x-webPath": "setup.submit"
+  },
+  "setupSubmitting": "सेटअप हो रहा है…",
+  "@setupSubmitting": {
+    "description": "Web path: setup.submitting",
+    "x-webPath": "setup.submitting"
+  },
+  "setupInvalidToken": "बूटस्ट्रैप टोकन अमान्य या समाप्त है",
+  "@setupInvalidToken": {
+    "description": "Web path: setup.invalidToken",
+    "x-webPath": "setup.invalidToken"
+  },
+  "setupTooMany": "बहुत अधिक प्रयास। कृपया बाद में पुनः प्रयास करें।",
+  "@setupTooMany": {
+    "description": "Web path: setup.tooMany",
+    "x-webPath": "setup.tooMany"
+  },
+  "setupFailed": "सेटअप विफल रहा। कृपया पुनः प्रयास करें।",
+  "@setupFailed": {
+    "description": "Web path: setup.failed",
+    "x-webPath": "setup.failed"
+  },
+  "setupUnsupported": "यह ब्राउज़र या डिवाइस Passkey का समर्थन नहीं करता",
+  "@setupUnsupported": {
+    "description": "Web path: setup.unsupported",
+    "x-webPath": "setup.unsupported"
+  },
+  "setupClosed": "यह इंस्टेंस पहले से प्रारंभ हो चुका है",
+  "@setupClosed": {
+    "description": "Web path: setup.closed",
+    "x-webPath": "setup.closed"
+  },
+  "setupBackToLogin": "साइन इन पर वापस जाएँ",
+  "@setupBackToLogin": {
+    "description": "Web path: setup.backToLogin",
+    "x-webPath": "setup.backToLogin"
   }
 }

@@ -10131,5 +10131,80 @@
     "placeholders": {
       "message": {}
     }
+  },
+  "setupTitle": "AssetPilot 설정",
+  "@setupTitle": {
+    "description": "Web path: setup.title",
+    "x-webPath": "setup.title"
+  },
+  "setupSubtitle": "첫 관리자를 만들고 Passkey를 등록하세요. 시작 로그에 표시된 일회용 부트스트랩 토큰을 입력하세요.",
+  "@setupSubtitle": {
+    "description": "Web path: setup.subtitle",
+    "x-webPath": "setup.subtitle"
+  },
+  "setupToken": "부트스트랩 토큰",
+  "@setupToken": {
+    "description": "Web path: setup.token",
+    "x-webPath": "setup.token"
+  },
+  "setupEmail": "관리자 이메일",
+  "@setupEmail": {
+    "description": "Web path: setup.email",
+    "x-webPath": "setup.email"
+  },
+  "setupDisplayName": "표시 이름",
+  "@setupDisplayName": {
+    "description": "Web path: setup.displayName",
+    "x-webPath": "setup.displayName"
+  },
+  "setupDeviceName": "Passkey 기기 이름(선택)",
+  "@setupDeviceName": {
+    "description": "Web path: setup.deviceName",
+    "x-webPath": "setup.deviceName"
+  },
+  "setupBackupReminder": "설정 후 이 기기를 분실해도 접근할 수 있도록 설정에서 백업 Passkey 또는 복구 옵션을 추가하세요.",
+  "@setupBackupReminder": {
+    "description": "Web path: setup.backupReminder",
+    "x-webPath": "setup.backupReminder"
+  },
+  "setupSubmit": "관리자 만들기 및 Passkey 등록",
+  "@setupSubmit": {
+    "description": "Web path: setup.submit",
+    "x-webPath": "setup.submit"
+  },
+  "setupSubmitting": "설정 중…",
+  "@setupSubmitting": {
+    "description": "Web path: setup.submitting",
+    "x-webPath": "setup.submitting"
+  },
+  "setupInvalidToken": "부트스트랩 토큰이 올바르지 않거나 만료되었습니다",
+  "@setupInvalidToken": {
+    "description": "Web path: setup.invalidToken",
+    "x-webPath": "setup.invalidToken"
+  },
+  "setupTooMany": "시도 횟수가 너무 많습니다. 나중에 다시 시도하세요.",
+  "@setupTooMany": {
+    "description": "Web path: setup.tooMany",
+    "x-webPath": "setup.tooMany"
+  },
+  "setupFailed": "설정에 실패했습니다. 다시 시도하세요.",
+  "@setupFailed": {
+    "description": "Web path: setup.failed",
+    "x-webPath": "setup.failed"
+  },
+  "setupUnsupported": "이 브라우저 또는 기기는 Passkey를 지원하지 않습니다",
+  "@setupUnsupported": {
+    "description": "Web path: setup.unsupported",
+    "x-webPath": "setup.unsupported"
+  },
+  "setupClosed": "이미 초기화된 인스턴스입니다",
+  "@setupClosed": {
+    "description": "Web path: setup.closed",
+    "x-webPath": "setup.closed"
+  },
+  "setupBackToLogin": "로그인으로 돌아가기",
+  "@setupBackToLogin": {
+    "description": "Web path: setup.backToLogin",
+    "x-webPath": "setup.backToLogin"
   }
 }

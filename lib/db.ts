@@ -377,6 +377,15 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_account_recovery_sessions_user ON account_recovery_sessions(user_id)`,
   );
 
+  // Passkey-first 首次部署初始化（issue #307）：單列狀態表，只存憑證雜湊；completed_at > 0 即永久關閉。
+  db.run(`CREATE TABLE IF NOT EXISTS system_bootstrap (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    token_hash TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL DEFAULT 0,
+    expires_at INTEGER NOT NULL DEFAULT 0,
+    consumed_at INTEGER NOT NULL DEFAULT 0,
+    completed_at INTEGER NOT NULL DEFAULT 0
+  )`);
   db.run(`CREATE TABLE IF NOT EXISTS system_settings (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     public_registration INTEGER DEFAULT 1,
@@ -897,6 +906,12 @@ END $$`);
   // 預設 'super'，使既有管理員升級後仍保有完整權限，不需資料遷移。僅在 is_admin=1 時有意義。
   alterIgnore("ALTER TABLE users ADD COLUMN admin_role TEXT DEFAULT 'super'");
 
+  // 既有實例（已有使用者）視為已初始化，永不開放 Setup Wizard。
+  db.run(
+    `INSERT INTO system_bootstrap (id, token_hash, created_at, expires_at, consumed_at, completed_at)
+     SELECT 1, '', ?, 0, 0, ? WHERE EXISTS (SELECT 1 FROM users) ON CONFLICT (id) DO NOTHING`,
+    [Date.now(), Date.now()],
+  );
   // 若 DB 有用戶但無管理員（is_admin 欄位以 DEFAULT 0 加入時既有用戶遺失管理員身份），
   // 自動將最早註冊的用戶升為管理員，確保系統可存取。
   try {

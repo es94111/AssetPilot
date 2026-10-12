@@ -6821,4 +6821,52 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => 'Configurer AssetPilot';
+
+  @override
+  String get setupSubtitle =>
+      'Créez le premier administrateur et enregistrez une Passkey. Saisissez le jeton d’amorçage à usage unique affiché dans le journal de démarrage.';
+
+  @override
+  String get setupToken => 'Jeton d’amorçage';
+
+  @override
+  String get setupEmail => 'E-mail de l’administrateur';
+
+  @override
+  String get setupDisplayName => 'Nom affiché';
+
+  @override
+  String get setupDeviceName => 'Nom de l’appareil Passkey (facultatif)';
+
+  @override
+  String get setupBackupReminder =>
+      'Après la configuration, ajoutez une Passkey de secours ou une option de récupération dans les paramètres pour ne pas perdre l’accès en cas de perte de cet appareil.';
+
+  @override
+  String get setupSubmit => 'Créer l’administrateur et enregistrer la Passkey';
+
+  @override
+  String get setupSubmitting => 'Configuration…';
+
+  @override
+  String get setupInvalidToken => 'Le jeton d’amorçage est invalide ou expiré';
+
+  @override
+  String get setupTooMany => 'Trop de tentatives. Réessayez plus tard.';
+
+  @override
+  String get setupFailed => 'Échec de la configuration. Réessayez.';
+
+  @override
+  String get setupUnsupported =>
+      'Ce navigateur ou appareil ne prend pas en charge les Passkeys';
+
+  @override
+  String get setupClosed => 'Cette instance est déjà initialisée';
+
+  @override
+  String get setupBackToLogin => 'Retour à la connexion';
 }

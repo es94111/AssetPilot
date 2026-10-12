@@ -10131,5 +10131,80 @@
     "placeholders": {
       "message": {}
     }
+  },
+  "setupTitle": "Configurer AssetPilot",
+  "@setupTitle": {
+    "description": "Web path: setup.title",
+    "x-webPath": "setup.title"
+  },
+  "setupSubtitle": "Créez le premier administrateur et enregistrez une Passkey. Saisissez le jeton d’amorçage à usage unique affiché dans le journal de démarrage.",
+  "@setupSubtitle": {
+    "description": "Web path: setup.subtitle",
+    "x-webPath": "setup.subtitle"
+  },
+  "setupToken": "Jeton d’amorçage",
+  "@setupToken": {
+    "description": "Web path: setup.token",
+    "x-webPath": "setup.token"
+  },
+  "setupEmail": "E-mail de l’administrateur",
+  "@setupEmail": {
+    "description": "Web path: setup.email",
+    "x-webPath": "setup.email"
+  },
+  "setupDisplayName": "Nom affiché",
+  "@setupDisplayName": {
+    "description": "Web path: setup.displayName",
+    "x-webPath": "setup.displayName"
+  },
+  "setupDeviceName": "Nom de l’appareil Passkey (facultatif)",
+  "@setupDeviceName": {
+    "description": "Web path: setup.deviceName",
+    "x-webPath": "setup.deviceName"
+  },
+  "setupBackupReminder": "Après la configuration, ajoutez une Passkey de secours ou une option de récupération dans les paramètres pour ne pas perdre l’accès en cas de perte de cet appareil.",
+  "@setupBackupReminder": {
+    "description": "Web path: setup.backupReminder",
+    "x-webPath": "setup.backupReminder"
+  },
+  "setupSubmit": "Créer l’administrateur et enregistrer la Passkey",
+  "@setupSubmit": {
+    "description": "Web path: setup.submit",
+    "x-webPath": "setup.submit"
+  },
+  "setupSubmitting": "Configuration…",
+  "@setupSubmitting": {
+    "description": "Web path: setup.submitting",
+    "x-webPath": "setup.submitting"
+  },
+  "setupInvalidToken": "Le jeton d’amorçage est invalide ou expiré",
+  "@setupInvalidToken": {
+    "description": "Web path: setup.invalidToken",
+    "x-webPath": "setup.invalidToken"
+  },
+  "setupTooMany": "Trop de tentatives. Réessayez plus tard.",
+  "@setupTooMany": {
+    "description": "Web path: setup.tooMany",
+    "x-webPath": "setup.tooMany"
+  },
+  "setupFailed": "Échec de la configuration. Réessayez.",
+  "@setupFailed": {
+    "description": "Web path: setup.failed",
+    "x-webPath": "setup.failed"
+  },
+  "setupUnsupported": "Ce navigateur ou appareil ne prend pas en charge les Passkeys",
+  "@setupUnsupported": {
+    "description": "Web path: setup.unsupported",
+    "x-webPath": "setup.unsupported"
+  },
+  "setupClosed": "Cette instance est déjà initialisée",
+  "@setupClosed": {
+    "description": "Web path: setup.closed",
+    "x-webPath": "setup.closed"
+  },
+  "setupBackToLogin": "Retour à la connexion",
+  "@setupBackToLogin": {
+    "description": "Web path: setup.backToLogin",
+    "x-webPath": "setup.backToLogin"
   }
 }

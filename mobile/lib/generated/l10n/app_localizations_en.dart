@@ -6706,4 +6706,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => 'Re-authentication failed';
+
+  @override
+  String get setupTitle => 'Set up AssetPilot';
+
+  @override
+  String get setupSubtitle =>
+      'Create the first admin and register a Passkey. Enter the one-time bootstrap token shown in the startup log.';
+
+  @override
+  String get setupToken => 'Bootstrap token';
+
+  @override
+  String get setupEmail => 'Admin email';
+
+  @override
+  String get setupDisplayName => 'Display name';
+
+  @override
+  String get setupDeviceName => 'Passkey device name (optional)';
+
+  @override
+  String get setupBackupReminder =>
+      'After setup, add a backup Passkey or recovery option in Settings so you do not lose access if this device is lost.';
+
+  @override
+  String get setupSubmit => 'Create admin and register Passkey';
+
+  @override
+  String get setupSubmitting => 'Setting up…';
+
+  @override
+  String get setupInvalidToken => 'The bootstrap token is invalid or expired';
+
+  @override
+  String get setupTooMany => 'Too many attempts. Please try again later.';
+
+  @override
+  String get setupFailed => 'Setup failed. Please try again.';
+
+  @override
+  String get setupUnsupported =>
+      'This browser or device does not support Passkeys';
+
+  @override
+  String get setupClosed => 'This instance is already initialized';
+
+  @override
+  String get setupBackToLogin => 'Back to sign in';
 }

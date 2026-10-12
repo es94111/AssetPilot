@@ -6492,4 +6492,51 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => 'AssetPilot 설정';
+
+  @override
+  String get setupSubtitle =>
+      '첫 관리자를 만들고 Passkey를 등록하세요. 시작 로그에 표시된 일회용 부트스트랩 토큰을 입력하세요.';
+
+  @override
+  String get setupToken => '부트스트랩 토큰';
+
+  @override
+  String get setupEmail => '관리자 이메일';
+
+  @override
+  String get setupDisplayName => '표시 이름';
+
+  @override
+  String get setupDeviceName => 'Passkey 기기 이름(선택)';
+
+  @override
+  String get setupBackupReminder =>
+      '설정 후 이 기기를 분실해도 접근할 수 있도록 설정에서 백업 Passkey 또는 복구 옵션을 추가하세요.';
+
+  @override
+  String get setupSubmit => '관리자 만들기 및 Passkey 등록';
+
+  @override
+  String get setupSubmitting => '설정 중…';
+
+  @override
+  String get setupInvalidToken => '부트스트랩 토큰이 올바르지 않거나 만료되었습니다';
+
+  @override
+  String get setupTooMany => '시도 횟수가 너무 많습니다. 나중에 다시 시도하세요.';
+
+  @override
+  String get setupFailed => '설정에 실패했습니다. 다시 시도하세요.';
+
+  @override
+  String get setupUnsupported => '이 브라우저 또는 기기는 Passkey를 지원하지 않습니다';
+
+  @override
+  String get setupClosed => '이미 초기화된 인스턴스입니다';
+
+  @override
+  String get setupBackToLogin => '로그인으로 돌아가기';
 }

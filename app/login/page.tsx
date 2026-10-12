@@ -61,6 +61,12 @@ export default function LoginPage() {
       .then((r) => r.json())
       .then((cfg) => setConfig(cfg))
       .catch(() => {});
+    fetch("/api/setup/status", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((s) => {
+        if (s?.required) router.replace("/setup");
+      })
+      .catch(() => {});
   }, []);
 
   const turnstileEnabled =

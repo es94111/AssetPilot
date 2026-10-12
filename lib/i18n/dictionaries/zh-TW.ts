@@ -2233,6 +2233,23 @@ export const zhTW = {
     switchFailed: "無法切換帳本，請稍後再試。",
     noLedger: "找不到可存取的帳本。",
   },
+  setup: {
+    title: "初始化 AssetPilot",
+    subtitle: "建立第一位管理員並註冊 Passkey。請輸入啟動日誌中顯示的一次性初始化憑證。",
+    token: "初始化憑證",
+    email: "管理員 Email",
+    displayName: "顯示名稱",
+    deviceName: "Passkey 裝置名稱（選填）",
+    backupReminder: "完成後請至設定頁新增備用 Passkey 或復原碼，避免遺失裝置後無法登入。",
+    submit: "建立管理員並註冊 Passkey",
+    submitting: "初始化中…",
+    invalidToken: "初始化憑證不正確或已失效",
+    tooMany: "嘗試次數過多，請稍後再試",
+    failed: "初始化失敗，請重試",
+    unsupported: "此瀏覽器或裝置不支援 Passkey",
+    closed: "系統已完成初始化",
+    backToLogin: "返回登入",
+  },
 };
 
 export type Dictionary = typeof zhTW;

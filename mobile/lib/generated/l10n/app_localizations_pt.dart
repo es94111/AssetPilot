@@ -6779,6 +6779,55 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsAccountRecoveryReauthFailed => '重新驗證失敗';
+
+  @override
+  String get setupTitle => 'Configurar o AssetPilot';
+
+  @override
+  String get setupSubtitle =>
+      'Crie o primeiro administrador e registre uma Passkey. Informe o token de inicialização de uso único exibido no log de inicialização.';
+
+  @override
+  String get setupToken => 'Token de inicialização';
+
+  @override
+  String get setupEmail => 'E-mail do administrador';
+
+  @override
+  String get setupDisplayName => 'Nome de exibição';
+
+  @override
+  String get setupDeviceName => 'Nome do dispositivo Passkey (opcional)';
+
+  @override
+  String get setupBackupReminder =>
+      'Após a configuração, adicione uma Passkey de backup ou opção de recuperação em Configurações para não perder o acesso se este dispositivo for perdido.';
+
+  @override
+  String get setupSubmit => 'Criar administrador e registrar Passkey';
+
+  @override
+  String get setupSubmitting => 'Configurando…';
+
+  @override
+  String get setupInvalidToken =>
+      'O token de inicialização é inválido ou expirou';
+
+  @override
+  String get setupTooMany => 'Muitas tentativas. Tente novamente mais tarde.';
+
+  @override
+  String get setupFailed => 'Falha na configuração. Tente novamente.';
+
+  @override
+  String get setupUnsupported =>
+      'Este navegador ou dispositivo não oferece suporte a Passkeys';
+
+  @override
+  String get setupClosed => 'Esta instância já foi inicializada';
+
+  @override
+  String get setupBackToLogin => 'Voltar ao login';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -13449,4 +13498,53 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String featuresTransactionsOcrFailed(Object message) {
     return 'Falha na leitura. Insira os valores manualmente. ($message)';
   }
+
+  @override
+  String get setupTitle => 'Configurar o AssetPilot';
+
+  @override
+  String get setupSubtitle =>
+      'Crie o primeiro administrador e registre uma Passkey. Informe o token de inicialização de uso único exibido no log de inicialização.';
+
+  @override
+  String get setupToken => 'Token de inicialização';
+
+  @override
+  String get setupEmail => 'E-mail do administrador';
+
+  @override
+  String get setupDisplayName => 'Nome de exibição';
+
+  @override
+  String get setupDeviceName => 'Nome do dispositivo Passkey (opcional)';
+
+  @override
+  String get setupBackupReminder =>
+      'Após a configuração, adicione uma Passkey de backup ou opção de recuperação em Configurações para não perder o acesso se este dispositivo for perdido.';
+
+  @override
+  String get setupSubmit => 'Criar administrador e registrar Passkey';
+
+  @override
+  String get setupSubmitting => 'Configurando…';
+
+  @override
+  String get setupInvalidToken =>
+      'O token de inicialização é inválido ou expirou';
+
+  @override
+  String get setupTooMany => 'Muitas tentativas. Tente novamente mais tarde.';
+
+  @override
+  String get setupFailed => 'Falha na configuração. Tente novamente.';
+
+  @override
+  String get setupUnsupported =>
+      'Este navegador ou dispositivo não oferece suporte a Passkeys';
+
+  @override
+  String get setupClosed => 'Esta instância já foi inicializada';
+
+  @override
+  String get setupBackToLogin => 'Voltar ao login';
 }

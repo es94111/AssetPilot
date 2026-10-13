@@ -38,7 +38,7 @@ function handleError(e: unknown): NextResponse {
  * 同一張發票無論確認幾次都指向同一把 key，由 transactions 的
  * `(user_id, client_ref)` 部分唯一索引保證只寫入一筆。
  */
-export function invoiceClientRef(userId: string, invoiceNumber: string): string {
+function invoiceClientRef(userId: string, invoiceNumber: string): string {
   return crypto
     .createHash('sha256')
     .update(`einvoice:${userId}:${invoiceNumber}`)

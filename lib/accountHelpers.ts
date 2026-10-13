@@ -114,11 +114,15 @@ export function convertFromTwd(
   twdAmount: number,
   currencyCode: string,
   userId: string,
+  rateMap?: Record<string, number>,
 ): number {
   const currency = normalizeCurrency(currencyCode);
   const twd = Number(twdAmount) || 0;
   if (currency === "TWD") return twd;
-  const rate = getExchangeRateToTwd(userId, currency);
+  const rate =
+    rateMap && rateMap[currency] > 0
+      ? rateMap[currency]
+      : getExchangeRateToTwd(userId, currency);
   if (!(rate > 0)) return twd;
   return Math.round((twd / rate) * 100) / 100;
 }
@@ -128,20 +132,45 @@ export function calcBalance(
   initialBalance: number,
   userId: string,
   accountCurrency = "TWD",
+  rateMap?: Record<string, number>,
 ): number {
   let balance = Number(initialBalance) || 0;
+  const normalizedAccountCurrency = normalizeCurrency(accountCurrency);
   const txs = queryAll(
     "SELECT type, amount, currency, original_amount FROM transactions WHERE account_id = ? AND user_id = ?",
     [accId, userId],
   );
+  if (txs.length === 0) {
+    return Math.round(balance * 100) / 100;
+  }
+
+  let resolvedRate: number | null = null;
+  if (normalizedAccountCurrency !== "TWD") {
+    if (rateMap && rateMap[normalizedAccountCurrency] > 0) {
+      resolvedRate = rateMap[normalizedAccountCurrency];
+    } else {
+      resolvedRate = getExchangeRateToTwd(userId, normalizedAccountCurrency);
+    }
+  }
+
   txs.forEach((t) => {
     const txCurrency = normalizeCurrency(t.currency as string);
-    const value =
-      txCurrency === accountCurrency
-        ? Number(t.original_amount) > 0
+    let value: number;
+    if (txCurrency === normalizedAccountCurrency) {
+      value =
+        Number(t.original_amount) > 0
           ? Number(t.original_amount)
-          : Number(t.amount) || 0
-        : convertFromTwd(Number(t.amount), accountCurrency, userId);
+          : Number(t.amount) || 0;
+    } else if (normalizedAccountCurrency === "TWD") {
+      value = Number(t.amount) || 0;
+    } else {
+      const twd = Number(t.amount) || 0;
+      if (resolvedRate && resolvedRate > 0) {
+        value = Math.round((twd / resolvedRate) * 100) / 100;
+      } else {
+        value = twd;
+      }
+    }
     if (t.type === "income" || t.type === "transfer_in") balance += value;
     else if (t.type === "expense" || t.type === "transfer_out")
       balance -= value;
@@ -168,19 +197,22 @@ export function formatAccount(
   a: Record<string, unknown>,
   balance?: number | null,
   twdAccumulated?: number | null,
+  rateMap?: Record<string, number>,
 ): Record<string, unknown> {
+  const accCurrency = normalizeCurrency(a.currency as string);
   return {
     ...a,
     icon: normalizeAccountIcon(a.icon as string),
     initialBalance: a.initial_balance,
-    currency: normalizeCurrency(a.currency as string),
+    currency: accCurrency,
     balance:
       balance ??
       calcBalance(
         a.id as string,
         a.initial_balance as number,
         a.user_id as string,
-        normalizeCurrency(a.currency as string),
+        accCurrency,
+        rateMap,
       ),
     twdAccumulated: twdAccumulated ?? 0,
     linkedBankId: a.linked_bank_id || null,

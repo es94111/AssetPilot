@@ -789,6 +789,36 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, date DESC)",
   );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_accounts_user ON accounts(user_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_transactions_user_account ON transactions(user_id, account_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_transactions_user_category ON transactions(user_id, category_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_transactions_user_date_stats ON transactions(user_id, date DESC, exclude_from_stats)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_stocks_user ON stocks(user_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_stock_tx_user_stock ON stock_transactions(user_id, stock_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_stock_tx_user_date ON stock_transactions(user_id, date DESC)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_stock_dividends_user_stock ON stock_dividends(user_id, stock_id)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_recurring_user_active ON recurring(user_id, is_active)",
+  );
+  alterIgnore(
+    "CREATE INDEX IF NOT EXISTS idx_budgets_user_period ON budgets(user_id, year, month)",
+  );
 
   // 交易憑證照片的每使用者資料金鑰（DEK），已被 PHOTO_MASTER_KEY 包覆。見 lib/photoCrypto.ts。
   db.run(`CREATE TABLE IF NOT EXISTS user_photo_keys (

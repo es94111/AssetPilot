@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   // TS 7 no longer ships. `npm run build` runs `npm run typecheck` first;
   // @typescript/native-preview keeps Next from auto-installing legacy TS.
   typescript: { ignoreBuildErrors: true },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns', 'decimal.js'],
+  },
   // Next.js 15 起 instrumentation.js 為穩定 API，無需 experimental.instrumentationHook
 
   // instrumentation.ts 會被編譯給 nodejs 與 edge 兩個 runtime；

@@ -54,7 +54,7 @@ const recurringChecks = new Map<string, string>();
 const stockRecurringChecks = new Map<string, string>();
 const stockRecurringInflight = new Set<string>();
 
-function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
+export function processDueRecurringOncePerDay(userId: string, userTimezone: string) {
   const today = todayInUserTz(userTimezone || "Asia/Taipei");
   const version = queryOne(
     "SELECT COALESCE(MAX(updated_at), 0) AS updated_at FROM recurring WHERE user_id = ?",

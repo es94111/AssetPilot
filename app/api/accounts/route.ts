@@ -9,6 +9,7 @@ import {
   accountTypeFromCategory,
   calcBalance,
   getExchangeRateToTwd,
+  getUserExchangeRateMap,
   normalizeStatementClosingDay,
   creditCardStatementCycle,
   creditCardPaymentWindow,
@@ -90,6 +91,7 @@ export async function GET(request: NextRequest) {
     ]),
   );
   const today = todayInUserTz(auth.userTimezone);
+  const rateMap = getUserExchangeRateMap(auth.userId);
   const result = accounts.map((a) => {
     const accountCurrency = normalizeCurrency(a.currency);
     const balance = calcBalance(
@@ -97,11 +99,11 @@ export async function GET(request: NextRequest) {
       a.initial_balance,
       auth.userId,
       accountCurrency,
+      rateMap,
     );
+    const rate = rateMap[accountCurrency] ?? getExchangeRateToTwd(auth.userId, accountCurrency);
     const twdAccumulated =
-      Math.round(
-        balance * getExchangeRateToTwd(auth.userId, accountCurrency) * 100,
-      ) / 100;
+      Math.round(balance * rate * 100) / 100;
     const category = a.category || categoryFromAccountType(a.account_type);
 
     // 信用卡：若已設定每月結帳日，計算「本期消費」與「上期已結帳帳單的消費/已繳」。

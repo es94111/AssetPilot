@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.146.0",
+  "currentVersion": "4.147.0",
   "releases": [
+    {
+      "version": "4.147.0",
+      "date": "2026-10-13",
+      "title": "全站執行效能優化與查詢加速",
+      "type": "improvement",
+      "changes": [
+        {
+          "tag": "improvement",
+          "text": "資料庫加上 10 組關鍵索引消除全表掃描；消除帳戶餘額與匯率計算的 N+1 查詢；股票投資組合改為單次批量抓取交易與股利；Dashboard Server Component 改為直連計算避免 Loopback HTTP Fetch；並啟用 Next.js optimizePackageImports 打包優化。"
+        }
+      ]
+    },
     {
       "version": "4.146.0",
       "date": "2026-10-12",

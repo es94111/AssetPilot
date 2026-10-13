@@ -139,7 +139,7 @@ function auditRequest(
   });
 }
 
-function processDueRecurringForLedger(
+export function processDueRecurringForLedger(
   dataOwnerId: string,
   timezone: string,
   context: { ledgerId: string; actorUserId: string; actorEmail: string; role: LedgerRole },

@@ -798,8 +798,9 @@ export async function getDashboardData(month?: string): Promise<DashboardRespons
   const cookieStore = await cookies();
   const actorId = String((verifyToken(session) as { userId: string }).userId);
 
-  const user = queryOne('SELECT timezone FROM users WHERE id = ?', [actorId]);
+  const user = queryOne('SELECT timezone, email FROM users WHERE id = ?', [actorId]);
   const userTimezone = String(user?.timezone || 'Asia/Taipei');
+  const actorEmail = String(user?.email || '');
 
   const selectedLedger = cookieStore.get('activeLedgerId')?.value || '';
   let userId = actorId;
@@ -807,25 +808,45 @@ export async function getDashboardData(month?: string): Promise<DashboardRespons
 
   if (selectedLedger) {
     const ledger = queryOne(
-      `SELECT l.data_owner_id, l.is_shared, l.timezone
+      `SELECT l.id, l.data_owner_id, l.is_shared, l.timezone, m.role
        FROM financial_ledgers l
        JOIN ledger_members m ON m.ledger_id = l.id AND m.user_id = ?
        WHERE l.id = ?`,
       [actorId, selectedLedger]
-    ) as { data_owner_id?: string; is_shared?: number; timezone?: string } | null;
+    ) as { id?: string; data_owner_id?: string; is_shared?: number; timezone?: string; role?: string } | null;
     if (ledger) {
       userId = String(ledger.data_owner_id || actorId);
       if (Number(ledger.is_shared) === 1 && ledger.timezone) {
         ledgerTimezone = String(ledger.timezone);
       }
+      if (userId === actorId) {
+        try {
+          const { processDueRecurringOncePerDay } = await import('@/lib/apiHelpers');
+          processDueRecurringOncePerDay(userId, ledgerTimezone);
+        } catch {
+          // Non-fatal if apiHelpers recurring fails
+        }
+      } else if (ledger.role && ledger.role !== 'viewer') {
+        try {
+          const { processDueRecurringForLedger } = await import('@/lib/ledgerContext');
+          processDueRecurringForLedger(userId, ledgerTimezone, {
+            ledgerId: String(ledger.id || selectedLedger),
+            actorUserId: actorId,
+            actorEmail,
+            role: ledger.role as any,
+          });
+        } catch {
+          // Non-fatal if ledgerContext recurring fails
+        }
+      }
     }
-  }
-
-  try {
-    const { processDueRecurringOncePerDay } = await import('@/lib/apiHelpers');
-    processDueRecurringOncePerDay(userId, ledgerTimezone);
-  } catch {
-    // Non-fatal if apiHelpers recurring fails
+  } else {
+    try {
+      const { processDueRecurringOncePerDay } = await import('@/lib/apiHelpers');
+      processDueRecurringOncePerDay(userId, ledgerTimezone);
+    } catch {
+      // Non-fatal if apiHelpers recurring fails
+    }
   }
 
   const validYm = month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month) ? month : null;

@@ -442,6 +442,16 @@ Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立
 
 FIFO 邏輯：買入批次依時間序進入佇列（手續費分攤至成本）；每筆賣出依序從最早批次扣除，算出該筆賣出的成本基礎；實現損益 = 賣出收入（股數 × 賣出價 - 手續費 - 證交稅）- FIFO 成本基礎；報酬率 = 實現損益 ÷ FIFO 成本基礎 × 100%。未賣出部位的平均成本以 FIFO 剩餘批次計算。
 
+#### 投資組合績效分析（XIRR／TWR／歸因）
+
+獨立 Tab（`/stocks/performance`）呈現投資組合績效與五因子收益歸因：
+- **年化內部報酬率 (XIRR)**：金額加權複利回報，以 Newton-Raphson 演算法求解，基準日數 Actual/365。多重根時回傳 `multiple-roots`，無根或無法收斂時回傳 `no-root`，不回傳假數值。
+- **時間加權報酬率 (TWR)**：消除外部現金流進出規模影響，依外部現金流時點將區間切割為子期間並以幾何連乘計算 `(1 + R1) * (1 + R2) * ... - 1`。缺歷史收盤價時標記不可用或警告。
+- **大盤基準比較 (Benchmark)**：美股市場以 S&P 500 (`^GSPC`)、台股市場以元大台灣50 (`0050.TW`) 為比較標的，計算同期間價格報酬與超額報酬（Alpha = TWR - Benchmark）。
+- **五因子收益歸因**：嚴格維持金額守恆：期末資產市值 = 期初資產市值 + 淨注入資金 + 總收益（已實現損益 + 未實現損益變動 + 股利收入 - 手續費與交易稅）。
+- **走勢與明細**：視覺化顯示資產總市值與累計淨投入資金走勢，並提供完整現金流與資金進出明細表。
+- **匯出與權限**：支援 CSV 與串流 Excel (.xlsx) 匯出，寫入稽核紀錄 `export_stock_performance`，納入共享帳本權限政策驗證。
+
 #### 批次更新股價
 
 Modal 列出所有持股與目前股價輸入框，每列附「標為已下市」checkbox（凍結價格 + 後續查價跳過），支援「從證交所取得最新股價」一鍵批次拉 TWSE 最新收盤價（透過 `POST /api/stocks/batch-fetch` 並發查價，受 `TWSE_MAX_CONCURRENCY` 環境變數控制，預設 5；失敗時指數退避重試 2 次，間隔 1s/2s）。`POST /api/stocks/batch-price` 接受 `{ updates: [{ stockId, currentPrice, delisted? }] }`；省略 `delisted` 時保留向後兼容（沿用 baseline 行為僅更新價格）。也允許手動調整個別股價；確認後一次寫回。
@@ -587,6 +597,7 @@ XLSX 具備欄位標題列，日期寫入為 UTC 午夜對應的 Excel 日期序
 | `/stocks/transactions` | 股票交易紀錄 |
 | `/stocks/dividends` | 股票股利紀錄 |
 | `/stocks/realized` | 股票實現損益紀錄 |
+| `/stocks/performance` | 投資組合績效分析（XIRR／TWR／歸因） |
 | `/api-credits` | API 使用與授權 |
 | `/settings/account` | 帳號設定（含個人登入稽核） |
 | `/settings/mcp` | MCP 連線（OAuth 位址與個人存取權杖） |
@@ -1188,11 +1199,13 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | UC-033 | 查詢全站登入稽核          | 管理員   |
 | UC-034 | 修改顯示名稱              | 使用者   |
 | UC-035 | 設定股票定期定額          | 使用者   |
+| UC-036 | 投資組合績效分析（XIRR／TWR／歸因） | 使用者   |
 
 ### 4.2 版本歷程
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.149.0 | 2026-10-15 | 新增 #310 投資組合績效分析：新增 `/stocks/performance` 頁面與 `/api/stock-performance` 路由，提供金額加權報酬率 (XIRR，Newton-Raphson 求解，Actual/365)、時間加權報酬率 (TWR，分割期間連乘)、大盤基準比較 (S&P 500 / 0050) 與五因子收益歸因（期初/期末市值、已實現、未實現變動、股利、手續費與稅，維持金額守恆）；支援區間快選、資產市值與累計淨投入走勢圖、現金流明細，以及 CSV / Excel 匯出與帳本權限政策整合。新增 10 種語言完整翻譯與自動化單元測試。 |
 | 4.141.0 | 2026-10-08 | 新增 #250 收據 OCR 自動帶入：新增交易可上傳收據影像辨識金額／日期／店家，僅以草稿預填、由使用者確認後儲存；HTTP OCR 供應商可由環境變數設定，未設定時回報無供應商並保留手動輸入。OCR API 不觸發自動背景寫入，讀取既有附件沿用 photoCrypto 與 S3 授權路徑。 |
 | 4.140.0 | 2026-10-08 | 行事曆日期格在既有交易／股利／排程筆數徽章之外，新增顯示當日收入／支出金額加總（台幣，收入綠字 `+`、支出紅字 `−`）。加總口徑與 Dashboard 一致：只計實際交易（`type IN ('income','expense')`，排除轉帳）且排除「不計入統計」交易；股利與固定收支排程僅為預計金額，維持現有筆數徽章、不併入加總。`app/api/calendar/route.ts` 新增 `GROUP BY date, type` 的 `SUM(amount)` 查詢並以 `lib/calendarEvents.ts` 新增的零相依 `buildCalendarDailyTotals()` 彙總為 `dailyTotals` 回傳；`components/features/calendar/CalendarClient.tsx` 於日期格與 `aria-label` 同步呈現。新增 `incomeAmount`／`expenseAmount` 2 個行事曆多語系鍵並重新產生 Web 與 Flutter 共用翻譯；`tests/lib/calendar.test.ts` 補上日期範圍與型別過濾的彙總測試。 |
 | 4.139.0 | 2026-10-08 | 新增 #252 本地智慧分類建議與固定收支偵測：新增交易依歷史摘要推薦 Top-3 子分類及信心度；偵測疑似週期交易並提供確認後建立固定收支的表單預填，支援忽略提示與智慧輔助開關。建議使用可解釋本地統計，無外部 AI 依賴；提示 GET 不觸發排程寫入，歷史資料以帳本範圍隔離。 |

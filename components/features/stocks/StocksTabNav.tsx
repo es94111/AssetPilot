@@ -9,6 +9,7 @@ const TABS = [
   { path: '/stocks/transactions', key: 'features.stocks.tabs.transactions' },
   { path: '/stocks/dividends', key: 'features.stocks.tabs.dividends' },
   { path: '/stocks/realized', key: 'features.stocks.tabs.realized' },
+  { path: '/stocks/performance', key: 'features.stocks.tabs.performance' },
   { path: '/stocks/settings', key: 'features.stocks.tabs.settings' },
 ];
 

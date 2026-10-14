@@ -10432,5 +10432,258 @@
   "@featuresTagsStatsNote": {
     "description": "Web path: features.tags.stats.note",
     "x-webPath": "features.tags.stats.note"
+  },
+  "featuresStocksTabsPerformance": "Анализ доходности",
+  "@featuresStocksTabsPerformance": {
+    "description": "Web path: features.stocks.tabs.performance",
+    "x-webPath": "features.stocks.tabs.performance"
+  },
+  "featuresStocksPerformanceTitle": "Анализ доходности портфеля",
+  "@featuresStocksPerformanceTitle": {
+    "description": "Web path: features.stocks.performance.title",
+    "x-webPath": "features.stocks.performance.title"
+  },
+  "featuresStocksPerformanceSubtitle": "Оценка доходности с помощью TWR, XIRR, сравнения с бенчмарком и 5-факторного анализа атрибуции прибыли.",
+  "@featuresStocksPerformanceSubtitle": {
+    "description": "Web path: features.stocks.performance.subtitle",
+    "x-webPath": "features.stocks.performance.subtitle"
+  },
+  "featuresStocksPerformanceExportCsv": "Экспорт в CSV",
+  "@featuresStocksPerformanceExportCsv": {
+    "description": "Web path: features.stocks.performance.exportCsv",
+    "x-webPath": "features.stocks.performance.exportCsv"
+  },
+  "featuresStocksPerformanceExportXlsx": "Экспорт в Excel",
+  "@featuresStocksPerformanceExportXlsx": {
+    "description": "Web path: features.stocks.performance.exportXlsx",
+    "x-webPath": "features.stocks.performance.exportXlsx"
+  },
+  "featuresStocksPerformanceFilterMarket": "Рынок",
+  "@featuresStocksPerformanceFilterMarket": {
+    "description": "Web path: features.stocks.performance.filterMarket",
+    "x-webPath": "features.stocks.performance.filterMarket"
+  },
+  "featuresStocksPerformanceFilterFrom": "Начальная дата",
+  "@featuresStocksPerformanceFilterFrom": {
+    "description": "Web path: features.stocks.performance.filterFrom",
+    "x-webPath": "features.stocks.performance.filterFrom"
+  },
+  "featuresStocksPerformanceFilterTo": "Конечная дата",
+  "@featuresStocksPerformanceFilterTo": {
+    "description": "Web path: features.stocks.performance.filterTo",
+    "x-webPath": "features.stocks.performance.filterTo"
+  },
+  "featuresStocksPerformanceFilterBaseCurrency": "Базовая валюта",
+  "@featuresStocksPerformanceFilterBaseCurrency": {
+    "description": "Web path: features.stocks.performance.filterBaseCurrency",
+    "x-webPath": "features.stocks.performance.filterBaseCurrency"
+  },
+  "featuresStocksPerformanceQuery": "Рассчитать",
+  "@featuresStocksPerformanceQuery": {
+    "description": "Web path: features.stocks.performance.query",
+    "x-webPath": "features.stocks.performance.query"
+  },
+  "featuresStocksPerformancePreset1m": "1 месяц",
+  "@featuresStocksPerformancePreset1m": {
+    "description": "Web path: features.stocks.performance.preset1m",
+    "x-webPath": "features.stocks.performance.preset1m"
+  },
+  "featuresStocksPerformancePreset3m": "3 месяца",
+  "@featuresStocksPerformancePreset3m": {
+    "description": "Web path: features.stocks.performance.preset3m",
+    "x-webPath": "features.stocks.performance.preset3m"
+  },
+  "featuresStocksPerformancePreset6m": "6 месяцев",
+  "@featuresStocksPerformancePreset6m": {
+    "description": "Web path: features.stocks.performance.preset6m",
+    "x-webPath": "features.stocks.performance.preset6m"
+  },
+  "featuresStocksPerformancePreset1y": "1 год",
+  "@featuresStocksPerformancePreset1y": {
+    "description": "Web path: features.stocks.performance.preset1y",
+    "x-webPath": "features.stocks.performance.preset1y"
+  },
+  "featuresStocksPerformancePresetYtd": "С начала года (YTD)",
+  "@featuresStocksPerformancePresetYtd": {
+    "description": "Web path: features.stocks.performance.presetYtd",
+    "x-webPath": "features.stocks.performance.presetYtd"
+  },
+  "featuresStocksPerformancePreset3y": "3 года",
+  "@featuresStocksPerformancePreset3y": {
+    "description": "Web path: features.stocks.performance.preset3y",
+    "x-webPath": "features.stocks.performance.preset3y"
+  },
+  "featuresStocksPerformanceMissingPriceWarning": "Для части активов отсутствуют исторические цены закрытия; TWR и часть оценок могут быть приблизительными.",
+  "@featuresStocksPerformanceMissingPriceWarning": {
+    "description": "Web path: features.stocks.performance.missingPriceWarning",
+    "x-webPath": "features.stocks.performance.missingPriceWarning"
+  },
+  "featuresStocksPerformanceXirr": "Внутренняя норма доходности (XIRR)",
+  "@featuresStocksPerformanceXirr": {
+    "description": "Web path: features.stocks.performance.xirr",
+    "x-webPath": "features.stocks.performance.xirr"
+  },
+  "featuresStocksPerformanceXirrUnavailable": "Не сошлось или нет денежных потоков",
+  "@featuresStocksPerformanceXirrUnavailable": {
+    "description": "Web path: features.stocks.performance.xirrUnavailable",
+    "x-webPath": "features.stocks.performance.xirrUnavailable"
+  },
+  "featuresStocksPerformanceXirrDesc": "Доходность, взвешенная по деньгам, отражающая сложный годовой процент с учётом времени и сумм ввода/вывода средств.",
+  "@featuresStocksPerformanceXirrDesc": {
+    "description": "Web path: features.stocks.performance.xirrDesc",
+    "x-webPath": "features.stocks.performance.xirrDesc"
+  },
+  "featuresStocksPerformanceTwr": "Доходность, взвешенная по времени (TWR)",
+  "@featuresStocksPerformanceTwr": {
+    "description": "Web path: features.stocks.performance.twr",
+    "x-webPath": "features.stocks.performance.twr"
+  },
+  "featuresStocksPerformanceTwrIncomplete": "Отсутствуют некоторые цены закрытия",
+  "@featuresStocksPerformanceTwrIncomplete": {
+    "description": "Web path: features.stocks.performance.twrIncomplete",
+    "x-webPath": "features.stocks.performance.twrIncomplete"
+  },
+  "featuresStocksPerformanceTwrDesc": "Исключает влияние денежных потоков для объективной оценки качества управления активами и выбора акций.",
+  "@featuresStocksPerformanceTwrDesc": {
+    "description": "Web path: features.stocks.performance.twrDesc",
+    "x-webPath": "features.stocks.performance.twrDesc"
+  },
+  "featuresStocksPerformanceBenchmark": "Доходность бенчмарка ({symbol})",
+  "@featuresStocksPerformanceBenchmark": {
+    "description": "Web path: features.stocks.performance.benchmark",
+    "x-webPath": "features.stocks.performance.benchmark",
+    "placeholders": {
+      "symbol": {}
+    }
+  },
+  "featuresStocksPerformanceExcessReturn": "Избыточная доходность (Альфа)",
+  "@featuresStocksPerformanceExcessReturn": {
+    "description": "Web path: features.stocks.performance.excessReturn",
+    "x-webPath": "features.stocks.performance.excessReturn"
+  },
+  "featuresStocksPerformanceTotalGain": "Общий доход за период",
+  "@featuresStocksPerformanceTotalGain": {
+    "description": "Web path: features.stocks.performance.totalGain",
+    "x-webPath": "features.stocks.performance.totalGain"
+  },
+  "featuresStocksPerformanceNetFlow": "Чистый приток капитала",
+  "@featuresStocksPerformanceNetFlow": {
+    "description": "Web path: features.stocks.performance.netFlow",
+    "x-webPath": "features.stocks.performance.netFlow"
+  },
+  "featuresStocksPerformanceAttributionTitle": "Атрибуция доходности (5 факторов)",
+  "@featuresStocksPerformanceAttributionTitle": {
+    "description": "Web path: features.stocks.performance.attributionTitle",
+    "x-webPath": "features.stocks.performance.attributionTitle"
+  },
+  "featuresStocksPerformanceAttributionDesc": "Конечная стоимость = Начальная стоимость + Чистый приток + Общий доход (Реализованный + Изменение нереализованного + Дивиденды - Комиссии и налоги)",
+  "@featuresStocksPerformanceAttributionDesc": {
+    "description": "Web path: features.stocks.performance.attributionDesc",
+    "x-webPath": "features.stocks.performance.attributionDesc"
+  },
+  "featuresStocksPerformanceRealizedPl": "Реализованная P/L",
+  "@featuresStocksPerformanceRealizedPl": {
+    "description": "Web path: features.stocks.performance.realizedPl",
+    "x-webPath": "features.stocks.performance.realizedPl"
+  },
+  "featuresStocksPerformanceUnrealizedChange": "Изменение нереализованной прибыли",
+  "@featuresStocksPerformanceUnrealizedChange": {
+    "description": "Web path: features.stocks.performance.unrealizedChange",
+    "x-webPath": "features.stocks.performance.unrealizedChange"
+  },
+  "featuresStocksPerformanceDividends": "Дивидендный доход",
+  "@featuresStocksPerformanceDividends": {
+    "description": "Web path: features.stocks.performance.dividends",
+    "x-webPath": "features.stocks.performance.dividends"
+  },
+  "featuresStocksPerformanceFeesAndTaxes": "Комиссии и налоги",
+  "@featuresStocksPerformanceFeesAndTaxes": {
+    "description": "Web path: features.stocks.performance.feesAndTaxes",
+    "x-webPath": "features.stocks.performance.feesAndTaxes"
+  },
+  "featuresStocksPerformanceStartValue": "Начальная стоимость портфеля",
+  "@featuresStocksPerformanceStartValue": {
+    "description": "Web path: features.stocks.performance.startValue",
+    "x-webPath": "features.stocks.performance.startValue"
+  },
+  "featuresStocksPerformanceContributions": "Ввод средств / покупки",
+  "@featuresStocksPerformanceContributions": {
+    "description": "Web path: features.stocks.performance.contributions",
+    "x-webPath": "features.stocks.performance.contributions"
+  },
+  "featuresStocksPerformanceWithdrawals": "Вывод средств / продажи",
+  "@featuresStocksPerformanceWithdrawals": {
+    "description": "Web path: features.stocks.performance.withdrawals",
+    "x-webPath": "features.stocks.performance.withdrawals"
+  },
+  "featuresStocksPerformanceEndValue": "Конечная стоимость портфеля",
+  "@featuresStocksPerformanceEndValue": {
+    "description": "Web path: features.stocks.performance.endValue",
+    "x-webPath": "features.stocks.performance.endValue"
+  },
+  "featuresStocksPerformanceTrendTitle": "Динамика стоимости портфеля и вложенного капитала",
+  "@featuresStocksPerformanceTrendTitle": {
+    "description": "Web path: features.stocks.performance.trendTitle",
+    "x-webPath": "features.stocks.performance.trendTitle"
+  },
+  "featuresStocksPerformanceTrendMarketValue": "Общая стоимость портфеля",
+  "@featuresStocksPerformanceTrendMarketValue": {
+    "description": "Web path: features.stocks.performance.trendMarketValue",
+    "x-webPath": "features.stocks.performance.trendMarketValue"
+  },
+  "featuresStocksPerformanceTrendNetContributions": "Совокупный чистый вложенный капитал",
+  "@featuresStocksPerformanceTrendNetContributions": {
+    "description": "Web path: features.stocks.performance.trendNetContributions",
+    "x-webPath": "features.stocks.performance.trendNetContributions"
+  },
+  "featuresStocksPerformanceTrendNoData": "Недостаточно данных для графика за этот период",
+  "@featuresStocksPerformanceTrendNoData": {
+    "description": "Web path: features.stocks.performance.trendNoData",
+    "x-webPath": "features.stocks.performance.trendNoData"
+  },
+  "featuresStocksPerformanceFlowsTitle": "Денежные потоки и движение средств",
+  "@featuresStocksPerformanceFlowsTitle": {
+    "description": "Web path: features.stocks.performance.flowsTitle",
+    "x-webPath": "features.stocks.performance.flowsTitle"
+  },
+  "featuresStocksPerformanceFlowDate": "Дата",
+  "@featuresStocksPerformanceFlowDate": {
+    "description": "Web path: features.stocks.performance.flowDate",
+    "x-webPath": "features.stocks.performance.flowDate"
+  },
+  "featuresStocksPerformanceFlowKind": "Тип",
+  "@featuresStocksPerformanceFlowKind": {
+    "description": "Web path: features.stocks.performance.flowKind",
+    "x-webPath": "features.stocks.performance.flowKind"
+  },
+  "featuresStocksPerformanceFlowSymbol": "Тикер",
+  "@featuresStocksPerformanceFlowSymbol": {
+    "description": "Web path: features.stocks.performance.flowSymbol",
+    "x-webPath": "features.stocks.performance.flowSymbol"
+  },
+  "featuresStocksPerformanceFlowDirection": "Направление",
+  "@featuresStocksPerformanceFlowDirection": {
+    "description": "Web path: features.stocks.performance.flowDirection",
+    "x-webPath": "features.stocks.performance.flowDirection"
+  },
+  "featuresStocksPerformanceFlowAmount": "Сумма",
+  "@featuresStocksPerformanceFlowAmount": {
+    "description": "Web path: features.stocks.performance.flowAmount",
+    "x-webPath": "features.stocks.performance.flowAmount"
+  },
+  "featuresStocksPerformanceFlowIn": "Приток (+)",
+  "@featuresStocksPerformanceFlowIn": {
+    "description": "Web path: features.stocks.performance.flowIn",
+    "x-webPath": "features.stocks.performance.flowIn"
+  },
+  "featuresStocksPerformanceFlowOut": "Отток (-)",
+  "@featuresStocksPerformanceFlowOut": {
+    "description": "Web path: features.stocks.performance.flowOut",
+    "x-webPath": "features.stocks.performance.flowOut"
+  },
+  "featuresStocksPerformanceFlowsEmpty": "В этот период нет движения средств или денежных потоков",
+  "@featuresStocksPerformanceFlowsEmpty": {
+    "description": "Web path: features.stocks.performance.flowsEmpty",
+    "x-webPath": "features.stocks.performance.flowsEmpty"
   }
 }

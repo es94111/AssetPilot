@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.147.0",
+  "currentVersion": "4.148.0",
   "releases": [
+    {
+      "version": "4.148.0",
+      "date": "2026-10-14",
+      "title": "Web 與 App 人機操作習慣人因工程改造",
+      "type": "improvement",
+      "changes": [
+        {
+          "tag": "improvement",
+          "text": "改善 Web 與 App 操作人因工程體驗：Web 桌面側邊欄依模組折疊收納並支援狀態記憶與自動展開；Web 頂端導覽新增全局快速記帳按鈕與 Alt+N/c 快捷鍵；Web 手機版底部導覽精簡為 5 欄提升觸控熱區至 70px+；Flutter App 首頁新增右下角快速記帳 FAB 與左右水平滑動切換月份手勢；App 記帳表單支援常用分類 Chip 一鍵選取與金額快選增量鈕。"
+        }
+      ]
+    },
     {
       "version": "4.147.0",
       "date": "2026-10-13",

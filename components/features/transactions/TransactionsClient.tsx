@@ -366,7 +366,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }
 
   useEffect(() => {
-    if (!metaLoaded || quickCreateHandled || searchParams.get('action') !== 'add') return;
+    if (searchParams.get('action') !== 'add') {
+      if (quickCreateHandled) setQuickCreateHandled(false);
+      return;
+    }
+    if (!metaLoaded || quickCreateHandled) return;
     setQuickCreateHandled(true);
     openAdd(searchParams.get('date') || undefined);
   }, [currentQuery, metaLoaded, pathname, quickCreateHandled, searchParams]);

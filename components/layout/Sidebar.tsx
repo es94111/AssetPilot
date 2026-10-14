@@ -8,6 +8,7 @@ import {
   Briefcase, Key, User, Shield, Database, LogOut, TrendingUp, Coins,
   BarChart3, Settings2, Sun, Moon, Monitor, Info, TableProperties,
   X, Plug, Bot, PanelLeftClose, PanelLeftOpen, Webhook, Users, Landmark, Target, BellRing, ReceiptText,
+  ChevronDown,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import { useTheme, type Theme } from '@/hooks/useTheme';
@@ -19,6 +20,7 @@ import LedgerSwitcher from '@/components/features/ledgers/LedgerSwitcher';
 // label 以譯文鍵（labelKey）表示，於 render 時用 t() 解析。
 const NAV_SECTIONS = [
   {
+    id: 'finance',
     labelKey: 'nav.sections.finance',
     items: [
       { path: '/dashboard',            labelKey: 'nav.dashboard',          icon: LayoutDashboard },
@@ -36,6 +38,7 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    id: 'stocks',
     labelKey: 'nav.sections.stocks',
     items: [
       { path: '/stocks/portfolio',     labelKey: 'nav.stocksPortfolio',    icon: Briefcase },
@@ -46,6 +49,7 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    id: 'system',
     labelKey: 'nav.sections.system',
     items: [
       { path: '/settings/export',  labelKey: 'nav.exportImport', icon: Database },
@@ -91,6 +95,7 @@ type ChangelogData = {
 };
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
+const SIDEBAR_SECTIONS_STATE_KEY = 'sidebar-sections-collapsed';
 
 export default function Sidebar({ user, open, onClose }: { user: any; open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
@@ -99,6 +104,9 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
   const { theme, setTheme } = useTheme();
   const sidebarRef = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    system: true, // 系統設定項目繁多且非高頻使用，預設摺疊以降低認知負荷
+  });
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [changelog, setChangelog] = useState<ChangelogData | null>(null);
   const [changelogLoading, setChangelogLoading] = useState(false);
@@ -108,10 +116,36 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
   useEffect(() => {
     try {
       setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+      const savedSections = window.localStorage.getItem(SIDEBAR_SECTIONS_STATE_KEY);
+      if (savedSections) {
+        setCollapsedSections(JSON.parse(savedSections));
+      }
     } catch {
       /* storage unavailable — keep expanded */
     }
   }, []);
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => {
+      const next = { ...prev, [sectionId]: !prev[sectionId] };
+      try {
+        window.localStorage.setItem(SIDEBAR_SECTIONS_STATE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore persistence failures */
+      }
+      return next;
+    });
+  };
+
+  const isSectionCollapsed = (section: (typeof NAV_SECTIONS)[number]) => {
+    if (collapsed) return false;
+    // 當前路徑若落在該區塊中，一律自動展開，確保使用者能看清所在位置
+    const hasActiveItem = section.items.some(
+      item => pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path))
+    );
+    if (hasActiveItem) return false;
+    return !!collapsedSections[section.id];
+  };
 
   const toggleCollapsed = () => {
     setCollapsed(prev => {
@@ -224,41 +258,62 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
           {NAV_SECTIONS.map(section => {
             const visibleItems = section.items.filter(item => !(item as any).requireAdmin || user?.isAdmin);
             if (visibleItems.length === 0) return null;
+            const isCollapsed = isSectionCollapsed(section);
             return (
-              <div key={section.labelKey} className="mb-5 last:mb-0" data-section={section.labelKey}>
-                <p
-                  className="mb-1.5 px-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-colors"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {collapsed ? '·' : t(section.labelKey)}
-                </p>
-                <div className="space-y-0.5">
-                  {visibleItems.map(item => {
-                    const Icon = item.icon;
-                    const active = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
-                    return (
-                      <Link
-                        key={item.path}
-                        href={item.path}
-                        onClick={onClose}
-                        aria-current={active ? 'page' : undefined}
-                        title={collapsed ? t(item.labelKey) : undefined}
-                        className={`nav-link ${collapsed ? 'justify-center px-0' : ''}`}
-                      >
-                        <Icon
-                          size={17}
-                          strokeWidth={active ? 2.2 : 1.8}
-                          className="shrink-0"
-                          aria-hidden="true"
-                        />
-                        {!collapsed && <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>}
-                        {active && !collapsed && (
-                          <span aria-hidden="true" className="ms-auto h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--primary)' }} />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
+              <div key={section.id} className="mb-4 last:mb-0" data-section={section.labelKey}>
+                {collapsed ? (
+                  <p
+                    className="mb-1.5 px-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-center"
+                    style={{ color: 'var(--text-muted)' }}
+                    title={t(section.labelKey)}
+                  >
+                    ·
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.id)}
+                    aria-expanded={!isCollapsed}
+                    className="mb-1.5 flex w-full items-center justify-between rounded px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-colors hover:text-[var(--text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] cursor-pointer"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <span>{t(section.labelKey)}</span>
+                    <ChevronDown
+                      size={13}
+                      className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                )}
+                {!isCollapsed && (
+                  <div className="space-y-0.5">
+                    {visibleItems.map(item => {
+                      const Icon = item.icon;
+                      const active = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
+                      return (
+                        <Link
+                          key={item.path}
+                          href={item.path}
+                          onClick={onClose}
+                          aria-current={active ? 'page' : undefined}
+                          title={collapsed ? t(item.labelKey) : undefined}
+                          className={`nav-link ${collapsed ? 'justify-center px-0' : ''}`}
+                        >
+                          <Icon
+                            size={17}
+                            strokeWidth={active ? 2.2 : 1.8}
+                            className="shrink-0"
+                            aria-hidden="true"
+                          />
+                          {!collapsed && <span className="min-w-0 flex-1 truncate">{t(item.labelKey)}</span>}
+                          {active && !collapsed && (
+                            <span aria-hidden="true" className="ms-auto h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--primary)' }} />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

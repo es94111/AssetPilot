@@ -125,6 +125,32 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
     }
   }, []);
 
+  const lastActiveSectionIdRef = useRef<string | null>(null);
+
+  // 當路徑切換至不同區塊時，若目標區塊為摺疊狀態，自動展開以便辨識位置
+  useEffect(() => {
+    const activeSection = NAV_SECTIONS.find(section =>
+      section.items.some(
+        item => pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path))
+      )
+    );
+    if (activeSection && activeSection.id !== lastActiveSectionIdRef.current) {
+      lastActiveSectionIdRef.current = activeSection.id;
+      setCollapsedSections(prev => {
+        if (prev[activeSection.id]) {
+          const next = { ...prev, [activeSection.id]: false };
+          try {
+            window.localStorage.setItem(SIDEBAR_SECTIONS_STATE_KEY, JSON.stringify(next));
+          } catch {
+            /* ignore persistence failures */
+          }
+          return next;
+        }
+        return prev;
+      });
+    }
+  }, [pathname]);
+
   const toggleSection = (sectionId: string) => {
     setCollapsedSections(prev => {
       const next = { ...prev, [sectionId]: !prev[sectionId] };
@@ -139,12 +165,16 @@ export default function Sidebar({ user, open, onClose }: { user: any; open?: boo
 
   const isSectionCollapsed = (section: (typeof NAV_SECTIONS)[number]) => {
     if (collapsed) return false;
-    // 當前路徑若落在該區塊中，一律自動展開，確保使用者能看清所在位置
+    // 使用者若有手動切換過此區塊的展開/摺疊狀態，優先以使用者的偏好為主
+    if (section.id in collapsedSections) {
+      return !!collapsedSections[section.id];
+    }
+    // 未設定過偏好時：若包含當前路徑則展開，否則只有 system 預設摺疊
     const hasActiveItem = section.items.some(
       item => pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path))
     );
     if (hasActiveItem) return false;
-    return !!collapsedSections[section.id];
+    return section.id === 'system';
   };
 
   const toggleCollapsed = () => {

@@ -24,7 +24,7 @@ export default function TopNav({ title, menuOpen, menuButtonRef, onMenuClick }: 
   const { theme, setTheme } = useTheme();
   const router = useRouter();
 
-  // 全域快捷鍵：Alt+N 或在未聚焦輸入框時按 c 快速開啟新增記帳
+  // 全域快捷鍵：Alt+N 快速開啟新增記帳
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -37,10 +37,7 @@ export default function TopNav({ title, menuOpen, menuButtonRef, onMenuClick }: 
       ) {
         return;
       }
-      if (
-        (e.altKey && e.key.toLowerCase() === 'n') ||
-        (!e.ctrlKey && !e.metaKey && !e.altKey && e.key === 'c')
-      ) {
+      if (e.altKey && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         router.push('/finance/transactions?action=add');
       }
@@ -70,8 +67,8 @@ export default function TopNav({ title, menuOpen, menuButtonRef, onMenuClick }: 
       {/* 快速新增記帳（Global Quick Action） */}
       <Link
         href="/finance/transactions?action=add"
-        title={`${t('transactions.create')} (Alt+N / c)`}
-        aria-label={t('transactions.create')}
+        title={`${t('features.transactions.add')} (Alt+N)`}
+        aria-label={t('features.transactions.add')}
         className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 text-xs font-semibold shadow-sm transition-all duration-150 cursor-pointer hover:opacity-90 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         style={{
           background: 'var(--primary)',
@@ -79,7 +76,7 @@ export default function TopNav({ title, menuOpen, menuButtonRef, onMenuClick }: 
         }}
       >
         <Plus size={15} strokeWidth={2.4} aria-hidden="true" />
-        <span className="hidden sm:inline">{t('transactions.create')}</span>
+        <span className="hidden sm:inline">{t('features.transactions.add')}</span>
       </Link>
 
       <div

@@ -751,6 +751,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               prefixIcon: Icon(Icons.attach_money),
               border: OutlineInputBorder(),
             ),
+            onChanged: (_) => setState(() {}),
             validator: (v) {
               final n = num.tryParse(v?.trim() ?? '');
               if (n == null || n <= 0) {
@@ -769,10 +770,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   visualDensity: VisualDensity.compact,
                   label: Text('+$delta'),
                   onPressed: () {
-                    final current = int.tryParse(_amount.text.trim()) ?? 0;
+                    final current = num.tryParse(_amount.text.trim()) ?? 0;
                     final next = current + delta;
                     setState(() {
-                      _amount.text = next.toString();
+                      _amount.text = next == next.roundToDouble()
+                          ? next.toInt().toString()
+                          : next.toString();
                     });
                   },
                 ),

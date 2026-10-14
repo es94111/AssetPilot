@@ -10432,5 +10432,258 @@
   "@featuresTagsStatsNote": {
     "description": "Web path: features.tags.stats.note",
     "x-webPath": "features.tags.stats.note"
+  },
+  "featuresStocksTabsPerformance": "تحليل الأداء",
+  "@featuresStocksTabsPerformance": {
+    "description": "Web path: features.stocks.tabs.performance",
+    "x-webPath": "features.stocks.tabs.performance"
+  },
+  "featuresStocksPerformanceTitle": "تحليل أداء المحفظة الاستثمارية",
+  "@featuresStocksPerformanceTitle": {
+    "description": "Web path: features.stocks.performance.title",
+    "x-webPath": "features.stocks.performance.title"
+  },
+  "featuresStocksPerformanceSubtitle": "تقييم العائد بمعدل العائد المرجح بالوقت (TWR) ومعدل العائد الداخلي (XIRR) والمقارنة بالمؤشر مع عزو العائد خماسي العوامل.",
+  "@featuresStocksPerformanceSubtitle": {
+    "description": "Web path: features.stocks.performance.subtitle",
+    "x-webPath": "features.stocks.performance.subtitle"
+  },
+  "featuresStocksPerformanceExportCsv": "تصدير CSV",
+  "@featuresStocksPerformanceExportCsv": {
+    "description": "Web path: features.stocks.performance.exportCsv",
+    "x-webPath": "features.stocks.performance.exportCsv"
+  },
+  "featuresStocksPerformanceExportXlsx": "تصدير Excel",
+  "@featuresStocksPerformanceExportXlsx": {
+    "description": "Web path: features.stocks.performance.exportXlsx",
+    "x-webPath": "features.stocks.performance.exportXlsx"
+  },
+  "featuresStocksPerformanceFilterMarket": "السوق",
+  "@featuresStocksPerformanceFilterMarket": {
+    "description": "Web path: features.stocks.performance.filterMarket",
+    "x-webPath": "features.stocks.performance.filterMarket"
+  },
+  "featuresStocksPerformanceFilterFrom": "من تاريخ",
+  "@featuresStocksPerformanceFilterFrom": {
+    "description": "Web path: features.stocks.performance.filterFrom",
+    "x-webPath": "features.stocks.performance.filterFrom"
+  },
+  "featuresStocksPerformanceFilterTo": "إلى تاريخ",
+  "@featuresStocksPerformanceFilterTo": {
+    "description": "Web path: features.stocks.performance.filterTo",
+    "x-webPath": "features.stocks.performance.filterTo"
+  },
+  "featuresStocksPerformanceFilterBaseCurrency": "العملة الأساسية",
+  "@featuresStocksPerformanceFilterBaseCurrency": {
+    "description": "Web path: features.stocks.performance.filterBaseCurrency",
+    "x-webPath": "features.stocks.performance.filterBaseCurrency"
+  },
+  "featuresStocksPerformanceQuery": "استعلام",
+  "@featuresStocksPerformanceQuery": {
+    "description": "Web path: features.stocks.performance.query",
+    "x-webPath": "features.stocks.performance.query"
+  },
+  "featuresStocksPerformancePreset1m": "آخر شهر",
+  "@featuresStocksPerformancePreset1m": {
+    "description": "Web path: features.stocks.performance.preset1m",
+    "x-webPath": "features.stocks.performance.preset1m"
+  },
+  "featuresStocksPerformancePreset3m": "آخر 3 أشهر",
+  "@featuresStocksPerformancePreset3m": {
+    "description": "Web path: features.stocks.performance.preset3m",
+    "x-webPath": "features.stocks.performance.preset3m"
+  },
+  "featuresStocksPerformancePreset6m": "آخر 6 أشهر",
+  "@featuresStocksPerformancePreset6m": {
+    "description": "Web path: features.stocks.performance.preset6m",
+    "x-webPath": "features.stocks.performance.preset6m"
+  },
+  "featuresStocksPerformancePreset1y": "آخر سنة",
+  "@featuresStocksPerformancePreset1y": {
+    "description": "Web path: features.stocks.performance.preset1y",
+    "x-webPath": "features.stocks.performance.preset1y"
+  },
+  "featuresStocksPerformancePresetYtd": "منذ بداية العام (YTD)",
+  "@featuresStocksPerformancePresetYtd": {
+    "description": "Web path: features.stocks.performance.presetYtd",
+    "x-webPath": "features.stocks.performance.presetYtd"
+  },
+  "featuresStocksPerformancePreset3y": "آخر 3 سنوات",
+  "@featuresStocksPerformancePreset3y": {
+    "description": "Web path: features.stocks.performance.preset3y",
+    "x-webPath": "features.stocks.performance.preset3y"
+  },
+  "featuresStocksPerformanceMissingPriceWarning": "بعض الأسعار التاريخية غير متوفرة لبعض الأصول؛ قد يتم احتساب TWR وبعض التقييمات تقريبياً.",
+  "@featuresStocksPerformanceMissingPriceWarning": {
+    "description": "Web path: features.stocks.performance.missingPriceWarning",
+    "x-webPath": "features.stocks.performance.missingPriceWarning"
+  },
+  "featuresStocksPerformanceXirr": "معدل العائد الداخلي السنوي (XIRR)",
+  "@featuresStocksPerformanceXirr": {
+    "description": "Web path: features.stocks.performance.xirr",
+    "x-webPath": "features.stocks.performance.xirr"
+  },
+  "featuresStocksPerformanceXirrUnavailable": "تعذر التقارب أو لا توجد تدفقات نقدية",
+  "@featuresStocksPerformanceXirrUnavailable": {
+    "description": "Web path: features.stocks.performance.xirrUnavailable",
+    "x-webPath": "features.stocks.performance.xirrUnavailable"
+  },
+  "featuresStocksPerformanceXirrDesc": "عائد مرجح بالأموال يعكس النمو السنوي المركب مع مراعاة توقيت وحجم التدفقات النقدية.",
+  "@featuresStocksPerformanceXirrDesc": {
+    "description": "Web path: features.stocks.performance.xirrDesc",
+    "x-webPath": "features.stocks.performance.xirrDesc"
+  },
+  "featuresStocksPerformanceTwr": "معدل العائد المرجح بالوقت (TWR)",
+  "@featuresStocksPerformanceTwr": {
+    "description": "Web path: features.stocks.performance.twr",
+    "x-webPath": "features.stocks.performance.twr"
+  },
+  "featuresStocksPerformanceTwrIncomplete": "نقص في بعض أسعار الإغلاق",
+  "@featuresStocksPerformanceTwrIncomplete": {
+    "description": "Web path: features.stocks.performance.twrIncomplete",
+    "x-webPath": "features.stocks.performance.twrIncomplete"
+  },
+  "featuresStocksPerformanceTwrDesc": "يزيل تأثير حجم التدفقات النقدية الداخلة والخارجة لتقييم كفاءة توزيع الأصول واختيار الأسهم.",
+  "@featuresStocksPerformanceTwrDesc": {
+    "description": "Web path: features.stocks.performance.twrDesc",
+    "x-webPath": "features.stocks.performance.twrDesc"
+  },
+  "featuresStocksPerformanceBenchmark": "عائد المؤشر القياسي ({symbol})",
+  "@featuresStocksPerformanceBenchmark": {
+    "description": "Web path: features.stocks.performance.benchmark",
+    "x-webPath": "features.stocks.performance.benchmark",
+    "placeholders": {
+      "symbol": {}
+    }
+  },
+  "featuresStocksPerformanceExcessReturn": "العائد الإضافي (Alpha)",
+  "@featuresStocksPerformanceExcessReturn": {
+    "description": "Web path: features.stocks.performance.excessReturn",
+    "x-webPath": "features.stocks.performance.excessReturn"
+  },
+  "featuresStocksPerformanceTotalGain": "إجمالي مكاسب الفترة",
+  "@featuresStocksPerformanceTotalGain": {
+    "description": "Web path: features.stocks.performance.totalGain",
+    "x-webPath": "features.stocks.performance.totalGain"
+  },
+  "featuresStocksPerformanceNetFlow": "صافي التدفقات النقدية",
+  "@featuresStocksPerformanceNetFlow": {
+    "description": "Web path: features.stocks.performance.netFlow",
+    "x-webPath": "features.stocks.performance.netFlow"
+  },
+  "featuresStocksPerformanceAttributionTitle": "تحليل عزو العائد (العوامل الخمسة)",
+  "@featuresStocksPerformanceAttributionTitle": {
+    "description": "Web path: features.stocks.performance.attributionTitle",
+    "x-webPath": "features.stocks.performance.attributionTitle"
+  },
+  "featuresStocksPerformanceAttributionDesc": "القيمة النهائية = القيمة الابتدائية + صافي التدفقات + إجمالي المكاسب (المحققة + تغير غير المحققة + الأرباح الموزعة - الرسوم والضرائب)",
+  "@featuresStocksPerformanceAttributionDesc": {
+    "description": "Web path: features.stocks.performance.attributionDesc",
+    "x-webPath": "features.stocks.performance.attributionDesc"
+  },
+  "featuresStocksPerformanceRealizedPl": "الربح/الخسارة المحققة",
+  "@featuresStocksPerformanceRealizedPl": {
+    "description": "Web path: features.stocks.performance.realizedPl",
+    "x-webPath": "features.stocks.performance.realizedPl"
+  },
+  "featuresStocksPerformanceUnrealizedChange": "تغير الأرباح غير المحققة",
+  "@featuresStocksPerformanceUnrealizedChange": {
+    "description": "Web path: features.stocks.performance.unrealizedChange",
+    "x-webPath": "features.stocks.performance.unrealizedChange"
+  },
+  "featuresStocksPerformanceDividends": "دخل التوزيعات",
+  "@featuresStocksPerformanceDividends": {
+    "description": "Web path: features.stocks.performance.dividends",
+    "x-webPath": "features.stocks.performance.dividends"
+  },
+  "featuresStocksPerformanceFeesAndTaxes": "الرسوم والضرائب",
+  "@featuresStocksPerformanceFeesAndTaxes": {
+    "description": "Web path: features.stocks.performance.feesAndTaxes",
+    "x-webPath": "features.stocks.performance.feesAndTaxes"
+  },
+  "featuresStocksPerformanceStartValue": "قيمة المحفظة الابتدائية",
+  "@featuresStocksPerformanceStartValue": {
+    "description": "Web path: features.stocks.performance.startValue",
+    "x-webPath": "features.stocks.performance.startValue"
+  },
+  "featuresStocksPerformanceContributions": "الإيداعات / مشتريات الأسهم",
+  "@featuresStocksPerformanceContributions": {
+    "description": "Web path: features.stocks.performance.contributions",
+    "x-webPath": "features.stocks.performance.contributions"
+  },
+  "featuresStocksPerformanceWithdrawals": "السحوبات / مبيعات الأسهم",
+  "@featuresStocksPerformanceWithdrawals": {
+    "description": "Web path: features.stocks.performance.withdrawals",
+    "x-webPath": "features.stocks.performance.withdrawals"
+  },
+  "featuresStocksPerformanceEndValue": "قيمة المحفظة النهائية",
+  "@featuresStocksPerformanceEndValue": {
+    "description": "Web path: features.stocks.performance.endValue",
+    "x-webPath": "features.stocks.performance.endValue"
+  },
+  "featuresStocksPerformanceTrendTitle": "مسار قيمة المحفظة وصافي رأس المال المستثمر",
+  "@featuresStocksPerformanceTrendTitle": {
+    "description": "Web path: features.stocks.performance.trendTitle",
+    "x-webPath": "features.stocks.performance.trendTitle"
+  },
+  "featuresStocksPerformanceTrendMarketValue": "القيمة الإجمالية للمحفظة",
+  "@featuresStocksPerformanceTrendMarketValue": {
+    "description": "Web path: features.stocks.performance.trendMarketValue",
+    "x-webPath": "features.stocks.performance.trendMarketValue"
+  },
+  "featuresStocksPerformanceTrendNetContributions": "صافي رأس المال المستثمر التراكمي",
+  "@featuresStocksPerformanceTrendNetContributions": {
+    "description": "Web path: features.stocks.performance.trendNetContributions",
+    "x-webPath": "features.stocks.performance.trendNetContributions"
+  },
+  "featuresStocksPerformanceTrendNoData": "لا توجد بيانات كافية لرسم المسار لهذه الفترة",
+  "@featuresStocksPerformanceTrendNoData": {
+    "description": "Web path: features.stocks.performance.trendNoData",
+    "x-webPath": "features.stocks.performance.trendNoData"
+  },
+  "featuresStocksPerformanceFlowsTitle": "التدفقات النقدية وحركات رأس المال",
+  "@featuresStocksPerformanceFlowsTitle": {
+    "description": "Web path: features.stocks.performance.flowsTitle",
+    "x-webPath": "features.stocks.performance.flowsTitle"
+  },
+  "featuresStocksPerformanceFlowDate": "التاريخ",
+  "@featuresStocksPerformanceFlowDate": {
+    "description": "Web path: features.stocks.performance.flowDate",
+    "x-webPath": "features.stocks.performance.flowDate"
+  },
+  "featuresStocksPerformanceFlowKind": "النوع",
+  "@featuresStocksPerformanceFlowKind": {
+    "description": "Web path: features.stocks.performance.flowKind",
+    "x-webPath": "features.stocks.performance.flowKind"
+  },
+  "featuresStocksPerformanceFlowSymbol": "الرمز",
+  "@featuresStocksPerformanceFlowSymbol": {
+    "description": "Web path: features.stocks.performance.flowSymbol",
+    "x-webPath": "features.stocks.performance.flowSymbol"
+  },
+  "featuresStocksPerformanceFlowDirection": "الاتجاه",
+  "@featuresStocksPerformanceFlowDirection": {
+    "description": "Web path: features.stocks.performance.flowDirection",
+    "x-webPath": "features.stocks.performance.flowDirection"
+  },
+  "featuresStocksPerformanceFlowAmount": "المبلغ",
+  "@featuresStocksPerformanceFlowAmount": {
+    "description": "Web path: features.stocks.performance.flowAmount",
+    "x-webPath": "features.stocks.performance.flowAmount"
+  },
+  "featuresStocksPerformanceFlowIn": "تدفق داخل (+)",
+  "@featuresStocksPerformanceFlowIn": {
+    "description": "Web path: features.stocks.performance.flowIn",
+    "x-webPath": "features.stocks.performance.flowIn"
+  },
+  "featuresStocksPerformanceFlowOut": "تدفق خارج (-)",
+  "@featuresStocksPerformanceFlowOut": {
+    "description": "Web path: features.stocks.performance.flowOut",
+    "x-webPath": "features.stocks.performance.flowOut"
+  },
+  "featuresStocksPerformanceFlowsEmpty": "لا توجد تدفقات نقدية أو حركات رأس مال في هذه الفترة",
+  "@featuresStocksPerformanceFlowsEmpty": {
+    "description": "Web path: features.stocks.performance.flowsEmpty",
+    "x-webPath": "features.stocks.performance.flowsEmpty"
   }
 }

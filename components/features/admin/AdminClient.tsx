@@ -66,6 +66,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   import_stock_transactions: "匯入台股交易資料",
   export_stock_dividends: "匯出台股股利資料",
   import_stock_dividends: "匯入台股股利資料",
+  export_stock_performance: "匯出投資組合績效",
   download_backup: "下載資料庫備份",
   restore_backup: "還原資料庫備份",
   restore_failed: "資料庫還原失敗",

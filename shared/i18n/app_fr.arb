@@ -10432,5 +10432,258 @@
   "@featuresTagsStatsNote": {
     "description": "Web path: features.tags.stats.note",
     "x-webPath": "features.tags.stats.note"
+  },
+  "featuresStocksTabsPerformance": "Performance",
+  "@featuresStocksTabsPerformance": {
+    "description": "Web path: features.stocks.tabs.performance",
+    "x-webPath": "features.stocks.tabs.performance"
+  },
+  "featuresStocksPerformanceTitle": "Analyse de performance du portefeuille",
+  "@featuresStocksPerformanceTitle": {
+    "description": "Web path: features.stocks.performance.title",
+    "x-webPath": "features.stocks.performance.title"
+  },
+  "featuresStocksPerformanceSubtitle": "Analysez vos rendements avec le taux pondéré par le temps (TWR), le taux de rentabilité interne (XIRR), le benchmark et l’attribution à 5 facteurs.",
+  "@featuresStocksPerformanceSubtitle": {
+    "description": "Web path: features.stocks.performance.subtitle",
+    "x-webPath": "features.stocks.performance.subtitle"
+  },
+  "featuresStocksPerformanceExportCsv": "Exporter en CSV",
+  "@featuresStocksPerformanceExportCsv": {
+    "description": "Web path: features.stocks.performance.exportCsv",
+    "x-webPath": "features.stocks.performance.exportCsv"
+  },
+  "featuresStocksPerformanceExportXlsx": "Exporter en Excel",
+  "@featuresStocksPerformanceExportXlsx": {
+    "description": "Web path: features.stocks.performance.exportXlsx",
+    "x-webPath": "features.stocks.performance.exportXlsx"
+  },
+  "featuresStocksPerformanceFilterMarket": "Marché",
+  "@featuresStocksPerformanceFilterMarket": {
+    "description": "Web path: features.stocks.performance.filterMarket",
+    "x-webPath": "features.stocks.performance.filterMarket"
+  },
+  "featuresStocksPerformanceFilterFrom": "Date de début",
+  "@featuresStocksPerformanceFilterFrom": {
+    "description": "Web path: features.stocks.performance.filterFrom",
+    "x-webPath": "features.stocks.performance.filterFrom"
+  },
+  "featuresStocksPerformanceFilterTo": "Date de fin",
+  "@featuresStocksPerformanceFilterTo": {
+    "description": "Web path: features.stocks.performance.filterTo",
+    "x-webPath": "features.stocks.performance.filterTo"
+  },
+  "featuresStocksPerformanceFilterBaseCurrency": "Devise de référence",
+  "@featuresStocksPerformanceFilterBaseCurrency": {
+    "description": "Web path: features.stocks.performance.filterBaseCurrency",
+    "x-webPath": "features.stocks.performance.filterBaseCurrency"
+  },
+  "featuresStocksPerformanceQuery": "Analyser",
+  "@featuresStocksPerformanceQuery": {
+    "description": "Web path: features.stocks.performance.query",
+    "x-webPath": "features.stocks.performance.query"
+  },
+  "featuresStocksPerformancePreset1m": "1 mois",
+  "@featuresStocksPerformancePreset1m": {
+    "description": "Web path: features.stocks.performance.preset1m",
+    "x-webPath": "features.stocks.performance.preset1m"
+  },
+  "featuresStocksPerformancePreset3m": "3 mois",
+  "@featuresStocksPerformancePreset3m": {
+    "description": "Web path: features.stocks.performance.preset3m",
+    "x-webPath": "features.stocks.performance.preset3m"
+  },
+  "featuresStocksPerformancePreset6m": "6 mois",
+  "@featuresStocksPerformancePreset6m": {
+    "description": "Web path: features.stocks.performance.preset6m",
+    "x-webPath": "features.stocks.performance.preset6m"
+  },
+  "featuresStocksPerformancePreset1y": "1 an",
+  "@featuresStocksPerformancePreset1y": {
+    "description": "Web path: features.stocks.performance.preset1y",
+    "x-webPath": "features.stocks.performance.preset1y"
+  },
+  "featuresStocksPerformancePresetYtd": "Depuis le début de l’année (YTD)",
+  "@featuresStocksPerformancePresetYtd": {
+    "description": "Web path: features.stocks.performance.presetYtd",
+    "x-webPath": "features.stocks.performance.presetYtd"
+  },
+  "featuresStocksPerformancePreset3y": "3 ans",
+  "@featuresStocksPerformancePreset3y": {
+    "description": "Web path: features.stocks.performance.preset3y",
+    "x-webPath": "features.stocks.performance.preset3y"
+  },
+  "featuresStocksPerformanceMissingPriceWarning": "Certains cours de clôture historiques sont manquants ; le TWR et certaines valorisations peuvent être approximatifs.",
+  "@featuresStocksPerformanceMissingPriceWarning": {
+    "description": "Web path: features.stocks.performance.missingPriceWarning",
+    "x-webPath": "features.stocks.performance.missingPriceWarning"
+  },
+  "featuresStocksPerformanceXirr": "Taux de rentabilité interne annualisé (XIRR)",
+  "@featuresStocksPerformanceXirr": {
+    "description": "Web path: features.stocks.performance.xirr",
+    "x-webPath": "features.stocks.performance.xirr"
+  },
+  "featuresStocksPerformanceXirrUnavailable": "Impossible de converger ou aucun flux",
+  "@featuresStocksPerformanceXirrUnavailable": {
+    "description": "Web path: features.stocks.performance.xirrUnavailable",
+    "x-webPath": "features.stocks.performance.xirrUnavailable"
+  },
+  "featuresStocksPerformanceXirrDesc": "Rendement pondéré par les capitaux reflétant le rendement annuel composé en tenant compte des dates et montants investis.",
+  "@featuresStocksPerformanceXirrDesc": {
+    "description": "Web path: features.stocks.performance.xirrDesc",
+    "x-webPath": "features.stocks.performance.xirrDesc"
+  },
+  "featuresStocksPerformanceTwr": "Taux de rendement pondéré dans le temps (TWR)",
+  "@featuresStocksPerformanceTwr": {
+    "description": "Web path: features.stocks.performance.twr",
+    "x-webPath": "features.stocks.performance.twr"
+  },
+  "featuresStocksPerformanceTwrIncomplete": "Certains cours de clôture manquent",
+  "@featuresStocksPerformanceTwrIncomplete": {
+    "description": "Web path: features.stocks.performance.twrIncomplete",
+    "x-webPath": "features.stocks.performance.twrIncomplete"
+  },
+  "featuresStocksPerformanceTwrDesc": "Élimine l’impact des flux entrants et sortants pour évaluer objectivement les choix d’allocation et de sélection d’actifs.",
+  "@featuresStocksPerformanceTwrDesc": {
+    "description": "Web path: features.stocks.performance.twrDesc",
+    "x-webPath": "features.stocks.performance.twrDesc"
+  },
+  "featuresStocksPerformanceBenchmark": "Rendement de l’indice de référence ({symbol})",
+  "@featuresStocksPerformanceBenchmark": {
+    "description": "Web path: features.stocks.performance.benchmark",
+    "x-webPath": "features.stocks.performance.benchmark",
+    "placeholders": {
+      "symbol": {}
+    }
+  },
+  "featuresStocksPerformanceExcessReturn": "Rendement excédentaire (Alpha)",
+  "@featuresStocksPerformanceExcessReturn": {
+    "description": "Web path: features.stocks.performance.excessReturn",
+    "x-webPath": "features.stocks.performance.excessReturn"
+  },
+  "featuresStocksPerformanceTotalGain": "Gain total sur la période",
+  "@featuresStocksPerformanceTotalGain": {
+    "description": "Web path: features.stocks.performance.totalGain",
+    "x-webPath": "features.stocks.performance.totalGain"
+  },
+  "featuresStocksPerformanceNetFlow": "Flux net de capitaux",
+  "@featuresStocksPerformanceNetFlow": {
+    "description": "Web path: features.stocks.performance.netFlow",
+    "x-webPath": "features.stocks.performance.netFlow"
+  },
+  "featuresStocksPerformanceAttributionTitle": "Attribution de performance (5 facteurs)",
+  "@featuresStocksPerformanceAttributionTitle": {
+    "description": "Web path: features.stocks.performance.attributionTitle",
+    "x-webPath": "features.stocks.performance.attributionTitle"
+  },
+  "featuresStocksPerformanceAttributionDesc": "Valeur finale = Valeur initiale + Apports nets + Gain total (Réalisé + Variation non réalisée + Dividendes - Frais et taxes)",
+  "@featuresStocksPerformanceAttributionDesc": {
+    "description": "Web path: features.stocks.performance.attributionDesc",
+    "x-webPath": "features.stocks.performance.attributionDesc"
+  },
+  "featuresStocksPerformanceRealizedPl": "P/L réalisé",
+  "@featuresStocksPerformanceRealizedPl": {
+    "description": "Web path: features.stocks.performance.realizedPl",
+    "x-webPath": "features.stocks.performance.realizedPl"
+  },
+  "featuresStocksPerformanceUnrealizedChange": "Variation des plus-values latentes",
+  "@featuresStocksPerformanceUnrealizedChange": {
+    "description": "Web path: features.stocks.performance.unrealizedChange",
+    "x-webPath": "features.stocks.performance.unrealizedChange"
+  },
+  "featuresStocksPerformanceDividends": "Revenus de dividendes",
+  "@featuresStocksPerformanceDividends": {
+    "description": "Web path: features.stocks.performance.dividends",
+    "x-webPath": "features.stocks.performance.dividends"
+  },
+  "featuresStocksPerformanceFeesAndTaxes": "Frais et taxes",
+  "@featuresStocksPerformanceFeesAndTaxes": {
+    "description": "Web path: features.stocks.performance.feesAndTaxes",
+    "x-webPath": "features.stocks.performance.feesAndTaxes"
+  },
+  "featuresStocksPerformanceStartValue": "Valeur initiale du portefeuille",
+  "@featuresStocksPerformanceStartValue": {
+    "description": "Web path: features.stocks.performance.startValue",
+    "x-webPath": "features.stocks.performance.startValue"
+  },
+  "featuresStocksPerformanceContributions": "Apports / achats de titres",
+  "@featuresStocksPerformanceContributions": {
+    "description": "Web path: features.stocks.performance.contributions",
+    "x-webPath": "features.stocks.performance.contributions"
+  },
+  "featuresStocksPerformanceWithdrawals": "Retraits / ventes de titres",
+  "@featuresStocksPerformanceWithdrawals": {
+    "description": "Web path: features.stocks.performance.withdrawals",
+    "x-webPath": "features.stocks.performance.withdrawals"
+  },
+  "featuresStocksPerformanceEndValue": "Valeur finale du portefeuille",
+  "@featuresStocksPerformanceEndValue": {
+    "description": "Web path: features.stocks.performance.endValue",
+    "x-webPath": "features.stocks.performance.endValue"
+  },
+  "featuresStocksPerformanceTrendTitle": "Évolution de la valeur du portefeuille et du capital net investi",
+  "@featuresStocksPerformanceTrendTitle": {
+    "description": "Web path: features.stocks.performance.trendTitle",
+    "x-webPath": "features.stocks.performance.trendTitle"
+  },
+  "featuresStocksPerformanceTrendMarketValue": "Valeur totale du portefeuille",
+  "@featuresStocksPerformanceTrendMarketValue": {
+    "description": "Web path: features.stocks.performance.trendMarketValue",
+    "x-webPath": "features.stocks.performance.trendMarketValue"
+  },
+  "featuresStocksPerformanceTrendNetContributions": "Capital net cumulé investi",
+  "@featuresStocksPerformanceTrendNetContributions": {
+    "description": "Web path: features.stocks.performance.trendNetContributions",
+    "x-webPath": "features.stocks.performance.trendNetContributions"
+  },
+  "featuresStocksPerformanceTrendNoData": "Données de tendance insuffisantes pour cette période",
+  "@featuresStocksPerformanceTrendNoData": {
+    "description": "Web path: features.stocks.performance.trendNoData",
+    "x-webPath": "features.stocks.performance.trendNoData"
+  },
+  "featuresStocksPerformanceFlowsTitle": "Flux de trésorerie et mouvements",
+  "@featuresStocksPerformanceFlowsTitle": {
+    "description": "Web path: features.stocks.performance.flowsTitle",
+    "x-webPath": "features.stocks.performance.flowsTitle"
+  },
+  "featuresStocksPerformanceFlowDate": "Date",
+  "@featuresStocksPerformanceFlowDate": {
+    "description": "Web path: features.stocks.performance.flowDate",
+    "x-webPath": "features.stocks.performance.flowDate"
+  },
+  "featuresStocksPerformanceFlowKind": "Type",
+  "@featuresStocksPerformanceFlowKind": {
+    "description": "Web path: features.stocks.performance.flowKind",
+    "x-webPath": "features.stocks.performance.flowKind"
+  },
+  "featuresStocksPerformanceFlowSymbol": "Symbole",
+  "@featuresStocksPerformanceFlowSymbol": {
+    "description": "Web path: features.stocks.performance.flowSymbol",
+    "x-webPath": "features.stocks.performance.flowSymbol"
+  },
+  "featuresStocksPerformanceFlowDirection": "Sens",
+  "@featuresStocksPerformanceFlowDirection": {
+    "description": "Web path: features.stocks.performance.flowDirection",
+    "x-webPath": "features.stocks.performance.flowDirection"
+  },
+  "featuresStocksPerformanceFlowAmount": "Montant",
+  "@featuresStocksPerformanceFlowAmount": {
+    "description": "Web path: features.stocks.performance.flowAmount",
+    "x-webPath": "features.stocks.performance.flowAmount"
+  },
+  "featuresStocksPerformanceFlowIn": "Entrée (+)",
+  "@featuresStocksPerformanceFlowIn": {
+    "description": "Web path: features.stocks.performance.flowIn",
+    "x-webPath": "features.stocks.performance.flowIn"
+  },
+  "featuresStocksPerformanceFlowOut": "Sortie (-)",
+  "@featuresStocksPerformanceFlowOut": {
+    "description": "Web path: features.stocks.performance.flowOut",
+    "x-webPath": "features.stocks.performance.flowOut"
+  },
+  "featuresStocksPerformanceFlowsEmpty": "Aucun flux de trésorerie ni mouvement sur cette période",
+  "@featuresStocksPerformanceFlowsEmpty": {
+    "description": "Web path: features.stocks.performance.flowsEmpty",
+    "x-webPath": "features.stocks.performance.flowsEmpty"
   }
 }

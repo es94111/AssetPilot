@@ -10432,5 +10432,258 @@
   "@featuresTagsStatsNote": {
     "description": "Web path: features.tags.stats.note",
     "x-webPath": "features.tags.stats.note"
+  },
+  "featuresStocksTabsPerformance": "绩效分析",
+  "@featuresStocksTabsPerformance": {
+    "description": "Web path: features.stocks.tabs.performance",
+    "x-webPath": "features.stocks.tabs.performance"
+  },
+  "featuresStocksPerformanceTitle": "投资组合绩效分析",
+  "@featuresStocksPerformanceTitle": {
+    "description": "Web path: features.stocks.performance.title",
+    "x-webPath": "features.stocks.performance.title"
+  },
+  "featuresStocksPerformanceSubtitle": "按时间加权 (TWR)、金额加权 (XIRR) 与大盘基准计算投资表现，并提供五因子收益归因分析。",
+  "@featuresStocksPerformanceSubtitle": {
+    "description": "Web path: features.stocks.performance.subtitle",
+    "x-webPath": "features.stocks.performance.subtitle"
+  },
+  "featuresStocksPerformanceExportCsv": "导出 CSV",
+  "@featuresStocksPerformanceExportCsv": {
+    "description": "Web path: features.stocks.performance.exportCsv",
+    "x-webPath": "features.stocks.performance.exportCsv"
+  },
+  "featuresStocksPerformanceExportXlsx": "导出 Excel",
+  "@featuresStocksPerformanceExportXlsx": {
+    "description": "Web path: features.stocks.performance.exportXlsx",
+    "x-webPath": "features.stocks.performance.exportXlsx"
+  },
+  "featuresStocksPerformanceFilterMarket": "市场",
+  "@featuresStocksPerformanceFilterMarket": {
+    "description": "Web path: features.stocks.performance.filterMarket",
+    "x-webPath": "features.stocks.performance.filterMarket"
+  },
+  "featuresStocksPerformanceFilterFrom": "起始日期",
+  "@featuresStocksPerformanceFilterFrom": {
+    "description": "Web path: features.stocks.performance.filterFrom",
+    "x-webPath": "features.stocks.performance.filterFrom"
+  },
+  "featuresStocksPerformanceFilterTo": "结束日期",
+  "@featuresStocksPerformanceFilterTo": {
+    "description": "Web path: features.stocks.performance.filterTo",
+    "x-webPath": "features.stocks.performance.filterTo"
+  },
+  "featuresStocksPerformanceFilterBaseCurrency": "基准币种",
+  "@featuresStocksPerformanceFilterBaseCurrency": {
+    "description": "Web path: features.stocks.performance.filterBaseCurrency",
+    "x-webPath": "features.stocks.performance.filterBaseCurrency"
+  },
+  "featuresStocksPerformanceQuery": "查询绩效",
+  "@featuresStocksPerformanceQuery": {
+    "description": "Web path: features.stocks.performance.query",
+    "x-webPath": "features.stocks.performance.query"
+  },
+  "featuresStocksPerformancePreset1m": "近 1 个月",
+  "@featuresStocksPerformancePreset1m": {
+    "description": "Web path: features.stocks.performance.preset1m",
+    "x-webPath": "features.stocks.performance.preset1m"
+  },
+  "featuresStocksPerformancePreset3m": "近 3 个月",
+  "@featuresStocksPerformancePreset3m": {
+    "description": "Web path: features.stocks.performance.preset3m",
+    "x-webPath": "features.stocks.performance.preset3m"
+  },
+  "featuresStocksPerformancePreset6m": "近 6 个月",
+  "@featuresStocksPerformancePreset6m": {
+    "description": "Web path: features.stocks.performance.preset6m",
+    "x-webPath": "features.stocks.performance.preset6m"
+  },
+  "featuresStocksPerformancePreset1y": "近 1 年",
+  "@featuresStocksPerformancePreset1y": {
+    "description": "Web path: features.stocks.performance.preset1y",
+    "x-webPath": "features.stocks.performance.preset1y"
+  },
+  "featuresStocksPerformancePresetYtd": "今年以来 (YTD)",
+  "@featuresStocksPerformancePresetYtd": {
+    "description": "Web path: features.stocks.performance.presetYtd",
+    "x-webPath": "features.stocks.performance.presetYtd"
+  },
+  "featuresStocksPerformancePreset3y": "近 3 年",
+  "@featuresStocksPerformancePreset3y": {
+    "description": "Web path: features.stocks.performance.preset3y",
+    "x-webPath": "features.stocks.performance.preset3y"
+  },
+  "featuresStocksPerformanceMissingPriceWarning": "部分持仓缺乏历史收盘价，TWR 及部分时点可能以近似估值计算。",
+  "@featuresStocksPerformanceMissingPriceWarning": {
+    "description": "Web path: features.stocks.performance.missingPriceWarning",
+    "x-webPath": "features.stocks.performance.missingPriceWarning"
+  },
+  "featuresStocksPerformanceXirr": "年化内部收益率 (XIRR)",
+  "@featuresStocksPerformanceXirr": {
+    "description": "Web path: features.stocks.performance.xirr",
+    "x-webPath": "features.stocks.performance.xirr"
+  },
+  "featuresStocksPerformanceXirrUnavailable": "无法收敛或无现金流",
+  "@featuresStocksPerformanceXirrUnavailable": {
+    "description": "Web path: features.stocks.performance.xirrUnavailable",
+    "x-webPath": "features.stocks.performance.xirrUnavailable"
+  },
+  "featuresStocksPerformanceXirrDesc": "金额加权收益率，反映考虑资金进出时点与金额后的实质年化复利回报。",
+  "@featuresStocksPerformanceXirrDesc": {
+    "description": "Web path: features.stocks.performance.xirrDesc",
+    "x-webPath": "features.stocks.performance.xirrDesc"
+  },
+  "featuresStocksPerformanceTwr": "时间加权收益率 (TWR)",
+  "@featuresStocksPerformanceTwr": {
+    "description": "Web path: features.stocks.performance.twr",
+    "x-webPath": "features.stocks.performance.twr"
+  },
+  "featuresStocksPerformanceTwrIncomplete": "缺少部分收盘价",
+  "@featuresStocksPerformanceTwrIncomplete": {
+    "description": "Web path: features.stocks.performance.twrIncomplete",
+    "x-webPath": "features.stocks.performance.twrIncomplete"
+  },
+  "featuresStocksPerformanceTwrDesc": "消除资金进出规模影响，客观评估投资组合资产配置与选股决策能力。",
+  "@featuresStocksPerformanceTwrDesc": {
+    "description": "Web path: features.stocks.performance.twrDesc",
+    "x-webPath": "features.stocks.performance.twrDesc"
+  },
+  "featuresStocksPerformanceBenchmark": "大盘基准收益 ({symbol})",
+  "@featuresStocksPerformanceBenchmark": {
+    "description": "Web path: features.stocks.performance.benchmark",
+    "x-webPath": "features.stocks.performance.benchmark",
+    "placeholders": {
+      "symbol": {}
+    }
+  },
+  "featuresStocksPerformanceExcessReturn": "超额收益 (Alpha)",
+  "@featuresStocksPerformanceExcessReturn": {
+    "description": "Web path: features.stocks.performance.excessReturn",
+    "x-webPath": "features.stocks.performance.excessReturn"
+  },
+  "featuresStocksPerformanceTotalGain": "区间总收益",
+  "@featuresStocksPerformanceTotalGain": {
+    "description": "Web path: features.stocks.performance.totalGain",
+    "x-webPath": "features.stocks.performance.totalGain"
+  },
+  "featuresStocksPerformanceNetFlow": "净注入资金",
+  "@featuresStocksPerformanceNetFlow": {
+    "description": "Web path: features.stocks.performance.netFlow",
+    "x-webPath": "features.stocks.performance.netFlow"
+  },
+  "featuresStocksPerformanceAttributionTitle": "收益归因分析（五因子）",
+  "@featuresStocksPerformanceAttributionTitle": {
+    "description": "Web path: features.stocks.performance.attributionTitle",
+    "x-webPath": "features.stocks.performance.attributionTitle"
+  },
+  "featuresStocksPerformanceAttributionDesc": "期末资产 = 期初资产 + 净注入资金 + 总收益（已实现 + 未实现变动 + 股利 - 手续费与税）",
+  "@featuresStocksPerformanceAttributionDesc": {
+    "description": "Web path: features.stocks.performance.attributionDesc",
+    "x-webPath": "features.stocks.performance.attributionDesc"
+  },
+  "featuresStocksPerformanceRealizedPl": "已实现盈亏",
+  "@featuresStocksPerformanceRealizedPl": {
+    "description": "Web path: features.stocks.performance.realizedPl",
+    "x-webPath": "features.stocks.performance.realizedPl"
+  },
+  "featuresStocksPerformanceUnrealizedChange": "未实现盈亏变动",
+  "@featuresStocksPerformanceUnrealizedChange": {
+    "description": "Web path: features.stocks.performance.unrealizedChange",
+    "x-webPath": "features.stocks.performance.unrealizedChange"
+  },
+  "featuresStocksPerformanceDividends": "股利收入",
+  "@featuresStocksPerformanceDividends": {
+    "description": "Web path: features.stocks.performance.dividends",
+    "x-webPath": "features.stocks.performance.dividends"
+  },
+  "featuresStocksPerformanceFeesAndTaxes": "手续费与交易税",
+  "@featuresStocksPerformanceFeesAndTaxes": {
+    "description": "Web path: features.stocks.performance.feesAndTaxes",
+    "x-webPath": "features.stocks.performance.feesAndTaxes"
+  },
+  "featuresStocksPerformanceStartValue": "期初资产市值",
+  "@featuresStocksPerformanceStartValue": {
+    "description": "Web path: features.stocks.performance.startValue",
+    "x-webPath": "features.stocks.performance.startValue"
+  },
+  "featuresStocksPerformanceContributions": "资金转入／买入投入",
+  "@featuresStocksPerformanceContributions": {
+    "description": "Web path: features.stocks.performance.contributions",
+    "x-webPath": "features.stocks.performance.contributions"
+  },
+  "featuresStocksPerformanceWithdrawals": "资金转出／卖出取回",
+  "@featuresStocksPerformanceWithdrawals": {
+    "description": "Web path: features.stocks.performance.withdrawals",
+    "x-webPath": "features.stocks.performance.withdrawals"
+  },
+  "featuresStocksPerformanceEndValue": "期末资产市值",
+  "@featuresStocksPerformanceEndValue": {
+    "description": "Web path: features.stocks.performance.endValue",
+    "x-webPath": "features.stocks.performance.endValue"
+  },
+  "featuresStocksPerformanceTrendTitle": "资产市值与累计净投入走势",
+  "@featuresStocksPerformanceTrendTitle": {
+    "description": "Web path: features.stocks.performance.trendTitle",
+    "x-webPath": "features.stocks.performance.trendTitle"
+  },
+  "featuresStocksPerformanceTrendMarketValue": "资产总市值",
+  "@featuresStocksPerformanceTrendMarketValue": {
+    "description": "Web path: features.stocks.performance.trendMarketValue",
+    "x-webPath": "features.stocks.performance.trendMarketValue"
+  },
+  "featuresStocksPerformanceTrendNetContributions": "累计净投入资金",
+  "@featuresStocksPerformanceTrendNetContributions": {
+    "description": "Web path: features.stocks.performance.trendNetContributions",
+    "x-webPath": "features.stocks.performance.trendNetContributions"
+  },
+  "featuresStocksPerformanceTrendNoData": "此区间尚无足够走势数据",
+  "@featuresStocksPerformanceTrendNoData": {
+    "description": "Web path: features.stocks.performance.trendNoData",
+    "x-webPath": "features.stocks.performance.trendNoData"
+  },
+  "featuresStocksPerformanceFlowsTitle": "现金流与进出记录",
+  "@featuresStocksPerformanceFlowsTitle": {
+    "description": "Web path: features.stocks.performance.flowsTitle",
+    "x-webPath": "features.stocks.performance.flowsTitle"
+  },
+  "featuresStocksPerformanceFlowDate": "日期",
+  "@featuresStocksPerformanceFlowDate": {
+    "description": "Web path: features.stocks.performance.flowDate",
+    "x-webPath": "features.stocks.performance.flowDate"
+  },
+  "featuresStocksPerformanceFlowKind": "类别",
+  "@featuresStocksPerformanceFlowKind": {
+    "description": "Web path: features.stocks.performance.flowKind",
+    "x-webPath": "features.stocks.performance.flowKind"
+  },
+  "featuresStocksPerformanceFlowSymbol": "标的",
+  "@featuresStocksPerformanceFlowSymbol": {
+    "description": "Web path: features.stocks.performance.flowSymbol",
+    "x-webPath": "features.stocks.performance.flowSymbol"
+  },
+  "featuresStocksPerformanceFlowDirection": "方向",
+  "@featuresStocksPerformanceFlowDirection": {
+    "description": "Web path: features.stocks.performance.flowDirection",
+    "x-webPath": "features.stocks.performance.flowDirection"
+  },
+  "featuresStocksPerformanceFlowAmount": "金额",
+  "@featuresStocksPerformanceFlowAmount": {
+    "description": "Web path: features.stocks.performance.flowAmount",
+    "x-webPath": "features.stocks.performance.flowAmount"
+  },
+  "featuresStocksPerformanceFlowIn": "投入 (+)",
+  "@featuresStocksPerformanceFlowIn": {
+    "description": "Web path: features.stocks.performance.flowIn",
+    "x-webPath": "features.stocks.performance.flowIn"
+  },
+  "featuresStocksPerformanceFlowOut": "取回 (-)",
+  "@featuresStocksPerformanceFlowOut": {
+    "description": "Web path: features.stocks.performance.flowOut",
+    "x-webPath": "features.stocks.performance.flowOut"
+  },
+  "featuresStocksPerformanceFlowsEmpty": "此区间内无资金进出与交易记录",
+  "@featuresStocksPerformanceFlowsEmpty": {
+    "description": "Web path: features.stocks.performance.flowsEmpty",
+    "x-webPath": "features.stocks.performance.flowsEmpty"
   }
 }

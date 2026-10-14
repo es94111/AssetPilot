@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.148.0",
+  "currentVersion": "4.149.0",
   "releases": [
+    {
+      "version": "4.149.0",
+      "date": "2026-10-15",
+      "title": "投資組合績效分析：XIRR／TWR／Benchmark 與收益歸因",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增投資組合績效分析（/stocks/performance）：提供金額加權報酬率 (XIRR，Newton-Raphson 求解)、時間加權報酬率 (TWR，分割期間連乘)、大盤基準比較 (S&P 500 / 0050) 與五因子收益歸因（期初/期末市值、已實現、未實現變動、股利、手續費與稅，維持金額守恆）；支援區間快選、資產市值與累計淨投入走勢圖、現金流明細，以及 CSV / Excel 匯出與帳本權限政策整合。#310"
+        }
+      ]
+    },
     {
       "version": "4.148.0",
       "date": "2026-10-14",

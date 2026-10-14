@@ -190,6 +190,47 @@ export async function fetchUsStockCloseOnDate(
   return parseYahooHistoricalClose(payload);
 }
 
+export interface UsClosePoint {
+  date: string;
+  close: number;
+}
+
+export function parseYahooCloseSeries(payload: unknown): UsClosePoint[] {
+  const result = (payload as any)?.chart?.result?.[0];
+  const timestamps = Array.isArray(result?.timestamp) ? result.timestamp : [];
+  const quote = result?.indicators?.quote?.[0];
+  const closes = Array.isArray(quote?.close) ? quote.close : [];
+  // 以交易所當地時區換算日期，避免 UTC 偏移造成日期錯位
+  const gmtOffset = Number(result?.meta?.gmtoffset) || 0;
+  const byDate = new Map<string, number>();
+  timestamps.forEach((timestamp: unknown, index: number) => {
+    const seconds = Number(timestamp);
+    const close = asFinitePositive(closes[index]);
+    if (!Number.isFinite(seconds) || seconds <= 0 || close <= 0) return;
+    const date = isoDateFromUnixSeconds(seconds + gmtOffset);
+    if (date) byDate.set(date, close);
+  });
+  return [...byDate.entries()]
+    .map(([date, close]) => ({ date, close }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export async function fetchUsStockCloseRange(
+  symbol: string,
+  startDate: string,
+  endDate: string,
+): Promise<UsClosePoint[]> {
+  const normalized = yahooSymbol(symbol);
+  const start = Math.floor(new Date(`${startDate}T00:00:00Z`).getTime() / 1000);
+  const end = Math.floor(new Date(`${endDate}T23:59:59Z`).getTime() / 1000);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end)
+    return [];
+  const payload = await fetchJson(
+    `${YAHOO_CHART_URL}/${encodeURIComponent(normalized)}?period1=${start}&period2=${end}&interval=1d`,
+  );
+  return parseYahooCloseSeries(payload);
+}
+
 export async function fetchUsDividends(
   symbol: string,
   startDate: string,

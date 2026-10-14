@@ -128,36 +128,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      body: AsyncView<Dashboard>(
-        key: ValueKey(_ym),
-        future: _future,
-        onRetry: _reload,
-        loadingBuilder: (_) => ListView(
-          padding: const EdgeInsets.fromLTRB(
-            ApSpace.xl,
-            ApSpace.lg,
-            ApSpace.xl,
-            ApSpace.xxl,
-          ),
-          children: const [SkeletonSummary()],
-        ),
-        builder: (context, d) => RefreshIndicator(
-          onRefresh: () async => _reload(),
-          child: ListView(
+      floatingActionButton: ApiClient.instance.activeLedgerReadOnly
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _openNewTxn,
+              icon: const Icon(Icons.add),
+              label: Text(trKey('mobileLegacyAddTransaction')),
+            ),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: (details) {
+          final velocity = details.primaryVelocity;
+          if (velocity == null) return;
+          // 右滑切換至上個月，左滑切換至下個月
+          if (velocity > 250) {
+            _shiftMonth(-1);
+          } else if (velocity < -250) {
+            _shiftMonth(1);
+          }
+        },
+        child: AsyncView<Dashboard>(
+          key: ValueKey(_ym),
+          future: _future,
+          onRetry: _reload,
+          loadingBuilder: (_) => ListView(
             padding: const EdgeInsets.fromLTRB(
               ApSpace.xl,
-              ApSpace.md,
+              ApSpace.lg,
               ApSpace.xl,
               ApSpace.xxl,
             ),
-            children: [
-              _DashboardContext(month: _ym),
-              const SizedBox(height: ApSpace.lg),
-              _AssetRow(d: d),
-              const SizedBox(height: ApSpace.lg),
-              _SummaryGrid(d: d),
-              const SizedBox(height: ApSpace.lg),
-              _QuickAccess(onAddTxn: () => _openNewTxn()),
+            children: const [SkeletonSummary()],
+          ),
+          builder: (context, d) => RefreshIndicator(
+            onRefresh: () async => _reload(),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.xl,
+                ApSpace.md,
+                ApSpace.xl,
+                ApSpace.xxl,
+              ),
+              children: [
+                _DashboardContext(month: _ym),
+                const SizedBox(height: ApSpace.lg),
+                _AssetRow(d: d),
+                const SizedBox(height: ApSpace.lg),
+                _SummaryGrid(d: d),
+                const SizedBox(height: ApSpace.lg),
+                _QuickAccess(onAddTxn: () => _openNewTxn()),
               const SizedBox(height: ApSpace.xl),
               _CategoryPie(nodes: d.catBreakdown),
               const SizedBox(height: ApSpace.xl),
@@ -191,8 +210,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Future<void> _openNewTxn() async {
     final changed = await Navigator.of(context).push<bool>(

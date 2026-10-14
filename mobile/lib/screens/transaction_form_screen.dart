@@ -751,6 +751,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               prefixIcon: Icon(Icons.attach_money),
               border: OutlineInputBorder(),
             ),
+            onChanged: (_) => setState(() {}),
             validator: (v) {
               final n = num.tryParse(v?.trim() ?? '');
               if (n == null || n <= 0) {
@@ -758,6 +759,38 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               }
               return null;
             },
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final delta in [50, 100, 500, 1000])
+                ActionChip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text('+$delta'),
+                  onPressed: () {
+                    final current = num.tryParse(_amount.text.trim()) ?? 0;
+                    final next = current + delta;
+                    setState(() {
+                      _amount.text = next == next.roundToDouble()
+                          ? next.toInt().toString()
+                          : next.toString();
+                    });
+                  },
+                ),
+              if (_amount.text.isNotEmpty)
+                ActionChip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(trKey('commonClear')),
+                  avatar: const Icon(Icons.backspace_outlined, size: 14),
+                  onPressed: () {
+                    setState(() {
+                      _amount.clear();
+                    });
+                  },
+                ),
+            ],
           ),
           SizedBox(height: 16),
           ListTile(
@@ -797,8 +830,34 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               },
             ),
           ] else ...[
+            if (_selectableCats.isNotEmpty) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  for (final cat in _selectableCats.take(8))
+                    ChoiceChip(
+                      visualDensity: VisualDensity.compact,
+                      label: Text(cat.name),
+                      selected: _categoryId == cat.id,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _parentCatId = cat.parentId;
+                            _categoryId = cat.id;
+                          } else {
+                            _categoryId = null;
+                          }
+                        });
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
             // 先選父分類。
             DropdownButtonFormField<String>(
+              key: ValueKey('parent_$_parentCatId'),
               initialValue: _parentCatId,
               isExpanded: true,
               decoration: InputDecoration(
@@ -820,6 +879,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             SizedBox(height: 16),
             // 再選該父分類底下的子分類（未選父分類前停用）。
             DropdownButtonFormField<String>(
+              key: ValueKey('child_${_parentCatId}_$_categoryId'),
               initialValue: _categoryId,
               isExpanded: true,
               decoration: InputDecoration(
@@ -1138,8 +1198,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     required ValueChanged<String?> onChanged,
     String? Function(String?)? validator,
   }) {
+    final hasVal = value != null && _accounts.any((a) => a.id == value);
+    final safeValue = hasVal ? value : null;
     return DropdownButtonFormField<String>(
-      initialValue: value,
+      key: ValueKey('acc_${label}_$safeValue'),
+      initialValue: safeValue,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: label,

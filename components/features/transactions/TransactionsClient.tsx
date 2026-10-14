@@ -366,7 +366,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }
 
   useEffect(() => {
-    if (!metaLoaded || quickCreateHandled || searchParams.get('action') !== 'add') return;
+    if (searchParams.get('action') !== 'add') {
+      if (quickCreateHandled) setQuickCreateHandled(false);
+      return;
+    }
+    if (!metaLoaded || quickCreateHandled) return;
     setQuickCreateHandled(true);
     openAdd(searchParams.get('date') || undefined);
   }, [currentQuery, metaLoaded, pathname, quickCreateHandled, searchParams]);
@@ -611,6 +615,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   function closeTransactionModal() {
     ocrRequestGate.invalidate();
     setModal(false);
+    if (searchParams.get('action') === 'add') {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('action');
+      params.delete('date');
+      const nextQuery = params.toString();
+      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -1317,8 +1328,11 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       )}
 
       <Dialog open={modal} onOpenChange={(open) => {
-        if (!open) ocrRequestGate.invalidate();
-        setModal(open);
+        if (!open) {
+          closeTransactionModal();
+        } else {
+          setModal(true);
+        }
       }}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader>

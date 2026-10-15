@@ -6857,4 +6857,173 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresTagsStatsNote =>
       'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
+
+  @override
+  String get featuresStocksTabsPerformance => 'تحليل الأداء';
+
+  @override
+  String get featuresStocksPerformanceTitle => 'تحليل أداء المحفظة الاستثمارية';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      'تقييم العائد بمعدل العائد المرجح بالوقت (TWR) ومعدل العائد الداخلي (XIRR) والمقارنة بالمؤشر مع عزو العائد خماسي العوامل.';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => 'تصدير CSV';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => 'تصدير Excel';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => 'السوق';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => 'من تاريخ';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => 'إلى تاريخ';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => 'العملة الأساسية';
+
+  @override
+  String get featuresStocksPerformanceQuery => 'استعلام';
+
+  @override
+  String get featuresStocksPerformancePreset1m => 'آخر شهر';
+
+  @override
+  String get featuresStocksPerformancePreset3m => 'آخر 3 أشهر';
+
+  @override
+  String get featuresStocksPerformancePreset6m => 'آخر 6 أشهر';
+
+  @override
+  String get featuresStocksPerformancePreset1y => 'آخر سنة';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => 'منذ بداية العام (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => 'آخر 3 سنوات';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      'بعض الأسعار التاريخية غير متوفرة لبعض الأصول؛ قد يتم احتساب TWR وبعض التقييمات تقريبياً.';
+
+  @override
+  String get featuresStocksPerformanceXirr =>
+      'معدل العائد الداخلي السنوي (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable =>
+      'تعذر التقارب أو لا توجد تدفقات نقدية';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      'عائد مرجح بالأموال يعكس النمو السنوي المركب مع مراعاة توقيت وحجم التدفقات النقدية.';
+
+  @override
+  String get featuresStocksPerformanceTwr => 'معدل العائد المرجح بالوقت (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete =>
+      'نقص في بعض أسعار الإغلاق';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      'يزيل تأثير حجم التدفقات النقدية الداخلة والخارجة لتقييم كفاءة توزيع الأصول واختيار الأسهم.';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return 'عائد المؤشر القياسي ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn => 'العائد الإضافي (Alpha)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => 'إجمالي مكاسب الفترة';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => 'صافي التدفقات النقدية';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle =>
+      'تحليل عزو العائد (العوامل الخمسة)';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      'القيمة النهائية = القيمة الابتدائية + صافي التدفقات + إجمالي المكاسب (المحققة + تغير غير المحققة + الأرباح الموزعة - الرسوم والضرائب)';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => 'الربح/الخسارة المحققة';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange =>
+      'تغير الأرباح غير المحققة';
+
+  @override
+  String get featuresStocksPerformanceDividends => 'دخل التوزيعات';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => 'الرسوم والضرائب';
+
+  @override
+  String get featuresStocksPerformanceStartValue => 'قيمة المحفظة الابتدائية';
+
+  @override
+  String get featuresStocksPerformanceContributions =>
+      'الإيداعات / مشتريات الأسهم';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals => 'السحوبات / مبيعات الأسهم';
+
+  @override
+  String get featuresStocksPerformanceEndValue => 'قيمة المحفظة النهائية';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle =>
+      'مسار قيمة المحفظة وصافي رأس المال المستثمر';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue =>
+      'القيمة الإجمالية للمحفظة';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions =>
+      'صافي رأس المال المستثمر التراكمي';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData =>
+      'لا توجد بيانات كافية لرسم المسار لهذه الفترة';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle =>
+      'التدفقات النقدية وحركات رأس المال';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => 'التاريخ';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => 'النوع';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => 'الرمز';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => 'الاتجاه';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => 'المبلغ';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => 'تدفق داخل (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => 'تدفق خارج (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty =>
+      'لا توجد تدفقات نقدية أو حركات رأس مال في هذه الفترة';
 }

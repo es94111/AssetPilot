@@ -12049,6 +12049,306 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'各標籤小計中，同一筆交易會在它的每個標籤各計一次；去重合計以交易為單位只計一次，因此不等於各標籤小計相加。已排除「不計入統計」的交易。'**
   String get featuresTagsStatsNote;
+
+  /// Web path: features.stocks.tabs.performance
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'績效分析'**
+  String get featuresStocksTabsPerformance;
+
+  /// Web path: features.stocks.performance.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'投資組合績效分析'**
+  String get featuresStocksPerformanceTitle;
+
+  /// Web path: features.stocks.performance.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'依時間加權 (TWR)、金額加權 (XIRR) 與大盤基準計算投資表現，並提供五因子收益歸因分析。'**
+  String get featuresStocksPerformanceSubtitle;
+
+  /// Web path: features.stocks.performance.exportCsv
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯出 CSV'**
+  String get featuresStocksPerformanceExportCsv;
+
+  /// Web path: features.stocks.performance.exportXlsx
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯出 Excel'**
+  String get featuresStocksPerformanceExportXlsx;
+
+  /// Web path: features.stocks.performance.filterMarket
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'市場'**
+  String get featuresStocksPerformanceFilterMarket;
+
+  /// Web path: features.stocks.performance.filterFrom
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'起始日期'**
+  String get featuresStocksPerformanceFilterFrom;
+
+  /// Web path: features.stocks.performance.filterTo
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'結束日期'**
+  String get featuresStocksPerformanceFilterTo;
+
+  /// Web path: features.stocks.performance.filterBaseCurrency
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'基準幣別'**
+  String get featuresStocksPerformanceFilterBaseCurrency;
+
+  /// Web path: features.stocks.performance.query
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查詢績效'**
+  String get featuresStocksPerformanceQuery;
+
+  /// Web path: features.stocks.performance.preset1m
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'近 1 個月'**
+  String get featuresStocksPerformancePreset1m;
+
+  /// Web path: features.stocks.performance.preset3m
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'近 3 個月'**
+  String get featuresStocksPerformancePreset3m;
+
+  /// Web path: features.stocks.performance.preset6m
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'近 6 個月'**
+  String get featuresStocksPerformancePreset6m;
+
+  /// Web path: features.stocks.performance.preset1y
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'近 1 年'**
+  String get featuresStocksPerformancePreset1y;
+
+  /// Web path: features.stocks.performance.presetYtd
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'今年以來 (YTD)'**
+  String get featuresStocksPerformancePresetYtd;
+
+  /// Web path: features.stocks.performance.preset3y
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'近 3 年'**
+  String get featuresStocksPerformancePreset3y;
+
+  /// Web path: features.stocks.performance.missingPriceWarning
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'部分持股缺乏歷史收盤價，TWR 及部分時點可能以近似估值計算。'**
+  String get featuresStocksPerformanceMissingPriceWarning;
+
+  /// Web path: features.stocks.performance.xirr
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'年化內部報酬率 (XIRR)'**
+  String get featuresStocksPerformanceXirr;
+
+  /// Web path: features.stocks.performance.xirrUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法收斂或無現金流'**
+  String get featuresStocksPerformanceXirrUnavailable;
+
+  /// Web path: features.stocks.performance.xirrDesc
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額加權報酬率，反映考量資金進出時點與金額後的實質年化複利回報。'**
+  String get featuresStocksPerformanceXirrDesc;
+
+  /// Web path: features.stocks.performance.twr
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'時間加權報酬率 (TWR)'**
+  String get featuresStocksPerformanceTwr;
+
+  /// Web path: features.stocks.performance.twrIncomplete
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'缺少部分收盤價'**
+  String get featuresStocksPerformanceTwrIncomplete;
+
+  /// Web path: features.stocks.performance.twrDesc
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'消除資金進出規模影響，客觀評估投資組合資產配置與選股決策能力。'**
+  String get featuresStocksPerformanceTwrDesc;
+
+  /// Web path: features.stocks.performance.benchmark
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'大盤基準報酬 ({symbol})'**
+  String featuresStocksPerformanceBenchmark(Object symbol);
+
+  /// Web path: features.stocks.performance.excessReturn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'超額報酬 (Alpha)'**
+  String get featuresStocksPerformanceExcessReturn;
+
+  /// Web path: features.stocks.performance.totalGain
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'區間總收益'**
+  String get featuresStocksPerformanceTotalGain;
+
+  /// Web path: features.stocks.performance.netFlow
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'淨注入資金'**
+  String get featuresStocksPerformanceNetFlow;
+
+  /// Web path: features.stocks.performance.attributionTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'收益歸因分析（五因子）'**
+  String get featuresStocksPerformanceAttributionTitle;
+
+  /// Web path: features.stocks.performance.attributionDesc
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期末資產 = 期初資產 + 淨注入資金 + 總收益（已實現 + 未實現變動 + 股利 - 手續費與稅）'**
+  String get featuresStocksPerformanceAttributionDesc;
+
+  /// Web path: features.stocks.performance.realizedPl
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已實現損益'**
+  String get featuresStocksPerformanceRealizedPl;
+
+  /// Web path: features.stocks.performance.unrealizedChange
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'未實現損益變動'**
+  String get featuresStocksPerformanceUnrealizedChange;
+
+  /// Web path: features.stocks.performance.dividends
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股利收入'**
+  String get featuresStocksPerformanceDividends;
+
+  /// Web path: features.stocks.performance.feesAndTaxes
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'手續費與交易稅'**
+  String get featuresStocksPerformanceFeesAndTaxes;
+
+  /// Web path: features.stocks.performance.startValue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期初資產市值'**
+  String get featuresStocksPerformanceStartValue;
+
+  /// Web path: features.stocks.performance.contributions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資金轉入／買入投入'**
+  String get featuresStocksPerformanceContributions;
+
+  /// Web path: features.stocks.performance.withdrawals
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資金轉出／賣出取回'**
+  String get featuresStocksPerformanceWithdrawals;
+
+  /// Web path: features.stocks.performance.endValue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'期末資產市值'**
+  String get featuresStocksPerformanceEndValue;
+
+  /// Web path: features.stocks.performance.trendTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資產市值與累計淨投入走勢'**
+  String get featuresStocksPerformanceTrendTitle;
+
+  /// Web path: features.stocks.performance.trendMarketValue
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資產總市值'**
+  String get featuresStocksPerformanceTrendMarketValue;
+
+  /// Web path: features.stocks.performance.trendNetContributions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'累計淨投入資金'**
+  String get featuresStocksPerformanceTrendNetContributions;
+
+  /// Web path: features.stocks.performance.trendNoData
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此區間尚無足夠走勢資料'**
+  String get featuresStocksPerformanceTrendNoData;
+
+  /// Web path: features.stocks.performance.flowsTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'現金流與進出紀錄'**
+  String get featuresStocksPerformanceFlowsTitle;
+
+  /// Web path: features.stocks.performance.flowDate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'日期'**
+  String get featuresStocksPerformanceFlowDate;
+
+  /// Web path: features.stocks.performance.flowKind
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'類別'**
+  String get featuresStocksPerformanceFlowKind;
+
+  /// Web path: features.stocks.performance.flowSymbol
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'標的'**
+  String get featuresStocksPerformanceFlowSymbol;
+
+  /// Web path: features.stocks.performance.flowDirection
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'方向'**
+  String get featuresStocksPerformanceFlowDirection;
+
+  /// Web path: features.stocks.performance.flowAmount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'金額'**
+  String get featuresStocksPerformanceFlowAmount;
+
+  /// Web path: features.stocks.performance.flowIn
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'投入 (+)'**
+  String get featuresStocksPerformanceFlowIn;
+
+  /// Web path: features.stocks.performance.flowOut
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'取回 (-)'**
+  String get featuresStocksPerformanceFlowOut;
+
+  /// Web path: features.stocks.performance.flowsEmpty
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'此區間內無資金進出與交易紀錄'**
+  String get featuresStocksPerformanceFlowsEmpty;
 }
 
 class _AppLocalizationsDelegate

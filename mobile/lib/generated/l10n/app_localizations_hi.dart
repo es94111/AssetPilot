@@ -6880,4 +6880,175 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresTagsStatsNote =>
       'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
+
+  @override
+  String get featuresStocksTabsPerformance => 'प्रदर्शन विश्लेषण';
+
+  @override
+  String get featuresStocksPerformanceTitle => 'पोर्टफ़ोलियो प्रदर्शन विश्लेषण';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      'समय-भारित रिटर्न (TWR), धन-भारित रिटर्न (XIRR), बेंचमार्क तुलना और 5-कारक रिटर्न एट्रिब्यूशन के साथ विश्लेषण करें।';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => 'CSV निर्यात करें';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => 'Excel निर्यात करें';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => 'बाज़ार';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => 'आरंभ तिथि';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => 'समाप्ति तिथि';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => 'मूल मुद्रा';
+
+  @override
+  String get featuresStocksPerformanceQuery => 'विश्लेषण करें';
+
+  @override
+  String get featuresStocksPerformancePreset1m => 'पिछला 1 महीना';
+
+  @override
+  String get featuresStocksPerformancePreset3m => 'पिछले 3 महीने';
+
+  @override
+  String get featuresStocksPerformancePreset6m => 'पिछले 6 महीने';
+
+  @override
+  String get featuresStocksPerformancePreset1y => 'पिछला 1 वर्ष';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => 'वर्ष की शुरुआत से (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => 'पिछले 3 वर्ष';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      'कुछ होल्डिंग्स के लिए ऐतिहासिक क्लोजिंग मूल्य उपलब्ध नहीं हैं; TWR और कुछ मूल्यांकन अनुमानित हो सकते हैं।';
+
+  @override
+  String get featuresStocksPerformanceXirr =>
+      'वार्षिक आंतरिक प्रतिफल दर (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable =>
+      'कन्वर्ज नहीं हो सका या कोई नकदी प्रवाह नहीं';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      'पूंजी प्रवाह के समय और राशि को ध्यान में रखते हुए वास्तविक वार्षिक चक्रवृद्धि प्रतिफल दर।';
+
+  @override
+  String get featuresStocksPerformanceTwr => 'समय-भारित प्रतिफल दर (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete =>
+      'कुछ क्लोजिंग मूल्य अनुपलब्ध हैं';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      'नकदी प्रवाह के प्रभाव को हटाकर निवेश चयन और परिसंपत्ति आवंटन का निष्पक्ष मूल्यांकन करता है।';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return 'बेंचमार्क प्रतिफल ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn =>
+      'अतिरिक्त प्रतिफल (अल्फ़ा)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => 'अवधि का कुल लाभ';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => 'शुद्ध पूंजी प्रवाह';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle =>
+      'प्रतिफल एट्रिब्यूशन विश्लेषण (5 कारक)';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      'अंतिम मूल्य = प्रारंभिक मूल्य + शुद्ध पूंजी प्रवाह + कुल लाभ (वास्तविक लाभ + अवास्तविक परिवर्तन + लाभांश - शुल्क व कर)';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => 'वास्तविक P/L';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange =>
+      'अवास्तविक P/L में परिवर्तन';
+
+  @override
+  String get featuresStocksPerformanceDividends => 'लाभांश आय';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => 'शुल्क और कर';
+
+  @override
+  String get featuresStocksPerformanceStartValue =>
+      'प्रारंभिक पोर्टफ़ोलियो मूल्य';
+
+  @override
+  String get featuresStocksPerformanceContributions => 'जमा / शेयर खरीद पूंजी';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals =>
+      'निकासी / शेयर बिक्री राशि';
+
+  @override
+  String get featuresStocksPerformanceEndValue => 'अंतिम पोर्टफ़ोलियो मूल्य';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle =>
+      'पोर्टफ़ोलियो मूल्य और संचयी शुद्ध निवेश का रुझान';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue =>
+      'कुल पोर्टफ़ोलियो मूल्य';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions =>
+      'संचयी शुद्ध निवेश पूंजी';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData =>
+      'इस अवधि के लिए रुझान डेटा अपर्याप्त है';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle =>
+      'नकदी प्रवाह और पूंजी गतिविधियाँ';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => 'तिथि';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => 'प्रकार';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => 'प्रतीक';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => 'दिशा';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => 'राशि';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => 'प्रवेश (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => 'निकासी (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty =>
+      'इस अवधि में कोई नकदी प्रवाह या पूंजी गतिविधि नहीं है';
 }

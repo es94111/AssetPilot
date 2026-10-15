@@ -6960,4 +6960,175 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresTagsStatsNote =>
       'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
+
+  @override
+  String get featuresStocksTabsPerformance => 'Анализ доходности';
+
+  @override
+  String get featuresStocksPerformanceTitle => 'Анализ доходности портфеля';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      'Оценка доходности с помощью TWR, XIRR, сравнения с бенчмарком и 5-факторного анализа атрибуции прибыли.';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => 'Экспорт в CSV';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => 'Экспорт в Excel';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => 'Рынок';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => 'Начальная дата';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => 'Конечная дата';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => 'Базовая валюта';
+
+  @override
+  String get featuresStocksPerformanceQuery => 'Рассчитать';
+
+  @override
+  String get featuresStocksPerformancePreset1m => '1 месяц';
+
+  @override
+  String get featuresStocksPerformancePreset3m => '3 месяца';
+
+  @override
+  String get featuresStocksPerformancePreset6m => '6 месяцев';
+
+  @override
+  String get featuresStocksPerformancePreset1y => '1 год';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => 'С начала года (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => '3 года';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      'Для части активов отсутствуют исторические цены закрытия; TWR и часть оценок могут быть приблизительными.';
+
+  @override
+  String get featuresStocksPerformanceXirr =>
+      'Внутренняя норма доходности (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable =>
+      'Не сошлось или нет денежных потоков';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      'Доходность, взвешенная по деньгам, отражающая сложный годовой процент с учётом времени и сумм ввода/вывода средств.';
+
+  @override
+  String get featuresStocksPerformanceTwr =>
+      'Доходность, взвешенная по времени (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete =>
+      'Отсутствуют некоторые цены закрытия';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      'Исключает влияние денежных потоков для объективной оценки качества управления активами и выбора акций.';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return 'Доходность бенчмарка ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn =>
+      'Избыточная доходность (Альфа)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => 'Общий доход за период';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => 'Чистый приток капитала';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle =>
+      'Атрибуция доходности (5 факторов)';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      'Конечная стоимость = Начальная стоимость + Чистый приток + Общий доход (Реализованный + Изменение нереализованного + Дивиденды - Комиссии и налоги)';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => 'Реализованная P/L';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange =>
+      'Изменение нереализованной прибыли';
+
+  @override
+  String get featuresStocksPerformanceDividends => 'Дивидендный доход';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => 'Комиссии и налоги';
+
+  @override
+  String get featuresStocksPerformanceStartValue =>
+      'Начальная стоимость портфеля';
+
+  @override
+  String get featuresStocksPerformanceContributions => 'Ввод средств / покупки';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals => 'Вывод средств / продажи';
+
+  @override
+  String get featuresStocksPerformanceEndValue => 'Конечная стоимость портфеля';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle =>
+      'Динамика стоимости портфеля и вложенного капитала';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue =>
+      'Общая стоимость портфеля';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions =>
+      'Совокупный чистый вложенный капитал';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData =>
+      'Недостаточно данных для графика за этот период';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle =>
+      'Денежные потоки и движение средств';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => 'Дата';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => 'Тип';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => 'Тикер';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => 'Направление';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => 'Сумма';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => 'Приток (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => 'Отток (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty =>
+      'В этот период нет движения средств или денежных потоков';
 }

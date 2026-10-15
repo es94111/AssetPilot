@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.149.1",
+  "currentVersion": "4.149.2",
   "releases": [
+    {
+      "version": "4.149.2",
+      "date": "2026-10-15",
+      "title": "重新產生 Flutter l10n，修復 i18n-parity CI",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "重新產生 mobile/lib/generated/l10n 的 Dart 本地化檔，補上 v4.149.0 新增的 featuresStocksPerformance* 與 featuresStocksTabsPerformance 鍵，修復 main 上 i18n-parity 檢查失敗（僅產生檔變更，無行為改動）。"
+        }
+      ]
+    },
     {
       "version": "4.149.1",
       "date": "2026-10-15",

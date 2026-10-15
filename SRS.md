@@ -1205,6 +1205,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 4.149.1 | 2026-10-15 | 修復投資組合績效「部分持股缺乏歷史收盤價」警告：`lib/stockHistory.ts` 將 TWSE／TPEx 月度請求並行數上限設為 4、失敗重試 3 次（線性退避）、非 2xx 回應拋錯而不寫入快取、容許尚無資料的當月，避免上游限流的空結果被快取為有效資料；`/api/stock-performance` 於價格抓取失敗時記錄警告。 |
 | 4.149.0 | 2026-10-15 | 新增 #310 投資組合績效分析：新增 `/stocks/performance` 頁面與 `/api/stock-performance` 路由，提供金額加權報酬率 (XIRR，Newton-Raphson 求解，Actual/365)、時間加權報酬率 (TWR，分割期間連乘)、大盤基準比較 (S&P 500 / 0050) 與五因子收益歸因（期初/期末市值、已實現、未實現變動、股利、手續費與稅，維持金額守恆）；支援區間快選、資產市值與累計淨投入走勢圖、現金流明細，以及 CSV / Excel 匯出與帳本權限政策整合。新增 10 種語言完整翻譯與自動化單元測試。 |
 | 4.141.0 | 2026-10-08 | 新增 #250 收據 OCR 自動帶入：新增交易可上傳收據影像辨識金額／日期／店家，僅以草稿預填、由使用者確認後儲存；HTTP OCR 供應商可由環境變數設定，未設定時回報無供應商並保留手動輸入。OCR API 不觸發自動背景寫入，讀取既有附件沿用 photoCrypto 與 S3 授權路徑。 |
 | 4.140.0 | 2026-10-08 | 行事曆日期格在既有交易／股利／排程筆數徽章之外，新增顯示當日收入／支出金額加總（台幣，收入綠字 `+`、支出紅字 `−`）。加總口徑與 Dashboard 一致：只計實際交易（`type IN ('income','expense')`，排除轉帳）且排除「不計入統計」交易；股利與固定收支排程僅為預計金額，維持現有筆數徽章、不併入加總。`app/api/calendar/route.ts` 新增 `GROUP BY date, type` 的 `SUM(amount)` 查詢並以 `lib/calendarEvents.ts` 新增的零相依 `buildCalendarDailyTotals()` 彙總為 `dailyTotals` 回傳；`components/features/calendar/CalendarClient.tsx` 於日期格與 `aria-label` 同步呈現。新增 `incomeAmount`／`expenseAmount` 2 個行事曆多語系鍵並重新產生 Web 與 Flutter 共用翻譯；`tests/lib/calendar.test.ts` 補上日期範圍與型別過濾的彙總測試。 |

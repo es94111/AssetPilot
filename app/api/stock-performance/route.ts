@@ -268,7 +268,8 @@ export async function GET(request: Request) {
           const points = await fetchUsStockCloseRange(sym, priceStart, to);
           prices[stockId] = points.map((p) => ({ date: p.date, close: p.close }));
         }
-      } catch {
+      } catch (err) {
+        console.warn(`[stock-performance] price fetch failed for ${sym}:`, err);
         prices[stockId] = [];
       }
     });

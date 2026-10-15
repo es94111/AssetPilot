@@ -6892,4 +6892,174 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresTagsStatsNote =>
       'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
+
+  @override
+  String get featuresStocksTabsPerformance => 'Performance';
+
+  @override
+  String get featuresStocksPerformanceTitle => 'Portfolio Performance Analysis';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      'Analyze returns with Time-Weighted Return (TWR), Money-Weighted Return (XIRR), market benchmark comparison, and 5-factor return attribution.';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => 'Export CSV';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => 'Export Excel';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => 'Market';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => 'Start date';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => 'End date';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => 'Base currency';
+
+  @override
+  String get featuresStocksPerformanceQuery => 'Analyze';
+
+  @override
+  String get featuresStocksPerformancePreset1m => '1 Month';
+
+  @override
+  String get featuresStocksPerformancePreset3m => '3 Months';
+
+  @override
+  String get featuresStocksPerformancePreset6m => '6 Months';
+
+  @override
+  String get featuresStocksPerformancePreset1y => '1 Year';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => 'Year to Date (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => '3 Years';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      'Historical close prices are missing for some holdings. TWR and certain valuation points may use approximations.';
+
+  @override
+  String get featuresStocksPerformanceXirr =>
+      'Annualized Internal Rate of Return (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable =>
+      'Cannot converge or no cash flows';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      'Money-weighted return reflecting compound annual growth factoring in the timing and size of capital flows.';
+
+  @override
+  String get featuresStocksPerformanceTwr => 'Time-Weighted Return (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete =>
+      'Missing some close prices';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      'Removes distortive effects of external cash inflows/outflows to evaluate pure asset allocation and security selection.';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return 'Benchmark return ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn => 'Excess return (Alpha)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => 'Period total gain';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => 'Net capital flow';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle =>
+      'Return Attribution (5 Factors)';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      'Ending Value = Starting Value + Net Contributions + Total Gain (Realized + Unrealized Change + Dividends - Fees & Taxes)';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => 'Realized P/L';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange =>
+      'Change in unrealized P/L';
+
+  @override
+  String get featuresStocksPerformanceDividends => 'Dividend income';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => 'Fees & taxes';
+
+  @override
+  String get featuresStocksPerformanceStartValue => 'Starting portfolio value';
+
+  @override
+  String get featuresStocksPerformanceContributions =>
+      'Capital contributions / purchases';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals =>
+      'Capital withdrawals / sales proceeds';
+
+  @override
+  String get featuresStocksPerformanceEndValue => 'Ending portfolio value';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle =>
+      'Portfolio Value & Net Invested Capital Trend';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue =>
+      'Total portfolio value';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions =>
+      'Cumulative net invested capital';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData =>
+      'Insufficient trend data for this period';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle =>
+      'Cash Flows & Capital Movements';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => 'Date';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => 'Type';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => 'Symbol';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => 'Direction';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => 'Amount';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => 'Inflow (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => 'Outflow (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty =>
+      'No cash flows or capital movements in this period';
 }

@@ -6572,6 +6572,163 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get featuresTagsStatsNote =>
       '各標籤小計中，同一筆交易會在它的每個標籤各計一次；去重合計以交易為單位只計一次，因此不等於各標籤小計相加。已排除「不計入統計」的交易。';
+
+  @override
+  String get featuresStocksTabsPerformance => '績效分析';
+
+  @override
+  String get featuresStocksPerformanceTitle => '投資組合績效分析';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      '依時間加權 (TWR)、金額加權 (XIRR) 與大盤基準計算投資表現，並提供五因子收益歸因分析。';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => '匯出 CSV';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => '匯出 Excel';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => '市場';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => '起始日期';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => '結束日期';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => '基準幣別';
+
+  @override
+  String get featuresStocksPerformanceQuery => '查詢績效';
+
+  @override
+  String get featuresStocksPerformancePreset1m => '近 1 個月';
+
+  @override
+  String get featuresStocksPerformancePreset3m => '近 3 個月';
+
+  @override
+  String get featuresStocksPerformancePreset6m => '近 6 個月';
+
+  @override
+  String get featuresStocksPerformancePreset1y => '近 1 年';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => '今年以來 (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => '近 3 年';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      '部分持股缺乏歷史收盤價，TWR 及部分時點可能以近似估值計算。';
+
+  @override
+  String get featuresStocksPerformanceXirr => '年化內部報酬率 (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable => '無法收斂或無現金流';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      '金額加權報酬率，反映考量資金進出時點與金額後的實質年化複利回報。';
+
+  @override
+  String get featuresStocksPerformanceTwr => '時間加權報酬率 (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete => '缺少部分收盤價';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      '消除資金進出規模影響，客觀評估投資組合資產配置與選股決策能力。';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return '大盤基準報酬 ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn => '超額報酬 (Alpha)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => '區間總收益';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => '淨注入資金';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle => '收益歸因分析（五因子）';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      '期末資產 = 期初資產 + 淨注入資金 + 總收益（已實現 + 未實現變動 + 股利 - 手續費與稅）';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => '已實現損益';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange => '未實現損益變動';
+
+  @override
+  String get featuresStocksPerformanceDividends => '股利收入';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => '手續費與交易稅';
+
+  @override
+  String get featuresStocksPerformanceStartValue => '期初資產市值';
+
+  @override
+  String get featuresStocksPerformanceContributions => '資金轉入／買入投入';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals => '資金轉出／賣出取回';
+
+  @override
+  String get featuresStocksPerformanceEndValue => '期末資產市值';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle => '資產市值與累計淨投入走勢';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue => '資產總市值';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions => '累計淨投入資金';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData => '此區間尚無足夠走勢資料';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle => '現金流與進出紀錄';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => '日期';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => '類別';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => '標的';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => '方向';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => '金額';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => '投入 (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => '取回 (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty => '此區間內無資金進出與交易紀錄';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -13050,6 +13207,163 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get featuresTagsStatsNote =>
       'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
+
+  @override
+  String get featuresStocksTabsPerformance => '绩效分析';
+
+  @override
+  String get featuresStocksPerformanceTitle => '投资组合绩效分析';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      '按时间加权 (TWR)、金额加权 (XIRR) 与大盘基准计算投资表现，并提供五因子收益归因分析。';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => '导出 CSV';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => '导出 Excel';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => '市场';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => '起始日期';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => '结束日期';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => '基准币种';
+
+  @override
+  String get featuresStocksPerformanceQuery => '查询绩效';
+
+  @override
+  String get featuresStocksPerformancePreset1m => '近 1 个月';
+
+  @override
+  String get featuresStocksPerformancePreset3m => '近 3 个月';
+
+  @override
+  String get featuresStocksPerformancePreset6m => '近 6 个月';
+
+  @override
+  String get featuresStocksPerformancePreset1y => '近 1 年';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => '今年以来 (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => '近 3 年';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      '部分持仓缺乏历史收盘价，TWR 及部分时点可能以近似估值计算。';
+
+  @override
+  String get featuresStocksPerformanceXirr => '年化内部收益率 (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable => '无法收敛或无现金流';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      '金额加权收益率，反映考虑资金进出时点与金额后的实质年化复利回报。';
+
+  @override
+  String get featuresStocksPerformanceTwr => '时间加权收益率 (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete => '缺少部分收盘价';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      '消除资金进出规模影响，客观评估投资组合资产配置与选股决策能力。';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return '大盘基准收益 ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn => '超额收益 (Alpha)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => '区间总收益';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => '净注入资金';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle => '收益归因分析（五因子）';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      '期末资产 = 期初资产 + 净注入资金 + 总收益（已实现 + 未实现变动 + 股利 - 手续费与税）';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => '已实现盈亏';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange => '未实现盈亏变动';
+
+  @override
+  String get featuresStocksPerformanceDividends => '股利收入';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => '手续费与交易税';
+
+  @override
+  String get featuresStocksPerformanceStartValue => '期初资产市值';
+
+  @override
+  String get featuresStocksPerformanceContributions => '资金转入／买入投入';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals => '资金转出／卖出取回';
+
+  @override
+  String get featuresStocksPerformanceEndValue => '期末资产市值';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle => '资产市值与累计净投入走势';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue => '资产总市值';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions => '累计净投入资金';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData => '此区间尚无足够走势数据';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle => '现金流与进出记录';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => '日期';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => '类别';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => '标的';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => '方向';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => '金额';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => '投入 (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => '取回 (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty => '此区间内无资金进出与交易记录';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -19620,4 +19934,161 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get featuresTagsStatsNote =>
       '各標籤小計中，同一筆交易會在它的每個標籤各計一次；去重合計以交易為單位只計一次，因此不等於各標籤小計相加。已排除「不計入統計」的交易。';
+
+  @override
+  String get featuresStocksTabsPerformance => '績效分析';
+
+  @override
+  String get featuresStocksPerformanceTitle => '投資組合績效分析';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      '依時間加權 (TWR)、金額加權 (XIRR) 與大盤基準計算投資表現，並提供五因子收益歸因分析。';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => '匯出 CSV';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => '匯出 Excel';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => '市場';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => '起始日期';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => '結束日期';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => '基準幣別';
+
+  @override
+  String get featuresStocksPerformanceQuery => '查詢績效';
+
+  @override
+  String get featuresStocksPerformancePreset1m => '近 1 個月';
+
+  @override
+  String get featuresStocksPerformancePreset3m => '近 3 個月';
+
+  @override
+  String get featuresStocksPerformancePreset6m => '近 6 個月';
+
+  @override
+  String get featuresStocksPerformancePreset1y => '近 1 年';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => '今年以來 (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => '近 3 年';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      '部分持股缺乏歷史收盤價，TWR 及部分時點可能以近似估值計算。';
+
+  @override
+  String get featuresStocksPerformanceXirr => '年化內部報酬率 (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable => '無法收斂或無現金流';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      '金額加權報酬率，反映考量資金進出時點與金額後的實質年化複利回報。';
+
+  @override
+  String get featuresStocksPerformanceTwr => '時間加權報酬率 (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete => '缺少部分收盤價';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      '消除資金進出規模影響，客觀評估投資組合資產配置與選股決策能力。';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return '大盤基準報酬 ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn => '超額報酬 (Alpha)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => '區間總收益';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => '淨注入資金';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle => '收益歸因分析（五因子）';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      '期末資產 = 期初資產 + 淨注入資金 + 總收益（已實現 + 未實現變動 + 股利 - 手續費與稅）';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => '已實現損益';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange => '未實現損益變動';
+
+  @override
+  String get featuresStocksPerformanceDividends => '股利收入';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => '手續費與交易稅';
+
+  @override
+  String get featuresStocksPerformanceStartValue => '期初資產市值';
+
+  @override
+  String get featuresStocksPerformanceContributions => '資金轉入／買入投入';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals => '資金轉出／賣出取回';
+
+  @override
+  String get featuresStocksPerformanceEndValue => '期末資產市值';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle => '資產市值與累計淨投入走勢';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue => '資產總市值';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions => '累計淨投入資金';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData => '此區間尚無足夠走勢資料';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle => '現金流與進出紀錄';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => '日期';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => '類別';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => '標的';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => '方向';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => '金額';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => '投入 (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => '取回 (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty => '此區間內無資金進出與交易紀錄';
 }

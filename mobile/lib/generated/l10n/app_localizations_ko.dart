@@ -6677,4 +6677,162 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get featuresTagsStatsNote =>
       'In per-tag subtotals a transaction is counted once for each of its tags. The de-duplicated total counts each transaction once, so it is not the sum of the subtotals. Transactions excluded from statistics are omitted.';
+
+  @override
+  String get featuresStocksTabsPerformance => '성과 분석';
+
+  @override
+  String get featuresStocksPerformanceTitle => '포트폴리오 성과 분석';
+
+  @override
+  String get featuresStocksPerformanceSubtitle =>
+      '시간가중수익률 (TWR), 금액가중수익률 (XIRR), 벤치마크 비교 및 5요인 수익 귀속 분석을 제공합니다。';
+
+  @override
+  String get featuresStocksPerformanceExportCsv => 'CSV 내보내기';
+
+  @override
+  String get featuresStocksPerformanceExportXlsx => 'Excel 내보내기';
+
+  @override
+  String get featuresStocksPerformanceFilterMarket => '시장';
+
+  @override
+  String get featuresStocksPerformanceFilterFrom => '시작일';
+
+  @override
+  String get featuresStocksPerformanceFilterTo => '종료일';
+
+  @override
+  String get featuresStocksPerformanceFilterBaseCurrency => '기준 통화';
+
+  @override
+  String get featuresStocksPerformanceQuery => '조회';
+
+  @override
+  String get featuresStocksPerformancePreset1m => '최근 1개월';
+
+  @override
+  String get featuresStocksPerformancePreset3m => '최근 3개월';
+
+  @override
+  String get featuresStocksPerformancePreset6m => '최근 6개월';
+
+  @override
+  String get featuresStocksPerformancePreset1y => '최근 1년';
+
+  @override
+  String get featuresStocksPerformancePresetYtd => '연초 이후 (YTD)';
+
+  @override
+  String get featuresStocksPerformancePreset3y => '최근 3년';
+
+  @override
+  String get featuresStocksPerformanceMissingPriceWarning =>
+      '일부 보유 종목의 과거 종가가 누락되어 TWR 및 일부 시점 가치가 근사치로 계산될 수 있습니다。';
+
+  @override
+  String get featuresStocksPerformanceXirr => '연환산 내부수익률 (XIRR)';
+
+  @override
+  String get featuresStocksPerformanceXirrUnavailable => '수렴 불가 또는 현금 흐름 없음';
+
+  @override
+  String get featuresStocksPerformanceXirrDesc =>
+      '자금 입출금 시점과 금액을 반영한 실질 연환산 복리 수익률(금액가중수익률)입니다。';
+
+  @override
+  String get featuresStocksPerformanceTwr => '시간가중수익률 (TWR)';
+
+  @override
+  String get featuresStocksPerformanceTwrIncomplete => '일부 종가 누락';
+
+  @override
+  String get featuresStocksPerformanceTwrDesc =>
+      '외부 입출금 규모 왜곡을 제거하여 자산 배분 및 종목 선택 능력을 객관적으로 평가합니다。';
+
+  @override
+  String featuresStocksPerformanceBenchmark(Object symbol) {
+    return '벤치마크 수익률 ($symbol)';
+  }
+
+  @override
+  String get featuresStocksPerformanceExcessReturn => '초과 수익률 (Alpha)';
+
+  @override
+  String get featuresStocksPerformanceTotalGain => '기간 총수익';
+
+  @override
+  String get featuresStocksPerformanceNetFlow => '순유입 자금';
+
+  @override
+  String get featuresStocksPerformanceAttributionTitle => '수익 귀속 분석 (5요인)';
+
+  @override
+  String get featuresStocksPerformanceAttributionDesc =>
+      '기말 자산 = 기초 자산 + 순유입 자금 + 총수익 (실현 손익 + 미실현 변동 + 배당금 - 수수료 및 세금)';
+
+  @override
+  String get featuresStocksPerformanceRealizedPl => '실현 손익';
+
+  @override
+  String get featuresStocksPerformanceUnrealizedChange => '미실현 손익 변동';
+
+  @override
+  String get featuresStocksPerformanceDividends => '배당 수익';
+
+  @override
+  String get featuresStocksPerformanceFeesAndTaxes => '수수료 및 세금';
+
+  @override
+  String get featuresStocksPerformanceStartValue => '기초 자산 평가액';
+
+  @override
+  String get featuresStocksPerformanceContributions => '자금 유입 / 매수 투입액';
+
+  @override
+  String get featuresStocksPerformanceWithdrawals => '자금 유출 / 매도 회수액';
+
+  @override
+  String get featuresStocksPerformanceEndValue => '기말 자산 평가액';
+
+  @override
+  String get featuresStocksPerformanceTrendTitle => '자산 평가액 및 누적 순투입액 추이';
+
+  @override
+  String get featuresStocksPerformanceTrendMarketValue => '총 자산 평가액';
+
+  @override
+  String get featuresStocksPerformanceTrendNetContributions => '누적 순투입 자금';
+
+  @override
+  String get featuresStocksPerformanceTrendNoData => '해당 기간의 추이 데이터가 충분하지 않습니다';
+
+  @override
+  String get featuresStocksPerformanceFlowsTitle => '현금 흐름 및 입출금 내역';
+
+  @override
+  String get featuresStocksPerformanceFlowDate => '일자';
+
+  @override
+  String get featuresStocksPerformanceFlowKind => '유형';
+
+  @override
+  String get featuresStocksPerformanceFlowSymbol => '종목';
+
+  @override
+  String get featuresStocksPerformanceFlowDirection => '방향';
+
+  @override
+  String get featuresStocksPerformanceFlowAmount => '금액';
+
+  @override
+  String get featuresStocksPerformanceFlowIn => '투입 (+)';
+
+  @override
+  String get featuresStocksPerformanceFlowOut => '회수 (-)';
+
+  @override
+  String get featuresStocksPerformanceFlowsEmpty =>
+      '해당 기간에 자금 입출금 또는 거래 내역이 없습니다';
 }

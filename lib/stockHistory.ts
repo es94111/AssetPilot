@@ -86,19 +86,70 @@ export function isValidStockHistoryDate(value: string): boolean {
   );
 }
 
-async function getJson(url: string, referer: string): Promise<unknown> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0", Referer: referer },
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!response.ok) throw new Error(`Historical price service returned ${response.status}`);
-  return response.json();
+const MAX_CONCURRENT_REQUESTS = 4;
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 250;
+let activeRequests = 0;
+const requestWaiters: Array<() => void> = [];
+
+async function withRequestSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+    await new Promise<void>((resolve) => requestWaiters.push(resolve));
+  } else {
+    activeRequests++;
+  }
+  try {
+    return await task();
+  } finally {
+    const next = requestWaiters.shift();
+    if (next) next();
+    else activeRequests--;
+  }
 }
 
+async function getJson(url: string, referer: string): Promise<unknown> {
+  return withRequestSlot(async () => {
+    const response = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0", Referer: referer },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Historical price service returned ${response.status}`);
+    return response.json();
+  });
+}
+
+async function withRetry<T>(task: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+      }
+    }
+  }
+  throw lastError;
+}
+
+function isTwseNoDataStat(stat: string): boolean {
+  return /NO DATA|沒有符合|查詢日期大於今日/i.test(stat);
+}
+
+// Upstream replies with HTTP 200 and an unexpected stat when throttled, so only
+// known "no data" replies count as empty; anything else is a retryable failure.
 async function fetchMonthFromTwse(symbol: string, month: string): Promise<StockHistoryCandle[]> {
   const date = `${month.replace("-", "")}01`;
   const url = `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${date}&stockNo=${encodeURIComponent(symbol)}`;
-  return parseTwseHistoryResponse(await getJson(url, "https://www.twse.com.tw/"));
+  return withRetry(async () => {
+    const payload = await getJson(url, "https://www.twse.com.tw/");
+    const stat = (payload as { stat?: unknown } | null)?.stat;
+    if (stat !== "OK" && !(typeof stat === "string" && isTwseNoDataStat(stat))) {
+      throw new Error(`Unexpected TWSE response: ${String(stat ?? "invalid payload")}`);
+    }
+    return parseTwseHistoryResponse(payload);
+  });
 }
 
 async function fetchMonthFromTpex(symbol: string, month: string): Promise<StockHistoryCandle[]> {
@@ -107,7 +158,14 @@ async function fetchMonthFromTpex(symbol: string, month: string): Promise<StockH
   const url = new URL("https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingStock");
   url.searchParams.set("code", symbol);
   url.searchParams.set("date", date);
-  return parseTpexHistoryResponse(await getJson(url.toString(), "https://www.tpex.org.tw/"));
+  return withRetry(async () => {
+    const payload = await getJson(url.toString(), "https://www.tpex.org.tw/");
+    const body = payload as { stat?: unknown; tables?: unknown } | null;
+    if (body?.stat !== "ok" || !Array.isArray(body.tables)) {
+      throw new Error(`Unexpected TPEx response: ${String(body?.stat ?? "invalid payload")}`);
+    }
+    return parseTpexHistoryResponse(payload);
+  });
 }
 
 async function fetchMonth(symbol: string, month: string): Promise<StockHistoryCandle[]> {
@@ -127,8 +185,9 @@ async function fetchMonth(symbol: string, month: string): Promise<StockHistoryCa
       twseError = error;
     }
 
+    let tpexRows: StockHistoryCandle[];
     try {
-      return await fetchMonthFromTpex(symbol, month);
+      tpexRows = await fetchMonthFromTpex(symbol, month);
     } catch (tpexError) {
       if (twseError) {
         throw new Error(
@@ -137,6 +196,9 @@ async function fetchMonth(symbol: string, month: string): Promise<StockHistoryCa
       }
       throw tpexError;
     }
+    // TPEx being empty is only trustworthy when TWSE gave a definitive "no data".
+    if (tpexRows.length === 0 && twseError) throw twseError;
+    return tpexRows;
   })();
 
   inFlightMonths.set(cacheKey, request);
@@ -173,11 +235,25 @@ export async function fetchStockHistory(
 ): Promise<StockHistoryCandle[]> {
   const months = monthRange(from, to);
   const collected: StockHistoryCandle[] = [];
+  const failures: Array<{ month: string; reason: unknown }> = [];
   const concurrency = 3;
   for (let index = 0; index < months.length; index += concurrency) {
     const batch = months.slice(index, index + concurrency);
-    const results = await Promise.all(batch.map((month) => fetchMonth(symbol, month)));
-    collected.push(...results.flat());
+    const results = await Promise.allSettled(batch.map((month) => fetchMonth(symbol, month)));
+    results.forEach((result, offset) => {
+      if (result.status === "fulfilled") {
+        collected.push(...result.value);
+      } else {
+        failures.push({ month: batch[offset], reason: result.reason });
+      }
+    });
+  }
+
+  if (failures.length > 0) {
+    if (failures.length === months.length) throw failures[0].reason;
+    console.warn(
+      `[stockHistory] ${symbol}: missing months ${failures.map((item) => item.month).join(", ")}`,
+    );
   }
 
   const byDate = new Map<string, StockHistoryCandle>();

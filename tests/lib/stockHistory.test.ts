@@ -99,3 +99,103 @@ test("aggregates daily candles into weekly and monthly OHLC candles", () => {
   ]);
   assert.equal(getStockHistoryBucketKey("2025-01-02", "week"), "2024-12-30");
 });
+
+test("retries a throttled request instead of dropping the month", async () => {
+  clearStockHistoryCache();
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    return calls === 1 ? new Response("", { status: 429 }) : response(twsePayload);
+  }) as typeof fetch;
+  try {
+    const candles = await fetchStockHistory("1201", "2025-01-01", "2025-01-31");
+    assert.equal(candles.length, 2);
+    assert.equal(calls, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearStockHistoryCache();
+  }
+});
+
+test("does not cache failed months so a later call refetches", async () => {
+  clearStockHistoryCache();
+  const originalFetch = globalThis.fetch;
+  let failing = true;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    if (failing) return new Response("", { status: 503 });
+    return response(twsePayload);
+  }) as typeof fetch;
+  try {
+    await assert.rejects(fetchStockHistory("1432", "2025-01-01", "2025-01-31"));
+    failing = false;
+    const before = calls;
+    const candles = await fetchStockHistory("1432", "2025-01-01", "2025-01-31");
+    assert.equal(candles.length, 2);
+    assert.ok(calls > before);
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearStockHistoryCache();
+  }
+});
+
+test("keeps successful months when another month keeps failing", async () => {
+  clearStockHistoryCache();
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.includes("20250201") || url.includes("2025%2F02%2F01")) {
+      return new Response("", { status: 429 });
+    }
+    return response(twsePayload);
+  }) as typeof fetch;
+  try {
+    const candles = await fetchStockHistory("3090", "2025-01-01", "2025-02-28");
+    assert.deepEqual(candles.map((candle) => candle.date), ["2025-01-02", "2025-01-03"]);
+  } finally {
+    console.warn = originalWarn;
+    globalThis.fetch = originalFetch;
+    clearStockHistoryCache();
+  }
+});
+
+test("throws when every month fails so callers can tell it from no data", async () => {
+  clearStockHistoryCache();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response("", { status: 429 })) as typeof fetch;
+  try {
+    await assert.rejects(fetchStockHistory("9958", "2025-01-01", "2025-01-31"));
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearStockHistoryCache();
+  }
+});
+
+test("caps concurrent upstream requests across symbols", async () => {
+  clearStockHistoryCache();
+  const originalFetch = globalThis.fetch;
+  let active = 0;
+  let peak = 0;
+  globalThis.fetch = (async () => {
+    active++;
+    peak = Math.max(peak, active);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    active--;
+    return response(twsePayload);
+  }) as typeof fetch;
+  try {
+    const symbols = Array.from({ length: 12 }, (_, index) => `10${String(index).padStart(2, "0")}`);
+    const results = await Promise.all(
+      symbols.map((symbol) => fetchStockHistory(symbol, "2025-01-01", "2025-01-31")),
+    );
+    assert.ok(results.every((candles) => candles.length === 2));
+    assert.ok(peak <= 4, `peak concurrency was ${peak}`);
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearStockHistoryCache();
+  }
+});

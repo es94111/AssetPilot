@@ -169,6 +169,12 @@ jobs:
             | tee /tmp/xctest.log
           grep -Fq "** TEST SUCCEEDED **" /tmp/xctest.log
 
+      - name: Boot simulator for integration tests
+        run: |
+          xcrun simctl boot "$IOS_SIMULATOR_ID" || \
+            xcrun simctl list devices booted | grep -Fq "$IOS_SIMULATOR_ID"
+          xcrun simctl bootstatus "$IOS_SIMULATOR_ID" -b
+
       - name: Run iOS integration tests (simulator)
         working-directory: mobile
         run: |

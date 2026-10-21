@@ -263,6 +263,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get offlineDraftsNotPostedYet => 'Not posted yet';
 
   @override
+  String get offlineDraftsSavedHint =>
+      'Saved as an offline draft — not posted yet. Confirm it later under “Offline drafts”.';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return 'Saved at $time';
   }

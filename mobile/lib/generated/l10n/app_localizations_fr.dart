@@ -265,6 +265,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get offlineDraftsNotPostedYet => 'Pas encore enregistré';
 
   @override
+  String get offlineDraftsSavedHint =>
+      'Enregistré comme brouillon hors ligne : pas encore comptabilisé. Confirmez-le plus tard dans « Brouillons hors ligne ».';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return 'Enregistré le $time';
   }

@@ -263,6 +263,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get offlineDraftsNotPostedYet => 'لم يتم التسجيل بعد';
 
   @override
+  String get offlineDraftsSavedHint =>
+      'تم الحفظ كمسودة دون اتصال — لم يتم التسجيل بعد. أكّدها لاحقًا من «المسودات دون اتصال».';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return 'تم الحفظ في $time';
   }

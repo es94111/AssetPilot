@@ -621,6 +621,12 @@ abstract class AppLocalizations {
   /// **'尚未入帳'**
   String get offlineDraftsNotPostedYet;
 
+  /// Web path: offlineDrafts.savedHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已儲存為離線草稿 — 尚未入帳。稍後請前往「離線草稿」確認。'**
+  String get offlineDraftsSavedHint;
+
   /// Web path: offlineDrafts.savedAt
   ///
   /// In zh_Hant_TW, this message translates to:

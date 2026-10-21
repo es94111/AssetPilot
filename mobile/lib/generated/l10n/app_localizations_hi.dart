@@ -264,6 +264,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get offlineDraftsNotPostedYet => 'अभी दर्ज नहीं हुआ';
 
   @override
+  String get offlineDraftsSavedHint =>
+      'ऑफ़लाइन ड्राफ़्ट के रूप में सहेजा गया — अभी दर्ज नहीं हुआ। बाद में “ऑफ़लाइन ड्राफ़्ट” से पुष्टि करें।';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return '$time पर सहेजा गया';
   }

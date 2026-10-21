@@ -264,6 +264,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get offlineDraftsNotPostedYet => 'Ainda não lançado';
 
   @override
+  String get offlineDraftsSavedHint =>
+      'Salvo como rascunho offline — ainda não lançado. Confirme depois em “Rascunhos offline”.';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return 'Salvo em $time';
   }
@@ -7485,6 +7489,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get offlineDraftsNotPostedYet => 'Ainda não lançado';
+
+  @override
+  String get offlineDraftsSavedHint =>
+      'Salvo como rascunho offline — ainda não lançado. Confirme depois em “Rascunhos offline”.';
 
   @override
   String offlineDraftsSavedAt(Object time) {

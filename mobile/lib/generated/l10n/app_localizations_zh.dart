@@ -262,6 +262,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get offlineDraftsNotPostedYet => '尚未入帳';
 
   @override
+  String get offlineDraftsSavedHint => '已儲存為離線草稿 — 尚未入帳。稍後請前往「離線草稿」確認。';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return '儲存於 $time';
   }
@@ -7072,6 +7075,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get offlineDraftsNotPostedYet => '尚未入账';
 
   @override
+  String get offlineDraftsSavedHint => '已保存为离线草稿 — 尚未入账。稍后请前往“离线草稿”确认。';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return '保存于 $time';
   }
@@ -13788,6 +13794,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get offlineDraftsNotPostedYet => '尚未入帳';
+
+  @override
+  String get offlineDraftsSavedHint => '已儲存為離線草稿 — 尚未入帳。稍後請前往「離線草稿」確認。';
 
   @override
   String offlineDraftsSavedAt(Object time) {

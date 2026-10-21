@@ -264,6 +264,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get offlineDraftsNotPostedYet => 'Ещё не проведено';
 
   @override
+  String get offlineDraftsSavedHint =>
+      'Сохранено как офлайн-черновик — ещё не проведено. Подтвердите позже в разделе «Офлайн-черновики».';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return 'Сохранено $time';
   }

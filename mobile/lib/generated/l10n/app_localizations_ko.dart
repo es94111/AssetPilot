@@ -262,6 +262,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get offlineDraftsNotPostedYet => '아직 기장되지 않음';
 
   @override
+  String get offlineDraftsSavedHint =>
+      '오프라인 초안으로 저장했습니다 — 아직 기장되지 않았습니다. 나중에 “오프라인 초안”에서 확인해 주세요.';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return '저장 시각 $time';
   }

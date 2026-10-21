@@ -265,6 +265,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get offlineDraftsNotPostedYet => 'Aún no registrado';
 
   @override
+  String get offlineDraftsSavedHint =>
+      'Guardado como borrador sin conexión: aún no está registrado. Confírmalo luego en «Borradores sin conexión».';
+
+  @override
   String offlineDraftsSavedAt(Object time) {
     return 'Guardado el $time';
   }

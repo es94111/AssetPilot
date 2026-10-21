@@ -421,6 +421,11 @@
     "description": "Web path: offlineDrafts.notPostedYet",
     "x-webPath": "offlineDrafts.notPostedYet"
   },
+  "offlineDraftsSavedHint": "已儲存為離線草稿 — 尚未入帳。稍後請前往「離線草稿」確認。",
+  "@offlineDraftsSavedHint": {
+    "description": "Web path: offlineDrafts.savedHint",
+    "x-webPath": "offlineDrafts.savedHint"
+  },
   "offlineDraftsSavedAt": "儲存於 {time}",
   "@offlineDraftsSavedAt": {
     "description": "Web path: offlineDrafts.savedAt",

@@ -166,6 +166,7 @@ export const ar = {
     online: "متصل",
     offline: "غير متصل",
     notPostedYet: "لم يتم التسجيل بعد",
+    savedHint: "تم الحفظ كمسودة دون اتصال — لم يتم التسجيل بعد. أكّدها لاحقًا من «المسودات دون اتصال».",
     savedAt: "تم الحفظ في {time}",
     photoPending: "{count} صورة في انتظار الرفع",
     submit: "إرسال",

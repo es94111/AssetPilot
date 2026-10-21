@@ -166,6 +166,7 @@ export const ko = {
     online: "온라인",
     offline: "오프라인",
     notPostedYet: "아직 기장되지 않음",
+    savedHint: "오프라인 초안으로 저장했습니다 — 아직 기장되지 않았습니다. 나중에 “오프라인 초안”에서 확인해 주세요.",
     savedAt: "저장 시각 {time}",
     photoPending: "업로드 대기 사진 {count}장",
     submit: "보내기",

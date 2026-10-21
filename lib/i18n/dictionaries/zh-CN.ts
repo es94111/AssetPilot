@@ -166,6 +166,7 @@ export const zhCN = {
     online: "已连接",
     offline: "离线中",
     notPostedYet: "尚未入账",
+    savedHint: "已保存为离线草稿 — 尚未入账。稍后请前往“离线草稿”确认。",
     savedAt: "保存于 {time}",
     photoPending: "另有 {count} 张照片待补上传",
     submit: "送出",

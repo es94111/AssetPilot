@@ -166,6 +166,7 @@ export const es = {
     online: "En línea",
     offline: "Sin conexión",
     notPostedYet: "Aún no registrado",
+    savedHint: "Guardado como borrador sin conexión: aún no está registrado. Confírmalo luego en «Borradores sin conexión».",
     savedAt: "Guardado el {time}",
     photoPending: "{count} foto(s) pendientes de subir",
     submit: "Enviar",

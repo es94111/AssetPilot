@@ -166,6 +166,7 @@ export const en = {
     online: "Online",
     offline: "Offline",
     notPostedYet: "Not posted yet",
+    savedHint: "Saved as an offline draft — not posted yet. Confirm it later under “Offline drafts”.",
     savedAt: "Saved at {time}",
     photoPending: "{count} photo(s) waiting to be uploaded",
     submit: "Submit",

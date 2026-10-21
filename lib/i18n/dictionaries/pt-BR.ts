@@ -166,6 +166,7 @@ export const ptBR = {
     online: "Online",
     offline: "Offline",
     notPostedYet: "Ainda não lançado",
+    savedHint: "Salvo como rascunho offline — ainda não lançado. Confirme depois em “Rascunhos offline”.",
     savedAt: "Salvo em {time}",
     photoPending: "{count} foto(s) aguardando envio",
     submit: "Enviar",

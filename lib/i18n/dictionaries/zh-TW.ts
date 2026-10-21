@@ -164,6 +164,7 @@ export const zhTW = {
     online: "已連線",
     offline: "離線中",
     notPostedYet: "尚未入帳",
+    savedHint: "已儲存為離線草稿 — 尚未入帳。稍後請前往「離線草稿」確認。",
     savedAt: "儲存於 {time}",
     photoPending: "另有 {count} 張照片待補上傳",
     submit: "送出",

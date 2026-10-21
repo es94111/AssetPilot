@@ -166,6 +166,7 @@ export const fr = {
     online: "En ligne",
     offline: "Hors ligne",
     notPostedYet: "Pas encore enregistré",
+    savedHint: "Enregistré comme brouillon hors ligne : pas encore comptabilisé. Confirmez-le plus tard dans « Brouillons hors ligne ».",
     savedAt: "Enregistré le {time}",
     photoPending: "{count} photo(s) en attente de téléversement",
     submit: "Envoyer",

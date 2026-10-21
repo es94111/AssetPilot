@@ -132,18 +132,28 @@ jobs:
           import sys
 
           devices = json.load(sys.stdin)["devices"]
-          candidates = []
+          candidates_by_runtime = {}
           for runtime, runtime_devices in devices.items():
               if not runtime.startswith("com.apple.CoreSimulator.SimRuntime.iOS-"):
                   continue
               version = tuple(int(part) for part in runtime.split("iOS-", 1)[1].split("-"))
-              for device in runtime_devices:
-                  if device.get("isAvailable") and device["name"].startswith("iPhone"):
-                      candidates.append((version, device["name"], device["udid"]))
+              candidates = [
+                  (version, device["name"], device["udid"])
+                  for device in runtime_devices
+                  if device.get("isAvailable") and device["name"].startswith("iPhone")
+              ]
+              if candidates:
+                  candidates_by_runtime[runtime] = (version, candidates)
 
-          if not candidates:
+          if not candidates_by_runtime:
               raise SystemExit("No available iPhone simulator found")
 
+          # Prefer the runtime with the most iPhone devices; single-device preview
+          # runtimes can fail first-boot data migration on hosted runners.
+          _, candidates = max(
+              candidates_by_runtime.values(),
+              key=lambda group: (len(group[1]), group[0]),
+          )
           print(max(candidates)[2])
           ')"
           echo "IOS_SIMULATOR_ID=$IOS_SIMULATOR_ID" >> "$GITHUB_ENV"
@@ -176,6 +186,7 @@ jobs:
           xcrun simctl bootstatus "$IOS_SIMULATOR_ID" -b
 
       - name: Run iOS integration tests (simulator)
+        timeout-minutes: 15
         working-directory: mobile
         run: |
           # 整合測試在真實模擬器上執行，驗證 Dart 與原生 platform channel

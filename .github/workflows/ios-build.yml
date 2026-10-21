@@ -125,6 +125,30 @@ jobs:
           test -d "$APP/Metadata.appintents"
           echo "iOS simulator build OK, extension embedded, App Intents metadata generated."
 
+      - name: Select available iPhone simulator
+        run: |
+          IOS_SIMULATOR_ID="$(xcrun simctl list devices available -j | python3 -c '
+          import json
+          import sys
+
+          devices = json.load(sys.stdin)["devices"]
+          candidates = []
+          for runtime, runtime_devices in devices.items():
+              if not runtime.startswith("com.apple.CoreSimulator.SimRuntime.iOS-"):
+                  continue
+              version = tuple(int(part) for part in runtime.split("iOS-", 1)[1].split("-"))
+              for device in runtime_devices:
+                  if device.get("isAvailable") and device["name"].startswith("iPhone"):
+                      candidates.append((version, device["name"], device["udid"]))
+
+          if not candidates:
+              raise SystemExit("No available iPhone simulator found")
+
+          print(max(candidates)[2])
+          ')"
+          echo "IOS_SIMULATOR_ID=$IOS_SIMULATOR_ID" >> "$GITHUB_ENV"
+          echo "Using iPhone simulator $IOS_SIMULATOR_ID"
+
       - name: Run iOS native unit tests (XCTest)
         working-directory: mobile
         run: |
@@ -139,7 +163,7 @@ jobs:
           xcodebuild test \
             -project ios/Runner.xcodeproj \
             -scheme Runner \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination "platform=iOS Simulator,id=$IOS_SIMULATOR_ID" \
             -only-testing:RunnerTests \
             CODE_SIGNING_ALLOWED=NO \
             | tee /tmp/xctest.log
@@ -151,7 +175,7 @@ jobs:
           # 整合測試在真實模擬器上執行，驗證 Dart 與原生 platform channel
           # 的實際往返——單元測試在桌面上執行，無法驗證這一段。
           flutter test integration_test \
-            -d "platform=iOS Simulator,name=iPhone 16,OS=latest"
+            -d "$IOS_SIMULATOR_ID"
 
   # ── 簽署封存：需要 Apple 憑證 ─────────────────────────────
   # 需要的 secrets：

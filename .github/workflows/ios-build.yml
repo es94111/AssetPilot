@@ -167,7 +167,7 @@ jobs:
             -only-testing:RunnerTests \
             CODE_SIGNING_ALLOWED=NO \
             | tee /tmp/xctest.log
-          grep -q "** TEST SUCCEEDED **" /tmp/xctest.log
+          grep -Fq "** TEST SUCCEEDED **" /tmp/xctest.log
 
       - name: Run iOS integration tests (simulator)
         working-directory: mobile

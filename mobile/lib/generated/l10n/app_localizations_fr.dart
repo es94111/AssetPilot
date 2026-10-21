@@ -247,6 +247,73 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authPasskeyButton => 'Connexion avec Passkey';
 
   @override
+  String get authAppleButton => 'Connexion avec Apple';
+
+  @override
+  String get offlineDraftsTitle => 'Brouillons hors ligne';
+
+  @override
+  String get offlineDraftsEmpty => 'Vous n\'avez aucun brouillon hors ligne.';
+
+  @override
+  String get offlineDraftsOnline => 'En ligne';
+
+  @override
+  String get offlineDraftsOffline => 'Hors ligne';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'Pas encore enregistré';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return 'Enregistré le $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '$count photo(s) en attente de téléversement';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'Envoyer';
+
+  @override
+  String get offlineDraftsDiscardTitle => 'Supprimer ce brouillon ?';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'Un brouillon supprimé ne peut pas être restauré et ne sera enregistré nulle part.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '$count brouillon(s) en attente de confirmation. Les brouillons ne sont jamais enregistrés automatiquement : confirmez avant d’envoyer.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'Tout envoyer';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '$count brouillon(s) seront envoyés. Ils ne comptent qu’une fois envoyés.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => 'Envoyer tous les brouillons ?';
+
+  @override
+  String get offlineDraftsSynced => 'Enregistré';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '$count brouillon(s) enregistré(s)';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count brouillon(s) non envoyé(s) — traitez-les manuellement';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Vérification du Passkey…';
 
   @override
@@ -3757,6 +3824,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Finances personnelles · App Android';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp =>
+      'Finances personnelles · App iOS';
+
+  @override
   String get mobileLegacySkip => 'Ignorer';
 
   @override
@@ -7184,4 +7255,21 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'Aucun flux de trésorerie ni mouvement sur cette période';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle =>
+      'Vous avez encore des brouillons non envoyés';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'Vous avez $count brouillon(s) non enregistré(s). Après la déconnexion, les brouillons restent sur cet appareil et vous les retrouverez en vous connectant au même compte. Ils ne sont jamais enregistrés automatiquement.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle =>
+      'Masquer les montants dans les widgets';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'Les widgets de l\'écran d\'accueil n\'affichent pas les montants par défaut, afin de protéger les données financières';
 }

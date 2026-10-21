@@ -13,9 +13,13 @@ import 'generated/shared_translations.dart';
 /// of truth; this key is read once to migrate existing users, then removed.
 const _localePreferenceKey = 'appLocale';
 
-/// Bridge to [MainActivity], which forwards to
-/// `AppCompatDelegate.setApplicationLocales` so the in-app picker and the system
-/// "App info → Language" screen write to the same per-app locale store.
+/// Bridge to the native per-app language store.
+///
+/// - Android：[MainActivity] forwards to `AppCompatDelegate.setApplicationLocales`
+///   so the in-app picker and the system "App info → Language" screen write to
+///   the same store.
+/// - iOS：`LocaleChannel` persists the choice in `UserDefaults` and applies it
+///   through `AppleLanguages`（iOS 沒有 per-app language API 的等價物）。
 const _localeChannel = MethodChannel('assetpilot/locale');
 
 const supportedAppLocales = kSupportedAppLocales;
@@ -102,12 +106,36 @@ Future<void> loadAppLocale() async {
     }
   }
 
+  // iOS 沒有 per-app language 的系統存放區，語言選擇由原生層保存在
+  // UserDefaults；啟動時讀回來，讓 App 內選擇的語言在重啟後仍然有效。
+  final persisted = await _readPersistedLocale();
+  if (persisted != null && persisted.isNotEmpty) {
+    final normalized = normalizeAppLocale(persisted);
+    if (supportedAppLocales.contains(normalized)) {
+      appLocale.value = normalized;
+      return;
+    }
+  }
+
   appLocale.value = osLocale;
 }
 
-/// Apply [locale] as the Android per-app language. The OS persists it and (on
-/// API 33+) reflects it in the system "App info → Language" screen; the runtime
-/// locale observer keeps [appLocale] in sync when the OS recreates the activity.
+/// 讀取原生層保存的語言選擇；沒有則回傳 null（Android 沒有此機制）。
+Future<String?> _readPersistedLocale() async {
+  try {
+    return await _localeChannel.invokeMethod<String>('getLocale');
+  } on MissingPluginException {
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Apply [locale] as the App's display language.
+///
+/// Android：寫入系統 per-app language 存放區（API 33+ 會反映在「App 資訊 →
+/// 語言」畫面），runtime locale observer 讓 [appLocale] 與系統保持一致。
+/// iOS：寫入原生層的 `UserDefaults` 與 `AppleLanguages`，重啟後仍有效。
 Future<void> setAppLocale(String locale) async {
   final normalized = normalizeAppLocale(locale);
   appLocale.value = normalized;

@@ -6,6 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import '../api_client.dart';
 import '../app_widget_sync.dart';
 import '../models.dart';
+import '../offline/connectivity_service.dart';
+import '../offline/offline_draft_core.dart';
+import '../offline/offline_draft_service.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
@@ -29,11 +32,24 @@ class TransactionFormScreen extends StatefulWidget {
   final Txn? existing;
   final String? initialType;
   final String? initialCategoryShortcut;
+
+  /// Siri／捷徑帶入的金額（字串形式，保留使用者說出的精度）。
+  final String? initialAmount;
+
+  /// Siri／捷徑帶入的帳戶名稱。
+  final String? initialAccount;
+
+  /// Siri／捷徑帶入的分類名稱。
+  final String? initialCategory;
+
   const TransactionFormScreen({
     super.key,
     this.existing,
     this.initialType,
     this.initialCategoryShortcut,
+    this.initialAmount,
+    this.initialAccount,
+    this.initialCategory,
   });
 
   @override
@@ -56,6 +72,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   List<Category> _categories = [];
 
   String _type = 'expense'; // expense / income / transfer
+  /// 收支類型是否已由呼叫端明確指定（Siri／捷徑或深層連結）。
+  /// 已指定時不讓分類快捷方式覆寫成支出。
+  bool _typeExplicit = false;
   DateTime _date = DateTime.now();
   String? _categoryId; // 實際存到後端的子分類 id
   String? _parentCatId; // 兩段式選擇用：目前選到的父分類 id（不送後端）
@@ -94,6 +113,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           initialType == 'income' ||
           initialType == 'transfer') {
         _type = initialType!;
+        _typeExplicit = true;
+      }
+      // Siri／捷徑帶入的金額：只在可解析為正數時預填，避免帶入無效值。
+      final initialAmount = widget.initialAmount?.trim();
+      if (initialAmount != null && initialAmount.isNotEmpty) {
+        final parsed = num.tryParse(initialAmount);
+        if (parsed != null && parsed > 0) _amount.text = initialAmount;
       }
     }
     _loadFuture = _loadRefs();
@@ -147,12 +173,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     _accountId ??= _accounts.isNotEmpty ? _accounts.first.id : null;
     // 新增模式：幣別預設跟隨預選帳戶。編輯模式維持原交易幣別（已於 initState 帶入）。
     if (!_isEdit) {
+      _applyInitialAccount();
       final a = _selectedAccount;
       if (a != null) {
         _currency = a.currency;
         _currencyInput?.text = _currency;
       }
       _applyInitialCategoryShortcut();
+      _applySiriCategory();
     }
     final e = widget.existing;
     if (e != null) {
@@ -176,7 +204,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final parentNames = _shortcutParentNames(shortcut);
     if (parentNames.isEmpty) return;
 
-    _type = 'expense';
+    // 分類快捷方式只對支出有意義；Siri 明確指定的類型優先，不被覆寫。
+    if (!_typeExplicit) _type = 'expense';
     final parent = _findCategory(
       _categories.where((c) => c.type == 'expense' && c.isParent),
       parentNames,
@@ -191,6 +220,43 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     );
     _categoryId =
         (preferredChild ?? (children.isEmpty ? null : children.first))?.id;
+  }
+
+  /// Siri／捷徑帶入的帳戶名稱：比對不到時保留預設值，由使用者自行挑選，
+  /// 不猜測也不靜默忽略（計畫書 5.4）。
+  void _applyInitialAccount() {
+    final name = widget.initialAccount?.trim();
+    if (name == null || name.isEmpty) return;
+    final match = _accounts.where((a) => a.name.trim() == name).firstOrNull;
+    if (match != null) _accountId = match.id;
+  }
+
+  /// Siri／捷徑帶入的分類名稱：優先完全比對，其次以父分類比對；
+  /// 找不到時留空讓使用者挑選，不猜測後直接儲存。
+  void _applySiriCategory() {
+    final name = widget.initialCategory?.trim();
+    if (name == null || name.isEmpty) return;
+
+    // 先找同類型的子分類（使用者最可能指的那一筆）。
+    final direct = _findCategory(
+      _categories.where((c) => c.type == _type),
+      [name],
+    );
+    if (direct != null) {
+      _categoryId = direct.id;
+      _parentCatId = direct.isParent ? null : direct.parentId;
+      return;
+    }
+
+    // 再找父分類：選中最接近的子分類交由使用者確認。
+    final parent = _findCategory(
+      _categories.where((c) => c.type == _type && c.isParent),
+      [name],
+    );
+    if (parent == null) return;
+    _parentCatId = parent.id;
+    final children = _childCatsOf(parent.id);
+    _categoryId = children.isEmpty ? null : children.first.id;
   }
 
   List<String> _shortcutParentNames(String shortcut) {
@@ -511,29 +577,35 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    // 離線草稿不經過 API 的統一唯讀防線，所以在這裡先擋。
+    if (ApiClient.instance.activeLedgerReadOnly) {
+      toast(context, trKey('ledgerReadOnlyNotice'), isError: true);
+      return;
+    }
     final amount = num.parse(_amount.text.trim());
     setState(() => _saving = true);
     try {
       final api = ApiClient.instance;
-      if (_type == 'transfer') {
-        await api.transfer({
-          'fromAccountId': _accountId,
-          'toAccountId': _toAccountId,
-          'amount': amount,
-          'date': _dateStr,
-          'note': _note.text.trim(),
-        });
-      } else {
-        final body = <String, dynamic>{
-          'type': _type,
-          'amount': amount,
-          'currency': _currency,
-          'date': _dateStr,
-          'categoryId': _categoryId,
-          'accountId': _accountId,
-          'note': _note.text.trim(),
-          'excludeFromStats': _excludeFromStats,
-        };
+      final isTransfer = _type == 'transfer';
+      final body = isTransfer
+          ? <String, dynamic>{
+              'fromAccountId': _accountId,
+              'toAccountId': _toAccountId,
+              'amount': amount,
+              'date': _dateStr,
+              'note': _note.text.trim(),
+            }
+          : <String, dynamic>{
+              'type': _type,
+              'amount': amount,
+              'currency': _currency,
+              'date': _dateStr,
+              'categoryId': _categoryId,
+              'accountId': _accountId,
+              'note': _note.text.trim(),
+              'excludeFromStats': _excludeFromStats,
+            };
+      if (!isTransfer) {
         // 外幣交易：金額即原幣別金額；匯率留空則由後端套系統匯率。
         if (_currency != 'TWD') {
           body['originalAmount'] = amount;
@@ -545,7 +617,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         if (_overseasApplies && feeText.isNotEmpty) {
           body['fxFee'] = num.tryParse(feeText) ?? 0;
         }
-        if (_isEdit) {
+      }
+
+      // 編輯既有交易不支援離線草稿（計畫書 4.3：離線草稿僅涵蓋「新增」）。
+      if (_isEdit) {
+        if (isTransfer) {
+          await api.transfer(body);
+        } else {
           await api.updateTransaction(widget.existing!.id, body);
           if (_photos.isNotEmpty) {
             await api.uploadTransactionPhotos(
@@ -553,6 +631,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               _photos.map((p) => p.path).toList(),
             );
           }
+        }
+        await _refreshDashboardWidgets();
+        if (mounted) Navigator.pop(context, true);
+        return;
+      }
+
+      // 新增：送出前先確認連線。離線（或送出失敗）時改存成草稿，
+      // 由使用者之後明確確認再送出，App 不會自行入帳。
+      if (!ConnectivityService.instance.online) {
+        await _saveAsDraft(body, isTransfer: isTransfer);
+        return;
+      }
+
+      try {
+        if (isTransfer) {
+          await api.transfer(body);
         } else {
           final created = await api.createTransaction(body);
           final id = '${created['id'] ?? ''}';
@@ -563,6 +657,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             );
           }
         }
+      } on ApiException catch (e) {
+        // 連線相關錯誤改成草稿；驗證／權限錯誤直接顯示（不可重試的 4xx）。
+        if (!isRetryableStatus(e.statusCode)) {
+          rethrow;
+        }
+        await _saveAsDraft(body, isTransfer: isTransfer);
+        return;
       }
       await _refreshDashboardWidgets();
       if (mounted) Navigator.pop(context, true);
@@ -572,6 +673,27 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         toast(context, '$e');
       }
     }
+  }
+
+  /// 把這次輸入存成離線草稿（尚未入帳）。
+  ///
+  /// 草稿帶穩定的冪等識別，之後送出時用同一識別，因此不會重複入帳。
+  /// 照片一併複製到 App 私有目錄，避免使用者以為照片已遺失。
+  Future<void> _saveAsDraft(
+    Map<String, dynamic> body, {
+    required bool isTransfer,
+  }) async {
+    final service = OfflineDraftService.instance;
+    await service.save(
+      payload: body,
+      kind: isTransfer ? OfflineDraftKind.transfer : OfflineDraftKind.transaction,
+      photoPaths: _photos.map((p) => p.path).toList(),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    toast(context, trKey('offlineDraftsSavedHint'));
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (mounted) Navigator.pop(context, true);
   }
 
   Future<void> _refreshDashboardWidgets() async {

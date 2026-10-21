@@ -246,6 +246,73 @@ class AppLocalizationsHi extends AppLocalizations {
   String get authPasskeyButton => 'Passkey से साइन इन करें';
 
   @override
+  String get authAppleButton => 'Apple से साइन इन करें';
+
+  @override
+  String get offlineDraftsTitle => 'ऑफ़लाइन ड्राफ़्ट';
+
+  @override
+  String get offlineDraftsEmpty => 'आपके पास कोई ऑफ़लाइन ड्राफ़्ट नहीं है।';
+
+  @override
+  String get offlineDraftsOnline => 'ऑनलाइन';
+
+  @override
+  String get offlineDraftsOffline => 'ऑफ़लाइन';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'अभी दर्ज नहीं हुआ';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return '$time पर सहेजा गया';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '$count फ़ोटो अभी अपलोड होनी बाकी हैं';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'भेजें';
+
+  @override
+  String get offlineDraftsDiscardTitle => 'यह ड्राफ़्ट हटाएँ?';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'हटाए गए ड्राफ़्ट वापस नहीं लाए जा सकते और किसी खाते में दर्ज नहीं होंगे।';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '$count ड्राफ़्ट पुष्टि की प्रतीक्षा में हैं। ड्राफ़्ट कभी स्वतः दर्ज नहीं होते — भेजने से पहले पुष्टि करें।';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'सभी भेजें';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '$count ड्राफ़्ट भेजे जाएँगे। ये केवल भेजने के बाद ही गिने जाते हैं।';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => 'सभी ड्राफ़्ट भेजें?';
+
+  @override
+  String get offlineDraftsSynced => 'दर्ज हो गया';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '$count ड्राफ़्ट दर्ज हुए';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count ड्राफ़्ट भेजे नहीं जा सके — कृपया स्वयं संभालें';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Passkey सत्यापित हो रहा है…';
 
   @override
@@ -3693,6 +3760,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'पर्सनल फाइनेंस · Android App';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => 'पर्सनल फाइनेंस · iOS ऐप';
+
+  @override
   String get mobileLegacySkip => 'छोड़ें';
 
   @override
@@ -7051,4 +7121,20 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'इस अवधि में कोई नकदी प्रवाह या पूंजी गतिविधि नहीं है';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle =>
+      'आपके पास अभी भी सबमिट नहीं किए गए ड्राफ़्ट हैं';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'आपके पास $count ड्राफ़्ट हैं जो अभी दर्ज नहीं हुए। साइन आउट के बाद ड्राफ़्ट इस डिवाइस पर बने रहते हैं और उसी खाते में साइन इन करने पर उन्हें फिर मिल जाते हैं। वे कभी अपने आप दर्ज नहीं होते।';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'विजेट में राशि छिपाएँ';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'वित्तीय जानकारी को निजी रखने के लिए होम स्क्रीन विजेट में राशि डिफ़ॉल्ट रूप से नहीं दिखाते';
 }

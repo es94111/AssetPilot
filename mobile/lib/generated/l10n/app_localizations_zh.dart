@@ -244,6 +244,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authPasskeyButton => '使用 Passkey 登入';
 
   @override
+  String get authAppleButton => '使用 Apple 登入';
+
+  @override
+  String get offlineDraftsTitle => '離線草稿';
+
+  @override
+  String get offlineDraftsEmpty => '目前沒有離線草稿。';
+
+  @override
+  String get offlineDraftsOnline => '已連線';
+
+  @override
+  String get offlineDraftsOffline => '離線中';
+
+  @override
+  String get offlineDraftsNotPostedYet => '尚未入帳';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return '儲存於 $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '另有 $count 張照片待補上傳';
+  }
+
+  @override
+  String get offlineDraftsSubmit => '送出';
+
+  @override
+  String get offlineDraftsDiscardTitle => '捨棄這筆草稿？';
+
+  @override
+  String get offlineDraftsDiscardHint => '捨棄後無法復原，且不會計入任何帳目。';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '有 $count 筆草稿等待確認。草稿不會自動入帳，請確認後再送出。';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => '全部送出';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '將送出 $count 筆草稿。送出後才會計入帳目。';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => '確認送出全部草稿？';
+
+  @override
+  String get offlineDraftsSynced => '已入帳';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '已入帳 $count 筆';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count 筆送出失敗，請手動處理';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Passkey 驗證中…';
 
   @override
@@ -3529,6 +3595,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mobileLegacyPersonalFinanceAndroidApp => '資產管理 · 安卓客戶端';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => '資產管理 · iOS 客戶端';
+
+  @override
   String get mobileLegacySkip => '跳過';
 
   @override
@@ -6729,6 +6798,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get featuresStocksPerformanceFlowsEmpty => '此區間內無資金進出與交易紀錄';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle => '仍有未送出的草稿';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return '你有 $count 筆草稿尚未入帳。登出後草稿會保留在本機，以同一個帳號登入時可以再次找到；它們不會自動入帳。';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'Widget 隱藏金額';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle => '桌面 Widget 預設不顯示金額，避免財務資訊外洩';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -6969,6 +7052,72 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get authPasskeyButton => '使用 Passkey 登录';
+
+  @override
+  String get authAppleButton => '使用 Apple 登录';
+
+  @override
+  String get offlineDraftsTitle => '离线草稿';
+
+  @override
+  String get offlineDraftsEmpty => '目前没有离线草稿。';
+
+  @override
+  String get offlineDraftsOnline => '已连接';
+
+  @override
+  String get offlineDraftsOffline => '离线中';
+
+  @override
+  String get offlineDraftsNotPostedYet => '尚未入账';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return '保存于 $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '另有 $count 张照片待补上传';
+  }
+
+  @override
+  String get offlineDraftsSubmit => '送出';
+
+  @override
+  String get offlineDraftsDiscardTitle => '舍弃这笔草稿？';
+
+  @override
+  String get offlineDraftsDiscardHint => '舍弃后无法复原，且不会计入任何账目。';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '有 $count 笔草稿等待确认。草稿不会自动入账，请确认后再送出。';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => '全部送出';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '将送出 $count 笔草稿。送出后才会计入账目。';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => '确认送出全部草稿？';
+
+  @override
+  String get offlineDraftsSynced => '已入账';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '已入账 $count 笔';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count 笔送出失败，请手动处理';
+  }
 
   @override
   String get authPasskeyVerifying => '正在验证 Passkey…';
@@ -10250,6 +10399,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get mobileLegacyPersonalFinanceAndroidApp => '资产管理 · Android 客户端';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => '资产管理 · iOS 客户端';
+
+  @override
   String get mobileLegacySkip => '跳过';
 
   @override
@@ -13364,6 +13516,20 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get featuresStocksPerformanceFlowsEmpty => '此区间内无资金进出与交易记录';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle => '仍有未提交的草稿';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return '你有 $count 笔草稿尚未记账。退出后草稿会保留在本机，使用同一账号登录时可以再次找到；它们不会自动记账。';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => '小组件隐藏金额';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle => '桌面小组件默认不显示金额，避免财务信息泄露';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -13604,6 +13770,72 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get authPasskeyButton => '使用 Passkey 登入';
+
+  @override
+  String get authAppleButton => '使用 Apple 登入';
+
+  @override
+  String get offlineDraftsTitle => '離線草稿';
+
+  @override
+  String get offlineDraftsEmpty => '目前沒有離線草稿。';
+
+  @override
+  String get offlineDraftsOnline => '已連線';
+
+  @override
+  String get offlineDraftsOffline => '離線中';
+
+  @override
+  String get offlineDraftsNotPostedYet => '尚未入帳';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return '儲存於 $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '另有 $count 張照片待補上傳';
+  }
+
+  @override
+  String get offlineDraftsSubmit => '送出';
+
+  @override
+  String get offlineDraftsDiscardTitle => '捨棄這筆草稿？';
+
+  @override
+  String get offlineDraftsDiscardHint => '捨棄後無法復原，且不會計入任何帳目。';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '有 $count 筆草稿等待確認。草稿不會自動入帳，請確認後再送出。';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => '全部送出';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '將送出 $count 筆草稿。送出後才會計入帳目。';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => '確認送出全部草稿？';
+
+  @override
+  String get offlineDraftsSynced => '已入帳';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '已入帳 $count 筆';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count 筆送出失敗，請手動處理';
+  }
 
   @override
   String get authPasskeyVerifying => 'Passkey 驗證中…';
@@ -16891,6 +17123,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get mobileLegacyPersonalFinanceAndroidApp => '資產管理 · 安卓客戶端';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => '資產管理 · iOS 客戶端';
+
+  @override
   String get mobileLegacySkip => '跳過';
 
   @override
@@ -20091,4 +20326,18 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get featuresStocksPerformanceFlowsEmpty => '此區間內無資金進出與交易紀錄';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle => '仍有未送出的草稿';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return '你有 $count 筆草稿尚未入帳。登出後草稿會保留在本機，以同一個帳號登入時可以再次找到；它們不會自動入帳。';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'Widget 隱藏金額';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle => '桌面 Widget 預設不顯示金額，避免財務資訊外洩';
 }

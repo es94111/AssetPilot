@@ -10,6 +10,7 @@ import 'accounts_screen.dart';
 import 'budgets_screen.dart';
 import 'categories_screen.dart';
 import 'ledger_screen.dart';
+import 'offline_drafts_screen.dart';
 import 'onboarding_screen.dart';
 import 'recurring_screen.dart';
 import 'reports_screen.dart';
@@ -96,6 +97,11 @@ class _MoreScreenState extends State<MoreScreen> {
         Icons.bar_chart_outlined,
         trKey('navReports'),
         () => open(ReportsScreen()),
+      ),
+      (
+        Icons.edit_note_outlined,
+        trKey('offlineDraftsTitle'),
+        () => open(OfflineDraftsScreen()),
       ),
     ];
     final system = <(IconData, String, VoidCallback)>[

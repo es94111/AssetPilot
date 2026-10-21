@@ -244,6 +244,72 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authPasskeyButton => 'Passkey로 로그인';
 
   @override
+  String get authAppleButton => 'Apple로 로그인';
+
+  @override
+  String get offlineDraftsTitle => '오프라인 초안';
+
+  @override
+  String get offlineDraftsEmpty => '오프라인 초안이 없습니다.';
+
+  @override
+  String get offlineDraftsOnline => '온라인';
+
+  @override
+  String get offlineDraftsOffline => '오프라인';
+
+  @override
+  String get offlineDraftsNotPostedYet => '아직 기장되지 않음';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return '저장 시각 $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '업로드 대기 사진 $count장';
+  }
+
+  @override
+  String get offlineDraftsSubmit => '보내기';
+
+  @override
+  String get offlineDraftsDiscardTitle => '이 초안을 삭제할까요?';
+
+  @override
+  String get offlineDraftsDiscardHint => '삭제한 초안은 복구할 수 없으며 어떤 장부에도 반영되지 않습니다.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '확인 대기 초안 $count건. 초안은 자동으로 기장되지 않으니 확인 후 보내세요.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => '모두 보내기';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '초안 $count건을 보냅니다. 보낸 뒤에만 장부에 반영됩니다.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => '모든 초안을 보낼까요?';
+
+  @override
+  String get offlineDraftsSynced => '기장 완료';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '초안 $count건 기장 완료';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '초안 $count건 전송 실패 — 직접 처리해 주세요';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Passkey 확인 중…';
 
   @override
@@ -3582,6 +3648,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mobileLegacyPersonalFinanceAndroidApp => '개인 재무 · Android 앱';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => '개인 재무 · iOS 앱';
+
+  @override
   String get mobileLegacySkip => '건너뛰기';
 
   @override
@@ -6835,4 +6904,19 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       '해당 기간에 자금 입출금 또는 거래 내역이 없습니다';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle => '아직 제출하지 않은 임시저장이 있습니다';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return '아직 기입되지 않은 임시저장이 $count건 있습니다. 로그아웃해도 임시저장은 이 기기에 보관되며, 같은 계정으로 다시 로그인하면 찾을 수 있습니다. 자동으로 기입되는 일은 없습니다.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => '위젯에서 금액 숨기기';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      '재무 정보를 보호하기 위해 홈 화면 위젯은 기본적으로 금액을 표시하지 않습니다';
 }

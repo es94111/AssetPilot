@@ -246,6 +246,73 @@ class AppLocalizationsPt extends AppLocalizations {
   String get authPasskeyButton => 'Entrar com Passkey';
 
   @override
+  String get authAppleButton => 'Entrar com Apple';
+
+  @override
+  String get offlineDraftsTitle => 'Rascunhos offline';
+
+  @override
+  String get offlineDraftsEmpty => 'Você não tem rascunhos offline.';
+
+  @override
+  String get offlineDraftsOnline => 'Online';
+
+  @override
+  String get offlineDraftsOffline => 'Offline';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'Ainda não lançado';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return 'Salvo em $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '$count foto(s) aguardando envio';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'Enviar';
+
+  @override
+  String get offlineDraftsDiscardTitle => 'Descartar este rascunho?';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'Rascunhos descartados não podem ser restaurados e não serão lançados em nenhuma conta.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '$count rascunho(s) aguardando confirmação. Rascunhos nunca são lançados automaticamente — confirme antes de enviar.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'Enviar tudo';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '$count rascunho(s) serão enviados. Eles só contam após o envio.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => 'Enviar todos os rascunhos?';
+
+  @override
+  String get offlineDraftsSynced => 'Lançado';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '$count rascunho(s) lançado(s)';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count rascunho(s) falharam no envio — trate manualmente';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Verificando Passkey…';
 
   @override
@@ -3738,6 +3805,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Finanças pessoais · App Android';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => 'Finanças pessoais · App iOS';
+
+  @override
   String get mobileLegacySkip => 'Pular';
 
   @override
@@ -7139,6 +7209,22 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'Sem fluxos de caixa ou movimentações neste período';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle =>
+      'Você ainda tem rascunhos não enviados';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'Você tem $count rascunho(s) não lançados. Após sair, os rascunhos permanecem neste dispositivo e você os encontrará novamente ao entrar na mesma conta. Eles nunca são lançados automaticamente.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'Ocultar valores nos widgets';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'Os widgets da tela inicial não mostram valores por padrão, para manter os dados financeiros privados';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -7381,6 +7467,73 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get authPasskeyButton => 'Entrar com Passkey';
+
+  @override
+  String get authAppleButton => 'Entrar com Apple';
+
+  @override
+  String get offlineDraftsTitle => 'Rascunhos offline';
+
+  @override
+  String get offlineDraftsEmpty => 'Você não tem rascunhos offline.';
+
+  @override
+  String get offlineDraftsOnline => 'Online';
+
+  @override
+  String get offlineDraftsOffline => 'Offline';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'Ainda não lançado';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return 'Salvo em $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '$count foto(s) aguardando envio';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'Enviar';
+
+  @override
+  String get offlineDraftsDiscardTitle => 'Descartar este rascunho?';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'Rascunhos descartados não podem ser restaurados e não serão lançados em nenhuma conta.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '$count rascunho(s) aguardando confirmação. Rascunhos nunca são lançados automaticamente — confirme antes de enviar.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'Enviar tudo';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '$count rascunho(s) serão enviados. Eles só contam após o envio.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => 'Enviar todos os rascunhos?';
+
+  @override
+  String get offlineDraftsSynced => 'Lançado';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '$count rascunho(s) lançado(s)';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count rascunho(s) falharam no envio — trate manualmente';
+  }
 
   @override
   String get authPasskeyVerifying => 'Verificando Passkey…';
@@ -10866,6 +11019,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Finanças pessoais · App Android';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => 'Finanças pessoais · App iOS';
+
+  @override
   String get mobileLegacySkip => 'Pular';
 
   @override
@@ -14169,4 +14325,20 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'Sem fluxos de caixa ou movimentações neste período';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle =>
+      'Você ainda tem rascunhos não enviados';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'Você tem $count rascunho(s) não lançados. Após sair, os rascunhos permanecem neste dispositivo e você os encontrará novamente ao entrar na mesma conta. Eles nunca são lançados automaticamente.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'Ocultar valores nos widgets';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'Os widgets da tela inicial não mostram valores por padrão, para manter os dados financeiros privados';
 }

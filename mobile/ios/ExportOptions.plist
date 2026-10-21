@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Store 匯出設定：指定 App 與 Widget 擴充都使用同一組 App Store
+	     描述檔，讓 App 與擴充的簽署身分一致。
+	     App Intents 位於主 App target 內（不需獨立擴充），因此不另列。
+	     描述檔的 team 與 bundle id 需與 Apple Developer 帳號一致；
+	     若尚未申請會員，此檔僅用於本機模擬器建置，正式封存需先完成設定。 -->
+	<key>method</key>
+	<string>app-store</string>
+	<key>teamID</key>
+	<string>$(APPLE_TEAM_ID)</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>destination</key>
+	<string>upload</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.assetpilot.assetpilot</key>
+		<string>AssetPilot App Store</string>
+		<key>com.assetpilot.assetpilot.AssetPilotWidget</key>
+		<string>AssetPilot App Store</string>
+	</dict>
+</dict>
+</plist>

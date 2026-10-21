@@ -245,6 +245,73 @@ class AppLocalizationsAr extends AppLocalizations {
   String get authPasskeyButton => 'تسجيل الدخول باستخدام Passkey';
 
   @override
+  String get authAppleButton => 'تسجيل الدخول باستخدام Apple';
+
+  @override
+  String get offlineDraftsTitle => 'المسودات دون اتصال';
+
+  @override
+  String get offlineDraftsEmpty => 'لا توجد مسودات دون اتصال.';
+
+  @override
+  String get offlineDraftsOnline => 'متصل';
+
+  @override
+  String get offlineDraftsOffline => 'غير متصل';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'لم يتم التسجيل بعد';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return 'تم الحفظ في $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '$count صورة في انتظار الرفع';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'إرسال';
+
+  @override
+  String get offlineDraftsDiscardTitle => 'هل تريد حذف هذه المسودة؟';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'لا يمكن استعادة المسودات المحذوفة ولن يتم تسجيلها في أي حساب.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '$count مسودة في انتظار التأكيد. لا تُسجَّل المسودات تلقائيًا — أكّد قبل الإرسال.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'إرسال الكل';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return 'سيتم إرسال $count مسودة. تُحتسب فقط بعد الإرسال.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => 'إرسال كل المسودات؟';
+
+  @override
+  String get offlineDraftsSynced => 'تم التسجيل';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return 'تم تسجيل $count مسودة';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return 'فشل إرسال $count مسودة — يرجى معالجتها يدويًا';
+  }
+
+  @override
   String get authPasskeyVerifying => 'جارٍ التحقق من Passkey…';
 
   @override
@@ -3681,6 +3748,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'إدارة مالية · تطبيق Android';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => 'إدارة مالية · تطبيق iOS';
+
+  @override
   String get mobileLegacySkip => 'تخطي';
 
   @override
@@ -7026,4 +7096,19 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'لا توجد تدفقات نقدية أو حركات رأس مال في هذه الفترة';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle => 'لا تزال لديك مسودات غير مرسلة';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'لديك $count مسودة لم يتم تسجيلها. تبقى المسودات على هذا الجهاز بعد تسجيل الخروج، ويمكنك العثور عليها مجددًا عند تسجيل الدخول إلى الحساب نفسه. لا تُسجَّل تلقائيًا أبدًا.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'إخفاء المبالغ في الأدوات';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'لا تعرض أدوات الشاشة الرئيسية المبالغ افتراضيًا، للحفاظ على خصوصية البيانات المالية';
 }

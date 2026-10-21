@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Group：讓 WidgetKit 擴充與主 App 共用快照容器。
+	     與 mobile/lib/platform/app_group_store.dart 的 appGroupId 保持一致。 -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.assetpilot.assetpilot</string>
+	</array>
+	<!-- Keychain Sharing：flutter_secure_storage 在 iOS 需要此 capability，
+	     否則 Keychain 寫入會靜默失敗（值看似寫入但實際未落地）。
+	     Widget 擴充不需要讀取憑證，因此只授予主 App。 -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.assetpilot.assetpilot</string>
+	</array>
+	<!-- Associated Domains：Universal Links（asset.shao.one 網域驗證）。 -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:asset.shao.one</string>
+	</array>
+	<!-- Sign in with Apple：iOS 版新增的登入方式，需在 Apple Developer 帳號
+	     同時啟用 Sign in with Apple 服務，否則簽署會失敗。 -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>

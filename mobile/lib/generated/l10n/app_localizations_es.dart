@@ -247,6 +247,73 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authPasskeyButton => 'Entrar con Passkey';
 
   @override
+  String get authAppleButton => 'Entrar con Apple';
+
+  @override
+  String get offlineDraftsTitle => 'Borradores sin conexión';
+
+  @override
+  String get offlineDraftsEmpty => 'No tienes borradores sin conexión.';
+
+  @override
+  String get offlineDraftsOnline => 'En línea';
+
+  @override
+  String get offlineDraftsOffline => 'Sin conexión';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'Aún no registrado';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return 'Guardado el $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '$count foto(s) pendientes de subir';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'Enviar';
+
+  @override
+  String get offlineDraftsDiscardTitle => '¿Descartar este borrador?';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'Los borradores descartados no se pueden restaurar y no se registrarán en ninguna cuenta.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '$count borrador(es) pendientes de confirmación. Los borradores nunca se registran automáticamente: confírmalos antes de enviarlos.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'Enviar todo';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return 'Se enviarán $count borrador(es). Solo cuentan una vez enviados.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => '¿Enviar todos los borradores?';
+
+  @override
+  String get offlineDraftsSynced => 'Registrado';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '$count borrador(es) registrados';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count borrador(es) no se enviaron: trátalos manualmente';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Verificando Passkey…';
 
   @override
@@ -3763,6 +3830,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Gestión financiera · App Android';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp =>
+      'Gestión financiera · App iOS';
+
+  @override
   String get mobileLegacySkip => 'Omitir';
 
   @override
@@ -7178,4 +7249,21 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'Sin flujos de caja ni movimientos en este período';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle =>
+      'Aún tienes borradores sin enviar';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'Tienes $count borrador(es) sin registrar. Al cerrar sesión, los borradores se conservan en este dispositivo y podrás volver a encontrarlos al iniciar sesión en la misma cuenta. Nunca se registran automáticamente.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle =>
+      'Ocultar importes en los widgets';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'Los widgets de la pantalla de inicio no muestran importes por defecto, para proteger los datos financieros';
 }

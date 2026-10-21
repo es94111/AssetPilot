@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -8,6 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_client.dart';
 import 'generated/l10n/app_localizations.dart';
+import 'offline/connectivity_service.dart';
+import 'offline/offline_draft_service.dart';
+import 'offline/offline_draft_store.dart';
+import 'platform/deep_link_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/ledger_screen.dart';
 import 'screens/login_screen.dart';
@@ -46,7 +49,8 @@ Future<void> setThemeMode(ThemeMode mode) async {
   await p.setString(_kThemeKey, mode.name);
 }
 
-ThemeData _buildTheme(Brightness brightness) => buildAssetPilotTheme(brightness);
+ThemeData _buildTheme(Brightness brightness) =>
+    buildAssetPilotTheme(brightness);
 
 class AssetPilotApp extends StatelessWidget {
   const AssetPilotApp({super.key});
@@ -107,9 +111,11 @@ class _RootGateState extends State<RootGate> {
   @override
   Widget build(BuildContext context) {
     if (_showSplash) {
-      return SplashScreen(onDone: () {
-        if (mounted) setState(() => _showSplash = false);
-      });
+      return SplashScreen(
+        onDone: () {
+          if (mounted) setState(() => _showSplash = false);
+        },
+      );
     }
     return const AuthGate();
   }
@@ -130,6 +136,10 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     ApiClient.instance.authState.addListener(_handleAuthChange);
+    // 深層連結監聽必須在「未登入」狀態就開始，否則 Widget 或 Siri 在
+    // 登入前喚醒 App 時連結會被丟掉（計畫書 5.4 節的冷啟動接續要求）。
+    // 連結會由 DeepLinkService 暫存，等 HomeShell 建立後再取走。
+    unawaited(DeepLinkService.instance.start());
   }
 
   @override
@@ -166,21 +176,44 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+
   /// 帳本切換時遞增，讓 IndexedStack 內的分頁全部重建（不保留舊帳本快取）。
   int _homeEpoch = 0;
-  final AppLinks _appLinks = AppLinks();
+  final DeepLinkService _deepLinks = DeepLinkService.instance;
   StreamSubscription<Uri>? _linkSubscription;
   bool _openingDeepLink = false;
 
   @override
   void initState() {
     super.initState();
-    _linkSubscription = _appLinks.uriLinkStream.listen(_handleIncomingLink);
+    _linkSubscription = _deepLinks.links.listen(_handleIncomingLink);
+    // 離線草稿需要知道目前連線狀態，以及草稿所屬的使用者／帳本。
+    unawaited(ConnectivityService.instance.start());
+    unawaited(_bindOfflineDrafts());
     // 第一次進到主畫面時自動彈出使用教學（看過後不再出現）。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_handleInitialLink());
       if (mounted) OnboardingScreen.showIfFirstTime(context);
     });
+  }
+
+  /// 把離線草稿服務綁定到目前使用者與帳本，避免跨帳號／跨帳本混用草稿。
+  Future<void> _bindOfflineDrafts() async {
+    try {
+      final me = await ApiClient.instance.me();
+      await OfflineDraftService.instance.bind(
+        userId: '${me['id'] ?? ''}',
+        ledgerId: ApiClient.instance.activeLedgerId,
+      );
+    } catch (_) {
+      if (ApiClient.instance.isLoggedIn) {
+        await OfflineDraftService.instance.restoreRememberedBinding(
+          ledgerId: ApiClient.instance.activeLedgerId,
+        );
+      } else {
+        await OfflineDraftStore.clearRememberedUserId();
+      }
+    }
   }
 
   @override
@@ -191,12 +224,18 @@ class _HomeShellState extends State<HomeShell> {
 
   Future<void> _handleInitialLink() async {
     try {
-      final uri = await _appLinks.getInitialLink();
+      // 冷啟動時系統可能帶來一個連結（App 尚未執行就被喚醒）。
+      // 若它是在登入前抵達的，會由 [DeepLinkService] 暫存，
+      // 這裡取回來處理。
+      final uri = await _deepLinks.initialLink() ?? _deepLinks.takePending();
       if (uri != null) await _handleIncomingLink(uri);
     } catch (_) {}
   }
 
   Future<void> _handleIncomingLink(Uri uri) async {
+    // 這個連結已被接手，不要留在 DeepLinkService 的待處理佇列，
+    // 否則登出再登入時會被重複開啟。
+    _deepLinks.consume(uri);
     if (_isLedgerInviteLink(uri) && !_openingDeepLink && mounted) {
       _openingDeepLink = true;
       try {
@@ -221,11 +260,30 @@ class _HomeShellState extends State<HomeShell> {
     // 對同一連結的重複投遞；但不長存去重，讓 widget 捷徑可重複點擊記帳。
     _openingDeepLink = true;
     try {
+      // 唯讀帳本不得經由捷徑／Widget 交接開啟記帳表單（計畫書 4.1／5.4）。
+      // 冷啟動後唯讀旗標尚未載入，連線時先向伺服器重新確認一次角色；
+      // 離線時沿用已知旗標，且逾時即放行，避免拖慢離線草稿流程。
+      final readOnly = ConnectivityService.instance.online
+          ? await ApiClient.instance.refreshLedgerRole().timeout(
+              const Duration(seconds: 4),
+              onTimeout: () => ApiClient.instance.activeLedgerReadOnly,
+            )
+          : ApiClient.instance.activeLedgerReadOnly;
+      if (!mounted) return;
+      if (readOnly) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(trKey('ledgerReadOnlyNotice'))));
+        return;
+      }
       final changed = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => TransactionFormScreen(
-            initialType: 'expense',
+            initialType: _linkTransactionType(uri),
             initialCategoryShortcut: uri.queryParameters['category'],
+            initialAmount: uri.queryParameters['amount'],
+            initialAccount: uri.queryParameters['account'],
+            initialCategory: uri.queryParameters['category'],
           ),
         ),
       );
@@ -237,6 +295,14 @@ class _HomeShellState extends State<HomeShell> {
     }
   }
 
+  /// 深層連結帶入的收支類型。Siri 捷徑會帶 `type=expense|income`；
+  /// 未帶或帶入無法辨識的值時回到預設的支出。
+  String _linkTransactionType(Uri uri) {
+    final type = uri.queryParameters['type'];
+    if (type == 'income' || type == 'expense') return type!;
+    return 'expense';
+  }
+
   bool _isNewTransactionLink(Uri uri) =>
       uri.scheme == 'assetpilot' &&
       uri.host == 'transaction' &&
@@ -245,16 +311,28 @@ class _HomeShellState extends State<HomeShell> {
   /// 共享帳本邀請連結：assetpilot://ledger/invite?token=…
   bool _isLedgerInviteLink(Uri uri) {
     final customScheme =
-        uri.scheme == 'assetpilot' && uri.host == 'ledger' && uri.path == '/invite';
-    final verifiedWebLink = uri.scheme == 'https' &&
+        uri.scheme == 'assetpilot' &&
+        uri.host == 'ledger' &&
+        uri.path == '/invite';
+    final verifiedWebLink =
+        uri.scheme == 'https' &&
         uri.host == 'asset.shao.one' &&
         uri.path == '/settings/ledgers';
-    final token = uri.queryParameters['token'] ?? uri.queryParameters['invite'] ?? '';
+    final token =
+        uri.queryParameters['token'] ?? uri.queryParameters['invite'] ?? '';
     return (customScheme || verifiedWebLink) && token.isNotEmpty;
   }
 
-  /// 切換帳本後重建所有分頁，確保畫面上不留前一個帳本的資料。
-  void _reloadAll() => setState(() => _homeEpoch += 1);
+  /// 切換帳本後重建所有分頁，確保畫面上不留前一個帳本的資料；
+  /// 同時把離線草稿服務換到新帳本，避免草稿被標成舊帳本。
+  void _reloadAll() {
+    setState(() => _homeEpoch += 1);
+    unawaited(
+      OfflineDraftService.instance.bindLedger(
+        ApiClient.instance.activeLedgerId,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

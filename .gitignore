@@ -31,6 +31,9 @@ test-results/
 playwright-report/
 blob-report/
 docs/*
+!docs/ios-app-development-plan.md
+!docs/ios-feature-matrix.md
+!docs/ios-release-checklist.md
 !docs/screenshots/
 !docs/marketing-screenshots/
 docs/marketing-screenshots/*/*.log

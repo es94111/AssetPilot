@@ -75,36 +75,6 @@ class _AccountsScreenState extends State<AccountsScreen> {
     if (changed == true) _reload();
   }
 
-  Future<void> _delete(Account a) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(trKey('mobileLegacyDeleteAccount')),
-        content: Text(
-          trKey('mobileDynamicDeleteAccountName', {'name': a.name}),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(trKey('commonCancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(trKey('commonDelete')),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    try {
-      await ApiClient.instance.deleteAccount(a.id);
-      if (mounted) toast(context, trKey('mobileLegacyDeleted'));
-      _reload();
-    } catch (e) {
-      if (mounted) toast(context, '$e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

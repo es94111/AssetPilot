@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../app.dart';
 import '../models.dart';
+import '../offline/offline_draft_core.dart';
+import '../offline/offline_draft_service.dart';
+import '../offline/offline_draft_store.dart';
+import '../platform/platform_info.dart';
+import '../platform/widget_snapshot_service.dart';
 import '../widgets.dart';
 import 'admin_screen.dart';
 import 'changelog_screen.dart';
@@ -66,6 +71,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _logout() async {
+    // 登出前若還有未送出的離線草稿，先明確告知使用者（計畫書 5.5／第 10 節）。
+    // 草稿會保留在本機的加密儲存中，以同一帳號登入可再次找回；
+    // **不會**自動入帳，也不會在這裡直接丟棄。
+    final pending = await OfflineDraftService.instance.list();
+    final outstanding = pending.where(isOutstanding).length;
+    if (outstanding > 0 && mounted) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(trKey('offlineDraftsLogoutWarningTitle')),
+          content: Text(
+            trKey('offlineDraftsLogoutWarningHint', {'count': outstanding}),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(trKey('commonCancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(trKey('shellLogout')),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+
     await ApiClient.instance.logout();
     if (mounted) {
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -102,7 +135,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: trKey('mobileLegacyEnterTheAccountEmailToConfirm'),
+                    labelText: trKey(
+                      'mobileLegacyEnterTheAccountEmailToConfirm',
+                    ),
                     hintText: user.email,
                     errorText: error,
                   ),
@@ -161,6 +196,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
     if (confirmed == true && mounted) {
+      await OfflineDraftStore.clearUser(user.id);
+      if (!mounted) return;
       toast(context, trKey('mobileLegacyAccountDeleted'));
       Navigator.of(context).popUntil((route) => route.isFirst);
       widget.onLoggedOut();
@@ -296,6 +333,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               onTap: () => _push(ReportScheduleScreen()),
             ),
+            if (PlatformInfo.isIOS)
+              FutureBuilder<bool>(
+                future: WidgetSnapshotService.readHideAmounts(),
+                builder: (context, snapshot) {
+                  final hide = snapshot.data ?? true;
+                  return SwitchListTile(
+                    secondary: Icon(Icons.widgets_outlined),
+                    title: Text(trKey('settingsWidgetHideAmountsTitle')),
+                    subtitle: Text(trKey('settingsWidgetHideAmountsSubtitle')),
+                    value: hide,
+                    onChanged: (v) async {
+                      await WidgetSnapshotService.setHideAmounts(v);
+                      if (!context.mounted) return;
+                      setState(() {});
+                    },
+                  );
+                },
+              ),
             Divider(),
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 0),

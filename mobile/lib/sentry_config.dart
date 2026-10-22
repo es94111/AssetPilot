@@ -56,6 +56,7 @@ void configureSentry(SentryFlutterOptions options) {
   options.privacy.maskAllText = true;
   options.privacy.maskAllImages = true;
   options.privacy.maskAssetImages = false;
+  // ignore: experimental_member_use
   options.privacy.unmask<Icon>();
 
   // 送出前再保險清掉可能挾帶的機敏標頭（JWT Cookie、Authorization）與查詢字串。

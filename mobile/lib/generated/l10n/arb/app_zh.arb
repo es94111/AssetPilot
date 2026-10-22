@@ -391,6 +391,101 @@
     "description": "Web path: auth.passkeyButton",
     "x-webPath": "auth.passkeyButton"
   },
+  "authAppleButton": "使用 Apple 登入",
+  "@authAppleButton": {
+    "description": "Web path: auth.appleButton",
+    "x-webPath": "auth.appleButton"
+  },
+  "offlineDraftsTitle": "離線草稿",
+  "@offlineDraftsTitle": {
+    "description": "Web path: offlineDrafts.title",
+    "x-webPath": "offlineDrafts.title"
+  },
+  "offlineDraftsEmpty": "目前沒有離線草稿。",
+  "@offlineDraftsEmpty": {
+    "description": "Web path: offlineDrafts.empty",
+    "x-webPath": "offlineDrafts.empty"
+  },
+  "offlineDraftsOnline": "已連線",
+  "@offlineDraftsOnline": {
+    "description": "Web path: offlineDrafts.online",
+    "x-webPath": "offlineDrafts.online"
+  },
+  "offlineDraftsOffline": "離線中",
+  "@offlineDraftsOffline": {
+    "description": "Web path: offlineDrafts.offline",
+    "x-webPath": "offlineDrafts.offline"
+  },
+  "offlineDraftsNotPostedYet": "尚未入帳",
+  "@offlineDraftsNotPostedYet": {
+    "description": "Web path: offlineDrafts.notPostedYet",
+    "x-webPath": "offlineDrafts.notPostedYet"
+  },
+  "offlineDraftsSavedHint": "已儲存為離線草稿 — 尚未入帳。稍後請前往「離線草稿」確認。",
+  "@offlineDraftsSavedHint": {
+    "description": "Web path: offlineDrafts.savedHint",
+    "x-webPath": "offlineDrafts.savedHint"
+  },
+  "offlineDraftsSavedAt": "儲存於 {time}",
+  "@offlineDraftsSavedAt": {
+    "description": "Web path: offlineDrafts.savedAt",
+    "x-webPath": "offlineDrafts.savedAt"
+  },
+  "offlineDraftsPhotoPending": "另有 {count} 張照片待補上傳",
+  "@offlineDraftsPhotoPending": {
+    "description": "Web path: offlineDrafts.photoPending",
+    "x-webPath": "offlineDrafts.photoPending"
+  },
+  "offlineDraftsSubmit": "送出",
+  "@offlineDraftsSubmit": {
+    "description": "Web path: offlineDrafts.submit",
+    "x-webPath": "offlineDrafts.submit"
+  },
+  "offlineDraftsDiscardTitle": "捨棄這筆草稿？",
+  "@offlineDraftsDiscardTitle": {
+    "description": "Web path: offlineDrafts.discardTitle",
+    "x-webPath": "offlineDrafts.discardTitle"
+  },
+  "offlineDraftsDiscardHint": "捨棄後無法復原，且不會計入任何帳目。",
+  "@offlineDraftsDiscardHint": {
+    "description": "Web path: offlineDrafts.discardHint",
+    "x-webPath": "offlineDrafts.discardHint"
+  },
+  "offlineDraftsPendingHint": "有 {count} 筆草稿等待確認。草稿不會自動入帳，請確認後再送出。",
+  "@offlineDraftsPendingHint": {
+    "description": "Web path: offlineDrafts.pendingHint",
+    "x-webPath": "offlineDrafts.pendingHint"
+  },
+  "offlineDraftsSubmitAll": "全部送出",
+  "@offlineDraftsSubmitAll": {
+    "description": "Web path: offlineDrafts.submitAll",
+    "x-webPath": "offlineDrafts.submitAll"
+  },
+  "offlineDraftsSubmitAllHint": "將送出 {count} 筆草稿。送出後才會計入帳目。",
+  "@offlineDraftsSubmitAllHint": {
+    "description": "Web path: offlineDrafts.submitAllHint",
+    "x-webPath": "offlineDrafts.submitAllHint"
+  },
+  "offlineDraftsConfirmSubmitAll": "確認送出全部草稿？",
+  "@offlineDraftsConfirmSubmitAll": {
+    "description": "Web path: offlineDrafts.confirmSubmitAll",
+    "x-webPath": "offlineDrafts.confirmSubmitAll"
+  },
+  "offlineDraftsSynced": "已入帳",
+  "@offlineDraftsSynced": {
+    "description": "Web path: offlineDrafts.synced",
+    "x-webPath": "offlineDrafts.synced"
+  },
+  "offlineDraftsSyncedCount": "已入帳 {count} 筆",
+  "@offlineDraftsSyncedCount": {
+    "description": "Web path: offlineDrafts.syncedCount",
+    "x-webPath": "offlineDrafts.syncedCount"
+  },
+  "offlineDraftsFailedCount": "{count} 筆送出失敗，請手動處理",
+  "@offlineDraftsFailedCount": {
+    "description": "Web path: offlineDrafts.failedCount",
+    "x-webPath": "offlineDrafts.failedCount"
+  },
   "authPasskeyVerifying": "Passkey 驗證中…",
   "@authPasskeyVerifying": {
     "description": "Web path: auth.passkeyVerifying",
@@ -5712,6 +5807,11 @@
     "description": "Mobile compatibility string: 資產管理 · 安卓客戶端",
     "x-webPath": "mobileLegacy.personalFinanceAndroidApp"
   },
+  "mobileLegacyPersonalFinanceIosApp": "資產管理 · iOS 客戶端",
+  "@mobileLegacyPersonalFinanceIosApp": {
+    "description": "Mobile compatibility string: 資產管理 · iOS 客戶端",
+    "x-webPath": "mobileLegacy.personalFinanceIosApp"
+  },
   "mobileLegacySkip": "跳過",
   "@mobileLegacySkip": {
     "description": "Mobile compatibility string: 跳過",
@@ -10858,5 +10958,25 @@
   "@featuresStocksPerformanceFlowsEmpty": {
     "description": "Web path: features.stocks.performance.flowsEmpty",
     "x-webPath": "features.stocks.performance.flowsEmpty"
+  },
+  "offlineDraftsLogoutWarningTitle": "仍有未送出的草稿",
+  "@offlineDraftsLogoutWarningTitle": {
+    "description": "Web path: offlineDrafts.logoutWarning.title",
+    "x-webPath": "offlineDrafts.logoutWarning.title"
+  },
+  "offlineDraftsLogoutWarningHint": "你有 {count} 筆草稿尚未入帳。登出後草稿會保留在本機，以同一個帳號登入時可以再次找到；它們不會自動入帳。",
+  "@offlineDraftsLogoutWarningHint": {
+    "description": "Web path: offlineDrafts.logoutWarning.hint",
+    "x-webPath": "offlineDrafts.logoutWarning.hint"
+  },
+  "settingsWidgetHideAmountsTitle": "Widget 隱藏金額",
+  "@settingsWidgetHideAmountsTitle": {
+    "description": "Web path: settings.widgetHideAmounts.title",
+    "x-webPath": "settings.widgetHideAmounts.title"
+  },
+  "settingsWidgetHideAmountsSubtitle": "桌面 Widget 預設不顯示金額，避免財務資訊外洩",
+  "@settingsWidgetHideAmountsSubtitle": {
+    "description": "Web path: settings.widgetHideAmounts.subtitle",
+    "x-webPath": "settings.widgetHideAmounts.subtitle"
   }
 }

@@ -391,6 +391,101 @@
     "description": "Web path: auth.passkeyButton",
     "x-webPath": "auth.passkeyButton"
   },
+  "authAppleButton": "Connexion avec Apple",
+  "@authAppleButton": {
+    "description": "Web path: auth.appleButton",
+    "x-webPath": "auth.appleButton"
+  },
+  "offlineDraftsTitle": "Brouillons hors ligne",
+  "@offlineDraftsTitle": {
+    "description": "Web path: offlineDrafts.title",
+    "x-webPath": "offlineDrafts.title"
+  },
+  "offlineDraftsEmpty": "Vous n'avez aucun brouillon hors ligne.",
+  "@offlineDraftsEmpty": {
+    "description": "Web path: offlineDrafts.empty",
+    "x-webPath": "offlineDrafts.empty"
+  },
+  "offlineDraftsOnline": "En ligne",
+  "@offlineDraftsOnline": {
+    "description": "Web path: offlineDrafts.online",
+    "x-webPath": "offlineDrafts.online"
+  },
+  "offlineDraftsOffline": "Hors ligne",
+  "@offlineDraftsOffline": {
+    "description": "Web path: offlineDrafts.offline",
+    "x-webPath": "offlineDrafts.offline"
+  },
+  "offlineDraftsNotPostedYet": "Pas encore enregistré",
+  "@offlineDraftsNotPostedYet": {
+    "description": "Web path: offlineDrafts.notPostedYet",
+    "x-webPath": "offlineDrafts.notPostedYet"
+  },
+  "offlineDraftsSavedHint": "Enregistré comme brouillon hors ligne : pas encore comptabilisé. Confirmez-le plus tard dans « Brouillons hors ligne ».",
+  "@offlineDraftsSavedHint": {
+    "description": "Web path: offlineDrafts.savedHint",
+    "x-webPath": "offlineDrafts.savedHint"
+  },
+  "offlineDraftsSavedAt": "Enregistré le {time}",
+  "@offlineDraftsSavedAt": {
+    "description": "Web path: offlineDrafts.savedAt",
+    "x-webPath": "offlineDrafts.savedAt"
+  },
+  "offlineDraftsPhotoPending": "{count} photo(s) en attente de téléversement",
+  "@offlineDraftsPhotoPending": {
+    "description": "Web path: offlineDrafts.photoPending",
+    "x-webPath": "offlineDrafts.photoPending"
+  },
+  "offlineDraftsSubmit": "Envoyer",
+  "@offlineDraftsSubmit": {
+    "description": "Web path: offlineDrafts.submit",
+    "x-webPath": "offlineDrafts.submit"
+  },
+  "offlineDraftsDiscardTitle": "Supprimer ce brouillon ?",
+  "@offlineDraftsDiscardTitle": {
+    "description": "Web path: offlineDrafts.discardTitle",
+    "x-webPath": "offlineDrafts.discardTitle"
+  },
+  "offlineDraftsDiscardHint": "Un brouillon supprimé ne peut pas être restauré et ne sera enregistré nulle part.",
+  "@offlineDraftsDiscardHint": {
+    "description": "Web path: offlineDrafts.discardHint",
+    "x-webPath": "offlineDrafts.discardHint"
+  },
+  "offlineDraftsPendingHint": "{count} brouillon(s) en attente de confirmation. Les brouillons ne sont jamais enregistrés automatiquement : confirmez avant d’envoyer.",
+  "@offlineDraftsPendingHint": {
+    "description": "Web path: offlineDrafts.pendingHint",
+    "x-webPath": "offlineDrafts.pendingHint"
+  },
+  "offlineDraftsSubmitAll": "Tout envoyer",
+  "@offlineDraftsSubmitAll": {
+    "description": "Web path: offlineDrafts.submitAll",
+    "x-webPath": "offlineDrafts.submitAll"
+  },
+  "offlineDraftsSubmitAllHint": "{count} brouillon(s) seront envoyés. Ils ne comptent qu’une fois envoyés.",
+  "@offlineDraftsSubmitAllHint": {
+    "description": "Web path: offlineDrafts.submitAllHint",
+    "x-webPath": "offlineDrafts.submitAllHint"
+  },
+  "offlineDraftsConfirmSubmitAll": "Envoyer tous les brouillons ?",
+  "@offlineDraftsConfirmSubmitAll": {
+    "description": "Web path: offlineDrafts.confirmSubmitAll",
+    "x-webPath": "offlineDrafts.confirmSubmitAll"
+  },
+  "offlineDraftsSynced": "Enregistré",
+  "@offlineDraftsSynced": {
+    "description": "Web path: offlineDrafts.synced",
+    "x-webPath": "offlineDrafts.synced"
+  },
+  "offlineDraftsSyncedCount": "{count} brouillon(s) enregistré(s)",
+  "@offlineDraftsSyncedCount": {
+    "description": "Web path: offlineDrafts.syncedCount",
+    "x-webPath": "offlineDrafts.syncedCount"
+  },
+  "offlineDraftsFailedCount": "{count} brouillon(s) non envoyé(s) — traitez-les manuellement",
+  "@offlineDraftsFailedCount": {
+    "description": "Web path: offlineDrafts.failedCount",
+    "x-webPath": "offlineDrafts.failedCount"
+  },
   "authPasskeyVerifying": "Vérification du Passkey…",
   "@authPasskeyVerifying": {
     "description": "Web path: auth.passkeyVerifying",
@@ -5588,6 +5683,11 @@
     "description": "Mobile compatibility string: 資產管理 · 安卓客戶端",
     "x-webPath": "mobileLegacy.personalFinanceAndroidApp"
   },
+  "mobileLegacyPersonalFinanceIosApp": "Finances personnelles · App iOS",
+  "@mobileLegacyPersonalFinanceIosApp": {
+    "description": "Mobile compatibility string: 資產管理 · iOS 客戶端",
+    "x-webPath": "mobileLegacy.personalFinanceIosApp"
+  },
   "mobileLegacySkip": "Ignorer",
   "@mobileLegacySkip": {
     "description": "Mobile compatibility string: 跳過",
@@ -10685,5 +10785,25 @@
   "@featuresStocksPerformanceFlowsEmpty": {
     "description": "Web path: features.stocks.performance.flowsEmpty",
     "x-webPath": "features.stocks.performance.flowsEmpty"
+  },
+  "offlineDraftsLogoutWarningTitle": "Vous avez encore des brouillons non envoyés",
+  "@offlineDraftsLogoutWarningTitle": {
+    "description": "Web path: offlineDrafts.logoutWarning.title",
+    "x-webPath": "offlineDrafts.logoutWarning.title"
+  },
+  "offlineDraftsLogoutWarningHint": "Vous avez {count} brouillon(s) non enregistré(s). Après la déconnexion, les brouillons restent sur cet appareil et vous les retrouverez en vous connectant au même compte. Ils ne sont jamais enregistrés automatiquement.",
+  "@offlineDraftsLogoutWarningHint": {
+    "description": "Web path: offlineDrafts.logoutWarning.hint",
+    "x-webPath": "offlineDrafts.logoutWarning.hint"
+  },
+  "settingsWidgetHideAmountsTitle": "Masquer les montants dans les widgets",
+  "@settingsWidgetHideAmountsTitle": {
+    "description": "Web path: settings.widgetHideAmounts.title",
+    "x-webPath": "settings.widgetHideAmounts.title"
+  },
+  "settingsWidgetHideAmountsSubtitle": "Les widgets de l'écran d'accueil n'affichent pas les montants par défaut, afin de protéger les données financières",
+  "@settingsWidgetHideAmountsSubtitle": {
+    "description": "Web path: settings.widgetHideAmounts.subtitle",
+    "x-webPath": "settings.widgetHideAmounts.subtitle"
   }
 }

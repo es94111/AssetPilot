@@ -391,6 +391,101 @@
     "description": "Web path: auth.passkeyButton",
     "x-webPath": "auth.passkeyButton"
   },
+  "authAppleButton": "Entrar con Apple",
+  "@authAppleButton": {
+    "description": "Web path: auth.appleButton",
+    "x-webPath": "auth.appleButton"
+  },
+  "offlineDraftsTitle": "Borradores sin conexión",
+  "@offlineDraftsTitle": {
+    "description": "Web path: offlineDrafts.title",
+    "x-webPath": "offlineDrafts.title"
+  },
+  "offlineDraftsEmpty": "No tienes borradores sin conexión.",
+  "@offlineDraftsEmpty": {
+    "description": "Web path: offlineDrafts.empty",
+    "x-webPath": "offlineDrafts.empty"
+  },
+  "offlineDraftsOnline": "En línea",
+  "@offlineDraftsOnline": {
+    "description": "Web path: offlineDrafts.online",
+    "x-webPath": "offlineDrafts.online"
+  },
+  "offlineDraftsOffline": "Sin conexión",
+  "@offlineDraftsOffline": {
+    "description": "Web path: offlineDrafts.offline",
+    "x-webPath": "offlineDrafts.offline"
+  },
+  "offlineDraftsNotPostedYet": "Aún no registrado",
+  "@offlineDraftsNotPostedYet": {
+    "description": "Web path: offlineDrafts.notPostedYet",
+    "x-webPath": "offlineDrafts.notPostedYet"
+  },
+  "offlineDraftsSavedHint": "Guardado como borrador sin conexión: aún no está registrado. Confírmalo luego en «Borradores sin conexión».",
+  "@offlineDraftsSavedHint": {
+    "description": "Web path: offlineDrafts.savedHint",
+    "x-webPath": "offlineDrafts.savedHint"
+  },
+  "offlineDraftsSavedAt": "Guardado el {time}",
+  "@offlineDraftsSavedAt": {
+    "description": "Web path: offlineDrafts.savedAt",
+    "x-webPath": "offlineDrafts.savedAt"
+  },
+  "offlineDraftsPhotoPending": "{count} foto(s) pendientes de subir",
+  "@offlineDraftsPhotoPending": {
+    "description": "Web path: offlineDrafts.photoPending",
+    "x-webPath": "offlineDrafts.photoPending"
+  },
+  "offlineDraftsSubmit": "Enviar",
+  "@offlineDraftsSubmit": {
+    "description": "Web path: offlineDrafts.submit",
+    "x-webPath": "offlineDrafts.submit"
+  },
+  "offlineDraftsDiscardTitle": "¿Descartar este borrador?",
+  "@offlineDraftsDiscardTitle": {
+    "description": "Web path: offlineDrafts.discardTitle",
+    "x-webPath": "offlineDrafts.discardTitle"
+  },
+  "offlineDraftsDiscardHint": "Los borradores descartados no se pueden restaurar y no se registrarán en ninguna cuenta.",
+  "@offlineDraftsDiscardHint": {
+    "description": "Web path: offlineDrafts.discardHint",
+    "x-webPath": "offlineDrafts.discardHint"
+  },
+  "offlineDraftsPendingHint": "{count} borrador(es) pendientes de confirmación. Los borradores nunca se registran automáticamente: confírmalos antes de enviarlos.",
+  "@offlineDraftsPendingHint": {
+    "description": "Web path: offlineDrafts.pendingHint",
+    "x-webPath": "offlineDrafts.pendingHint"
+  },
+  "offlineDraftsSubmitAll": "Enviar todo",
+  "@offlineDraftsSubmitAll": {
+    "description": "Web path: offlineDrafts.submitAll",
+    "x-webPath": "offlineDrafts.submitAll"
+  },
+  "offlineDraftsSubmitAllHint": "Se enviarán {count} borrador(es). Solo cuentan una vez enviados.",
+  "@offlineDraftsSubmitAllHint": {
+    "description": "Web path: offlineDrafts.submitAllHint",
+    "x-webPath": "offlineDrafts.submitAllHint"
+  },
+  "offlineDraftsConfirmSubmitAll": "¿Enviar todos los borradores?",
+  "@offlineDraftsConfirmSubmitAll": {
+    "description": "Web path: offlineDrafts.confirmSubmitAll",
+    "x-webPath": "offlineDrafts.confirmSubmitAll"
+  },
+  "offlineDraftsSynced": "Registrado",
+  "@offlineDraftsSynced": {
+    "description": "Web path: offlineDrafts.synced",
+    "x-webPath": "offlineDrafts.synced"
+  },
+  "offlineDraftsSyncedCount": "{count} borrador(es) registrados",
+  "@offlineDraftsSyncedCount": {
+    "description": "Web path: offlineDrafts.syncedCount",
+    "x-webPath": "offlineDrafts.syncedCount"
+  },
+  "offlineDraftsFailedCount": "{count} borrador(es) no se enviaron: trátalos manualmente",
+  "@offlineDraftsFailedCount": {
+    "description": "Web path: offlineDrafts.failedCount",
+    "x-webPath": "offlineDrafts.failedCount"
+  },
   "authPasskeyVerifying": "Verificando Passkey…",
   "@authPasskeyVerifying": {
     "description": "Web path: auth.passkeyVerifying",
@@ -5588,6 +5683,11 @@
     "description": "Mobile compatibility string: 資產管理 · 安卓客戶端",
     "x-webPath": "mobileLegacy.personalFinanceAndroidApp"
   },
+  "mobileLegacyPersonalFinanceIosApp": "Gestión financiera · App iOS",
+  "@mobileLegacyPersonalFinanceIosApp": {
+    "description": "Mobile compatibility string: 資產管理 · iOS 客戶端",
+    "x-webPath": "mobileLegacy.personalFinanceIosApp"
+  },
   "mobileLegacySkip": "Omitir",
   "@mobileLegacySkip": {
     "description": "Mobile compatibility string: 跳過",
@@ -10685,5 +10785,25 @@
   "@featuresStocksPerformanceFlowsEmpty": {
     "description": "Web path: features.stocks.performance.flowsEmpty",
     "x-webPath": "features.stocks.performance.flowsEmpty"
+  },
+  "offlineDraftsLogoutWarningTitle": "Aún tienes borradores sin enviar",
+  "@offlineDraftsLogoutWarningTitle": {
+    "description": "Web path: offlineDrafts.logoutWarning.title",
+    "x-webPath": "offlineDrafts.logoutWarning.title"
+  },
+  "offlineDraftsLogoutWarningHint": "Tienes {count} borrador(es) sin registrar. Al cerrar sesión, los borradores se conservan en este dispositivo y podrás volver a encontrarlos al iniciar sesión en la misma cuenta. Nunca se registran automáticamente.",
+  "@offlineDraftsLogoutWarningHint": {
+    "description": "Web path: offlineDrafts.logoutWarning.hint",
+    "x-webPath": "offlineDrafts.logoutWarning.hint"
+  },
+  "settingsWidgetHideAmountsTitle": "Ocultar importes en los widgets",
+  "@settingsWidgetHideAmountsTitle": {
+    "description": "Web path: settings.widgetHideAmounts.title",
+    "x-webPath": "settings.widgetHideAmounts.title"
+  },
+  "settingsWidgetHideAmountsSubtitle": "Los widgets de la pantalla de inicio no muestran importes por defecto, para proteger los datos financieros",
+  "@settingsWidgetHideAmountsSubtitle": {
+    "description": "Web path: settings.widgetHideAmounts.subtitle",
+    "x-webPath": "settings.widgetHideAmounts.subtitle"
   }
 }

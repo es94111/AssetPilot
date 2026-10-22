@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appID": "TEAM_ID.com.assetpilot.assetpilot",
+        "components": [
+          {
+            "/": "/settings/ledgers*",
+            "comment": "共享帳本邀請連結：/settings/ledgers?invite=…"
+          }
+        ]
+      }
+    ]
+  }
+}

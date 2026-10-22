@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:app_links/app_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api_client.dart';
 import 'l10n.dart';
+import 'platform/app_link_service.dart';
 
 /// 32 bytes of CSPRNG randomness, hex-encoded.
 String _generateDeviceNonce() {
@@ -18,11 +18,16 @@ class PasskeyAuth {
   static const callbackScheme = 'assetpilot';
   static const callbackHost = 'auth-ticket';
 
+  /// 取回冷啟動連結時，只看 Passkey 自己的回呼 host。
+  ///
+  /// 避免把 Widget／Siri 的記帳連結誤當成登入回呼。
+  static const List<String> _callbackHosts = [callbackHost];
+
   static Future<void> signIn({
     required String baseUrl,
     String? turnstileToken,
   }) async {
-    final appLinks = AppLinks();
+    final appLinks = AppLinkService.instance;
     final completer = Completer<Uri>();
     void completeIfCallback(Uri uri) {
       if (uri.scheme == callbackScheme &&
@@ -38,7 +43,7 @@ class PasskeyAuth {
     // 兌換時仍需由本 App 從記憶體中原樣附上才能通過驗證（見安全報告 AUTHZ-VULN-07）。
     final deviceNonce = _generateDeviceNonce();
 
-    final sub = appLinks.uriLinkStream.listen(completeIfCallback);
+    final sub = appLinks.links.listen(completeIfCallback);
     try {
       final passkeyUri = Uri.parse('$baseUrl/app/passkey-login');
       final launched = await launchUrl(
@@ -54,7 +59,8 @@ class PasskeyAuth {
       );
       if (!launched) throw ApiException(0, trKey('mobileLegacyUnableToOpenTheBrowserForPasskeySign'));
 
-      final initialUri = await appLinks.getInitialLink();
+      // 冷啟動回呼：App 被 assetpilot://auth-ticket 喚起時，連結只會出現一次。
+      final initialUri = await appLinks.takeInitialLink(hosts: _callbackHosts);
       if (initialUri != null) completeIfCallback(initialUri);
 
       final Uri cb;

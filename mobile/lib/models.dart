@@ -25,6 +25,7 @@ class AppUser {
   final String defaultCurrency;
   final bool googleLinked;
   final bool lineLinked;
+  final bool appleLinked;
 
   AppUser({
     required this.id,
@@ -35,6 +36,7 @@ class AppUser {
     required this.defaultCurrency,
     required this.googleLinked,
     required this.lineLinked,
+    this.appleLinked = false,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> j) {
@@ -51,6 +53,7 @@ class AppUser {
           : _asStr(j['defaultCurrency']),
       googleLinked: _asBool(j['googleLinked']) || _asBool(j['google_linked']),
       lineLinked: _asBool(j['lineLinked']) || _asBool(j['line_linked']),
+      appleLinked: _asBool(j['appleLinked']) || _asBool(j['apple_linked']),
     );
   }
 }

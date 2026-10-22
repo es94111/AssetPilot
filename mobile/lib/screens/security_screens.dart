@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api_client.dart';
+import '../apple_auth.dart';
 import '../models.dart';
 import '../widgets.dart';
 import '../l10n.dart';
@@ -371,6 +372,8 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
     try {
       if (provider == 'Google') {
         await ApiClient.instance.unlinkGoogle();
+      } else if (provider == 'Apple') {
+        await ApiClient.instance.appleUnlink();
       } else {
         await ApiClient.instance.unlinkLine();
       }
@@ -381,9 +384,40 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
     }
   }
 
+  /// 在 App 內以系統授權視窗把 Apple 身分綁到目前帳號。
+  ///
+  /// 其他供應商仍在瀏覽器完成綁定；Apple 因為 iOS 端可直接呼叫
+  /// `ASAuthorizationAppleIDProvider`，可在 App 內完成，不必離開 App。
+  Future<void> _linkApple() async {
+    try {
+      final clientId = await ApiClient.instance.appleClientId();
+      if (clientId == null) {
+        if (mounted) {
+          toast(context, trKey('mobileDynamicProviderLoginFailed', {
+            'provider': 'Apple',
+            'error': '後端尚未設定 Apple 登入',
+          }));
+        }
+        return;
+      }
+      await AppleAuth.link(
+        clientId: clientId,
+        baseUrl: ApiClient.instance.baseUrl,
+      );
+      if (mounted) toast(context, trKey('mobileLegacyLinked'));
+      _reload();
+    } catch (e) {
+      if (mounted && !AppleAuth.isUserCancelled(e)) toast(context, '$e');
+    }
+  }
+
   Widget _tile(String provider, bool linked) => ListTile(
     leading: Icon(
-      provider == 'Google' ? Icons.account_circle : Icons.chat_bubble_outline,
+      provider == 'Google'
+          ? Icons.account_circle
+          : provider == 'Apple'
+              ? Icons.apple
+              : Icons.chat_bubble_outline,
     ),
     title: Text(trKey('mobileDynamicProviderBinding', {'provider': provider})),
     subtitle: Text(
@@ -395,7 +429,13 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
             child: Text(trKey('mobileLegacyUnlink')),
           )
         : OutlinedButton(
-            onPressed: () => _openWeb(context, '/settings/account'),
+            onPressed: () {
+              if (provider == 'Apple' && AppleAuth.isSupported) {
+                _linkApple();
+              } else {
+                _openWeb(context, '/settings/account');
+              }
+            },
             child: Text(trKey('mobileLegacyLink')),
           ),
   );
@@ -412,6 +452,10 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
             _tile('Google', user.googleLinked),
             Divider(height: 1),
             _tile('LINE', user.lineLinked),
+            if (AppleAuth.isSupported) ...[
+              Divider(height: 1),
+              _tile('Apple', user.appleLinked),
+            ],
             Padding(
               padding: EdgeInsets.all(16),
               child: Text(

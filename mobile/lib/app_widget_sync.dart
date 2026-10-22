@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -6,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'format.dart';
 import 'models.dart';
+import 'platform/platform_info.dart';
 
 /// 將 App 內已取得的 Dashboard 快照同步給 Android 桌面小工具。
 ///
@@ -16,8 +16,12 @@ class AppWidgetSync {
   static const _recentLimit = 5;
   static const _reminderLimit = 5;
 
+  /// iOS 改用 WidgetKit 擴充（見 platform/widget_snapshot_service.dart），
+  /// 不走 Android 的 MethodChannel 路徑。
+  static bool get supportsIOSWidget => PlatformInfo.isIOS;
+
   static Future<void> updateDashboard(Dashboard dashboard) async {
-    if (!Platform.isAndroid) return;
+    if (!PlatformInfo.isAndroid) return;
 
     final progress = _expenseProgress(dashboard.income, dashboard.expense);
     final updatedAt = DateTime.now();
@@ -62,7 +66,7 @@ class AppWidgetSync {
   }
 
   static Future<void> updatePortfolio(PortfolioSummary summary) async {
-    if (!Platform.isAndroid) return;
+    if (!PlatformInfo.isAndroid) return;
 
     try {
       await _channel.invokeMethod('updatePortfolio', {
@@ -83,7 +87,7 @@ class AppWidgetSync {
     required List<Budget> budgets,
     required Map<String, String> categoryNames,
   }) async {
-    if (!Platform.isAndroid) return;
+    if (!PlatformInfo.isAndroid) return;
 
     final shown = [...budgets]
       ..sort((a, b) => b.progress.compareTo(a.progress));
@@ -118,7 +122,7 @@ class AppWidgetSync {
     required Map<String, String> accountNames,
     required List<Account> accounts,
   }) async {
-    if (!Platform.isAndroid) return;
+    if (!PlatformInfo.isAndroid) return;
 
     final today = _todayDate();
     final reminders = <_WidgetReminder>[];
@@ -176,7 +180,7 @@ class AppWidgetSync {
   }
 
   static Future<void> clearDashboard() async {
-    if (!Platform.isAndroid) return;
+    if (!PlatformInfo.isAndroid) return;
     try {
       await _channel.invokeMethod('clearDashboard');
     } catch (e) {

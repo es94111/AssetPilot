@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:app_links/app_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api_client.dart';
 import 'l10n.dart';
+import 'platform/app_link_service.dart';
 
 /// Google SSO（Authorization Code Flow，系統瀏覽器 + App Link 回呼）。
 ///
@@ -18,6 +18,11 @@ class GoogleAuth {
   static const callbackPath = '/app/google-callback';
   static const callbackScheme = 'assetpilot';
   static const callbackHost = 'google-callback';
+
+  /// 取回冷啟動／最近連結時，只看 Google 自己的回呼 host。
+  ///
+  /// 避免把 Widget／Siri 的記帳連結誤當成登入回呼。
+  static const List<String> _callbackHosts = [callbackHost];
 
   /// 執行 Google 登入；成功則 [ApiClient] 已持有 Cookie。失敗拋 [ApiException]。
   static Future<void> signIn({
@@ -39,7 +44,7 @@ class GoogleAuth {
       'prompt': 'select_account',
     });
 
-    final appLinks = AppLinks();
+    final appLinks = AppLinkService.instance;
     final completer = Completer<Uri>();
     void completeIfCallback(Uri uri) {
       final isHttpsAppLink = uri.path == callbackPath;
@@ -52,12 +57,12 @@ class GoogleAuth {
       }
     }
 
-    // 啟動瀏覽器前先記錄目前的 initial link。getInitialLink() 會回傳「最初喚起 App
+    // 啟動瀏覽器前先記錄目前的 initial link。initial link 會回傳「最初喚起 App
     // 的 URI」且具持久性：上一次 Google 登入的回呼會殘留於此。若直接拿來比對，
     // 第二次登入會立刻被舊回呼（帶舊 state）完成，導致「登入狀態不符」。
-    final staleInitialUri = await appLinks.getInitialLink();
+    final staleInitialUri = await appLinks.peekInitialLink(hosts: _callbackHosts);
 
-    final sub = appLinks.uriLinkStream.listen(completeIfCallback);
+    final sub = appLinks.links.listen(completeIfCallback);
 
     try {
       // 用 in-app 瀏覽器分頁（Android Custom Tab）開授權頁，登入完成後可由
@@ -73,7 +78,7 @@ class GoogleAuth {
 
       // 僅在 initial link 與啟動前不同（真正的冷啟動回呼）時才採用，
       // 避免把上一次登入殘留的舊回呼當成本次結果。
-      final initialUri = await appLinks.getInitialLink();
+      final initialUri = await appLinks.peekInitialLink(hosts: _callbackHosts);
       if (initialUri != null &&
           initialUri.toString() != staleInitialUri?.toString()) {
         completeIfCallback(initialUri);

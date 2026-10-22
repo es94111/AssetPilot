@@ -246,6 +246,77 @@ class AppLocalizationsRu extends AppLocalizations {
   String get authPasskeyButton => 'Войти с Passkey';
 
   @override
+  String get authAppleButton => 'Войти с Apple';
+
+  @override
+  String get offlineDraftsTitle => 'Офлайн-черновики';
+
+  @override
+  String get offlineDraftsEmpty => 'У вас нет офлайн-черновиков.';
+
+  @override
+  String get offlineDraftsOnline => 'В сети';
+
+  @override
+  String get offlineDraftsOffline => 'Не в сети';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'Ещё не проведено';
+
+  @override
+  String get offlineDraftsSavedHint =>
+      'Сохранено как офлайн-черновик — ещё не проведено. Подтвердите позже в разделе «Офлайн-черновики».';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return 'Сохранено $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return 'Фото к загрузке: $count';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'Отправить';
+
+  @override
+  String get offlineDraftsDiscardTitle => 'Удалить этот черновик?';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'Удалённые черновики нельзя восстановить, и они не попадут ни в один счёт.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return 'Черновиков на подтверждении: $count. Черновики никогда не проводятся автоматически — подтвердите перед отправкой.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'Отправить все';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return 'Будет отправлено черновиков: $count. Они будут учтены только после отправки.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => 'Отправить все черновики?';
+
+  @override
+  String get offlineDraftsSynced => 'Проведено';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return 'Проведено черновиков: $count';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return 'Не удалось отправить черновиков: $count — обработайте вручную';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Проверка Passkey…';
 
   @override
@@ -3733,6 +3804,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Личные финансы · Android-приложение';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp =>
+      'Личные финансы · приложение для iOS';
+
+  @override
   String get mobileLegacySkip => 'Пропустить';
 
   @override
@@ -7131,4 +7206,20 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'В этот период нет движения средств или денежных потоков';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle =>
+      'У вас остались неотправленные черновики';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'У вас $count черновик(ов), не проведённых в учёт. После выхода черновики остаются на этом устройстве, и вы найдёте их снова, войдя в тот же аккаунт. Они никогда не проводятся автоматически.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'Скрывать суммы в виджетах';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'Виджеты на экране «Домой» по умолчанию не показывают суммы, чтобы финансовые данные оставались конфиденциальными';
 }

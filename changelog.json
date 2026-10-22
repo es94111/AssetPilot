@@ -1,6 +1,18 @@
 {
-  "currentVersion": "4.149.2",
+  "currentVersion": "4.150.0",
   "releases": [
+    {
+      "version": "4.150.0",
+      "date": "2026-10-21",
+      "title": "iOS App 與離線草稿",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增原生 iOS App，支援 Apple 登入、WidgetKit 小工具、App Intents、Universal Links 與多語系；交易表單可離線保存並於重新開啟後恢復草稿，支援帳號隔離、刪除帳號時清理草稿，以及交易已建立但附件上傳失敗時僅重試附件。"
+        }
+      ]
+    },
     {
       "version": "4.149.2",
       "date": "2026-10-15",

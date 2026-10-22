@@ -891,6 +891,9 @@ END $$`);
   alterIgnore("ALTER TABLE users ADD COLUMN google_id TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN google_sub TEXT DEFAULT ''");
   alterIgnore("ALTER TABLE users ADD COLUMN line_id TEXT DEFAULT ''");
+  // Sign in with Apple：帳號以 Apple 的 stable user id (sub) 識別，
+  // 不以 email 作為識別依據（Apple 可能隱藏 email 或變更 email）。
+  alterIgnore("ALTER TABLE users ADD COLUMN apple_id TEXT DEFAULT ''");
   // Local password authentication is retired. Keep the legacy column for
   // schema compatibility, but disable it for every existing account.
   alterIgnore("ALTER TABLE users ADD COLUMN has_password INTEGER DEFAULT 0");

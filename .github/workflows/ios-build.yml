@@ -1,0 +1,331 @@
+name: Build iOS App
+
+# iOS 版建置檢查與 TestFlight 封存。
+#
+# 分成兩條路徑：
+# - PR／一般推送：只做「不需簽署憑證」的檢查（Flutter analyze、flutter test、
+#   iOS 模擬器 Debug 建置）。不需要任何 secret，因此 fork 也能跑。
+# - 版本 tag 或手動觸發：額外產生簽署封存（.ipa）並上傳到 App Store Connect
+#   的 TestFlight。這條路徑需要 Apple 憑證（見下方 secrets 清單）。
+#
+# 簽署與上傳與 PR 檢查分離，確保不需要密鑰的檢查不被憑證卡住。
+
+on:
+  push:
+    branches: [main, dev]
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'shared/i18n/**'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ── 不需簽署憑證的檢查：PR 與日常推送都會跑 ────────────────
+  verify:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Select Xcode version
+        run: |
+          # 選用 runner 上可用的最新 Xcode，避免 runner 更新造成建置結果漂移。
+          # 若要重現本機結果，請用與此處相同（或更新）的 Xcode 版本。
+          # 送審時須再確認 Apple 當期接受的 SDK 版本。
+          XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then
+            echo "No Xcode found in /Applications" >&2
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          swift --version
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Flutter analyze
+        working-directory: mobile
+        run: flutter analyze --no-fatal-infos
+
+      - name: Flutter test
+        working-directory: mobile
+        run: flutter test
+
+      - name: Check shared i18n drift
+        run: |
+          npm run i18n:generate
+          git diff --exit-code -- \
+            lib/i18n/dictionaries \
+            lib/i18n/generated \
+            mobile/android/app/src/main/res/xml/locale_config.xml \
+            mobile/lib/generated
+
+      - name: Verify iOS project targets
+        working-directory: mobile
+        run: |
+          # 確認 WidgetKit 擴充 target 存在、entitlements 與 Info.plist 齊全、
+          # 擴充已嵌入 App，且 App Intents 位於主 App target。
+          # Xcode 專案以腳本維護（tool/setup_ios_targets.rb），
+          # 這裡只做「結果正確」的驗證。
+          xcodebuild \
+            -project ios/Runner.xcodeproj \
+            -list
+          # App Intent 必須在主 App target（擴充中無法呼叫 UIApplication.shared）。
+          grep -q "RecordTransactionIntent.swift" ios/Runner.xcodeproj/project.pbxproj
+          # 擴充嵌入必須排在 Thin Binary 之前，否則會造成建置循環。
+          ruby -e '
+            require "xcodeproj"
+            project = Xcodeproj::Project.open("ios/Runner.xcodeproj")
+            runner = project.targets.find { |t| t.name == "Runner" }
+            phases = runner.build_phases
+            embed = phases.index { |p| p.respond_to?(:name) && p.name == "Embed Foundation Extensions" }
+            thin = phases.index { |p| p.respond_to?(:name) && p.name == "Thin Binary" }
+            abort "embed phase must come before Thin Binary" if embed.nil? || thin.nil? || embed > thin
+            puts "iOS project targets OK."
+          '
+
+      - name: Build iOS (simulator, no signing)
+        working-directory: mobile
+        run: |
+          # 模擬器建置不需要簽署憑證，可驗證 Dart 與原生碼能否編譯。
+          # 不帶 --no-codesign，因模擬器本來就不需要簽署。
+          flutter build ios --simulator --debug --no-codesign \
+            --build-name=0.0.1 \
+            --build-number=1
+
+      - name: Verify iOS build output
+        working-directory: mobile
+        run: |
+          APP="build/ios/iphonesimulator/Runner.app"
+          test -d "$APP"
+          # 擴充必須被嵌入 App，否則 Widget 不會出現在系統中。
+          test -d "$APP/PlugIns/AssetPilotWidget.appex"
+          # App Intents metadata 是 Siri／捷徑可被搜尋到的前提；
+          # Xcode 會在編譯時由 ExtractAppIntentsMetadata 產生。
+          test -d "$APP/Metadata.appintents"
+          echo "iOS simulator build OK, extension embedded, App Intents metadata generated."
+
+      - name: Select available iPhone simulator
+        run: |
+          IOS_SIMULATOR_ID="$(xcrun simctl list devices available -j | python3 -c '
+          import json
+          import sys
+
+          devices = json.load(sys.stdin)["devices"]
+          candidates_by_runtime = {}
+          for runtime, runtime_devices in devices.items():
+              if not runtime.startswith("com.apple.CoreSimulator.SimRuntime.iOS-"):
+                  continue
+              version = tuple(int(part) for part in runtime.split("iOS-", 1)[1].split("-"))
+              candidates = [
+                  (version, device["name"], device["udid"])
+                  for device in runtime_devices
+                  if device.get("isAvailable") and device["name"].startswith("iPhone")
+              ]
+              if candidates:
+                  candidates_by_runtime[runtime] = (version, candidates)
+
+          if not candidates_by_runtime:
+              raise SystemExit("No available iPhone simulator found")
+
+          # Prefer the runtime with the most iPhone devices; single-device preview
+          # runtimes can fail first-boot data migration on hosted runners.
+          _, candidates = max(
+              candidates_by_runtime.values(),
+              key=lambda group: (len(group[1]), group[0]),
+          )
+          print(max(candidates)[2])
+          ')"
+          echo "IOS_SIMULATOR_ID=$IOS_SIMULATOR_ID" >> "$GITHUB_ENV"
+          echo "Using iPhone simulator $IOS_SIMULATOR_ID"
+
+      - name: Run iOS native unit tests (XCTest)
+        working-directory: mobile
+        run: |
+          # 原生端單元測試（ios/RunnerTests/）驗證的是「不需要 Flutter 引擎」
+          # 的規則，例如深層連結佇列的依 host 分取與去重。
+          # 這些測試以主 App 為宿主執行，因此需要先建置一次。
+          #
+          # 注意：必須在整合測試**之前**執行。整合測試會把
+          # ios/Flutter/Generated.xcconfig 的 FLUTTER_TARGET 改寫成暫存目錄
+          # 裡的 listener.dart（測試結束後該目錄就被刪除），
+          # 若之後再跑 xcodebuild 就會因找不到 listener.dart 而建置失敗。
+          xcodebuild test \
+            -project ios/Runner.xcodeproj \
+            -scheme Runner \
+            -destination "platform=iOS Simulator,id=$IOS_SIMULATOR_ID" \
+            -only-testing:RunnerTests \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee /tmp/xctest.log
+          grep -Fq "** TEST SUCCEEDED **" /tmp/xctest.log
+
+      - name: Boot simulator for integration tests
+        run: |
+          xcrun simctl boot "$IOS_SIMULATOR_ID" || \
+            xcrun simctl list devices booted | grep -Fq "$IOS_SIMULATOR_ID"
+          xcrun simctl bootstatus "$IOS_SIMULATOR_ID" -b
+
+      - name: Run iOS integration tests (simulator)
+        timeout-minutes: 15
+        working-directory: mobile
+        run: |
+          # 整合測試在真實模擬器上執行，驗證 Dart 與原生 platform channel
+          # 的實際往返——單元測試在桌面上執行，無法驗證這一段。
+          flutter test integration_test \
+            -d "$IOS_SIMULATOR_ID"
+
+  # ── 簽署封存：需要 Apple 憑證 ─────────────────────────────
+  # 需要的 secrets：
+  #   APPLE_CERTIFICATE_BASE64 / APPLE_CERTIFICATE_PASSWORD  （Distribution 憑證 .p12）
+  #   APPLE_PROVISIONING_PROFILE_BASE64                     （App Store 描述檔）
+  #   APPLE_KEY_ID / APPLE_ISSUER_ID / APPLE_PRIVATE_KEY_BASE64（App Store Connect API 金鑰）
+  archive:
+    needs: verify
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+      APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
+      APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
+      APPLE_PRIVATE_KEY_BASE64: ${{ secrets.APPLE_PRIVATE_KEY_BASE64 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Select Xcode version
+        run: |
+          # 與 verify 工作流一致：選用 runner 上可用的最新 Xcode。
+          XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then
+            echo "No Xcode found in /Applications" >&2
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(jq -r .currentVersion changelog.json)"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Resolved app version: ${VERSION}"
+
+      - name: Verify Apple signing configuration
+        run: |
+          missing=0
+          for name in APPLE_CERTIFICATE_BASE64 APPLE_CERTIFICATE_PASSWORD \
+                      APPLE_PROVISIONING_PROFILE_BASE64 APPLE_KEY_ID \
+                      APPLE_ISSUER_ID APPLE_PRIVATE_KEY_BASE64 APPLE_TEAM_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing secret $name; cannot build a signed iOS archive."
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Import signing assets
+        run: |
+          set -euo pipefail
+          CERT_DIR="$RUNNER_TEMP/ios-signing"
+          mkdir -p "$CERT_DIR"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERT_DIR/certificate.p12"
+          echo "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$CERT_DIR/AssetPilot.mobileprovision"
+          echo "$APPLE_PRIVATE_KEY_BASE64" | base64 --decode > "$CERT_DIR/AuthKey_${APPLE_KEY_ID}.p8"
+
+          # 匯入簽署憑證到本次 runner 的 keychain。
+          security create-keychain -p ci "$CERT_DIR/build.keychain"
+          security default-keychain -s "$CERT_DIR/build.keychain"
+          security unlock-keychain -p ci "$CERT_DIR/build.keychain"
+          security import "$CERT_DIR/certificate.p12" \
+            -k "$CERT_DIR/build.keychain" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k ci \
+            "$CERT_DIR/build.keychain" >/dev/null
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$CERT_DIR/AssetPilot.mobileprovision" \
+            "$HOME/Library/MobileDevice/Provisioning Profiles/AssetPilot.mobileprovision"
+
+      - name: Build signed archive
+        working-directory: mobile
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # ExportOptions.plist 以 $(APPLE_TEAM_ID) 佔位，避免把 team id
+          # 寫死在版控中。
+          sed "s/\$(APPLE_TEAM_ID)/${APPLE_TEAM_ID}/g" \
+            ios/ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
+          flutter build ipa \
+            --release \
+            --build-name=${{ steps.version.outputs.version }} \
+            --build-number=${{ github.run_number }} \
+            --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: assetpilot-ipa
+          path: mobile/build/ios/ipa/*.ipa
+
+      - name: Publish to TestFlight
+        working-directory: mobile
+        run: |
+          set -euo pipefail
+          if [ ! -d "$HOME/private_keys" ]; then
+            mkdir -p "$HOME/private_keys"
+          fi
+          cp "$RUNNER_TEMP/ios-signing/AuthKey_${APPLE_KEY_ID}.p8" \
+            "$HOME/private_keys/AuthKey_${APPLE_KEY_ID}.p8"
+          IPA_PATH="$(ls build/ios/ipa/*.ipa | head -1)"
+          xcrun altool --upload-app --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$APPLE_KEY_ID" \
+            --apiIssuer "$APPLE_ISSUER_ID" \
+            --verbose

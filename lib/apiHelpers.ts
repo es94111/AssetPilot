@@ -337,6 +337,7 @@ export function formatUser(user: any) {
     hasPassword: false,
     googleLinked: !!user.google_id,
     lineLinked: !!user.line_id,
+    appleLinked: !!user.apple_id,
     avatarUrl: user.avatar_url || "",
   };
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- WidgetKit 擴充與主 App 共用同一個 App Group container。
+	     擴充只讀取最小摘要快照，不需要 Keychain Sharing。 -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.assetpilot.assetpilot</string>
+	</array>
+</dict>
+</plist>

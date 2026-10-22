@@ -245,6 +245,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPasskeyButton => 'Sign in with Passkey';
 
   @override
+  String get authAppleButton => 'Sign in with Apple';
+
+  @override
+  String get offlineDraftsTitle => 'Offline drafts';
+
+  @override
+  String get offlineDraftsEmpty => 'You have no offline drafts.';
+
+  @override
+  String get offlineDraftsOnline => 'Online';
+
+  @override
+  String get offlineDraftsOffline => 'Offline';
+
+  @override
+  String get offlineDraftsNotPostedYet => 'Not posted yet';
+
+  @override
+  String get offlineDraftsSavedHint =>
+      'Saved as an offline draft — not posted yet. Confirm it later under “Offline drafts”.';
+
+  @override
+  String offlineDraftsSavedAt(Object time) {
+    return 'Saved at $time';
+  }
+
+  @override
+  String offlineDraftsPhotoPending(Object count) {
+    return '$count photo(s) waiting to be uploaded';
+  }
+
+  @override
+  String get offlineDraftsSubmit => 'Submit';
+
+  @override
+  String get offlineDraftsDiscardTitle => 'Discard this draft?';
+
+  @override
+  String get offlineDraftsDiscardHint =>
+      'Discarded drafts cannot be restored and will not be recorded anywhere.';
+
+  @override
+  String offlineDraftsPendingHint(Object count) {
+    return '$count draft(s) awaiting confirmation. Drafts are never posted automatically — confirm before submitting.';
+  }
+
+  @override
+  String get offlineDraftsSubmitAll => 'Submit all';
+
+  @override
+  String offlineDraftsSubmitAllHint(Object count) {
+    return '$count draft(s) will be submitted. They only count once submitted.';
+  }
+
+  @override
+  String get offlineDraftsConfirmSubmitAll => 'Submit all drafts?';
+
+  @override
+  String get offlineDraftsSynced => 'Posted';
+
+  @override
+  String offlineDraftsSyncedCount(Object count) {
+    return '$count draft(s) posted';
+  }
+
+  @override
+  String offlineDraftsFailedCount(Object count) {
+    return '$count draft(s) failed to submit — please handle them manually';
+  }
+
+  @override
   String get authPasskeyVerifying => 'Verifying Passkey…';
 
   @override
@@ -3693,6 +3764,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Personal finance · Android app';
 
   @override
+  String get mobileLegacyPersonalFinanceIosApp => 'Personal finance · iOS app';
+
+  @override
   String get mobileLegacySkip => 'Skip';
 
   @override
@@ -7062,4 +7136,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get featuresStocksPerformanceFlowsEmpty =>
       'No cash flows or capital movements in this period';
+
+  @override
+  String get offlineDraftsLogoutWarningTitle =>
+      'You still have unsubmitted drafts';
+
+  @override
+  String offlineDraftsLogoutWarningHint(Object count) {
+    return 'You have $count draft(s) that have not been posted. Drafts are kept on this device after signing out, and you can find them again when you sign back in to the same account. They are never posted automatically.';
+  }
+
+  @override
+  String get settingsWidgetHideAmountsTitle => 'Hide amounts in widgets';
+
+  @override
+  String get settingsWidgetHideAmountsSubtitle =>
+      'Home screen widgets do not show amounts by default, to keep financial data private';
 }

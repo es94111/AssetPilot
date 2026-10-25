@@ -125,21 +125,24 @@ jobs:
           test -d "$APP/Metadata.appintents"
           echo "iOS simulator build OK, extension embedded, App Intents metadata generated."
 
-      - name: Select available iPhone simulator
+      - name: Select and boot available iPhone simulator
         run: |
-          IOS_SIMULATOR_ID="$(xcrun simctl list devices available -j | python3 -c '
-          import json
-          import sys
+          IOS_SIMULATOR_ID="$(python3 -c '
+          import json, re, subprocess, sys
 
-          devices = json.load(sys.stdin)["devices"]
+          data = json.loads(subprocess.run(
+              ["xcrun", "simctl", "list", "devices", "available", "-j"],
+              capture_output=True, text=True, check=True
+          ).stdout)
+
+          devices = data["devices"]
           candidates_by_runtime = {}
           for runtime, runtime_devices in devices.items():
               if not runtime.startswith("com.apple.CoreSimulator.SimRuntime.iOS-"):
                   continue
               version = tuple(int(part) for part in runtime.split("iOS-", 1)[1].split("-"))
               candidates = [
-                  (version, device["name"], device["udid"])
-                  for device in runtime_devices
+                  device for device in runtime_devices
                   if device.get("isAvailable") and device["name"].startswith("iPhone")
               ]
               if candidates:
@@ -148,13 +151,46 @@ jobs:
           if not candidates_by_runtime:
               raise SystemExit("No available iPhone simulator found")
 
-          # Prefer the runtime with the most iPhone devices; single-device preview
-          # runtimes can fail first-boot data migration on hosted runners.
-          _, candidates = max(
+          def score_device(name):
+              # Prioritize standard numbered iPhones (e.g. iPhone 16/17/18) over preview/prototype names (Air/Duo/SE)
+              m = re.match(r"^iPhone\s+(\d+)(?:\s+(Pro\s+Max|Pro|Plus))?$", name)
+              if m:
+                  return (10, int(m.group(1)), name)
+              return (1, 0, name)
+
+          # Prefer runtimes with the most devices, then highest version
+          sorted_runtimes = sorted(
               candidates_by_runtime.values(),
               key=lambda group: (len(group[1]), group[0]),
+              reverse=True
           )
-          print(max(candidates)[2])
+
+          chosen_udid = None
+          for _, devs in sorted_runtimes:
+              sorted_devs = sorted(devs, key=lambda d: score_device(d["name"]), reverse=True)
+              for dev in sorted_devs:
+                  udid = dev["udid"]
+                  name = dev["name"]
+                  print(f"Preparing simulator {name} ({udid})...", file=sys.stderr)
+                  subprocess.run(["xcrun", "simctl", "shutdown", udid], capture_output=True)
+                  subprocess.run(["xcrun", "simctl", "erase", udid], capture_output=True)
+                  subprocess.run(["xcrun", "simctl", "boot", udid], capture_output=True)
+                  status_res = subprocess.run(["xcrun", "simctl", "bootstatus", udid, "-b"], capture_output=True, text=True)
+                  output = status_res.stdout + status_res.stderr
+                  if "Data Migration Failed" in output or status_res.returncode != 0:
+                      print(f"Warning: data migration failed for {name} ({udid}): {output.strip()}", file=sys.stderr)
+                      subprocess.run(["xcrun", "simctl", "shutdown", udid], capture_output=True)
+                      continue
+                  print(f"Successfully booted and verified {name} ({udid})", file=sys.stderr)
+                  chosen_udid = udid
+                  break
+              if chosen_udid:
+                  break
+
+          if not chosen_udid:
+              raise SystemExit("Failed to boot any available iPhone simulator")
+
+          print(chosen_udid)
           ')"
           echo "IOS_SIMULATOR_ID=$IOS_SIMULATOR_ID" >> "$GITHUB_ENV"
           echo "Using iPhone simulator $IOS_SIMULATOR_ID"
@@ -179,10 +215,10 @@ jobs:
             | tee /tmp/xctest.log
           grep -Fq "** TEST SUCCEEDED **" /tmp/xctest.log
 
-      - name: Boot simulator for integration tests
+      - name: Ensure simulator is booted for integration tests
         run: |
-          xcrun simctl boot "$IOS_SIMULATOR_ID" || \
-            xcrun simctl list devices booted | grep -Fq "$IOS_SIMULATOR_ID"
+          # Ensure simulator remains in Booted state after XCTest completes
+          xcrun simctl boot "$IOS_SIMULATOR_ID" 2>/dev/null || true
           xcrun simctl bootstatus "$IOS_SIMULATOR_ID" -b
 
       - name: Run iOS integration tests (simulator)

@@ -585,6 +585,120 @@ abstract class AppLocalizations {
   /// **'使用 Passkey 登入'**
   String get authPasskeyButton;
 
+  /// Web path: auth.appleButton
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'使用 Apple 登入'**
+  String get authAppleButton;
+
+  /// Web path: offlineDrafts.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'離線草稿'**
+  String get offlineDraftsTitle;
+
+  /// Web path: offlineDrafts.empty
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前沒有離線草稿。'**
+  String get offlineDraftsEmpty;
+
+  /// Web path: offlineDrafts.online
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已連線'**
+  String get offlineDraftsOnline;
+
+  /// Web path: offlineDrafts.offline
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'離線中'**
+  String get offlineDraftsOffline;
+
+  /// Web path: offlineDrafts.notPostedYet
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'尚未入帳'**
+  String get offlineDraftsNotPostedYet;
+
+  /// Web path: offlineDrafts.savedHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已儲存為離線草稿 — 尚未入帳。稍後請前往「離線草稿」確認。'**
+  String get offlineDraftsSavedHint;
+
+  /// Web path: offlineDrafts.savedAt
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲存於 {time}'**
+  String offlineDraftsSavedAt(Object time);
+
+  /// Web path: offlineDrafts.photoPending
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'另有 {count} 張照片待補上傳'**
+  String offlineDraftsPhotoPending(Object count);
+
+  /// Web path: offlineDrafts.submit
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'送出'**
+  String get offlineDraftsSubmit;
+
+  /// Web path: offlineDrafts.discardTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'捨棄這筆草稿？'**
+  String get offlineDraftsDiscardTitle;
+
+  /// Web path: offlineDrafts.discardHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'捨棄後無法復原，且不會計入任何帳目。'**
+  String get offlineDraftsDiscardHint;
+
+  /// Web path: offlineDrafts.pendingHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'有 {count} 筆草稿等待確認。草稿不會自動入帳，請確認後再送出。'**
+  String offlineDraftsPendingHint(Object count);
+
+  /// Web path: offlineDrafts.submitAll
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'全部送出'**
+  String get offlineDraftsSubmitAll;
+
+  /// Web path: offlineDrafts.submitAllHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'將送出 {count} 筆草稿。送出後才會計入帳目。'**
+  String offlineDraftsSubmitAllHint(Object count);
+
+  /// Web path: offlineDrafts.confirmSubmitAll
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確認送出全部草稿？'**
+  String get offlineDraftsConfirmSubmitAll;
+
+  /// Web path: offlineDrafts.synced
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已入帳'**
+  String get offlineDraftsSynced;
+
+  /// Web path: offlineDrafts.syncedCount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已入帳 {count} 筆'**
+  String offlineDraftsSyncedCount(Object count);
+
+  /// Web path: offlineDrafts.failedCount
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'{count} 筆送出失敗，請手動處理'**
+  String offlineDraftsFailedCount(Object count);
+
   /// Web path: auth.passkeyVerifying
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -6656,6 +6770,12 @@ abstract class AppLocalizations {
   /// **'資產管理 · 安卓客戶端'**
   String get mobileLegacyPersonalFinanceAndroidApp;
 
+  /// Mobile compatibility string: 資產管理 · iOS 客戶端
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資產管理 · iOS 客戶端'**
+  String get mobileLegacyPersonalFinanceIosApp;
+
   /// Mobile compatibility string: 跳過
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -12349,6 +12469,30 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'此區間內無資金進出與交易紀錄'**
   String get featuresStocksPerformanceFlowsEmpty;
+
+  /// Web path: offlineDrafts.logoutWarning.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'仍有未送出的草稿'**
+  String get offlineDraftsLogoutWarningTitle;
+
+  /// Web path: offlineDrafts.logoutWarning.hint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'你有 {count} 筆草稿尚未入帳。登出後草稿會保留在本機，以同一個帳號登入時可以再次找到；它們不會自動入帳。'**
+  String offlineDraftsLogoutWarningHint(Object count);
+
+  /// Web path: settings.widgetHideAmounts.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'Widget 隱藏金額'**
+  String get settingsWidgetHideAmountsTitle;
+
+  /// Web path: settings.widgetHideAmounts.subtitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'桌面 Widget 預設不顯示金額，避免財務資訊外洩'**
+  String get settingsWidgetHideAmountsSubtitle;
 }
 
 class _AppLocalizationsDelegate

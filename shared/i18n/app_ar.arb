@@ -391,6 +391,101 @@
     "description": "Web path: auth.passkeyButton",
     "x-webPath": "auth.passkeyButton"
   },
+  "authAppleButton": "تسجيل الدخول باستخدام Apple",
+  "@authAppleButton": {
+    "description": "Web path: auth.appleButton",
+    "x-webPath": "auth.appleButton"
+  },
+  "offlineDraftsTitle": "المسودات دون اتصال",
+  "@offlineDraftsTitle": {
+    "description": "Web path: offlineDrafts.title",
+    "x-webPath": "offlineDrafts.title"
+  },
+  "offlineDraftsEmpty": "لا توجد مسودات دون اتصال.",
+  "@offlineDraftsEmpty": {
+    "description": "Web path: offlineDrafts.empty",
+    "x-webPath": "offlineDrafts.empty"
+  },
+  "offlineDraftsOnline": "متصل",
+  "@offlineDraftsOnline": {
+    "description": "Web path: offlineDrafts.online",
+    "x-webPath": "offlineDrafts.online"
+  },
+  "offlineDraftsOffline": "غير متصل",
+  "@offlineDraftsOffline": {
+    "description": "Web path: offlineDrafts.offline",
+    "x-webPath": "offlineDrafts.offline"
+  },
+  "offlineDraftsNotPostedYet": "لم يتم التسجيل بعد",
+  "@offlineDraftsNotPostedYet": {
+    "description": "Web path: offlineDrafts.notPostedYet",
+    "x-webPath": "offlineDrafts.notPostedYet"
+  },
+  "offlineDraftsSavedHint": "تم الحفظ كمسودة دون اتصال — لم يتم التسجيل بعد. أكّدها لاحقًا من «المسودات دون اتصال».",
+  "@offlineDraftsSavedHint": {
+    "description": "Web path: offlineDrafts.savedHint",
+    "x-webPath": "offlineDrafts.savedHint"
+  },
+  "offlineDraftsSavedAt": "تم الحفظ في {time}",
+  "@offlineDraftsSavedAt": {
+    "description": "Web path: offlineDrafts.savedAt",
+    "x-webPath": "offlineDrafts.savedAt"
+  },
+  "offlineDraftsPhotoPending": "{count} صورة في انتظار الرفع",
+  "@offlineDraftsPhotoPending": {
+    "description": "Web path: offlineDrafts.photoPending",
+    "x-webPath": "offlineDrafts.photoPending"
+  },
+  "offlineDraftsSubmit": "إرسال",
+  "@offlineDraftsSubmit": {
+    "description": "Web path: offlineDrafts.submit",
+    "x-webPath": "offlineDrafts.submit"
+  },
+  "offlineDraftsDiscardTitle": "هل تريد حذف هذه المسودة؟",
+  "@offlineDraftsDiscardTitle": {
+    "description": "Web path: offlineDrafts.discardTitle",
+    "x-webPath": "offlineDrafts.discardTitle"
+  },
+  "offlineDraftsDiscardHint": "لا يمكن استعادة المسودات المحذوفة ولن يتم تسجيلها في أي حساب.",
+  "@offlineDraftsDiscardHint": {
+    "description": "Web path: offlineDrafts.discardHint",
+    "x-webPath": "offlineDrafts.discardHint"
+  },
+  "offlineDraftsPendingHint": "{count} مسودة في انتظار التأكيد. لا تُسجَّل المسودات تلقائيًا — أكّد قبل الإرسال.",
+  "@offlineDraftsPendingHint": {
+    "description": "Web path: offlineDrafts.pendingHint",
+    "x-webPath": "offlineDrafts.pendingHint"
+  },
+  "offlineDraftsSubmitAll": "إرسال الكل",
+  "@offlineDraftsSubmitAll": {
+    "description": "Web path: offlineDrafts.submitAll",
+    "x-webPath": "offlineDrafts.submitAll"
+  },
+  "offlineDraftsSubmitAllHint": "سيتم إرسال {count} مسودة. تُحتسب فقط بعد الإرسال.",
+  "@offlineDraftsSubmitAllHint": {
+    "description": "Web path: offlineDrafts.submitAllHint",
+    "x-webPath": "offlineDrafts.submitAllHint"
+  },
+  "offlineDraftsConfirmSubmitAll": "إرسال كل المسودات؟",
+  "@offlineDraftsConfirmSubmitAll": {
+    "description": "Web path: offlineDrafts.confirmSubmitAll",
+    "x-webPath": "offlineDrafts.confirmSubmitAll"
+  },
+  "offlineDraftsSynced": "تم التسجيل",
+  "@offlineDraftsSynced": {
+    "description": "Web path: offlineDrafts.synced",
+    "x-webPath": "offlineDrafts.synced"
+  },
+  "offlineDraftsSyncedCount": "تم تسجيل {count} مسودة",
+  "@offlineDraftsSyncedCount": {
+    "description": "Web path: offlineDrafts.syncedCount",
+    "x-webPath": "offlineDrafts.syncedCount"
+  },
+  "offlineDraftsFailedCount": "فشل إرسال {count} مسودة — يرجى معالجتها يدويًا",
+  "@offlineDraftsFailedCount": {
+    "description": "Web path: offlineDrafts.failedCount",
+    "x-webPath": "offlineDrafts.failedCount"
+  },
   "authPasskeyVerifying": "جارٍ التحقق من Passkey…",
   "@authPasskeyVerifying": {
     "description": "Web path: auth.passkeyVerifying",
@@ -5588,6 +5683,11 @@
     "description": "Mobile compatibility string: 資產管理 · 安卓客戶端",
     "x-webPath": "mobileLegacy.personalFinanceAndroidApp"
   },
+  "mobileLegacyPersonalFinanceIosApp": "إدارة مالية · تطبيق iOS",
+  "@mobileLegacyPersonalFinanceIosApp": {
+    "description": "Mobile compatibility string: 資產管理 · iOS 客戶端",
+    "x-webPath": "mobileLegacy.personalFinanceIosApp"
+  },
   "mobileLegacySkip": "تخطي",
   "@mobileLegacySkip": {
     "description": "Mobile compatibility string: 跳過",
@@ -10685,5 +10785,25 @@
   "@featuresStocksPerformanceFlowsEmpty": {
     "description": "Web path: features.stocks.performance.flowsEmpty",
     "x-webPath": "features.stocks.performance.flowsEmpty"
+  },
+  "offlineDraftsLogoutWarningTitle": "لا تزال لديك مسودات غير مرسلة",
+  "@offlineDraftsLogoutWarningTitle": {
+    "description": "Web path: offlineDrafts.logoutWarning.title",
+    "x-webPath": "offlineDrafts.logoutWarning.title"
+  },
+  "offlineDraftsLogoutWarningHint": "لديك {count} مسودة لم يتم تسجيلها. تبقى المسودات على هذا الجهاز بعد تسجيل الخروج، ويمكنك العثور عليها مجددًا عند تسجيل الدخول إلى الحساب نفسه. لا تُسجَّل تلقائيًا أبدًا.",
+  "@offlineDraftsLogoutWarningHint": {
+    "description": "Web path: offlineDrafts.logoutWarning.hint",
+    "x-webPath": "offlineDrafts.logoutWarning.hint"
+  },
+  "settingsWidgetHideAmountsTitle": "إخفاء المبالغ في الأدوات",
+  "@settingsWidgetHideAmountsTitle": {
+    "description": "Web path: settings.widgetHideAmounts.title",
+    "x-webPath": "settings.widgetHideAmounts.title"
+  },
+  "settingsWidgetHideAmountsSubtitle": "لا تعرض أدوات الشاشة الرئيسية المبالغ افتراضيًا، للحفاظ على خصوصية البيانات المالية",
+  "@settingsWidgetHideAmountsSubtitle": {
+    "description": "Web path: settings.widgetHideAmounts.subtitle",
+    "x-webPath": "settings.widgetHideAmounts.subtitle"
   }
 }

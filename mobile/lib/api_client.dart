@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show File, Platform, SocketException;
+import 'dart:io' show File, SocketException;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -12,6 +11,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_widget_sync.dart';
 import 'play_integrity.dart';
+import 'platform/platform_info.dart';
+import 'platform/deep_link_service.dart';
+import 'platform/secure_store.dart';
+import 'platform/widget_snapshot_service.dart';
+import 'offline/offline_draft_store.dart';
 import 'l10n.dart';
 
 /// API 呼叫失敗時拋出，message 會盡量依目前 App 語系顯示。
@@ -37,6 +41,7 @@ class ApiClient {
 
   static const _kCookie = 'authCookie';
   static const _kAppDeviceId = 'appDeviceId';
+
   /// 目前選取的帳本（issue #281）。未設定時代表個人帳本，行為與過往版本相同。
   static const _kActiveLedger = 'activeLedgerId';
 
@@ -88,9 +93,6 @@ class ApiClient {
     );
   }
 
-  // 認證 Cookie 的加密儲存（Android 使用 flutter_secure_storage 的 Keystore-backed defaults）。
-  static const _secure = FlutterSecureStorage(aOptions: AndroidOptions());
-
   /// 固定正式後台；App 不提供使用者自行修改，避免 OAuth/CSRF 設定不一致。
   static const defaultBaseUrl = 'https://asset.shao.one';
 
@@ -115,21 +117,21 @@ class ApiClient {
     _baseUrl = defaultBaseUrl;
     await p.remove('baseUrl');
     try {
-      _cookie = await _secure.read(key: _kCookie);
-      _appDeviceId = await _secure.read(key: _kAppDeviceId);
+      _cookie = await SecureStore.read(_kCookie);
+      _appDeviceId = await SecureStore.read(_kAppDeviceId);
     } catch (_) {
       // 解密失敗（如裝置遷移後 Keystore 金鑰不可用）→ 清掉避免反覆失敗，使用者重新登入即可。
       _cookie = null;
       _appDeviceId = null;
       try {
-        await _secure.delete(key: _kCookie);
-        await _secure.delete(key: _kAppDeviceId);
+        await SecureStore.delete(_kCookie);
+        await SecureStore.delete(_kAppDeviceId);
       } catch (_) {}
     }
     if (_appDeviceId == null || _appDeviceId!.isEmpty) {
       _appDeviceId = _newAppDeviceId();
       try {
-        await _secure.write(key: _kAppDeviceId, value: _appDeviceId!);
+        await SecureStore.write(_kAppDeviceId, _appDeviceId!);
       } catch (_) {}
     }
     // 一次性遷移：把舊版明文存於 SharedPreferences 的 cookie 搬進加密儲存，並清除明文殘留。
@@ -138,7 +140,7 @@ class ApiClient {
       _cookie ??= legacy;
       if (_cookie != null) {
         try {
-          await _secure.write(key: _kCookie, value: _cookie!);
+          await SecureStore.write(_kCookie, _cookie!);
         } catch (_) {}
       }
       await p.remove(_kCookie);
@@ -152,6 +154,7 @@ class ApiClient {
     String ledgerId, {
     bool readOnly = false,
   }) async {
+    final changed = _activeLedgerId != ledgerId;
     _activeLedgerId = ledgerId;
     _activeLedgerReadOnly = readOnly;
     final p = await SharedPreferences.getInstance();
@@ -159,6 +162,11 @@ class ApiClient {
       await p.remove(_kActiveLedger);
     } else {
       await p.setString(_kActiveLedger, ledgerId);
+    }
+    if (changed) {
+      // 切換帳本時清除 iOS Widget 快照：快照只反映個人帳本，切到共享帳本
+      // 後不能繼續顯示另一個帳本的收支金額（計畫書 5.3）。
+      await WidgetSnapshotService.clear();
     }
   }
 
@@ -194,12 +202,7 @@ class ApiClient {
 
   // 自訂 User-Agent，讓後端登入稽核能識別這是 AssetPilot App 及其平台。
   static final String _userAgent = () {
-    final os = Platform.isAndroid
-        ? 'Android'
-        : Platform.isIOS
-        ? 'iOS'
-        : Platform.operatingSystem;
-    return 'AssetPilotApp ($os)';
+    return 'AssetPilotApp (${PlatformInfo.userAgentPlatform})';
   }();
 
   void _ensureLedgerWritable(String path) {
@@ -232,9 +235,9 @@ class ApiClient {
 
   Future<void> _persistCookie() async {
     if (_cookie == null) {
-      await _secure.delete(key: _kCookie);
+      await SecureStore.delete(_kCookie);
     } else {
-      await _secure.write(key: _kCookie, value: _cookie!);
+      await SecureStore.write(_kCookie, _cookie!);
     }
   }
 
@@ -244,6 +247,13 @@ class ApiClient {
     authState.value = false;
     await clearActiveLedger();
     await AppWidgetSync.clearDashboard();
+    // 清除 iOS Widget 快照，避免登出後桌面仍顯示上一個帳號的收支金額。
+    await WidgetSnapshotService.clear();
+    // 清除尚未被主畫面接走的捷徑輸入（計畫書 5.2 步驟 7）。
+    // 未清除的話，上一個帳號收到的 `assetpilot://transaction/new`
+    // 會在下一個帳號登入後被取出，等於把別人的輸入帶進新帳號。
+    await DeepLinkService.instance.clearPending();
+    await OfflineDraftStore.clearRememberedUserId();
   }
 
   Future<void> _persistLogin() async {
@@ -440,6 +450,26 @@ class ApiClient {
   /// 後端公開設定（是否開放註冊、是否啟用 Turnstile、site key…）。
   Future<Map<String, dynamic>> config() => _getMap('/api/config');
 
+  String? _appleClientId;
+
+  /// 後端設定的 Apple Service ID（`aud`）；後端未設定時回傳 null。
+  ///
+  /// 取得後會快取，避免每次綁定都重新請求 `/api/config`。
+  Future<String?> appleClientId() async {
+    if (_appleClientId != null) return _appleClientId;
+    try {
+      final cfg = await config();
+      final id = cfg['appleClientId'];
+      if (id is String && id.isNotEmpty) {
+        _appleClientId = id;
+        return id;
+      }
+    } catch (_) {
+      // 設定取不到時交由呼叫端顯示錯誤。
+    }
+    return null;
+  }
+
   /// 取得一次性 Play Integrity nonce（登入／註冊前向後端索取）。
   Future<String> integrityNonce() async {
     final m = await _getMap('/api/app/integrity/nonce');
@@ -513,6 +543,108 @@ class ApiClient {
     throw ApiException(res.statusCode, _errorMessage(res));
   }
 
+  /// 取得 Apple 登入所需的 state、bindingToken 與 nonce。
+  ///
+  /// - `state`：單次使用的流程識別。
+  /// - `bindingToken`：綁定發起流程的 client，兌換 session 時必須原樣送回。
+  /// - `nonce`：必須嵌入 Apple 身分令牌，後端驗證時比對，防止重放。
+  ///
+  /// [flow] 為 `link` 時，後端會要求已登入並把 state 綁定到該使用者，
+  /// 用於把 Apple 身分綁到現有帳號。
+  Future<Map<String, String>> appleState({String flow = 'login'}) async {
+    final m = await _getMap('/api/auth/apple/state?flow=$flow');
+    final s = m['state'];
+    if (s == null) throw ApiException(0, trKey('authErrorsGoogleStateFailed'));
+    return {
+      'state': '$s',
+      'bindingToken': '${m['bindingToken'] ?? ''}',
+      'nonce': '${m['nonce'] ?? ''}',
+    };
+  }
+
+  /// 把 Apple 身分綁定到目前已登入的帳號。
+  Future<void> appleLink({
+    required String identityToken,
+    required String state,
+    required String bindingToken,
+  }) async {
+    late http.Response res;
+    try {
+      res = await http
+          .post(
+            _uri('/api/account/link-apple'),
+            headers: _headers(json: true),
+            body: jsonEncode({
+              'identityToken': identityToken,
+              'state': state,
+              'bindingToken': bindingToken,
+            }),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 200) return;
+    throw ApiException(res.statusCode, _errorMessage(res));
+  }
+
+  /// 解除 Apple 登入綁定。
+  Future<void> appleUnlink() async {
+    late http.Response res;
+    try {
+      res = await http
+          .post(
+            _uri('/api/account/unlink-apple'),
+            headers: _headers(json: true),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 200) return;
+    throw ApiException(res.statusCode, _errorMessage(res));
+  }
+
+  /// 以 Apple 身分令牌換取登入 session。
+  Future<void> appleLogin({
+    required String identityToken,
+    required String state,
+    required String bindingToken,
+    String? fullName,
+    String? turnstileToken,
+  }) async {
+    late http.Response res;
+    try {
+      res = await http
+          .post(
+            _uri('/api/auth/apple'),
+            headers: _headers(json: true),
+            body: jsonEncode({
+              'identityToken': identityToken,
+              'state': state,
+              'bindingToken': bindingToken,
+              if (fullName != null && fullName.isNotEmpty) 'fullName': fullName,
+              'turnstileToken': ?turnstileToken,
+            }),
+          )
+          .timeout(_timeout);
+    } catch (e) {
+      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
+    }
+    if (res.statusCode == 200) {
+      _captureCookie(res);
+      if (_cookie == null) {
+        throw ApiException(
+          200,
+          trKey('mobileLegacyTheGoogleSignInResponseDidNotInclude'),
+        );
+      }
+      await _persistLogin();
+      return;
+    }
+    throw ApiException(res.statusCode, _errorMessage(res));
+  }
+
   /// bindingToken 需在 [lineLogin] 原樣送回，理由同 [googleState]。
   Future<Map<String, String>> lineState({String? turnstileToken}) async {
     final query = turnstileToken == null || turnstileToken.isEmpty
@@ -563,7 +695,10 @@ class ApiClient {
     throw ApiException(res.statusCode, _errorMessage(res));
   }
 
-  Future<void> exchangeAppAuthTicket(String ticket, {String? deviceNonce}) async {
+  Future<void> exchangeAppAuthTicket(
+    String ticket, {
+    String? deviceNonce,
+  }) async {
     late http.Response res;
     try {
       res = await http
@@ -1044,6 +1179,20 @@ class ApiClient {
     return rows;
   }
 
+  /// 向伺服器重新確認目前帳本的角色並回傳是否唯讀。冷啟動後旗標尚未載入
+  /// （[init] 只還原帳本 id），Siri／Widget 交接與離線草稿送出前都要先呼叫。
+  /// 查詢失敗（離線等）時維持目前旗標，實際寫入仍由伺服器把關。
+  Future<bool> refreshLedgerRole() async {
+    if (_activeLedgerId.isEmpty) {
+      _activeLedgerReadOnly = false;
+      return false;
+    }
+    try {
+      await ledgers();
+    } catch (_) {}
+    return _activeLedgerReadOnly;
+  }
+
   /// 依帳本清單更新目前帳本的唯讀狀態；選取的帳本已不在清單中時視為
   /// 個人帳本（可寫），避免殘留的 viewer 狀態永久鎖住寫入。
   void updateLedgerRoleState(List<dynamic> rows) {
@@ -1056,7 +1205,8 @@ class ApiClient {
         .where((e) => e is Map && '${e['id'] ?? ''}' == active)
         .toList();
     _activeLedgerReadOnly =
-        selected.isNotEmpty && '${(selected.first as Map)['role'] ?? ''}' == 'viewer';
+        selected.isNotEmpty &&
+        '${(selected.first as Map)['role'] ?? ''}' == 'viewer';
   }
 
   /// 建立空白共享帳本。
@@ -1065,9 +1215,11 @@ class ApiClient {
 
   /// 接受邀請（token 來自邀請信連結／深層連結）。
   Future<Map<String, dynamic>> acceptLedgerInvitation(String token) =>
-      _getMapFromSend('POST', '/api/ledgers/invitations/accept', body: {
-        'token': token,
-      });
+      _getMapFromSend(
+        'POST',
+        '/api/ledgers/invitations/accept',
+        body: {'token': token},
+      );
 
   /// 帳本成員清單。
   Future<Map<String, dynamic>> ledgerMembers(String ledgerId) =>

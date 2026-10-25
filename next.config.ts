@@ -58,6 +58,22 @@ const nextConfig: NextConfig = {
       ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://challenges.cloudflare.com"
       : "script-src 'self' 'unsafe-inline' https://accounts.google.com https://challenges.cloudflare.com";
     return [
+      // apple-app-site-association：Universal Links 的驗證檔案。
+      //
+      // Apple 的要求（https://developer.apple.com/documentation/xcode/supporting-associated-domains）：
+      // 1. 必須以 `Content-Type: application/json` 提供（不能是
+      //    `text/plain`，也不能靠副檔名推導 —— 此檔沒有副檔名）。
+      // 2. **不得**轉址（301／302 會讓驗證失敗），因此以 exact path 規則
+      //    讓它直接命中靜態檔。
+      // 3. 不可長期快取：內容變更（換 Team ID、增加路徑）後需立刻生效，
+      //    否則 Apple 會持續使用舊的關聯資料。
+      {
+        source: '/.well-known/apple-app-site-association',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
       // 靜態資源長期快取（僅 production；dev mode 下 app-pages-internals.js 等無 hash 的 chunk 不可 immutable）
       ...(!isDev ? [
         {

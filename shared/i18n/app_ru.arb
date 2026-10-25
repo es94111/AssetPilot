@@ -391,6 +391,101 @@
     "description": "Web path: auth.passkeyButton",
     "x-webPath": "auth.passkeyButton"
   },
+  "authAppleButton": "Войти с Apple",
+  "@authAppleButton": {
+    "description": "Web path: auth.appleButton",
+    "x-webPath": "auth.appleButton"
+  },
+  "offlineDraftsTitle": "Офлайн-черновики",
+  "@offlineDraftsTitle": {
+    "description": "Web path: offlineDrafts.title",
+    "x-webPath": "offlineDrafts.title"
+  },
+  "offlineDraftsEmpty": "У вас нет офлайн-черновиков.",
+  "@offlineDraftsEmpty": {
+    "description": "Web path: offlineDrafts.empty",
+    "x-webPath": "offlineDrafts.empty"
+  },
+  "offlineDraftsOnline": "В сети",
+  "@offlineDraftsOnline": {
+    "description": "Web path: offlineDrafts.online",
+    "x-webPath": "offlineDrafts.online"
+  },
+  "offlineDraftsOffline": "Не в сети",
+  "@offlineDraftsOffline": {
+    "description": "Web path: offlineDrafts.offline",
+    "x-webPath": "offlineDrafts.offline"
+  },
+  "offlineDraftsNotPostedYet": "Ещё не проведено",
+  "@offlineDraftsNotPostedYet": {
+    "description": "Web path: offlineDrafts.notPostedYet",
+    "x-webPath": "offlineDrafts.notPostedYet"
+  },
+  "offlineDraftsSavedHint": "Сохранено как офлайн-черновик — ещё не проведено. Подтвердите позже в разделе «Офлайн-черновики».",
+  "@offlineDraftsSavedHint": {
+    "description": "Web path: offlineDrafts.savedHint",
+    "x-webPath": "offlineDrafts.savedHint"
+  },
+  "offlineDraftsSavedAt": "Сохранено {time}",
+  "@offlineDraftsSavedAt": {
+    "description": "Web path: offlineDrafts.savedAt",
+    "x-webPath": "offlineDrafts.savedAt"
+  },
+  "offlineDraftsPhotoPending": "Фото к загрузке: {count}",
+  "@offlineDraftsPhotoPending": {
+    "description": "Web path: offlineDrafts.photoPending",
+    "x-webPath": "offlineDrafts.photoPending"
+  },
+  "offlineDraftsSubmit": "Отправить",
+  "@offlineDraftsSubmit": {
+    "description": "Web path: offlineDrafts.submit",
+    "x-webPath": "offlineDrafts.submit"
+  },
+  "offlineDraftsDiscardTitle": "Удалить этот черновик?",
+  "@offlineDraftsDiscardTitle": {
+    "description": "Web path: offlineDrafts.discardTitle",
+    "x-webPath": "offlineDrafts.discardTitle"
+  },
+  "offlineDraftsDiscardHint": "Удалённые черновики нельзя восстановить, и они не попадут ни в один счёт.",
+  "@offlineDraftsDiscardHint": {
+    "description": "Web path: offlineDrafts.discardHint",
+    "x-webPath": "offlineDrafts.discardHint"
+  },
+  "offlineDraftsPendingHint": "Черновиков на подтверждении: {count}. Черновики никогда не проводятся автоматически — подтвердите перед отправкой.",
+  "@offlineDraftsPendingHint": {
+    "description": "Web path: offlineDrafts.pendingHint",
+    "x-webPath": "offlineDrafts.pendingHint"
+  },
+  "offlineDraftsSubmitAll": "Отправить все",
+  "@offlineDraftsSubmitAll": {
+    "description": "Web path: offlineDrafts.submitAll",
+    "x-webPath": "offlineDrafts.submitAll"
+  },
+  "offlineDraftsSubmitAllHint": "Будет отправлено черновиков: {count}. Они будут учтены только после отправки.",
+  "@offlineDraftsSubmitAllHint": {
+    "description": "Web path: offlineDrafts.submitAllHint",
+    "x-webPath": "offlineDrafts.submitAllHint"
+  },
+  "offlineDraftsConfirmSubmitAll": "Отправить все черновики?",
+  "@offlineDraftsConfirmSubmitAll": {
+    "description": "Web path: offlineDrafts.confirmSubmitAll",
+    "x-webPath": "offlineDrafts.confirmSubmitAll"
+  },
+  "offlineDraftsSynced": "Проведено",
+  "@offlineDraftsSynced": {
+    "description": "Web path: offlineDrafts.synced",
+    "x-webPath": "offlineDrafts.synced"
+  },
+  "offlineDraftsSyncedCount": "Проведено черновиков: {count}",
+  "@offlineDraftsSyncedCount": {
+    "description": "Web path: offlineDrafts.syncedCount",
+    "x-webPath": "offlineDrafts.syncedCount"
+  },
+  "offlineDraftsFailedCount": "Не удалось отправить черновиков: {count} — обработайте вручную",
+  "@offlineDraftsFailedCount": {
+    "description": "Web path: offlineDrafts.failedCount",
+    "x-webPath": "offlineDrafts.failedCount"
+  },
   "authPasskeyVerifying": "Проверка Passkey…",
   "@authPasskeyVerifying": {
     "description": "Web path: auth.passkeyVerifying",
@@ -5588,6 +5683,11 @@
     "description": "Mobile compatibility string: 資產管理 · 安卓客戶端",
     "x-webPath": "mobileLegacy.personalFinanceAndroidApp"
   },
+  "mobileLegacyPersonalFinanceIosApp": "Личные финансы · приложение для iOS",
+  "@mobileLegacyPersonalFinanceIosApp": {
+    "description": "Mobile compatibility string: 資產管理 · iOS 客戶端",
+    "x-webPath": "mobileLegacy.personalFinanceIosApp"
+  },
   "mobileLegacySkip": "Пропустить",
   "@mobileLegacySkip": {
     "description": "Mobile compatibility string: 跳過",
@@ -10685,5 +10785,25 @@
   "@featuresStocksPerformanceFlowsEmpty": {
     "description": "Web path: features.stocks.performance.flowsEmpty",
     "x-webPath": "features.stocks.performance.flowsEmpty"
+  },
+  "offlineDraftsLogoutWarningTitle": "У вас остались неотправленные черновики",
+  "@offlineDraftsLogoutWarningTitle": {
+    "description": "Web path: offlineDrafts.logoutWarning.title",
+    "x-webPath": "offlineDrafts.logoutWarning.title"
+  },
+  "offlineDraftsLogoutWarningHint": "У вас {count} черновик(ов), не проведённых в учёт. После выхода черновики остаются на этом устройстве, и вы найдёте их снова, войдя в тот же аккаунт. Они никогда не проводятся автоматически.",
+  "@offlineDraftsLogoutWarningHint": {
+    "description": "Web path: offlineDrafts.logoutWarning.hint",
+    "x-webPath": "offlineDrafts.logoutWarning.hint"
+  },
+  "settingsWidgetHideAmountsTitle": "Скрывать суммы в виджетах",
+  "@settingsWidgetHideAmountsTitle": {
+    "description": "Web path: settings.widgetHideAmounts.title",
+    "x-webPath": "settings.widgetHideAmounts.title"
+  },
+  "settingsWidgetHideAmountsSubtitle": "Виджеты на экране «Домой» по умолчанию не показывают суммы, чтобы финансовые данные оставались конфиденциальными",
+  "@settingsWidgetHideAmountsSubtitle": {
+    "description": "Web path: settings.widgetHideAmounts.subtitle",
+    "x-webPath": "settings.widgetHideAmounts.subtitle"
   }
 }

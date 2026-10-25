@@ -41,6 +41,10 @@ dependencies:
   http: ^1.3.0
   # 持久化登入 Cookie 與後端位址
   shared_preferences: ^2.3.5
+  # App 私有目錄路徑（iOS 離線草稿持久化、App Group 快照 fallback）
+  path_provider: ^2.1.4
+  # 網路連線狀態：離線記帳草稿要能判斷「目前是否連線」並在使用者確認後提示送出
+  connectivity_plus: ^6.1.0
   # 金額格式化（千分位、貨幣）
   intl: ^0.20.2
   # 圓餅圖／趨勢圖（對應 Web 的 Chart.js）
@@ -66,6 +70,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # 整合測試：在真實 iOS 模擬器／實機上跑，驗證 Dart 與原生通道的
+  # 實際往返（單元測試在桌面上執行，無法驗證 platform channel）。
+  integration_test:
+    sdk: flutter
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -80,7 +89,7 @@ dev_dependencies:
 # 重新產圖後執行：dart run flutter_launcher_icons
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
   image_path: "assets/icon/app_icon.png"
   min_sdk_android: 21
   adaptive_icon_background: "assets/icon/ic_bg.png"

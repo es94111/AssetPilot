@@ -1,15 +1,20 @@
 import 'dart:async';
 
-import 'package:app_links/app_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'api_client.dart';
 import 'l10n.dart';
+import 'platform/app_link_service.dart';
 
 class LineAuth {
   static const callbackPath = '/app/line-callback';
   static const callbackScheme = 'assetpilot';
   static const callbackHost = 'line-callback';
+
+  /// 取回冷啟動／最近連結時，只看 LINE 自己的回呼 host。
+  ///
+  /// 避免把 Widget／Siri 的記帳連結誤當成登入回呼。
+  static const List<String> _callbackHosts = [callbackHost];
 
   static Future<void> signIn({
     required String channelId,
@@ -39,7 +44,7 @@ class LineAuth {
       'nonce': nonce,
     });
 
-    final appLinks = AppLinks();
+    final appLinks = AppLinkService.instance;
     final completer = Completer<Uri>();
     void completeIfCallback(Uri uri) {
       final isHttpsAppLink = uri.path == callbackPath;
@@ -52,12 +57,12 @@ class LineAuth {
       }
     }
 
-    // 啟動瀏覽器前先記錄目前的 initial link。getInitialLink() 會回傳「最初喚起 App
+    // 啟動瀏覽器前先記錄目前的 initial link。initial link 會回傳「最初喚起 App
     // 的 URI」且具持久性：上一次登入的回呼會殘留於此。若直接拿來比對，第二次登入
     // 會立刻被舊回呼（帶舊 state）完成，導致「登入狀態不符」。
-    final staleInitialUri = await appLinks.getInitialLink();
+    final staleInitialUri = await appLinks.peekInitialLink(hosts: _callbackHosts);
 
-    final sub = appLinks.uriLinkStream.listen(completeIfCallback);
+    final sub = appLinks.links.listen(completeIfCallback);
     try {
       // 用 in-app 瀏覽器分頁（Android Custom Tab）開授權頁，登入完成後可由
       // closeInAppWebView() 主動關閉；外部瀏覽器無法被關閉，會在導回 App 後殘留。
@@ -69,7 +74,7 @@ class LineAuth {
 
       // 僅在 initial link 與啟動前不同（真正的冷啟動回呼）時才採用，
       // 避免把上一次登入殘留的舊回呼當成本次結果。
-      final initialUri = await appLinks.getInitialLink();
+      final initialUri = await appLinks.peekInitialLink(hosts: _callbackHosts);
       if (initialUri != null &&
           initialUri.toString() != staleInitialUri?.toString()) {
         completeIfCallback(initialUri);

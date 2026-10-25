@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
+import '../apple_auth.dart';
 import '../google_auth.dart';
 import '../line_auth.dart';
 import '../passkey_auth.dart';
+import '../platform/platform_info.dart';
 import '../theme.dart';
 import '../widgets/turnstile_widget.dart';
 import '../l10n.dart';
@@ -31,6 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _lineChannelId;
   bool _lineLoading = false;
   bool _passkeyLoading = false;
+  bool _appleEnabled = false;
+  String? _appleClientId;
+  bool _appleLoading = false;
 
   // Turnstile 狀態
   String? _turnstileToken;
@@ -58,6 +63,13 @@ class _LoginScreenState extends State<LoginScreen> {
         _lineEnabled =
             cfg['lineCodeFlow'] == true && (cfg['lineChannelId'] is String);
         _lineChannelId = cfg['lineChannelId'] as String?;
+        // Apple 登入僅在 iOS 且後端已設定 Service ID 時顯示。
+        _appleEnabled =
+            AppleAuth.isSupported &&
+            cfg['appleEnabled'] == true &&
+            (cfg['appleClientId'] is String) &&
+            (cfg['appleClientId'] as String).isNotEmpty;
+        _appleClientId = cfg['appleClientId'] as String?;
         _turnstileToken = null;
         _turnstileNonce++;
       });
@@ -68,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _turnstileEnabled = false;
         _googleEnabled = false;
         _lineEnabled = false;
+        _appleEnabled = false;
       });
     } finally {
       if (mounted) setState(() => _configLoading = false);
@@ -184,6 +197,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _appleSignIn() async {
+    if (_appleClientId == null) return;
+    if (!_requireTurnstile()) return;
+    final turnstileToken = _turnstileToken;
+    setState(() {
+      _appleLoading = true;
+      _error = null;
+    });
+    try {
+      await AppleAuth.signIn(
+        clientId: _appleClientId!,
+        baseUrl: ApiClient.instance.baseUrl,
+        turnstileToken: turnstileToken,
+      );
+      if (mounted) widget.onLoggedIn();
+    } on ApiException catch (e) {
+      if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
+      // 使用者主動取消時不顯示紅色錯誤框。
+      if (!AppleAuth.isUserCancelled(e)) {
+        setState(() => _error = e.message);
+      }
+      if (_turnstileEnabled) _resetTurnstile();
+    } catch (e) {
+      if (!mounted) return;
+      setState(
+        () => _error = trKey('mobileDynamicProviderLoginFailed', {
+          'provider': 'Apple',
+          'error': e,
+        }),
+      );
+      if (_turnstileEnabled) _resetTurnstile();
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -221,7 +270,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: ApSpace.xs),
                     Text(
-                      trKey('mobileLegacyPersonalFinanceAndroidApp'),
+                      // 副標要對應實際的平台：iOS 版顯示「iOS 客戶端」，
+                      // 直接沿用 Android 字串會讓 iOS 使用者誤以為裝錯版本。
+                      PlatformInfo.isIOS
+                          ? trKey('mobileLegacyPersonalFinanceIosApp')
+                          : trKey('mobileLegacyPersonalFinanceAndroidApp'),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -271,6 +324,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                     const SizedBox(height: ApSpace.xl),
+                    // Apple 規範要求使用 Sign in with Apple 時，該按鈕在畫面上的
+                    // 優先順序不得低於其他第三方登入按鈕，因此放在最上方。
+                    if (_appleEnabled) ...[
+                      OutlinedButton.icon(
+                        onPressed: _appleLoading ? null : _appleSignIn,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: theme.colorScheme.surface.withValues(
+                            alpha: 0.85,
+                          ),
+                        ),
+                        icon: _appleLoading
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.apple_rounded),
+                        label: Text(trKey('authAppleButton')),
+                      ),
+                      const SizedBox(height: ApSpace.md),
+                    ],
                     OutlinedButton.icon(
                       onPressed: _passkeyLoading ? null : _passkeySignIn,
                       style: OutlinedButton.styleFrom(

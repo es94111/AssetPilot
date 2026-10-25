@@ -1,0 +1,3 @@
+// 擴充 Target 共用設定：沿用 Flutter 產生的版本號，確保 App 與擴充的
+// CFBundleShortVersionString／CFBundleVersion 一致（App Store 會檢查）。
+#include "Generated.xcconfig"

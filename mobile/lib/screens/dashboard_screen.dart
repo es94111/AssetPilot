@@ -7,6 +7,7 @@ import '../api_client.dart';
 import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
+import '../platform/widget_snapshot_service.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 import '../theme.dart';
@@ -46,6 +47,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // 小工具快照，否則會把共享帳本數字與個人快取混在一起。
     if (ApiClient.instance.activeLedgerId.isEmpty) {
       await AppWidgetSync.updateDashboard(dashboard);
+      // iOS WidgetKit 摘要快照（快速記帳 + 本月收支摘要）。
+      // 同樣只反映個人帳本，避免共享帳本數字與個人快取混在一起。
+      unawaited(
+        WidgetSnapshotService.updateFromDashboard(
+          dashboard,
+          isPersonalLedger: true,
+        ),
+      );
       unawaited(_refreshSecondaryWidgetSnapshots(yearMonth));
     }
     return dashboard;

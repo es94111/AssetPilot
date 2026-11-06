@@ -1,6 +1,26 @@
 {
-  "currentVersion": "4.150.0",
+  "currentVersion": "4.150.1",
   "releases": [
+    {
+      "version": "4.150.1",
+      "date": "2026-11-06",
+      "title": "後端權限驗證安全修正",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "OAuth 自助註冊於部署初始化未完成時一律拒絕，修補首位完成 OAuth 註冊者搶奪管理員權限並永久關閉 /setup 初始化入口的漏洞（first-user OAuth takeover）。"
+        },
+        {
+          "tag": "fixed",
+          "text": "簽發工作階段的端點改由後端強制驗證：passkey 登入需通過信任來源檢查；App auth-ticket 簽發／兌換強制 deviceNonce 綁定與 JSON 內容，並於攜帶 Origin 時驗證來源，修補登入 CSRF／工作階段置換。"
+        },
+        {
+          "tag": "fixed",
+          "text": "不可逆的帳戶刪除新增後端 step-up 二次驗證（近期登入或新鮮 Passkey UV），與復原碼重新產生採相同機制；前端通過不再算通過。"
+        }
+      ]
+    },
     {
       "version": "4.150.0",
       "date": "2026-10-21",

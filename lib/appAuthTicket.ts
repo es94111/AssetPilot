@@ -29,7 +29,7 @@ function pruneAppAuthTickets() {
   }
 }
 
-export function issueAppAuthTicket(userId: string, deviceNonce?: string): string {
+export function issueAppAuthTicket(userId: string, deviceNonce: string): string {
   pruneAppAuthTickets();
   const ticket = crypto.randomBytes(32).toString('base64url');
   appAuthTickets.set(ticket, {
@@ -46,6 +46,8 @@ export function consumeAppAuthTicket(ticket: unknown, deviceNonce?: unknown): st
   const entry = appAuthTickets.get(ticket);
   if (!entry) return null;
   appAuthTickets.delete(ticket);
-  if (entry.deviceNonce && entry.deviceNonce !== deviceNonce) return null;
+  // deviceNonce 必填且必須相符，兩者缺一即拒絕（fail-closed）：
+  // 僅持有 ticket URI 的第三方不得兌換工作階段。
+  if (!entry.deviceNonce || entry.deviceNonce !== deviceNonce) return null;
   return entry.userId;
 }

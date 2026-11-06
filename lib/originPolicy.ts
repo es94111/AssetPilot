@@ -60,3 +60,15 @@ export function resolvePasskeyExpectedOrigin(
   // production 未設定來源：fail-closed
   return { origin: null, fellBackToRequest: false };
 }
+
+/**
+ * 請求來源信任檢查（登入 CSRF 防護）：Origin 標頭必須存在且完全符合伺服器
+ * 信任清單。用於「簽發工作階段」的瀏覽器端點；WebAuthn 的 clientData.origin
+ * 檢查無法取代此關卡（被中繼的合法斷言仍會通過）。
+ */
+export function isTrustedBrowserOrigin(headers: OriginHeadersLike): boolean {
+  const origin = getHeader(headers, "origin").trim();
+  if (!origin) return false;
+  const resolved = resolvePasskeyExpectedOrigin(origin);
+  return !!resolved.origin && resolved.origin === origin;
+}

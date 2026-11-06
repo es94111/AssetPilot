@@ -2,6 +2,7 @@
 import crypto from "crypto";
 import { getDB, queryOne, saveDB } from "./db";
 import { getClientIpFromHeaders } from "./requestIp";
+import { isSetupRequired } from "./setupBootstrap";
 
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || "";
 const IP_COUNTRY_CACHE_TTL_MS = 60 * 60 * 1000; // 1 小時
@@ -340,6 +341,16 @@ export function canOAuthRegister(email: string): {
 } {
   const emailLower = normalizeEmail(email);
   if (!emailLower) return { ok: false, error: "電子郵件格式不正確" };
+  // 部署初始化未完成（0 使用者且 bootstrap 未完成）時禁止 OAuth 自助註冊：
+  // 「使用者數為 0」本身不足以授權（見 lib/setupBootstrap.ts 安全原則），必須由
+  // 部署者以一次性 bootstrap 憑證完成 /setup；否則搶先完成 OAuth 註冊者將取得
+  // 首位 admin 並永久關閉初始化入口（first-user OAuth takeover）。
+  if (isSetupRequired()) {
+    return {
+      ok: false,
+      error: "系統初始化尚未完成，請先由管理員完成部署初始化後再註冊",
+    };
+  }
   if (getUserCount() === 0) return { ok: true };
   const settings = getSystemSettings();
   const allowList = settings.allowedRegistrationEmails;

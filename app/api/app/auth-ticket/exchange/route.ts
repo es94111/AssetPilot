@@ -4,8 +4,20 @@ import { setAuthCookie, formatUser, isActiveUserFlag } from '../../../../../lib/
 import { consumeAppAuthTicket } from '../../../../../lib/appAuthTicket';
 import { createLoginSession } from '../../../../../lib/sessionHelpers';
 import { recordLoginAudit, recordLoginAttempt } from '../../../../../lib/loginHelpers';
+import { isTrustedBrowserOrigin } from '../../../../../lib/originPolicy';
 
 export async function POST(request: NextRequest) {
+  // 僅接受 JSON 內容（阻斷 HTML 表單的 JSON-CSRF 載入；原生 App 亦使用
+  // application/json）。攜帶 Origin 時必須符合伺服器信任清單（瀏覽器 CSRF
+  // 防護）；原生 App 不送 Origin 標頭，改以 deviceNonce 綁定裝置實例。
+  const contentType = String(request.headers.get('content-type') || '').toLowerCase();
+  if (!contentType.includes('application/json')) {
+    return NextResponse.json({ error: '不支援的請求格式' }, { status: 415 });
+  }
+  const requestOrigin = String(request.headers.get('origin') || '').trim();
+  if (requestOrigin && !isTrustedBrowserOrigin(request.headers)) {
+    return NextResponse.json({ error: '不被信任的請求來源' }, { status: 403 });
+  }
   const body = await request.json().catch(() => ({}));
   const userId = consumeAppAuthTicket(body.ticket, body.deviceNonce);
   if (!userId) {

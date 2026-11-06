@@ -6,7 +6,9 @@
 //     不是 authToken，因此 requireAuth 與所有財務 API 一律拒絕。
 //   - 復原碼在「新 Passkey 註冊成功」時才以單一 UPDATE 原子消耗（受影響列數 = 1 才算成功）。
 import crypto from 'crypto';
+import { server as webauthnServer, type CredentialInfo } from '@passwordless-id/webauthn';
 import { getDB, queryAll, queryOne, saveDB } from './db';
+import { consumePasskeyChallenge } from './passkeyChallenge';
 import { uid, normalizeEmail } from './loginHelpers';
 import { checkRateLimit, type RateLimitEntry } from './rateLimit';
 import { resolvePasskeyExpectedOrigin, type OriginHeadersLike } from './originPolicy';
@@ -250,4 +252,67 @@ export function isRecentLogin(sessionId: string, now = Date.now()): boolean {
   if (!sessionId) return false;
   const row = queryOne('SELECT login_at FROM login_sessions WHERE id = ? AND revoked_at = 0', [sessionId]);
   return !!row && now - Number(row.login_at) <= RECOVERY_REAUTH_WINDOW_MS;
+}
+
+export interface StepUpReauthResult {
+  ok: boolean;
+  status: number;
+  error?: string;
+  reauthRequired?: boolean;
+}
+
+/**
+ * 敏感操作共用的 step-up 重新驗證：近期登入（RECOVERY_REAUTH_WINDOW_MS）內
+ * 直接通過；否則必須附上新鮮的 Passkey 使用者驗證（UV）。
+ * 供 /api/account/recovery-codes、/api/account/delete 等端點共用；呼叫端依
+ * 回傳值轉為 HTTP 回應（reauthRequired: true 供前端觸發重驗流程）。
+ */
+export async function verifyStepUpReauth(
+  userId: string,
+  sessionId: string | undefined,
+  body: Record<string, unknown>,
+  headers: Headers_,
+): Promise<StepUpReauthResult> {
+  if (isRecentLogin(String(sessionId || ''))) return { ok: true, status: 200 };
+
+  const authentication = body.authentication as { id?: string } | undefined;
+  const challengeKey = typeof body.challengeKey === 'string' ? body.challengeKey : '';
+  if (!authentication || !challengeKey) {
+    return { ok: false, status: 403, error: '需要重新驗證身分', reauthRequired: true };
+  }
+  const entry = consumePasskeyChallenge(challengeKey);
+  if (!entry || entry.purpose || (entry.userId !== null && entry.userId !== userId)) {
+    return { ok: false, status: 400, error: 'Challenge 已過期或無效，請重試', reauthRequired: true };
+  }
+  const cred = queryOne('SELECT * FROM passkey_credentials WHERE credential_id = ? AND user_id = ?', [
+    String(authentication.id || ''),
+    userId,
+  ]);
+  const get = (headers as Headers).get?.bind(headers) as ((n: string) => string | null) | undefined;
+  const requestOrigin = String(
+    get ? get('origin') || '' : (headers as Record<string, string | undefined>).origin || '',
+  );
+  const { origin } = resolvePasskeyExpectedOrigin(requestOrigin);
+  if (!cred || !origin) {
+    return { ok: false, status: 403, error: '重新驗證失敗', reauthRequired: true };
+  }
+  try {
+    const credentialKey: CredentialInfo = {
+      id: String(cred.credential_id || ''),
+      publicKey: String(cred.public_key || ''),
+      algorithm: String(cred.algorithm || '') as CredentialInfo['algorithm'],
+      transports: JSON.parse(String(cred.transports || '[]')),
+    };
+    const result = await webauthnServer.verifyAuthentication(authentication as never, credentialKey, {
+      challenge: entry.challenge,
+      origin,
+      userVerified: true,
+      counter: Number(cred.counter) || 0,
+    });
+    getDB().run('UPDATE passkey_credentials SET counter = ? WHERE credential_id = ?', [result.counter || 0, cred.credential_id]);
+    saveDB();
+    return { ok: true, status: 200 };
+  } catch {
+    return { ok: false, status: 403, error: '重新驗證失敗', reauthRequired: true };
+  }
 }

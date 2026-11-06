@@ -413,13 +413,37 @@ export default function AccountSettingsClient({
     }
     setDeleting(true);
     try {
-      const res = await fetch("/api/account/settings/delete", {
+      let res = await fetch("/api/account/settings/delete", {
         method: "DELETE",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirmEmail: deleteConfirmEmail.trim() }),
       });
-      const data = await res.json().catch(() => ({}));
+      let data = await res.json().catch(() => ({}));
+      if (res.status === 403 && data.reauthRequired) {
+        // 登入已逾近期窗口時，改以 Passkey（UV）重新驗證後再試（後端強制）。
+        if (!webauthnClient.isAvailable())
+          throw new Error(ta("recovery.reauthFailed"));
+        const { key, challenge } = (await apiGet(
+          "/api/account/passkey/challenge",
+        )) as { key: string; challenge: string };
+        const authentication = await webauthnClient.authenticate({
+          challenge,
+          userVerification: "required",
+          timeout: 60000,
+        });
+        res = await fetch("/api/account/settings/delete", {
+          method: "DELETE",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            confirmEmail: deleteConfirmEmail.trim(),
+            authentication,
+            challengeKey: key,
+          }),
+        });
+        data = await res.json().catch(() => ({}));
+      }
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setDeleteOpen(false);
       window.location.href = "/";

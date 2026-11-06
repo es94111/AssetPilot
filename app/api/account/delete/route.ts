@@ -6,6 +6,7 @@ import {
   LedgerOwnershipTransferRequiredError,
 } from "../../../../lib/userDeletion";
 import { auditSensitiveAction } from "../../../../lib/auditHelpers";
+import { verifyStepUpReauth } from "../../../../lib/accountRecovery";
 
 function normalizeEmail(email: string | number | null | undefined) {
   return String(email || "")
@@ -19,6 +20,21 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const { confirmEmail } = body;
+
+  // 不可逆刪除：後端必須重新驗證操作者（近期登入或新鮮 Passkey UV）。
+  // 前端的 email 確認僅為意圖確認，不具驗證效力。
+  const stepUp = await verifyStepUpReauth(
+    auth.userId,
+    auth.sessionId,
+    body as Record<string, unknown>,
+    request.headers,
+  );
+  if (!stepUp.ok) {
+    return NextResponse.json(
+      { error: stepUp.error || "需要重新驗證身分", reauthRequired: true },
+      { status: stepUp.status || 403 },
+    );
+  }
 
   const user = queryOne("SELECT * FROM users WHERE id = ?", [auth.userId]);
   if (!user)

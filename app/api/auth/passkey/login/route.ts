@@ -8,9 +8,14 @@ import { formatUser, isActiveUserFlag, setAuthCookie } from '../../../../../lib/
 import { consumePasskeyChallenge } from '@/lib/passkeyChallenge';
 import { createLoginSession } from '../../../../../lib/sessionHelpers';
 import { getTurnstileSiteKey, verifyTurnstileToken } from '../../../../../lib/turnstile';
-import { resolvePasskeyExpectedOrigin } from '@/lib/originPolicy';
+import { isTrustedBrowserOrigin, resolvePasskeyExpectedOrigin } from '@/lib/originPolicy';
 
 export async function POST(request: Request) {
+  // 簽發 session 前先驗證請求來源（登入 CSRF 防護）：此為瀏覽器端點，
+  // Origin 必須存在且符合伺服器信任清單。
+  if (!isTrustedBrowserOrigin(request.headers)) {
+    return NextResponse.json({ error: '不被信任的請求來源' }, { status: 403 });
+  }
   const body = await request.json().catch(() => ({}));
   const { authentication, challengeKey } = body;
   const turnstileToken = String(body.turnstileToken || body['cf-turnstile-response'] || '');

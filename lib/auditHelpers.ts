@@ -44,6 +44,8 @@ const AUDIT_METADATA_ALLOWED_KEYS = new Set([
   'provider', 'sync_status',
   // Passkey 遺失復原碼稽核（issue #308）。只記錄筆數，絕不記錄復原碼明文或雜湊。
   'recovery_code_count', 'removed_passkey_count', 'revoked_session_count',
+  // Keyring rotation scheduler audit metadata (identifiers and sanitized error codes only).
+  'purpose', 'rotation_id', 'error_code',
 ]);
 
 export interface WriteAuditArgs {

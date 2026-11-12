@@ -8,9 +8,8 @@
 // 一旦更換金鑰，所有既有訂閱的推播都會被 push service 拒絕（必須重新訂閱）。
 
 import crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
 import { queryOne, getDB } from './db';
+import { writeEnvVars } from './envSecrets';
 import {
   generateVapidKeys,
   isValidVapidKeyPair,
@@ -25,33 +24,12 @@ export const VAPID_PRIVATE_KEY_ENV = 'VAPID_PRIVATE_KEY';
 
 let cached: VapidKeyPair | null = null;
 
-function envPath(): string {
-  return process.env.ENV_PATH || path.join(process.cwd(), '.env');
-}
-
-function upsertEnvLine(lines: string[], key: string, value: string): string[] {
-  const next = [...lines];
-  const idx = next.findIndex((line) => line.startsWith(`${key}=`));
-  if (idx >= 0) next[idx] = `${key}=${value}`;
-  else next.push(`${key}=${value}`);
-  return next;
-}
-
-/** 把產生的金鑰寫入持久化 .env（權限 0600，與 envSecrets.ts 相同）。 */
+/** 把產生的金鑰寫入持久化 .env；共用 envSecrets 的原子寫入器。 */
 function persistKeys(keys: VapidKeyPair): void {
-  const file = envPath();
-  let content = '';
-  try {
-    content = fs.readFileSync(file, 'utf-8');
-  } catch {
-    // 首次啟動尚無 .env 屬正常情況。
-  }
-  let lines = content ? content.split('\n').filter((line) => line.trim() !== '') : [];
-  lines = upsertEnvLine(lines, VAPID_PUBLIC_KEY_ENV, keys.publicKey);
-  lines = upsertEnvLine(lines, VAPID_PRIVATE_KEY_ENV, keys.privateKey);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
-  try { fs.chmodSync(file, 0o600); } catch { /* 非 POSIX 檔案系統 */ }
+  writeEnvVars({
+    [VAPID_PUBLIC_KEY_ENV]: keys.publicKey,
+    [VAPID_PRIVATE_KEY_ENV]: keys.privateKey,
+  });
 }
 
 /**

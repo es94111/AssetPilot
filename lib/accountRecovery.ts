@@ -1,7 +1,7 @@
 // lib/accountRecovery.ts — Passkey 遺失復原碼與受限復原流程（issue #308）
 //
 // 安全設計：
-//   - 復原碼 160-bit CSPRNG，只存 HMAC-SHA256 雜湊；明文僅在產生當下回傳一次。
+//   - 復原碼 160-bit CSPRNG，只存 SHA-256（新碼 v2）或相容舊資料的 HMAC-SHA256（v1）；明文僅在產生當下回傳一次。
 //   - 驗證復原碼只會發出「復原工作階段」（獨立 cookie `recoveryToken`、獨立資料表），
 //     不是 authToken，因此 requireAuth 與所有財務 API 一律拒絕。
 //   - 復原碼在「新 Passkey 註冊成功」時才以單一 UPDATE 原子消耗（受影響列數 = 1 才算成功）。
@@ -27,12 +27,24 @@ const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32
 
 type Headers_ = OriginHeadersLike;
 
-function hmacSecret(): string {
-  return String(process.env.JWT_SECRET || '');
+function legacyRecoveryCodePepper(): string {
+  return String(process.env.RECOVERY_CODE_LEGACY_PEPPER || process.env.JWT_SECRET || '');
 }
 
 export function hashRecoveryCode(normalizedCode: string): string {
-  return crypto.createHmac('sha256', hmacSecret()).update(`recovery-code:${normalizedCode}`).digest('hex');
+  return crypto.createHash('sha256').update(`recovery-code:${normalizedCode}`).digest('hex');
+}
+
+export function verifyRecoveryCodeHash(normalizedCode: string, storedHash: string, hashVersion: number): boolean {
+  let candidate = '';
+  if (hashVersion === 1) {
+    const pepper = legacyRecoveryCodePepper();
+    if (!pepper) return false;
+    candidate = crypto.createHmac('sha256', pepper).update(`recovery-code:${normalizedCode}`).digest('hex');
+  } else if (hashVersion === 2) {
+    candidate = hashRecoveryCode(normalizedCode);
+  }
+  return candidate ? timingSafeEqualHex(candidate, storedHash) : false;
 }
 
 export function normalizeRecoveryCode(input: unknown): string {
@@ -102,8 +114,8 @@ export function regenerateRecoveryCodes(userId: string): string[] {
     const code = generateRecoveryCode();
     codes.push(code);
     db.run(
-      'INSERT INTO account_recovery_codes (id, user_id, code_hash, created_at, used_at, revoked_at) VALUES (?,?,?,?,0,0)',
-      [uid(), userId, hashRecoveryCode(normalizeRecoveryCode(code)), now],
+      'INSERT INTO account_recovery_codes (id, user_id, code_hash, hash_version, created_at, used_at, revoked_at) VALUES (?,?,?,?,?,0,0)',
+      [uid(), userId, hashRecoveryCode(normalizeRecoveryCode(code)), 2, now],
     );
   }
   // 復原中的工作階段也隨舊碼失效。
@@ -148,12 +160,14 @@ export function findValidRecoveryCode(email: string, normalizedCode: string): { 
     return null;
   }
   const rows = queryAll(
-    'SELECT id, code_hash FROM account_recovery_codes WHERE user_id = ? AND used_at = 0 AND revoked_at = 0',
+    'SELECT id, code_hash, hash_version FROM account_recovery_codes WHERE user_id = ? AND used_at = 0 AND revoked_at = 0',
     [String(user.id)],
   );
   let matched: string | null = null;
   for (const row of rows) {
-    if (timingSafeEqualHex(candidate, String(row.code_hash || ''))) matched = String(row.id);
+    if (verifyRecoveryCodeHash(normalizedCode, String(row.code_hash || ''), Number(row.hash_version) || 1)) {
+      matched = String(row.id);
+    }
   }
   return matched ? { userId: String(user.id), codeId: matched } : null;
 }

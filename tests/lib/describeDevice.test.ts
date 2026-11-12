@@ -21,7 +21,7 @@ import test, { after } from 'node:test';
 
 // lib/loginHelpers 會匯入 lib/db，而 lib/db 在載入時會呼叫 ensureEnvSecrets()，
 // 它會在 ENV_PATH 旁寫入自動產生的密鑰。指向暫存目錄，
-// 才不會在儲存庫根目錄留下 .env 或 .env.generated-secrets。
+// 才不會在儲存庫根目錄留下 .env 或 generated secret sidecars。
 const sandbox = mkdtempSync(join(tmpdir(), 'assetpilot-describe-device-'));
 process.env.ENV_PATH = join(sandbox, '.env');
 

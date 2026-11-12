@@ -315,6 +315,9 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `JWT_EXPIRES` | 基本 | 瀏覽器登入 JWT 有效期限 | `7d` |
 | `APP_JWT_EXPIRES` | 基本 | App 登入 JWT 有效期限（Token 存於裝置端加密儲存） | `90d` |
 | `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
+| `KEYRING_ROOT_KEK` | 安全 | 用途分離 keyring 的 32-byte Root KEK（base64）；啟用後所有副本必須一致，應由 Secret Manager 提供 | — |
+| `KEYRING_ENABLE` | 安全 | 首次啟用 keyring 的明確屏障；確認所有副本均支援後才設為 `true`，DB 啟用後以資料庫狀態為準 | `false` |
+| `RECOVERY_CODE_LEGACY_PEPPER` | 舊碼相容 | 僅驗證升級前 HMAC v1 復原碼；輪換 JWT 前填入舊金鑰，直到舊碼用完、撤銷或重新產生 | — |
 | `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
 | `GOOGLE_CLIENT_ID` | SSO | Google OAuth Client ID（留空停用 Google 登入） | — |
 | `GOOGLE_CLIENT_SECRET` | SSO | Google OAuth Client Secret | — |
@@ -333,11 +336,46 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` | 寄信 | 主要／備用寄信通道：`smtp` / `zeabur` / `resend` | — |
 | `SMTP_*` / `ZEABUR_*` / `RESEND_*` | 寄信 | 各寄信通道的連線設定 | — |
 | `APP_URL` | MCP OAuth / 寄信 | 正式環境的對外 HTTPS origin | — |
-| `EINVOICE_ENCRYPTION_KEY` | 🔑 自動 | 雲端發票載具驗證碼的加密主金鑰（首次需要時自動產生） | — |
+| `EINVOICE_ENCRYPTION_KEY` | 🔑 自動 | 雲端發票載具驗證碼加密主金鑰；首次啟動持久化至 `ENV_PATH.generated-einvoice`（0600）及 `ENV_PATH`，請備份兩者且勿任意更換 | — |
 | `EINVOICE_API_ENDPOINT` | 雲端發票 | 電子發票供應商 API 端點（https，三者齊備才啟用） | — |
 | `EINVOICE_API_APP_ID` / `EINVOICE_API_KEY` | 雲端發票 | 供應商 API 憑證（僅以標頭送出，不寫入日誌） | — |
 
 > 💡 **寄信通道**（v4.30.0 起）一律由環境變數設定。`EMAIL_PROVIDER_PRIMARY` 留空則寄信停用；`EMAIL_PROVIDER_FALLBACK` 僅在 primary 執行期失敗時觸發。對應通道的設定變數需配合補齊。
+
+### 用途金鑰環啟用與手動輪換
+
+此功能預設停用。Root KEK 請用 `openssl rand -base64 32` 產生並放在部署平台的 Secret Manager；所有副本使用相同值，資料庫只保存用途金鑰的包裝值。Keyring 啟用後，Root KEK 缺失或不一致會讓服務 fail closed，切勿遺失或直接更換 Root KEK。
+
+首次啟用前先備份資料庫與相關 Secret，將支援 keyring 的版本部署到所有副本並確認舊版副本已退出，再設定 `KEYRING_ENABLE=true`。資料庫 `keyring_control.enabled` 是啟用後的權威狀態；各副本仍必須持續提供一致的 `KEYRING_ROOT_KEK`。
+
+手動輪換範例（用途：`jwt`、`api-token`、`einvoice`、`photo`）：
+
+```sh
+# 預設 dry-run，只顯示 active kid 與待處理數，不修改資料
+npm run rotate:key -- --purpose=api-token
+
+# 建立 pending key（需先有可還原的 DB 與 Root KEK 備份）
+npm run rotate:key -- --prepare --purpose=api-token --confirm-backup
+
+# 啟用並批次重加密；此確認是操作者聲明，不是即時副本健康檢查
+npm run rotate:key -- --activate --rotation=<rotation-id> --confirm-backup --confirm-all-instances-ready
+
+# 暫停或程序中斷後續跑
+npm run rotate:key -- --resume --rotation=<rotation-id> --confirm-backup
+
+# 回滾 active key 指標；已重加密資料仍由 previous key 解密，不會反向重加密
+npm run rotate:key -- --rollback --rotation=<rotation-id> --confirm-backup
+```
+
+`--apply` 可合併建立 pending、啟用與批次重加密。輪換工具不會退役或銷毀舊 key；回滾後也不得刪除仍被資料或備份引用的 previous key。JWT 輪換仍需依 Token 有效期限及舊 Token 相容策略評估。
+
+### 管理後台自動輪換
+
+Keyring 啟用後，可在「管理員設定 → 系統設定 → 金鑰自動輪換」為各用途設定 1–3650 天的週期、設定預期副本數，並暫停或恢復排程。排程預設停用；啟用任一用途前，管理員必須確認資料庫備份已設定並測試。這是管理員確認，不是系統即時驗證備份健康狀態。
+
+每個副本會定期回報心跳，並針對 pending key 執行自我測試；所有近期副本均通過 readiness 且數量達預期值後才會切換金鑰。副本不足或安全檢查失敗時不會啟用金鑰，排程會暫停並在管理後台及伺服器日誌顯示狀態；短暫錯誤最多重試三次。舊 key 不會自動銷毀，須由管理員在確認資料、備份和匯出不再依賴它之後另行處理。外部通知尚未設定，請定期檢查管理後台與伺服器日誌。
+
+第三方外部憑證與 PostgreSQL 登入憑證採人工輪換，不由此排程管理；操作步驟請參閱[第三方憑證輪換 Runbook](docs/key-rotation-runbooks.md)。
 
 ---
 

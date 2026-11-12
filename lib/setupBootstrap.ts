@@ -40,12 +40,8 @@ export function resetSetupThrottleForTests(): void {
   globalThrottle.clear();
 }
 
-function hmacSecret(): string {
-  return String(process.env.JWT_SECRET || '');
-}
-
 export function hashSetupToken(token: string): string {
-  return crypto.createHmac('sha256', hmacSecret()).update(`setup-bootstrap:${token}`).digest('hex');
+  return crypto.createHash('sha256').update(`assetpilot:setup-bootstrap:v2:${token}`, 'utf8').digest('hex');
 }
 
 export function generateSetupToken(): string {

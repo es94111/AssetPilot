@@ -96,7 +96,23 @@ test('長度錯誤 → 拋出明確錯誤', () => {
   assert.throws(() => pc.loadMasterKey(), /32 bytes/);
 });
 
+test('PHOTO_MASTER_KEY_OLD 僅載入為唯讀解包 fallback', () => {
+  const previousKey = crypto.randomBytes(32).toString('base64');
+  process.env.PHOTO_MASTER_KEY = crypto.randomBytes(32).toString('base64');
+  process.env.PHOTO_MASTER_KEY_OLD = previousKey;
+  pc._resetMasterKeyCache();
+  assert.equal(pc.loadPreviousMasterKey()!.toString('base64'), previousKey);
+  assert.notEqual(pc.loadMasterKey()!.toString('base64'), previousKey);
+});
+
+test('PHOTO_MASTER_KEY_OLD 長度錯誤 → 拋出明確錯誤', () => {
+  process.env.PHOTO_MASTER_KEY_OLD = crypto.randomBytes(16).toString('base64');
+  pc._resetMasterKeyCache();
+  assert.throws(() => pc.loadPreviousMasterKey(), /32 bytes/);
+});
+
 delete process.env.PHOTO_MASTER_KEY;
+delete process.env.PHOTO_MASTER_KEY_OLD;
 pc._resetMasterKeyCache();
 
 console.log(`\n結果：${pass} pass / ${fail} fail`);

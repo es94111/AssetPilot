@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 
 process.env.JWT_SECRET ||= 'test-secret-for-recovery';
 
@@ -27,6 +28,33 @@ test('hash is deterministic, one-way and never equals plaintext', () => {
   assert.equal(h, mod.hashRecoveryCode(code));
   assert.notEqual(h, code);
   assert.match(h, /^[0-9a-f]{64}$/);
+});
+
+test('new recovery hashes are JWT-independent and legacy v1 hashes use their retained pepper', () => {
+  const previousJwt = process.env.JWT_SECRET;
+  const previousPepper = process.env.RECOVERY_CODE_LEGACY_PEPPER;
+  const code = '01AB23CD45EF67GH89JKMNPQRSTVWXYZ';
+  try {
+    process.env.JWT_SECRET = 'legacy-jwt-secret';
+    delete process.env.RECOVERY_CODE_LEGACY_PEPPER;
+    const legacyHash = crypto.createHmac('sha256', process.env.JWT_SECRET)
+      .update(`recovery-code:${code}`)
+      .digest('hex');
+    const v2Hash = mod.hashRecoveryCode(code);
+
+    process.env.JWT_SECRET = 'rotated-jwt-secret';
+    assert.equal(mod.hashRecoveryCode(code), v2Hash);
+    assert.equal(mod.verifyRecoveryCodeHash(code, legacyHash, 1), false);
+    process.env.RECOVERY_CODE_LEGACY_PEPPER = 'legacy-jwt-secret';
+    assert.equal(mod.verifyRecoveryCodeHash(code, legacyHash, 1), true);
+    assert.equal(mod.verifyRecoveryCodeHash(code, v2Hash, 2), true);
+    assert.equal(mod.verifyRecoveryCodeHash(code, legacyHash, 2), false);
+  } finally {
+    if (previousJwt === undefined) delete process.env.JWT_SECRET;
+    else process.env.JWT_SECRET = previousJwt;
+    if (previousPepper === undefined) delete process.env.RECOVERY_CODE_LEGACY_PEPPER;
+    else process.env.RECOVERY_CODE_LEGACY_PEPPER = previousPepper;
+  }
 });
 
 test('throttle blocks repeated attempts on the same credential', () => {

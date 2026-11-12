@@ -1,6 +1,30 @@
 {
-  "currentVersion": "4.150.1",
+  "currentVersion": "4.151.0",
   "releases": [
+    {
+      "version": "4.151.0",
+      "date": "2026-11-12",
+      "title": "用途分離金鑰輪換與加密資料安全強化",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增資料庫管理的用途分離 keyring，以 Root KEK 包裝用途金鑰，支援 key ID、pending/active/previous/retired 狀態、版本化密文，以及舊新金鑰並行讀取與回滾。"
+        },
+        {
+          "tag": "new",
+          "text": "管理介面與 CLI 支援預覽、準備、啟用、續跑及退役金鑰；多副本排程器具備 readiness 檢查、跨程序鎖、重試、稽核與安全暫停。"
+        },
+        {
+          "tag": "new",
+          "text": "JWT、Webhook secret、電子發票憑證及照片 DEK 支援用途隔離的金鑰輪換；照片 DEK 可批次重包並保留 legacy 金鑰解密能力。"
+        },
+        {
+          "tag": "fixed",
+          "text": "強化秘密持久化與復原相容性：電子發票金鑰可原子產生並持久保存，環境秘密原子更新，復原碼雜湊不再依賴 JWT 金鑰。"
+        }
+      ]
+    },
     {
       "version": "4.150.1",
       "date": "2026-11-06",

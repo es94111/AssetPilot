@@ -348,10 +348,12 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     code_hash TEXT NOT NULL,
+    hash_version INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL,
     used_at INTEGER DEFAULT 0,
     revoked_at INTEGER DEFAULT 0
   )`);
+  db.run('ALTER TABLE account_recovery_codes ADD COLUMN IF NOT EXISTS hash_version INTEGER NOT NULL DEFAULT 1');
   db.run(
     `CREATE INDEX IF NOT EXISTS idx_account_recovery_codes_user ON account_recovery_codes(user_id, revoked_at, used_at)`,
   );
@@ -394,6 +396,108 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     updated_at INTEGER DEFAULT 0,
     updated_by TEXT DEFAULT ''
   )`);
+
+  // Root-KEK-backed application key ring. The database stores only KEK-wrapped keys;
+  // keyring_control.enabled is the durable fail-closed marker for partially configured replicas.
+  db.run(`CREATE TABLE IF NOT EXISTS keyring_control (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    enabled INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0
+  )`);
+  db.run('INSERT INTO keyring_control (id, enabled, created_at, updated_at) VALUES (1, 0, ?, ?) ON CONFLICT (id) DO NOTHING', [Date.now(), Date.now()]);
+  db.run(`CREATE TABLE IF NOT EXISTS keyring_keys (
+    kid TEXT PRIMARY KEY,
+    purpose TEXT NOT NULL CHECK (purpose IN ('jwt', 'api-token', 'einvoice', 'photo')),
+    wrapped_key TEXT NOT NULL,
+    wrap_iv TEXT NOT NULL,
+    wrap_tag TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'active', 'previous', 'retired')),
+    accept_legacy INTEGER NOT NULL DEFAULT 0 CHECK (accept_legacy IN (0, 1)),
+    created_at INTEGER NOT NULL,
+    retired_at INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (purpose, kid)
+  )`);
+  db.run(`DO $$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+      WHERE conrelid = 'keyring_keys'::regclass
+        AND conname = 'keyring_keys_status_check'
+        AND pg_get_constraintdef(oid) LIKE '%pending%'
+    ) THEN
+      ALTER TABLE keyring_keys DROP CONSTRAINT IF EXISTS keyring_keys_status_check;
+      ALTER TABLE keyring_keys ADD CONSTRAINT keyring_keys_status_check
+        CHECK (status IN ('pending', 'active', 'previous', 'retired'));
+    END IF;
+  END $$`);
+  db.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_keyring_one_active ON keyring_keys(purpose) WHERE status = 'active'");
+  db.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_keyring_one_pending ON keyring_keys(purpose) WHERE status = 'pending'");
+  db.run('DROP INDEX IF EXISTS idx_keyring_one_legacy');
+  db.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_keyring_one_legacy_non_photo ON keyring_keys(purpose) WHERE purpose <> 'photo' AND accept_legacy = 1 AND status IN ('active', 'previous')");
+  db.run(`CREATE TABLE IF NOT EXISTS keyring_rotations (
+    id TEXT PRIMARY KEY,
+    purpose TEXT NOT NULL CHECK (purpose IN ('jwt', 'api-token', 'einvoice', 'photo')),
+    from_kid TEXT NOT NULL,
+    to_kid TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('prepared', 'running', 'paused', 'completed', 'rolled_back')),
+    cursor_id TEXT NOT NULL DEFAULT '',
+    scanned_count INTEGER NOT NULL DEFAULT 0,
+    reencrypted_count INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    completed_at INTEGER NOT NULL DEFAULT 0,
+    last_error_code TEXT NOT NULL DEFAULT ''
+  )`);
+  db.run("CREATE UNIQUE INDEX IF NOT EXISTS idx_keyring_rotation_one_inflight ON keyring_rotations(purpose) WHERE status IN ('prepared', 'running', 'paused')");
+  db.run('CREATE INDEX IF NOT EXISTS idx_keyring_rotations_status ON keyring_rotations(status, updated_at)');
+  db.run(`CREATE TABLE IF NOT EXISTS keyring_rotation_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    expected_instance_count INTEGER NOT NULL DEFAULT 1,
+    backup_confirmed_at INTEGER NOT NULL DEFAULT 0,
+    backup_confirmed_by TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    updated_by TEXT NOT NULL DEFAULT ''
+  )`);
+  db.run(`INSERT INTO keyring_rotation_settings (id, expected_instance_count, updated_at)
+    VALUES (1, 1, ?) ON CONFLICT (id) DO NOTHING`, [Date.now()]);
+  db.run(`CREATE TABLE IF NOT EXISTS keyring_rotation_schedules (
+    purpose TEXT PRIMARY KEY CHECK (purpose IN ('jwt', 'api-token', 'einvoice', 'photo')),
+    enabled INTEGER NOT NULL DEFAULT 0 CHECK (enabled IN (0, 1)),
+    paused INTEGER NOT NULL DEFAULT 0 CHECK (paused IN (0, 1)),
+    interval_days INTEGER NOT NULL DEFAULT 365,
+    next_run_at INTEGER NOT NULL DEFAULT 0,
+    last_started_at INTEGER NOT NULL DEFAULT 0,
+    last_completed_at INTEGER NOT NULL DEFAULT 0,
+    last_rotation_id TEXT NOT NULL DEFAULT '',
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    retry_after INTEGER NOT NULL DEFAULT 0,
+    last_error_code TEXT NOT NULL DEFAULT '',
+    last_error_at INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    updated_by TEXT NOT NULL DEFAULT ''
+  )`);
+  db.run(`INSERT INTO keyring_rotation_schedules (purpose, interval_days, updated_at)
+    VALUES ('jwt', 90, ?), ('api-token', 365, ?), ('einvoice', 365, ?), ('photo', 365, ?)
+    ON CONFLICT (purpose) DO NOTHING`, [Date.now(), Date.now(), Date.now(), Date.now()]);
+  db.run(`CREATE TABLE IF NOT EXISTS keyring_rotation_instances (
+    instance_id TEXT PRIMARY KEY,
+    started_at INTEGER NOT NULL,
+    last_seen_at INTEGER NOT NULL,
+    keyring_enabled INTEGER NOT NULL DEFAULT 0 CHECK (keyring_enabled IN (0, 1)),
+    protocol_version INTEGER NOT NULL DEFAULT 1
+  )`);
+  db.run('CREATE INDEX IF NOT EXISTS idx_keyring_rotation_instances_seen ON keyring_rotation_instances(last_seen_at)');
+  db.run(`CREATE TABLE IF NOT EXISTS keyring_rotation_readiness (
+    instance_id TEXT NOT NULL,
+    purpose TEXT NOT NULL CHECK (purpose IN ('jwt', 'api-token', 'einvoice', 'photo')),
+    kid TEXT NOT NULL,
+    ready INTEGER NOT NULL CHECK (ready IN (0, 1)),
+    checked_at INTEGER NOT NULL,
+    error_code TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (instance_id, purpose, kid)
+  )`);
+  db.run('CREATE INDEX IF NOT EXISTS idx_keyring_rotation_readiness_target ON keyring_rotation_readiness(purpose, kid, checked_at)');
 
   const alterIgnore = (sql: string): void => {
     try {
@@ -798,8 +902,10 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     wrapped_dek TEXT NOT NULL,
     iv TEXT NOT NULL,
     tag TEXT NOT NULL,
+    key_id TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   )`);
+  db.run("ALTER TABLE user_photo_keys ADD COLUMN IF NOT EXISTS key_id TEXT NOT NULL DEFAULT ''");
 
   // issue #281：LINE 對話狀態以「LINE 使用者＋帳本」為範圍。舊版只有
   // line_user_id 主鍵，無法在同一個 LINE 帳號下維護不同帳本的草稿（切換帳本會

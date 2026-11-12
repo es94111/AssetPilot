@@ -120,6 +120,17 @@ if (!DB_URL) {
     assert.ok(cols[0].column_name === 'repayment_summary_id');
   });
 
+  test('復原碼 hash_version migration 保留舊資料為 v1 預設', () => {
+    const columns = queryAll(
+      `SELECT data_type, column_default, is_nullable FROM information_schema.columns
+       WHERE table_name = 'account_recovery_codes' AND column_name = 'hash_version'`,
+    ) as Array<{ data_type: string; column_default: string | null; is_nullable: string }>;
+    assert.equal(columns.length, 1, 'account_recovery_codes.hash_version 應存在');
+    assert.equal(columns[0].data_type, 'integer');
+    assert.equal(columns[0].is_nullable, 'NO');
+    assert.match(String(columns[0].column_default), /1/, '既有復原碼應預設為 HMAC v1');
+  });
+
   test('Web Push 訂閱／去重資料表與 user_settings 開關欄位由 migration 建立', () => {
     const subscriptionColumns = queryAll(
       `SELECT column_name FROM information_schema.columns

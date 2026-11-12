@@ -13,12 +13,17 @@ test('generated setup token has >=128-bit entropy and is unique', () => {
   assert.ok(a.length - 'ap-setup-'.length >= 32);
 });
 
-test('token hash is deterministic, one-way and differs from plaintext', () => {
+test('token hash is deterministic, one-way and independent of JWT secret', () => {
   const t = mod.generateSetupToken();
-  assert.equal(mod.hashSetupToken(t), mod.hashSetupToken(t));
-  assert.notEqual(mod.hashSetupToken(t), t);
-  assert.notEqual(mod.hashSetupToken(t), mod.hashSetupToken(t + 'x'));
-  assert.match(mod.hashSetupToken(t), /^[0-9a-f]{64}$/);
+  const originalSecret = process.env.JWT_SECRET;
+  const hash = mod.hashSetupToken(t);
+  process.env.JWT_SECRET = 'rotated-secret';
+  assert.equal(mod.hashSetupToken(t), hash);
+  assert.notEqual(hash, t);
+  assert.notEqual(hash, mod.hashSetupToken(t + 'x'));
+  assert.match(hash, /^[0-9a-f]{64}$/);
+  if (originalSecret === undefined) delete process.env.JWT_SECRET;
+  else process.env.JWT_SECRET = originalSecret;
 });
 
 test('identity validation normalises email and rejects invalid input', () => {

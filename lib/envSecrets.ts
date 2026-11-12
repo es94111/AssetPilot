@@ -45,6 +45,59 @@ function generatedSecretsPath(envPath: string): string {
   return `${envPath}.generated-secrets`;
 }
 
+function generatedEinvoiceSecretPath(envPath: string): string {
+  return `${envPath}.generated-einvoice`;
+}
+
+function readGeneratedEinvoiceSecret(file: string): string | null {
+  let content: string;
+  try {
+    content = fs.readFileSync(file, 'utf-8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return null;
+    throw error;
+  }
+  const key = parseEnvFile(content).EINVOICE_ENCRYPTION_KEY || '';
+  if (!key) {
+    throw new Error(`Generated e-invoice secret file ${file} is incomplete; do not delete until the active ENV_PATH value is backed up.`);
+  }
+  return key;
+}
+
+function getOrCreateGeneratedEinvoiceSecret(envPath: string): string {
+  const file = generatedEinvoiceSecretPath(envPath);
+  const existing = readGeneratedEinvoiceSecret(file);
+  if (existing) return existing;
+
+  const candidate = generateSecret(64);
+  const dir = path.dirname(file);
+  fs.mkdirSync(dir, { recursive: true });
+  const temporary = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  let fd: number | null = null;
+  try {
+    fd = fs.openSync(temporary, 'wx', 0o600);
+    fs.writeFileSync(fd, `EINVOICE_ENCRYPTION_KEY=${candidate}\n`);
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fd = null;
+    try {
+      fs.linkSync(temporary, file);
+      try { fs.chmodSync(file, 0o600); } catch {}
+      return candidate;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code !== 'EEXIST') throw error;
+      const winner = readGeneratedEinvoiceSecret(file);
+      if (!winner) throw new Error(`Generated e-invoice secret winner file disappeared: ${file}`);
+      return winner;
+    }
+  } finally {
+    if (fd != null) {
+      try { fs.closeSync(fd); } catch {}
+    }
+    try { fs.unlinkSync(temporary); } catch {}
+  }
+}
+
 function readGeneratedSecrets(file: string): GeneratedSecrets | null {
   let content: string;
   try {
@@ -117,6 +170,80 @@ function readEnvContent(envPath: string): string {
   try { return fs.readFileSync(envPath, 'utf-8'); } catch { return ''; }
 }
 
+const ENV_PATH_LOCK_STALE_MS = 60_000;
+const ENV_PATH_LOCK_WAIT_MS = 30_000;
+
+function withEnvPathLock<T>(envPath: string, action: () => T): T {
+  fs.mkdirSync(path.dirname(envPath), { recursive: true });
+  const lockPath = `${envPath}.lock`;
+  const deadline = Date.now() + ENV_PATH_LOCK_WAIT_MS;
+  const waitCell = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
+
+  while (true) {
+    try {
+      fs.mkdirSync(lockPath, { mode: 0o700 });
+      try {
+        fs.writeFileSync(path.join(lockPath, 'owner'), `${process.pid}\n${Date.now()}\n`, { mode: 0o600, flag: 'wx' });
+      } catch (error) {
+        try { fs.rmSync(lockPath, { recursive: true, force: true }); } catch {}
+        throw error;
+      }
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code !== 'EEXIST') throw error;
+    }
+
+    try {
+      if (Date.now() - fs.statSync(lockPath).mtimeMs > ENV_PATH_LOCK_STALE_MS) {
+        const stalePath = `${lockPath}.stale-${process.pid}-${crypto.randomUUID()}`;
+        try {
+          fs.renameSync(lockPath, stalePath);
+          fs.rmSync(stalePath, { recursive: true, force: true });
+          continue;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') throw error;
+        }
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') throw error;
+    }
+
+    if (Date.now() >= deadline) throw new Error(`Timed out waiting for ENV_PATH writer lock: ${envPath}`);
+    Atomics.wait(waitCell, 0, 0, 20);
+  }
+
+  try {
+    return action();
+  } finally {
+    try { fs.rmSync(lockPath, { recursive: true, force: true }); } catch {}
+  }
+}
+
+function writeAtomicEnvFile(envPath: string, content: string): void {
+  const dir = path.dirname(envPath);
+  fs.mkdirSync(dir, { recursive: true });
+  const temporary = `${envPath}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  let fd: number | null = null;
+  try {
+    fd = fs.openSync(temporary, 'wx', 0o600);
+    fs.writeFileSync(fd, content, 'utf-8');
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fd = null;
+    fs.renameSync(temporary, envPath);
+    try { fs.chmodSync(envPath, 0o600); } catch { /* non-POSIX filesystem */ }
+    try {
+      const dirFd = fs.openSync(dir, 'r');
+      try { fs.fsyncSync(dirFd); } finally { fs.closeSync(dirFd); }
+    } catch { /* directory fsync is not supported on every platform */ }
+  } finally {
+    if (fd != null) {
+      try { fs.closeSync(fd); } catch { /* already closed */ }
+    }
+    try { fs.unlinkSync(temporary); } catch { /* renamed or already removed */ }
+  }
+}
+
 function hydrateProcessEnv(envContent: string): void {
   const values = parseEnvFile(envContent);
   for (const [key, value] of Object.entries(values)) {
@@ -124,75 +251,21 @@ function hydrateProcessEnv(envContent: string): void {
   }
 }
 
-function initializeEnvSecrets(envPath: string): void {
-  const envContent = readEnvContent(envPath);
-  hydrateProcessEnv(envContent);
-
-  const updates: Record<string, string> = {};
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'please-change-this-secret') {
-    updates.JWT_SECRET = generateSecret(64);
-    process.env.JWT_SECRET = updates.JWT_SECRET;
-  }
-
-  // Webhook 簽章密鑰以 AES-256-GCM 加密後存入資料庫（見 lib/apiTokenCore.ts）。
-  // 與 JWT_SECRET 相同，缺少時自動產生，讓自架部署無須額外設定即可使用 Webhook；
-  // 一旦有訂閱後就不可更換（更換後既有密鑰將無法解密）。
-  if (!process.env.API_TOKEN_ENCRYPTION_KEY) {
-    updates.API_TOKEN_ENCRYPTION_KEY = generateSecret(64);
-    process.env.API_TOKEN_ENCRYPTION_KEY = updates.API_TOKEN_ENCRYPTION_KEY;
-  }
-
-  // 雲端發票載具憑證（驗證碼）的加密主金鑰（issue #253），同樣以 AES-256-GCM 加密
-  // 後存入 invoice_carriers（見 lib/einvoiceSecret.ts）。與 Webhook 主金鑰分開，
-  // 避免不同用途共用同一把金鑰；缺少時自動產生，一旦有載具綁定後即不可更換。
-  if (!process.env.EINVOICE_ENCRYPTION_KEY) {
-    updates.EINVOICE_ENCRYPTION_KEY = generateSecret(64);
-    process.env.EINVOICE_ENCRYPTION_KEY = updates.EINVOICE_ENCRYPTION_KEY;
-  }
-
-  // Web Push VAPID 金鑰（issue #257）首啟產生並寫入同一個 ENV_PATH 持久化 Volume。
-  // ENV_PATH lock 串行化 replica cold-start，後續啟動會先讀到勝出者寫入的同一組金鑰。
-  const vapidPublic = String(process.env.VAPID_PUBLIC_KEY || '').trim();
-  const vapidPrivate = String(process.env.VAPID_PRIVATE_KEY || '').trim();
-  if (!isValidVapidKeyPair(vapidPublic, vapidPrivate)) {
-    const vapid = generateVapidKeys();
-    updates.VAPID_PUBLIC_KEY = vapid.publicKey;
-    updates.VAPID_PRIVATE_KEY = vapid.privateKey;
-    process.env.VAPID_PUBLIC_KEY = vapid.publicKey;
-    process.env.VAPID_PRIVATE_KEY = vapid.privateKey;
-  }
-
-  if (Object.keys(updates).length === 0) return;
-
-  let lines = envContent ? envContent.split('\n').filter(line => line.trim() !== '') : [];
-  for (const [key, value] of Object.entries(updates)) lines = upsertEnvLine(lines, key, value);
-  try {
-    fs.writeFileSync(envPath, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
-    try { fs.chmodSync(envPath, 0o600); } catch (_) {}
-  } catch (error) {
-    // JWT/API encryption keys already failed startup before this Web Push change;
-    // do not silently weaken their persistence guarantees.
-    const mustPersistExistingSecrets = Boolean(updates.JWT_SECRET || updates.API_TOKEN_ENCRYPTION_KEY);
-    if (mustPersistExistingSecrets) throw error;
-
-    // VAPID is optional: with read-only ENV_PATH the current process may use its in-memory pair,
-    // while the shared public-key DB marker ensures mismatched replicas fail closed.
-    console.error(
-      '[web-push] Could not persist generated VAPID keys to ENV_PATH; pushes will work only until restart. Configure a writable persistent ENV_PATH or set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY.',
-      error,
-    );
-  }
-}
-
 export function ensureEnvSecrets(): void {
   if (initialized) return;
   const envPath = process.env.ENV_PATH || path.join(process.cwd(), '.env');
+  withEnvPathLock(envPath, () => ensureEnvSecretsLocked(envPath));
+}
+
+function ensureEnvSecretsLocked(envPath: string): void {
+  if (initialized) return;
   try {
     const envContent = readEnvContent(envPath);
     hydrateProcessEnv(envContent);
 
     const needsJwt = !process.env.JWT_SECRET || process.env.JWT_SECRET === 'please-change-this-secret';
     const needsApiKey = !process.env.API_TOKEN_ENCRYPTION_KEY;
+    const needsEinvoiceKey = !process.env.EINVOICE_ENCRYPTION_KEY;
     const needsVapid = !isValidVapidKeyPair(process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
     const updates: Record<string, string> = {};
 
@@ -233,6 +306,12 @@ export function ensureEnvSecrets(): void {
       }
     }
 
+    if (needsEinvoiceKey) {
+      const key = getOrCreateGeneratedEinvoiceSecret(envPath);
+      updates.EINVOICE_ENCRYPTION_KEY = key;
+      process.env.EINVOICE_ENCRYPTION_KEY = key;
+    }
+
     if (Object.keys(updates).length === 0) {
       initialized = true;
       return;
@@ -241,15 +320,21 @@ export function ensureEnvSecrets(): void {
     let lines = envContent ? envContent.split('\n').filter(line => line.trim() !== '') : [];
     for (const [key, value] of Object.entries(updates)) lines = upsertEnvLine(lines, key, value);
     try {
-      fs.mkdirSync(path.dirname(envPath), { recursive: true });
-      fs.writeFileSync(envPath, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
-      try { fs.chmodSync(envPath, 0o600); } catch (_) {}
+      writeAtomicEnvFile(envPath, `${lines.join('\n')}\n`);
     } catch (error) {
       if (updates.JWT_SECRET || updates.API_TOKEN_ENCRYPTION_KEY) throw error;
-      console.error(
-        '[web-push] Could not persist generated VAPID keys to ENV_PATH; configure a writable persistent ENV_PATH or set matching VAPID environment variables on every replica.',
-        error,
-      );
+      if (updates.EINVOICE_ENCRYPTION_KEY) {
+        console.error(
+          '[env-secrets] Could not copy the persisted e-invoice key into ENV_PATH; the canonical key remains in the mode-0600 generated-einvoice sidecar.',
+          error,
+        );
+      }
+      if (updates.VAPID_PUBLIC_KEY || updates.VAPID_PRIVATE_KEY) {
+        console.error(
+          '[web-push] Could not persist generated VAPID keys to ENV_PATH; configure a writable persistent ENV_PATH or set matching VAPID environment variables on every replica.',
+          error,
+        );
+      }
     }
     initialized = true;
   } catch (error) {
@@ -260,15 +345,13 @@ export function ensureEnvSecrets(): void {
 
 export function writeEnvVars(updates: Record<string, string>): void {
   const envPath = process.env.ENV_PATH || path.join(process.cwd(), '.env');
-  let envContent = '';
-  try { envContent = fs.readFileSync(envPath, 'utf-8'); } catch (_) {}
-  const dir = path.dirname(envPath);
-  fs.mkdirSync(dir, { recursive: true });
-  let lines = envContent ? envContent.split('\n').filter(line => line.trim() !== '') : [];
-  for (const [key, value] of Object.entries(updates)) {
-    lines = upsertEnvLine(lines, key, value);
-    process.env[key] = value;
-  }
-  fs.writeFileSync(envPath, `${lines.join('\n')}\n`, { encoding: 'utf-8', mode: 0o600 });
-  try { fs.chmodSync(envPath, 0o600); } catch (_) {}
+  withEnvPathLock(envPath, () => {
+    const envContent = readEnvContent(envPath);
+    let lines = envContent ? envContent.split('\n').filter(line => line.trim() !== '') : [];
+    for (const [key, value] of Object.entries(updates)) {
+      lines = upsertEnvLine(lines, key, value);
+    }
+    writeAtomicEnvFile(envPath, `${lines.join('\n')}\n`);
+    for (const [key, value] of Object.entries(updates)) process.env[key] = value;
+  });
 }

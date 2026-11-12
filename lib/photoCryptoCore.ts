@@ -15,26 +15,35 @@ export const KEY_LEN = 32;
 export const HEADER_LEN = MAGIC.length + IV_LEN + TAG_LEN; // 32
 
 let masterKeyCache: Buffer | null | undefined; // undefined = 尚未載入；null = 未設定
+let previousMasterKeyCache: Buffer | null | undefined;
 
-/** 載入並驗證主金鑰；未設定回 null（代表停用加密）。 */
-export function loadMasterKey(): Buffer | null {
-  if (masterKeyCache !== undefined) return masterKeyCache;
-  const raw = String(process.env.PHOTO_MASTER_KEY || '').trim();
-  if (!raw) {
-    masterKeyCache = null;
-    return null;
-  }
+function loadConfiguredMasterKey(envName: 'PHOTO_MASTER_KEY' | 'PHOTO_MASTER_KEY_OLD'): Buffer | null {
+  const raw = String(process.env[envName] || '').trim();
+  if (!raw) return null;
   let key: Buffer;
   try {
     key = Buffer.from(raw, 'base64');
   } catch {
-    throw new Error('PHOTO_MASTER_KEY 不是有效的 base64');
+    throw new Error(`${envName} 不是有效的 base64`);
   }
-  if (key.length !== KEY_LEN) {
-    throw new Error(`PHOTO_MASTER_KEY 解碼後必須為 ${KEY_LEN} bytes（請用：openssl rand -base64 32）`);
+  if (key.length !== KEY_LEN || key.toString('base64') !== raw) {
+    throw new Error(`${envName} 解碼後必須為 ${KEY_LEN} bytes（請用：openssl rand -base64 32）`);
   }
-  masterKeyCache = key;
   return key;
+}
+
+/** 載入並驗證主金鑰；未設定回 null（代表停用加密）。 */
+export function loadMasterKey(): Buffer | null {
+  if (masterKeyCache !== undefined) return masterKeyCache;
+  masterKeyCache = loadConfiguredMasterKey('PHOTO_MASTER_KEY');
+  return masterKeyCache;
+}
+
+/** 舊版單金鑰輪替時的唯讀 unwrap fallback；不供新 DEK 包覆使用。 */
+export function loadPreviousMasterKey(): Buffer | null {
+  if (previousMasterKeyCache !== undefined) return previousMasterKeyCache;
+  previousMasterKeyCache = loadConfiguredMasterKey('PHOTO_MASTER_KEY_OLD');
+  return previousMasterKeyCache;
 }
 
 /** 是否已啟用照片加密（PHOTO_MASTER_KEY 已設定且合法）。 */
@@ -93,5 +102,8 @@ export function decryptWithDek(dek: Buffer, stored: Buffer): Buffer {
 
 /** 清除主金鑰快取（測試用 / 金鑰輪替後）。 */
 export function _resetMasterKeyCache(): void {
+  masterKeyCache?.fill(0);
+  previousMasterKeyCache?.fill(0);
   masterKeyCache = undefined;
+  previousMasterKeyCache = undefined;
 }

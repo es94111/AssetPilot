@@ -6,8 +6,8 @@
 //
 // 與 Webhook 簽章密鑰主金鑰（API_TOKEN_ENCRYPTION_KEY）刻意分開：
 // 不同用途的金鑰不共用，任一外洩不會連帶影響另一項功能。
-// 未設定時由 lib/envSecrets.ts 於首次啟動自動產生並寫入 .env（比照 JWT_SECRET），
-// 讓自架部署無須手動設定即可使用；一旦有載具綁定後即不可更換
+// 未設定時由 lib/envSecrets.ts 於首次啟動原子持久化至 mode-0600 的 ENV_PATH.generated-einvoice，
+// 再寫入 ENV_PATH（預設 .env），讓自架部署無須手動設定即可使用；一旦有載具綁定後即不可更換
 // （更換後既有憑證無法解密，使用者需重新綁定）。
 //
 // 刻意不依賴 DB 或 Next.js，故可於純 Node 測試中直接驗證。

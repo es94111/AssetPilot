@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { apiGet, apiPut, apiPost, apiDelete } from "@/lib/clientApi";
 import { Button } from "@/components/ui/button";
+import KeyringRotationPanel from "@/components/features/admin/KeyringRotationPanel";
 import { Input } from "@/components/ui/Input";
 import {
   Table,
@@ -908,6 +909,7 @@ export default function AdminClient(
 
       {activeTab === "system" && (
         <div className="space-y-6">
+          <KeyringRotationPanel canWrite={canWrite} />
           <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold mb-4">系統設定</h3>
             <form onSubmit={saveSystemSettings} className="space-y-4">

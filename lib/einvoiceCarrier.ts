@@ -37,7 +37,7 @@ import {
   type NormalizedInvoice,
   type SyncStatus,
 } from './einvoiceCore';
-import { decryptCarrierSecret, encryptCarrierSecret } from './einvoiceSecret';
+import { decryptEinvoiceSecret, encryptEinvoiceSecret } from './einvoiceKeyring';
 
 export const MAX_ACTIVE_CARRIERS = 5;
 export const EINVOICE_SYNC_LOCK_TTL_MS = 60_000;
@@ -274,7 +274,7 @@ export function bindCarrier(userId: string, input: BindCarrierInput): CarrierSum
            last_sync_status = '', last_error = '', consecutive_failures = 0,
            next_retry_at = 0, last_sync_retryable = 1, sync_lock_until = 0, updated_at = ?
        WHERE id = ? AND user_id = ?`,
-      [encryptCarrierSecret(verifyCode), maskCarrierBarcode(barcode), now, String(existing.id), userId],
+      [encryptEinvoiceSecret(verifyCode), maskCarrierBarcode(barcode), now, String(existing.id), userId],
     );
     saveDB();
     const refreshed = findCarrier(userId, String(existing.id));
@@ -307,7 +307,7 @@ export function bindCarrier(userId: string, input: BindCarrierInput): CarrierSum
       userId,
       barcode,
       maskCarrierBarcode(barcode),
-      encryptCarrierSecret(verifyCode),
+      encryptEinvoiceSecret(verifyCode),
       'active',
       0,
       '',
@@ -526,7 +526,7 @@ export async function syncCarrier(
 
   let verifyCode = '';
   try {
-    verifyCode = decryptCarrierSecret(String(carrier.verify_code_encrypted || ''), env);
+    verifyCode = decryptEinvoiceSecret(String(carrier.verify_code_encrypted || ''), env);
   } catch {
     const message = '載具憑證無法解密，請重新綁定此手機條碼載具';
     applySyncState(carrier, 'failed', message, now, false);

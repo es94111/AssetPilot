@@ -10,6 +10,8 @@ database.db*
 *.backup_*
 data/
 .env
+.env.generated-secrets*
+.env.generated-einvoice*
 .claude
 .git
 .github

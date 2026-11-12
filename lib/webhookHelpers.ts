@@ -27,6 +27,8 @@ import {
   type WebhookEvent,
 } from './apiTokenCore';
 import { sendWebhookPayload, WEBHOOK_DELIVERY_CLAIM_LEASE_MS } from './webhookDelivery';
+import { decryptVersionedSecret, encryptVersionedSecret, parseVersionedSecret } from './keyringCore';
+import { getActiveKey, getKeyById, getLegacyKey, isKeyringEnabled } from './keyring';
 
 export {
   WEBHOOK_EVENTS,
@@ -115,6 +117,27 @@ function masterSecret(): string {
   return secret;
 }
 
+function encryptWebhookSecret(secret: string): string {
+  const active = getActiveKey('api-token');
+  return active
+    ? encryptVersionedSecret(secret, active.key, 'api-token', active.kid)
+    : encryptSecret(secret, masterSecret());
+}
+
+function decryptWebhookSecret(payload: string): string {
+  const versioned = parseVersionedSecret(payload);
+  if (versioned) {
+    const key = getKeyById('api-token', versioned.kid);
+    return decryptVersionedSecret(payload, key.key, 'api-token', key.kid);
+  }
+  if (isKeyringEnabled()) {
+    const legacy = getLegacyKey('api-token');
+    if (!legacy) throw new Error('Legacy webhook key is unavailable');
+    return decryptSecret(payload, legacy.key.toString('utf8'));
+  }
+  return decryptSecret(payload, masterSecret());
+}
+
 // ── 訂閱管理 ──
 
 function summarize(row: SubscriptionRow): WebhookSubscriptionSummary {
@@ -156,7 +179,7 @@ export function createWebhookSubscription(
   const secret = generateWebhookSecret();
   getDB().run(
     'INSERT INTO webhook_subscriptions (id, user_id, url, secret_encrypted, secret_prefix, events, active, created_at, updated_at, last_success_at, last_failure_at) VALUES (?,?,?,?,?,?,1,?,?,0,0)',
-    [id, userId, safeUrl, encryptSecret(secret, masterSecret()), secret.slice(0, 14), parsedEvents.join(' '), now, now],
+    [id, userId, safeUrl, encryptWebhookSecret(secret), secret.slice(0, 14), parsedEvents.join(' '), now, now],
   );
   saveDB();
 
@@ -374,7 +397,7 @@ export async function attemptWebhookDelivery(
   let outcome: DeliveryAttemptOutcome;
   let secret: string;
   try {
-    secret = decryptSecret(String(sub.secret_encrypted), masterSecret());
+    secret = decryptWebhookSecret(String(sub.secret_encrypted));
   } catch (e) {
     // 主金鑰被更換或資料損毀時無法再簽章，此訂閱已不可能成功投遞；
     // 直接永久失敗，並在錯誤訊息標明原因，避免無意義地重試 5 次。

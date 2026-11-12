@@ -120,6 +120,73 @@ if (!DB_URL) {
     assert.ok(cols[0].column_name === 'repayment_summary_id');
   });
 
+  test('復原碼 hash_version migration 保留舊資料為 v1 預設', () => {
+    const columns = queryAll(
+      `SELECT data_type, column_default, is_nullable FROM information_schema.columns
+       WHERE table_name = 'account_recovery_codes' AND column_name = 'hash_version'`,
+    ) as Array<{ data_type: string; column_default: string | null; is_nullable: string }>;
+    assert.equal(columns.length, 1, 'account_recovery_codes.hash_version 應存在');
+    assert.equal(columns[0].data_type, 'bigint');
+    assert.equal(columns[0].is_nullable, 'NO');
+    assert.match(String(columns[0].column_default), /1/, '既有復原碼應預設為 HMAC v1');
+  });
+
+  test('keyring migrations create key and rotation schemas with safe defaults', () => {
+    const tables = queryAll(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = current_schema() AND table_name LIKE 'keyring_%'
+       ORDER BY table_name`,
+    ) as Array<{ table_name: string }>;
+    assert.deepEqual(tables.map((table) => table.table_name), [
+      'keyring_control',
+      'keyring_keys',
+      'keyring_rotation_instances',
+      'keyring_rotation_readiness',
+      'keyring_rotation_schedules',
+      'keyring_rotation_settings',
+      'keyring_rotations',
+    ]);
+
+    const keyColumns = queryAll(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_name = 'keyring_keys' ORDER BY ordinal_position`,
+    ) as Array<{ column_name: string }>;
+    assert.deepEqual(keyColumns.map((column) => column.column_name), [
+      'kid', 'purpose', 'wrapped_key', 'wrap_iv', 'wrap_tag', 'status',
+      'accept_legacy', 'created_at', 'retired_at',
+    ]);
+
+    const control = queryOne('SELECT enabled FROM keyring_control WHERE id = 1');
+    assert.equal(Number(control?.enabled), 0, 'keyring must remain disabled until explicitly enabled');
+    const settings = queryOne('SELECT expected_instance_count FROM keyring_rotation_settings WHERE id = 1');
+    assert.equal(Number(settings?.expected_instance_count), 1);
+
+    const schedules = queryAll(
+      'SELECT purpose, interval_days, enabled, paused FROM keyring_rotation_schedules ORDER BY purpose',
+    ) as Array<{ purpose: string; interval_days: number | string; enabled: number | string; paused: number | string }>;
+    assert.deepEqual(schedules.map((schedule) => [schedule.purpose, Number(schedule.interval_days)]), [
+      ['api-token', 365],
+      ['einvoice', 365],
+      ['jwt', 90],
+      ['photo', 365],
+    ]);
+    assert.ok(schedules.every((schedule) => Number(schedule.enabled) === 0 && Number(schedule.paused) === 0));
+
+    const indexes = queryAll(
+      `SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()
+       AND indexname LIKE 'idx_keyring_%' ORDER BY indexname`,
+    ) as Array<{ indexname: string }>;
+    assert.deepEqual(indexes.map((index) => index.indexname), [
+      'idx_keyring_one_active',
+      'idx_keyring_one_legacy_non_photo',
+      'idx_keyring_one_pending',
+      'idx_keyring_rotation_instances_seen',
+      'idx_keyring_rotation_one_inflight',
+      'idx_keyring_rotation_readiness_target',
+      'idx_keyring_rotations_status',
+    ]);
+  });
+
   test('Web Push 訂閱／去重資料表與 user_settings 開關欄位由 migration 建立', () => {
     const subscriptionColumns = queryAll(
       `SELECT column_name FROM information_schema.columns

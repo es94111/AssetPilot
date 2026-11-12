@@ -8,10 +8,15 @@ export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
   let flushOnExit: (() => void) | undefined;
+  let databaseReady = false;
   try {
     const db = await import('./lib/db');
     flushOnExit = db.flushOnExit;
     await db.initDB();
+    databaseReady = true;
+
+    const { initializeKeyring } = await import('./lib/keyring');
+    initializeKeyring();
 
     try {
       const { ensureSetupBootstrapToken } = await import('./lib/setupBootstrap');
@@ -27,14 +32,21 @@ export async function register() {
       console.error('[setup] bootstrap token initialisation failed', error instanceof Error ? error.message : 'unknown');
     }
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (databaseReady) {
+      console.error(`[keyring] startup validation failed: ${message}`);
+      throw error;
+    }
     // Database availability is a runtime dependency, not a reason to make
     // Next.js fail its instrumentation hook. lib/db.ts keeps retrying with an
     // unref'ed backoff and publishes the adapter once migrations succeed.
-    const message = error instanceof Error ? error.message : String(error);
     console.error(`[db] startup connection unavailable; retrying: ${message}`);
   }
 
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    void import('./lib/keyringRotationScheduler')
+      .then(({ startKeyringRotationScheduler }) => startKeyringRotationScheduler())
+      .catch((error) => console.error('[keyring] rotation scheduler startup failed', error));
     void import('./lib/webPushEvents')
       .then(({ startWebPushScheduler }) => startWebPushScheduler())
       .catch((error) => console.error('[web-push] scheduler startup failed', error));

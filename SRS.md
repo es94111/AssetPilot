@@ -122,6 +122,8 @@ Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立
 
 使用者可在帳號設定註冊 Passkey（指紋、Face ID、PIN 碼、硬體安全金鑰），之後可在登入頁用 Passkey 一鍵無密碼登入。同一個帳號支援多組 Passkey，每組可命名並獨立刪除。後端有 origin 白名單防 rebinding。WebAuthn 前端模組由伺服器本地提供（不走 CDN），以避開外部失效風險。
 
+帳號復原碼由密碼學安全亂數產生，僅回傳一次；新碼以帶 domain separation 的 SHA-256（v2）雜湊儲存，不依賴 `JWT_SECRET`，因此輪換 JWT 不會使新碼失效。升級前既有 HMAC-SHA-256（v1）復原碼仍可驗證；若要輪換 JWT，必須先將舊 JWT 金鑰設為 `RECOVERY_CODE_LEGACY_PEPPER`，並保留到所有舊碼已使用、撤銷或重新產生。資料庫以 `hash_version` 區分格式，舊資料升級時預設為 v1。
+
 #### 管理員身分與註冊政策
 
 系統建立的第一個使用者自動成為管理員；若資料庫升級時尚無任何管理員，最早建立的使用者會被追認升級。這條規則沒有例外，目的是確保系統**永遠至少有一位管理員**。
@@ -545,7 +547,7 @@ XLSX 具備欄位標題列，日期寫入為 UTC 午夜對應的 Excel 日期序
 
 #### 雲端發票載具匯入（#253）
 
-於「系統設定 → 雲端發票」頁面綁定手機條碼載具（`/` + 7 碼英數字），最多 5 組；輸出的載具清單一律為遮蔽值（`/ABC••••`），驗證碼以 AES-256-GCM 加密後才落地，主金鑰為 `EINVOICE_ENCRYPTION_KEY`（未設定時自動產生，比照 `API_TOKEN_ENCRYPTION_KEY`）。
+於「系統設定 → 雲端發票」頁面綁定手機條碼載具（`/` + 7 碼英數字），最多 5 組；輸出的載具清單一律為遮蔽值（`/ABC••••`），驗證碼以 AES-256-GCM 加密後才落地，主金鑰為 `EINVOICE_ENCRYPTION_KEY`（未設定時於首次啟動原子持久化至 `ENV_PATH.generated-einvoice` mode 0600 sidecar，並寫入 `ENV_PATH`；部署須備份兩者，勿任意更換）。
 
 - **匯入為草稿、確認後才入帳**：使用者按「立即同步」或由登入時的排程（`lib/requestMaintenance.ts` 掛載、每載具至少間隔 1 小時，冷卻依 `last_sync_at` 存於資料庫並跨實例共用）拉取發票，寫入 `invoice_imports` 交易草稿（發票號碼／店家／金額／日期／時間）；草稿本身不建立交易，須由使用者選定帳戶與分類並確認後才呼叫既有 `insertIncomeExpenseTransaction()` 入帳。查詢區間預設近 30 天、上限 90 天，並自該載具上次最新發票日續拉。
 - **去重**：以發票號碼為唯一鍵（`UNIQUE(user_id, invoice_number)`），重複同步不產生第二筆草稿；確認入帳另以 `client_ref = sha256('einvoice:' + userId + ':' + invoiceNumber)[:32]` 冪等，重送不會重複記帳。

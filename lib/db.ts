@@ -406,6 +406,12 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     updated_at INTEGER NOT NULL DEFAULT 0
   )`);
   db.run('INSERT INTO keyring_control (id, enabled, created_at, updated_at) VALUES (1, 0, ?, ?) ON CONFLICT (id) DO NOTHING', [Date.now(), Date.now()]);
+  // Optional OpenBao (Vault-API-compatible) Transit backend for KEYRING_ROOT_KEK — see
+  // lib/rootKekProvider.ts. root_kek_wrapped stores only the OpenBao-wrapped root KEK
+  // ciphertext (never the plaintext); default 'env' provider leaves these columns unused.
+  db.run("ALTER TABLE keyring_control ADD COLUMN IF NOT EXISTS root_kek_provider TEXT NOT NULL DEFAULT 'env'");
+  db.run("ALTER TABLE keyring_control ADD COLUMN IF NOT EXISTS root_kek_wrapped TEXT NOT NULL DEFAULT ''");
+  db.run('ALTER TABLE keyring_control ADD COLUMN IF NOT EXISTS root_kek_updated_at INTEGER NOT NULL DEFAULT 0');
   db.run(`CREATE TABLE IF NOT EXISTS keyring_keys (
     kid TEXT PRIMARY KEY,
     purpose TEXT NOT NULL CHECK (purpose IN ('jwt', 'api-token', 'einvoice', 'photo')),

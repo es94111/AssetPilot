@@ -65,10 +65,14 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  if (error instanceof Error) {
+  // Only print messages from our own, hand-crafted error type (never interpolates secret
+  // material). Any other error — e.g. an unanticipated driver/network exception — falls back to
+  // a generic, non-interpolated message so an unexpected future error path can't surface
+  // response bodies, tokens, or other sensitive detail; mirrors tools/rotate-key.ts.
+  if (error instanceof Error && error.name === 'RootKekProviderError') {
     console.error(`${error.name}: ${error.message}`);
   } else {
-    console.error('操作失敗；未輸出任何金鑰資料。');
+    console.error('操作失敗；未輸出任何金鑰資料。請檢查部署端錯誤紀錄。');
   }
   process.exitCode = 1;
 });

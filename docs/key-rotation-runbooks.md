@@ -115,3 +115,30 @@ OPENBAO_TRANSIT_KEY=assetpilot-root-kek
 - OpenBao 無法連線或回應非預期時會 fail closed（啟動失敗並記錄不含秘密的錯誤訊息），不會退化成明文或自動略過 keyring。
 
 **停用／切換回 env**：移除 `KEYRING_ROOT_KEK_PROVIDER`（或設為 `env`），改設定與目前 `keyring_control.root_kek_wrapped` 對應的明文 `KEYRING_ROOT_KEK`（可用上述 `--status` 確認已建立，再由管理員在 OpenBao 端 `transit/decrypt` 一次取出並妥善銷毀查詢紀錄）。切換前務必先確認新舊設定在同一批副本上不會同時生效，避免同用途金鑰被不同 root KEK 解讀。
+
+## 一次性金鑰遷移（重新部署＋匯出／匯入）
+
+適用於「匯出資料 → 以全新金鑰重新部署 → 匯入」：舊的 `PHOTO_MASTER_KEY`、`API_TOKEN_ENCRYPTION_KEY`、`JWT_SECRET` 與舊 `KEYRING_ROOT_KEK` 都不必帶到新環境。
+
+`npm run backup:database` 的 SQL 備份是原樣匯出，密文仍綁定舊金鑰，只適合同環境災難復原；跨金鑰搬遷請改用加密搬遷包（`.apm`）。
+
+**流程**
+
+1. 舊環境（仍使用舊金鑰）：
+   ```
+   npm run migrate:export -- --output=assetpilot.apm --generate-key
+   ```
+   會產生 `assetpilot.apm` 與權限 600 的 `assetpilot.apm.key`（搬遷金鑰）。任何必要秘密無法解密時整體失敗，不產生部分檔案。搬遷金鑰與搬遷包請分開保管，也可改用環境變數 `ASSETPILOT_MIGRATION_KEY` 或 `--key-file`；金鑰不接受命令列參數。
+2. 新環境：建立全新資料庫，只設定新的 `DATABASE_URL` 與 `KEYRING_ROOT_KEK`（`openssl rand -base64 32`）。
+3. 匯入：
+   ```
+   npm run migrate:import -- --input=assetpilot.apm --key-file=assetpilot.apm.key
+   ```
+   匯入會先寫入匯入前備份，還原資料後建立全新的 `jwt`／`api-token`／`photo` keyring，重新包裝照片 DEK 與 Webhook secret 並驗證；任一步失敗會還原匯入前狀態。
+4. 驗證照片、Webhook、登入皆正常後，即可銷毀舊金鑰、搬遷金鑰與搬遷包。
+
+**注意**
+
+- 搬遷包只含資料庫內容；照片若存放於磁碟或 S3 的檔案本體需另行搬移。
+- 新 keyring 全為新金鑰，舊 JWT 全部失效，使用者需重新登入。
+- 匯入完成後的後續輪換仍使用 `npm run rotate:key`。

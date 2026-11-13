@@ -52,7 +52,7 @@ export function isPhotoEncryptionEnabled(): boolean {
  * 取得使用者的 DEK；不存在時依 create 決定是否隨機產生並寫入 DB。
  * @returns DEK，或 create=false 且尚未建立時回 null。
  */
-function unwrapStoredDek(row: Record<string, string | number | null>, ringEnabled: boolean): Buffer {
+export function unwrapStoredDek(row: Record<string, string | number | null>, ringEnabled: boolean): Buffer {
   const kid = String(row.key_id || '');
   if (kid) {
     const key = getKeyById('photo', kid);

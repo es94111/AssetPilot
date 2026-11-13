@@ -319,3 +319,37 @@ export function clearKeyringCache(): void {
   configurationChecked = false;
   configurationEnabled = false;
 }
+
+// Replaces every keyring key with freshly generated ones wrapped by `root`.
+// Used only by the one-time migration import; `root` must be KEYRING_ROOT_KEK.
+export function createFreshKeyring(root: Buffer): Record<KeyringPurpose, string> {
+  const db = getDB();
+  const kids = {} as Record<KeyringPurpose, string>;
+  db.run('BEGIN');
+  try {
+    db.run("SELECT pg_advisory_xact_lock(hashtext('assetpilot:keyring:initialize:v1'))");
+    clearCachedKeys();
+    db.run('DELETE FROM keyring_keys');
+    for (const purpose of KEYRING_PURPOSES) {
+      const key = crypto.randomBytes(32);
+      try {
+        kids[purpose] = wrapAndInsert(purpose, key, root, false);
+      } finally {
+        key.fill(0);
+      }
+    }
+    const now = Date.now();
+    if (queryOne('SELECT id FROM keyring_control WHERE id = 1')) {
+      db.run("UPDATE keyring_control SET enabled = 1, root_kek_wrapped = '', updated_at = ? WHERE id = 1", [now]);
+    } else {
+      db.run('INSERT INTO keyring_control (id, enabled, updated_at) VALUES (1, 1, ?)', [now]);
+    }
+    db.run('COMMIT');
+  } catch (error) {
+    try { db.run('ROLLBACK'); } catch { /* preserve the original error */ }
+    throw error;
+  } finally {
+    clearKeyringCache();
+  }
+  return kids;
+}

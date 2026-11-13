@@ -345,6 +345,8 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 
 此功能預設停用。Root KEK 請用 `openssl rand -base64 32` 產生並放在部署平台的 Secret Manager；所有副本使用相同值，資料庫只保存用途金鑰的包裝值。Keyring 啟用後，Root KEK 缺失或不一致會讓服務 fail closed，切勿遺失或直接更換 Root KEK。
 
+重新部署並更換所有金鑰時，請使用 `npm run migrate:export` / `npm run migrate:import` 的加密搬遷包（匯出時以舊金鑰解密、以新 keyring 重新加密，新環境只需 `KEYRING_ROOT_KEK`），不要用 `backup:database` 的原樣 SQL 備份；流程見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#一次性金鑰遷移重新部署匯出匯入)。
+
 首次啟用前先備份資料庫與相關 Secret，將支援 keyring 的版本部署到所有副本並確認舊版副本已退出，再設定 `KEYRING_ENABLE=true`。資料庫 `keyring_control.enabled` 是啟用後的權威狀態；各副本仍必須持續提供一致的 `KEYRING_ROOT_KEK`。
 
 自行架設 OpenBao（Vault API 相容）的部署可改設定 `KEYRING_ROOT_KEK_PROVIDER=openbao`，由其 Transit secrets engine 提供並自動輪換 Root KEK 的保護層；此時不需設定 `KEYRING_ROOT_KEK`，用途金鑰環與以下輪換指令完全不受影響。設定步驟、`npm run rootkek:openbao` 診斷工具與範圍限制請見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#openbao-root-kek-provider選用)。

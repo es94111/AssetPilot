@@ -183,6 +183,7 @@ function withEnvPathLock<T>(envPath: string, action: () => T): T {
     try {
       fs.mkdirSync(lockPath, { mode: 0o700 });
       try {
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- lockPath 衍生自部署者設定的 ENV_PATH，非任何請求輸入；第二引數固定為常數 'owner'
         fs.writeFileSync(path.join(lockPath, 'owner'), `${process.pid}\n${Date.now()}\n`, { mode: 0o600, flag: 'wx' });
       } catch (error) {
         try { fs.rmSync(lockPath, { recursive: true, force: true }); } catch {}

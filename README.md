@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.112.3-blue" alt="version">
+  <img src="https://img.shields.io/badge/version-5.0.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
   <img src="https://img.shields.io/badge/认证-Google%2FLINE%2FPasskey-green" alt="auth">
@@ -314,11 +314,16 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `DATABASE_URL` / `POSTGRES_URL` | 基本 | PostgreSQL 連線字串 | — |
 | `JWT_EXPIRES` | 基本 | 瀏覽器登入 JWT 有效期限 | `7d` |
 | `APP_JWT_EXPIRES` | 基本 | App 登入 JWT 有效期限（Token 存於裝置端加密儲存） | `90d` |
-| `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
-| `KEYRING_ROOT_KEK` | 安全 | 用途分離 keyring 的 32-byte Root KEK（base64）；啟用後所有副本必須一致，應由 Secret Manager 提供。`KEYRING_ROOT_KEK_PROVIDER=openbao` 時不需設定 | — |
+| `JWT_SECRET` | 🔑 自動／舊碼相容 | keyring 未啟用時的 JWT 簽章金鑰；啟用後新 JWT 使用 `jwt` 用途金鑰，首次啟動仍會自動產生 legacy fallback | — |
+| `KEYRING_ROOT_KEK` | 安全 | env provider 使用的 32-byte Root KEK（base64）；所有副本必須一致並由 Secret Manager 提供。OpenBao provider 不需設定 | — |
 | `KEYRING_ENABLE` | 安全 | 首次啟用 keyring 的明確屏障；確認所有副本均支援後才設為 `true`，DB 啟用後以資料庫狀態為準 | `false` |
-| `KEYRING_ROOT_KEK_PROVIDER` | 選配 / 安全 | 選用：設為 `openbao` 時改由自架的 OpenBao Transit secrets engine 提供並自動輪換 Root KEK 的保護層（見下方小節），預設 `env` 不受影響 | `env` |
-| `OPENBAO_ADDR` / `OPENBAO_TOKEN` / `OPENBAO_TRANSIT_KEY` | 選配 | `KEYRING_ROOT_KEK_PROVIDER=openbao` 時的連線位址、存取權杖與 Transit 具名金鑰名稱 | `assetpilot-root-kek` |
+| `KEYRING_ROOT_KEK_PROVIDER` | 選配／安全 | `openbao` 使用自架 OpenBao Transit 保護 Root KEK；Transit 自動輪換的是包裝金鑰版本，不是 AssetPilot 用途金鑰（見下方） | `env` |
+| `OPENBAO_ADDR` | OpenBao | `KEYRING_ROOT_KEK_PROVIDER=openbao` 時的 OpenBao API 位址 | — |
+| `OPENBAO_TOKEN` | OpenBao／秘密 | 只允許操作指定 Transit key 的服務 token；應由 Secret Manager 注入，應用程式不會自動續期 | — |
+| `OPENBAO_TRANSIT_KEY` | OpenBao | Transit 具名金鑰；限字母、數字、`-`、`_` | `assetpilot-root-kek` |
+| `PHOTO_MASTER_KEY` | 舊碼相容 | keyring 停用時照片 DEK 的 legacy 包裝金鑰；keyring 啟用後新資料使用 `photo` 用途金鑰 | — |
+| `API_TOKEN_ENCRYPTION_KEY` | 舊碼相容 | keyring 停用時 Webhook secret 的 legacy 加密金鑰；keyring 啟用後新資料使用 `api-token` 用途金鑰 | — |
+| `ASSETPILOT_MIGRATION_KEY` | 一次性搬遷 | 僅供 `migrate:export`／`migrate:import` 使用的 32-byte base64 搬遷包金鑰；建議改用權限受限的 `--key-file` | — |
 | `RECOVERY_CODE_LEGACY_PEPPER` | 舊碼相容 | 僅驗證升級前 HMAC v1 復原碼；輪換 JWT 前填入舊金鑰，直到舊碼用完、撤銷或重新產生 | — |
 | `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
 | `GOOGLE_CLIENT_ID` | SSO | Google OAuth Client ID（留空停用 Google 登入） | — |
@@ -341,15 +346,41 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 
 > 💡 **寄信通道**（v4.30.0 起）一律由環境變數設定。`EMAIL_PROVIDER_PRIMARY` 留空則寄信停用；`EMAIL_PROVIDER_FALLBACK` 僅在 primary 執行期失敗時觸發。對應通道的設定變數需配合補齊。
 
-### 用途金鑰環啟用與手動輪換
+### 用途金鑰環啟用與輪換
 
-此功能預設停用。Root KEK 請用 `openssl rand -base64 32` 產生並放在部署平台的 Secret Manager；所有副本使用相同值，資料庫只保存用途金鑰的包裝值。Keyring 啟用後，Root KEK 缺失或不一致會讓服務 fail closed，切勿遺失或直接更換 Root KEK。
+此功能預設停用。使用預設 env provider 時，Root KEK 請用 `openssl rand -base64 32` 產生並放在部署平台的 Secret Manager；所有副本使用相同值，資料庫只保存用途金鑰的包裝值。使用 OpenBao provider 時則由 OpenBao 還原同一個 Root KEK。Keyring 啟用後，Root KEK 缺失、provider 不一致或來源不可用會讓服務 fail closed；切勿遺失或直接更換 Root KEK。
 
-重新部署並更換所有金鑰時，請使用 `npm run migrate:export` / `npm run migrate:import` 的加密搬遷包（匯出時以舊金鑰解密、以新 keyring 重新加密，新環境只需 `KEYRING_ROOT_KEK`），不要用 `backup:database` 的原樣 SQL 備份；流程見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#一次性金鑰遷移重新部署匯出匯入)。
+重新部署並更換所有金鑰時，請使用 `npm run migrate:export`／`npm run migrate:import` 的加密搬遷包（匯出時以舊金鑰解密、匯入時以新 keyring 重新加密）。新環境可選 env provider 的 `KEYRING_ROOT_KEK`，或 OpenBao provider 的 `KEYRING_ROOT_KEK_PROVIDER`、`OPENBAO_ADDR`、`OPENBAO_TOKEN`；不要使用管理員頁的原樣 SQL 備份作為跨金鑰搬遷格式。流程見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#一次性金鑰遷移重新部署匯出匯入)。
 
-首次啟用前先備份資料庫與相關 Secret，將支援 keyring 的版本部署到所有副本並確認舊版副本已退出，再設定 `KEYRING_ENABLE=true`。資料庫 `keyring_control.enabled` 是啟用後的權威狀態；各副本仍必須持續提供一致的 `KEYRING_ROOT_KEK`。
+首次啟用前先備份資料庫與相關 Secret，將支援 keyring 的版本部署到所有副本並確認舊版副本已退出，再設定 `KEYRING_ENABLE=true`。資料庫 `keyring_control.enabled` 是啟用後的權威狀態；各副本仍必須使用一致的 Root KEK provider 與設定（OpenBao 模式須指向同一 OpenBao Transit key）。
 
-自行架設 OpenBao（Vault API 相容）的部署可改設定 `KEYRING_ROOT_KEK_PROVIDER=openbao`，由其 Transit secrets engine 提供並自動輪換 Root KEK 的保護層；此時不需設定 `KEYRING_ROOT_KEK`，用途金鑰環與以下輪換指令完全不受影響。設定步驟、`npm run rootkek:openbao` 診斷工具與範圍限制請見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#openbao-root-kek-provider選用)。
+#### 使用 OpenBao Transit 自動輪換（選配）
+
+OpenBao Transit 可自動輪換「包裝 Root KEK 的 Transit 金鑰版本」。AssetPilot 啟動時透過 Transit 解開資料庫中保存的 Root KEK 密文；Root KEK 明文及用途金鑰不會送往 Transit。**這不會自動輪換 AssetPilot 的 `jwt`、`api-token`、`photo` 用途金鑰**；用途金鑰仍由管理後台排程或 `npm run rotate:key` 管理。
+
+先在 OpenBao 啟用 Transit、建立專用金鑰並設定自動輪換週期：
+
+```sh
+bao secrets enable transit # 僅首次啟用
+bao write -f transit/keys/assetpilot-root-kek
+bao write transit/keys/assetpilot-root-kek/config auto_rotate_period=2160h
+```
+
+再由管理者建立僅能操作該 Transit key 的 policy/token，並將以下設定透過部署平台 Secret Manager 提供：
+
+```dotenv
+KEYRING_ROOT_KEK_PROVIDER=openbao
+OPENBAO_ADDR=https://openbao.internal:8200
+OPENBAO_TOKEN=<專用 policy token>
+OPENBAO_TRANSIT_KEY=assetpilot-root-kek # 可省略，預設值
+KEYRING_ENABLE=true # 僅新資料庫首次啟用 keyring 時需要
+```
+
+OpenBao 模式不設定 `KEYRING_ROOT_KEK`。初次啟用前請先確認所有副本支援 keyring，且都使用相同 OpenBao、標準 `transit` mount 與具名 key；設定不一致會使服務無法解開資料庫中的密文並 fail closed。已由 env Root KEK 啟用 keyring 的既有資料庫不可直接切換成 OpenBao，否則用途金鑰可能無法解包；請先依一次性搬遷流程匯出，再在全新資料庫以 OpenBao 設定匯入。`OPENBAO_TOKEN` 不會由應用程式續期，請確保每次部署及 CLI 操作時有效。
+
+OpenBao 的 `auto_rotate_period` 會保留舊版本供解密。若要把資料庫內保存的 Root KEK 密文更新成最新 Transit 版本，可在輪換後執行 `npm run rootkek:openbao -- --rewrap`；此操作只重新包裝同一個 Root KEK，不會輪換用途金鑰。`npm run rootkek:openbao -- --status` 可檢查 provider 狀態與連線。不要在 rewrap、備份與還原驗證前提高 Transit key 的 `min_decryption_version`，也不要刪除仍被資料庫或備份引用的 Transit key。
+
+完整 least-privilege policy、診斷與復原步驟見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#openbao-root-kek-provider選用)。
 
 手動輪換範例（用途：`jwt`、`api-token`、`photo`）：
 
@@ -504,8 +535,7 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
   Token 明文與簽章密鑰都只在建立後的一次性提示中顯示（需確認已複製才能關閉），
   簽鑰提示同時附上 `X-AssetPilot-Signature` 格式與時間戳比對說明。
 
-> Webhook 簽章密鑰的加密主金鑰為 `API_TOKEN_ENCRYPTION_KEY`；未設定時首次啟動會自動產生
-> 並寫入 `.env`（比照 `JWT_SECRET`）。一旦有訂閱後請勿更換。
+> keyring 未啟用時，Webhook 簽章密鑰使用 legacy `API_TOKEN_ENCRYPTION_KEY` 加密；啟用 keyring 後，新密鑰改由 `api-token` 用途金鑰加密並以 `kid` 版本化。舊格式資料完成遷移前仍需保留相容金鑰；不要直接替換仍被資料引用的舊金鑰。
 
 ### 資料治理
 

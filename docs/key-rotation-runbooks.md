@@ -5,7 +5,7 @@
 ## 共通流程
 
 1. 建立變更紀錄：服務、使用目的、憑證識別（不可記錄憑證值）、負責人、影響範圍、切換窗口、回滾方式及預計撤銷舊憑證時間。
-2. 確認有可用的管理員／break-glass 存取方式；對資料加密相關服務，先完成資料庫及 `KEYRING_ROOT_KEK` 備份，並抽樣測試還原。
+2. 確認有可用的管理員／break-glass 存取方式；對資料加密相關服務，先備份資料庫及 Root KEK 來源（`KEYRING_ROOT_KEK`，或 OpenBao Transit key／其持久化資料），並抽樣測試還原。
 3. 在供應商端建立新憑證，暫時保留舊憑證。若供應商不支援憑證重疊，安排短維護窗口並先確認回復舊憑證的可行性。
 4. 將新值直接存入部署平台 Secret Manager；不要經由程式碼、shell history、建置參數或明文文件傳遞。更新所有環境及副本。
 5. 依應用載入方式重新部署／重啟，再確認所有副本健康。執行對應的端到端驗證，並觀察錯誤率、稽核紀錄及供應商使用狀態。
@@ -91,7 +91,21 @@ VAPID 不做固定週期輪換；私鑰外洩或供應商要求時才執行。�
    bao write transit/keys/assetpilot-root-kek/config auto_rotate_period=2160h
    ```
    `auto_rotate_period` 由 OpenBao 自行按排程產生新金鑰版本；舊版本密文仍可解密，不需要 AssetPilot 做任何事。
-3. 建立一個只能對 `transit/datakey/plaintext/assetpilot-root-kek`、`transit/decrypt/assetpilot-root-kek`、`transit/rewrap/assetpilot-root-kek` 操作的 policy/token，不要給予整個 `transit/*` 或更高權限。
+3. 建立只允許 AssetPilot 操作該 Transit key 的 policy/token，不要給予整個 `transit/*` 或更高權限。標準 mount `transit` 的 policy 範例如下：
+   ```hcl
+   path "transit/datakey/plaintext/assetpilot-root-kek" {
+     capabilities = ["update"]
+   }
+
+   path "transit/decrypt/assetpilot-root-kek" {
+     capabilities = ["update"]
+   }
+
+   path "transit/rewrap/assetpilot-root-kek" {
+     capabilities = ["update"]
+   }
+   ```
+   若設定不同的 `OPENBAO_TRANSIT_KEY`，policy 中三處路徑的 key 名稱也要一致。
 
 **AssetPilot 設定**
 
@@ -100,13 +114,16 @@ KEYRING_ROOT_KEK_PROVIDER=openbao
 OPENBAO_ADDR=https://openbao.internal:8200
 OPENBAO_TOKEN=<上述 policy 對應的 token>
 OPENBAO_TRANSIT_KEY=assetpilot-root-kek
+KEYRING_ENABLE=true # 僅首次啟用 keyring 的新資料庫需要
 ```
-不需要設定 `KEYRING_ROOT_KEK`；首次啟動會透過 OpenBao 的 datakey API 建立一次，並把 OpenBao 包裝後的密文存入 `keyring_control.root_kek_wrapped`（資料庫中永遠不含明文）。之後每次啟動改呼叫 `decrypt` 還原相同明文，所有副本須指向同一個 OpenBao 與同一個 Transit 金鑰，否則會各自解出不同值而彼此的用途金鑰互不相容。
+不需要設定 `KEYRING_ROOT_KEK`。首次初始化新 keyring 時，AssetPilot 透過 OpenBao datakey API 建立 Root KEK，並把 Transit 包裝後的密文存入 `keyring_control.root_kek_wrapped`（資料庫中不含明文）。之後每次啟動呼叫 `decrypt` 還原相同明文；所有副本須指向同一 OpenBao、標準 `transit` mount 與同一具名金鑰，否則服務無法解開資料庫中的密文並 fail closed。首次啟用前須先部署支援 keyring 的版本到所有副本，確認舊版副本已退出，再啟用 `KEYRING_ENABLE=true`。
 
 **日常操作**
 
 - `npm run rootkek:openbao -- --status`：顯示目前供應者、是否已建立包裝後的 root KEK、最後更新時間，並測試 OpenBao 連線；不會建立或變更任何金鑰。
-- `npm run rootkek:openbao -- --rewrap`：在 OpenBao 的 `auto_rotate_period` 產生新金鑰版本後，把資料庫中保存的那一筆密文更新到最新版本；只動那一筆密文，不觸碰任何用途金鑰，也不改變明文 root KEK。可依 OpenBao 的輪換週期手動或排入 cron 執行。
+- `npm run rootkek:openbao -- --rewrap`：在 OpenBao 的 `auto_rotate_period` 產生新金鑰版本後，把資料庫中保存的那一筆密文更新到最新版本；只動那一筆密文，不觸碰任何用途金鑰，也不改變明文 Root KEK。Transit 保留舊版本時，rewrap 不是啟動服務的必要步驟，但建議定期執行，以減少資料庫密文對舊版本的依賴；可手動或排入 cron。
+
+OpenBao token 不會由 AssetPilot 自動續期；在每次部署、重啟或執行上述 CLI 前，確認 token 有效，並由 OpenBao/部署平台的受控流程續期或更新 token。
 
 **範圍限制（刻意不做的事）**
 
@@ -120,7 +137,7 @@ OPENBAO_TRANSIT_KEY=assetpilot-root-kek
 
 適用於「匯出資料 → 以全新金鑰重新部署 → 匯入」：舊的 `PHOTO_MASTER_KEY`、`API_TOKEN_ENCRYPTION_KEY`、`JWT_SECRET` 與舊 `KEYRING_ROOT_KEK` 都不必帶到新環境。
 
-`npm run backup:database` 的 SQL 備份是原樣匯出，密文仍綁定舊金鑰，只適合同環境災難復原；跨金鑰搬遷請改用加密搬遷包（`.apm`）。
+管理員頁的整檔 SQL 備份是原樣匯出，密文仍綁定舊金鑰，僅適合保留原有金鑰的災難復原；跨金鑰搬遷請改用加密搬遷包（`.apm`）。資料庫備份與其對應的 Root KEK／OpenBao Transit key 必須一併保護並定期測試還原。
 
 **流程**
 
@@ -129,13 +146,13 @@ OPENBAO_TRANSIT_KEY=assetpilot-root-kek
    npm run migrate:export -- --output=assetpilot.apm --generate-key
    ```
    會產生 `assetpilot.apm` 與權限 600 的 `assetpilot.apm.key`（搬遷金鑰）。任何必要秘密無法解密時整體失敗，不產生部分檔案。搬遷金鑰與搬遷包請分開保管，也可改用環境變數 `ASSETPILOT_MIGRATION_KEY` 或 `--key-file`；金鑰不接受命令列參數。
-2. 新環境：建立全新資料庫，只設定新的 `DATABASE_URL` 與 `KEYRING_ROOT_KEK`（`openssl rand -base64 32`）。
+2. 新環境：建立全新資料庫並設定 `DATABASE_URL`。若選 env provider，設定新的 `KEYRING_ROOT_KEK`（`openssl rand -base64 32`）；若選 OpenBao provider，改設定 `KEYRING_ROOT_KEK_PROVIDER=openbao`、`OPENBAO_ADDR`、`OPENBAO_TOKEN` 及選用的 `OPENBAO_TRANSIT_KEY`。新環境不可沿用舊 Root KEK。不要直接將既有 keyring 資料庫從 env provider 切換到 OpenBao。
 3. 匯入：
    ```
    npm run migrate:import -- --input=assetpilot.apm --key-file=assetpilot.apm.key
    ```
-   匯入會先寫入匯入前備份，還原資料後建立全新的 `jwt`／`api-token`／`photo` keyring，重新包裝照片 DEK 與 Webhook secret 並驗證；任一步失敗會還原匯入前狀態。
-4. 驗證照片、Webhook、登入皆正常後，即可銷毀舊金鑰、搬遷金鑰與搬遷包。
+   匯入會先寫入匯入前備份，還原資料後建立全新的 `jwt`／`api-token`／`photo` keyring，重新包裝照片 DEK 與 Webhook secret 並驗證；任一步失敗會還原匯入前狀態。使用 OpenBao 時，匯入前就要提供上述 OpenBao 設定；CLI 會先解析／建立新 Root KEK，並在 SQL 還原後保留其包裝密文。匯入完成後，應用程式副本也須持續使用同一 OpenBao Transit key。
+4. 驗證照片、Webhook、登入皆正常後，新環境不再需要舊金鑰；但只有在所有仍需保留的舊資料庫備份、SQL 匯出與災難復原程序都不再依賴它們後，才能銷毀舊金鑰。確認復原窗口已結束後，再分別銷毀搬遷金鑰與搬遷包。
 
 **注意**
 

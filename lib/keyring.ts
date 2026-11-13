@@ -322,11 +322,23 @@ export function clearKeyringCache(): void {
 
 // Replaces every keyring key with freshly generated ones wrapped by `root`.
 // Used only by the one-time migration import; `root` must be KEYRING_ROOT_KEK.
-export function createFreshKeyring(root: Buffer): Record<KeyringPurpose, string> {
+export function createFreshKeyring(
+  root: Buffer,
+  preservedRootKek?: { provider: 'openbao'; wrapped: string; updatedAt: number } | null,
+): Record<KeyringPurpose, string> {
   const db = getDB();
   const kids = {} as Record<KeyringPurpose, string>;
   db.run('BEGIN');
   try {
+    db.run(`CREATE TABLE IF NOT EXISTS keyring_control (
+      id INTEGER PRIMARY KEY CHECK(id = 1),
+      enabled INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL DEFAULT 0
+    )`);
+    db.run("ALTER TABLE keyring_control ADD COLUMN IF NOT EXISTS root_kek_provider TEXT NOT NULL DEFAULT 'env'");
+    db.run("ALTER TABLE keyring_control ADD COLUMN IF NOT EXISTS root_kek_wrapped TEXT NOT NULL DEFAULT ''");
+    db.run('ALTER TABLE keyring_control ADD COLUMN IF NOT EXISTS root_kek_updated_at INTEGER NOT NULL DEFAULT 0');
     db.run("SELECT pg_advisory_xact_lock(hashtext('assetpilot:keyring:initialize:v1'))");
     clearCachedKeys();
     db.run('DELETE FROM keyring_keys');
@@ -339,10 +351,19 @@ export function createFreshKeyring(root: Buffer): Record<KeyringPurpose, string>
       }
     }
     const now = Date.now();
+    const provider = preservedRootKek?.provider || 'env';
+    const wrapped = preservedRootKek?.wrapped || '';
+    const rootKekUpdatedAt = preservedRootKek?.updatedAt || 0;
     if (queryOne('SELECT id FROM keyring_control WHERE id = 1')) {
-      db.run("UPDATE keyring_control SET enabled = 1, root_kek_wrapped = '', updated_at = ? WHERE id = 1", [now]);
+      db.run(
+        'UPDATE keyring_control SET enabled = 1, root_kek_provider = ?, root_kek_wrapped = ?, root_kek_updated_at = ?, updated_at = ? WHERE id = 1',
+        [provider, wrapped, rootKekUpdatedAt, now],
+      );
     } else {
-      db.run('INSERT INTO keyring_control (id, enabled, updated_at) VALUES (1, 1, ?)', [now]);
+      db.run(
+        'INSERT INTO keyring_control (id, enabled, created_at, updated_at, root_kek_provider, root_kek_wrapped, root_kek_updated_at) VALUES (1, 1, ?, ?, ?, ?, ?)',
+        [now, now, provider, wrapped, rootKekUpdatedAt],
+      );
     }
     db.run('COMMIT');
   } catch (error) {

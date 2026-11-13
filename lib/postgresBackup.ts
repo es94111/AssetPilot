@@ -1,6 +1,6 @@
 import { getDB, queryAll } from "./db";
 
-type AnyRow = Record<string, unknown>;
+export type AnyRow = Record<string, unknown>;
 
 const BACKUP_HEADER = "-- AssetPilot PostgreSQL backup";
 
@@ -242,7 +242,12 @@ export function assertRestorableBackupSql(sql: string): void {
   }
 }
 
-export function createPostgresBackupSql(): string {
+export interface PostgresBackupOptions {
+  // Return null to omit the row from the dump.
+  transformRow?: (table: string, row: AnyRow) => AnyRow | null;
+}
+
+export function createPostgresBackupSql(options: PostgresBackupOptions = {}): string {
   const tables = queryAll(`
     SELECT table_name
     FROM information_schema.tables
@@ -351,7 +356,9 @@ export function createPostgresBackupSql(): string {
     const rows = queryAll(
       `SELECT ${selectColumns.join(", ")} FROM ${quoteIdent(table)}`,
     ) as AnyRow[];
-    for (const row of rows) {
+    for (const original of rows) {
+      const row = options.transformRow ? options.transformRow(table, original) : original;
+      if (!row) continue;
       const values = columnNames.map((column) => sqlLiteral(row[column]));
       lines.push(
         `INSERT INTO ${quoteIdent(table)} (${columnNames.map(quoteIdent).join(", ")}) VALUES (${values.join(", ")});`,

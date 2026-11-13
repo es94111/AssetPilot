@@ -117,14 +117,14 @@ function masterSecret(): string {
   return secret;
 }
 
-function encryptWebhookSecret(secret: string): string {
+export function encryptWebhookSecret(secret: string): string {
   const active = getActiveKey('api-token');
   return active
     ? encryptVersionedSecret(secret, active.key, 'api-token', active.kid)
     : encryptSecret(secret, masterSecret());
 }
 
-function decryptWebhookSecret(payload: string): string {
+export function decryptWebhookSecret(payload: string): string {
   const versioned = parseVersionedSecret(payload);
   if (versioned) {
     const key = getKeyById('api-token', versioned.kid);

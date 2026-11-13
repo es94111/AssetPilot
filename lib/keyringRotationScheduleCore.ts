@@ -64,5 +64,5 @@ export function isValidExpectedInstanceCount(value: unknown): value is number {
 }
 
 export function isKeyringPurpose(value: unknown): value is KeyringPurpose {
-  return value === 'jwt' || value === 'api-token' || value === 'einvoice' || value === 'photo';
+  return value === 'jwt' || value === 'api-token' || value === 'photo';
 }

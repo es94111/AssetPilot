@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 const PURPOSES = [
   { id: "jwt", label: "登入／JWT" },
   { id: "api-token", label: "API Token／Webhook" },
-  { id: "einvoice", label: "電子發票載具" },
   { id: "photo", label: "照片資料金鑰" },
 ] as const;
 
@@ -17,7 +16,6 @@ type ScheduleForm = Record<Purpose, { enabled: boolean; intervalDays: number }>;
 const EMPTY_FORM: ScheduleForm = {
   jwt: { enabled: false, intervalDays: 90 },
   "api-token": { enabled: false, intervalDays: 365 },
-  einvoice: { enabled: false, intervalDays: 365 },
   photo: { enabled: false, intervalDays: 365 },
 };
 

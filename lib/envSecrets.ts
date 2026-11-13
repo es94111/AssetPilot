@@ -45,59 +45,6 @@ function generatedSecretsPath(envPath: string): string {
   return `${envPath}.generated-secrets`;
 }
 
-function generatedEinvoiceSecretPath(envPath: string): string {
-  return `${envPath}.generated-einvoice`;
-}
-
-function readGeneratedEinvoiceSecret(file: string): string | null {
-  let content: string;
-  try {
-    content = fs.readFileSync(file, 'utf-8');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return null;
-    throw error;
-  }
-  const key = parseEnvFile(content).EINVOICE_ENCRYPTION_KEY || '';
-  if (!key) {
-    throw new Error(`Generated e-invoice secret file ${file} is incomplete; do not delete until the active ENV_PATH value is backed up.`);
-  }
-  return key;
-}
-
-function getOrCreateGeneratedEinvoiceSecret(envPath: string): string {
-  const file = generatedEinvoiceSecretPath(envPath);
-  const existing = readGeneratedEinvoiceSecret(file);
-  if (existing) return existing;
-
-  const candidate = generateSecret(64);
-  const dir = path.dirname(file);
-  fs.mkdirSync(dir, { recursive: true });
-  const temporary = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
-  let fd: number | null = null;
-  try {
-    fd = fs.openSync(temporary, 'wx', 0o600);
-    fs.writeFileSync(fd, `EINVOICE_ENCRYPTION_KEY=${candidate}\n`);
-    fs.fsyncSync(fd);
-    fs.closeSync(fd);
-    fd = null;
-    try {
-      fs.linkSync(temporary, file);
-      try { fs.chmodSync(file, 0o600); } catch {}
-      return candidate;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException)?.code !== 'EEXIST') throw error;
-      const winner = readGeneratedEinvoiceSecret(file);
-      if (!winner) throw new Error(`Generated e-invoice secret winner file disappeared: ${file}`);
-      return winner;
-    }
-  } finally {
-    if (fd != null) {
-      try { fs.closeSync(fd); } catch {}
-    }
-    try { fs.unlinkSync(temporary); } catch {}
-  }
-}
-
 function readGeneratedSecrets(file: string): GeneratedSecrets | null {
   let content: string;
   try {
@@ -266,7 +213,6 @@ function ensureEnvSecretsLocked(envPath: string): void {
 
     const needsJwt = !process.env.JWT_SECRET || process.env.JWT_SECRET === 'please-change-this-secret';
     const needsApiKey = !process.env.API_TOKEN_ENCRYPTION_KEY;
-    const needsEinvoiceKey = !process.env.EINVOICE_ENCRYPTION_KEY;
     const needsVapid = !isValidVapidKeyPair(process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
     const updates: Record<string, string> = {};
 
@@ -307,12 +253,6 @@ function ensureEnvSecretsLocked(envPath: string): void {
       }
     }
 
-    if (needsEinvoiceKey) {
-      const key = getOrCreateGeneratedEinvoiceSecret(envPath);
-      updates.EINVOICE_ENCRYPTION_KEY = key;
-      process.env.EINVOICE_ENCRYPTION_KEY = key;
-    }
-
     if (Object.keys(updates).length === 0) {
       initialized = true;
       return;
@@ -324,12 +264,6 @@ function ensureEnvSecretsLocked(envPath: string): void {
       writeAtomicEnvFile(envPath, `${lines.join('\n')}\n`);
     } catch (error) {
       if (updates.JWT_SECRET || updates.API_TOKEN_ENCRYPTION_KEY) throw error;
-      if (updates.EINVOICE_ENCRYPTION_KEY) {
-        console.error(
-          '[env-secrets] Could not copy the persisted e-invoice key into ENV_PATH; the canonical key remains in the mode-0600 generated-einvoice sidecar.',
-          error,
-        );
-      }
       if (updates.VAPID_PUBLIC_KEY || updates.VAPID_PRIVATE_KEY) {
         console.error(
           '[web-push] Could not persist generated VAPID keys to ENV_PATH; configure a writable persistent ENV_PATH or set matching VAPID environment variables on every replica.',

@@ -15,6 +15,47 @@ const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!DB_URL) {
   test('db 遷移回填（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
+  const { Client } = await import('pg');
+  const baselineClient = new Client({ connectionString: DB_URL });
+  await baselineClient.connect();
+  let existingInvoiceTables: string[] = [];
+  let existingEinvoiceSchedules: Array<[string, number, number, number]> = [];
+  try {
+    const tables = await baselineClient.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = current_schema()
+         AND table_name IN ('invoice_carriers', 'invoice_imports')
+       ORDER BY table_name`,
+    );
+    existingInvoiceTables = tables.rows.map((row) => row.table_name);
+
+    const scheduleTable = await baselineClient.query<{ table_exists: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM information_schema.tables
+         WHERE table_schema = current_schema() AND table_name = 'keyring_rotation_schedules'
+       ) AS table_exists`,
+    );
+    if (scheduleTable.rows[0]?.table_exists) {
+      const schedules = await baselineClient.query<{
+        purpose: string;
+        interval_days: number | string;
+        enabled: number | string;
+        paused: number | string;
+      }>(
+        `SELECT purpose, interval_days, enabled, paused
+         FROM keyring_rotation_schedules WHERE purpose = 'einvoice'`,
+      );
+      existingEinvoiceSchedules = schedules.rows.map((schedule) => [
+        schedule.purpose,
+        Number(schedule.interval_days),
+        Number(schedule.enabled),
+        Number(schedule.paused),
+      ]);
+    }
+  } finally {
+    await baselineClient.end();
+  }
+
   const { initDB, getDB, queryOne, queryAll } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
 
@@ -164,13 +205,23 @@ if (!DB_URL) {
     const schedules = queryAll(
       'SELECT purpose, interval_days, enabled, paused FROM keyring_rotation_schedules ORDER BY purpose',
     ) as Array<{ purpose: string; interval_days: number | string; enabled: number | string; paused: number | string }>;
-    assert.deepEqual(schedules.map((schedule) => [schedule.purpose, Number(schedule.interval_days)]), [
+    const currentEinvoiceSchedules = schedules
+      .filter((schedule) => schedule.purpose === 'einvoice')
+      .map((schedule) => [
+        schedule.purpose,
+        Number(schedule.interval_days),
+        Number(schedule.enabled),
+        Number(schedule.paused),
+      ]);
+    assert.deepEqual(currentEinvoiceSchedules, existingEinvoiceSchedules, 'legacy e-invoice schedules must remain unchanged');
+
+    const supportedSchedules = schedules.filter((schedule) => schedule.purpose !== 'einvoice');
+    assert.deepEqual(supportedSchedules.map((schedule) => [schedule.purpose, Number(schedule.interval_days)]), [
       ['api-token', 365],
-      ['einvoice', 365],
       ['jwt', 90],
       ['photo', 365],
     ]);
-    assert.ok(schedules.every((schedule) => Number(schedule.enabled) === 0 && Number(schedule.paused) === 0));
+    assert.ok(supportedSchedules.every((schedule) => Number(schedule.enabled) === 0 && Number(schedule.paused) === 0));
 
     const indexes = queryAll(
       `SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()
@@ -264,56 +315,14 @@ if (!DB_URL) {
     getDB().run('CREATE INDEX IF NOT EXISTS idx_transactions_repayment_summary ON transactions(repayment_summary_id) WHERE repayment_summary_id != \'\'');
   });
 
-  // #253 雲端發票載具整合：確認啟動 migration 已建立資料表、排程欄位及索引。
-  test('invoice_carriers migration 含加密憑證、退避狀態與 auto_sync 欄位', () => {
-    const cols = queryAll(
-      `SELECT column_name FROM information_schema.columns
-       WHERE table_name = 'invoice_carriers' ORDER BY ordinal_position`,
-    ) as Array<{ column_name: string }>;
-    const names = cols.map((c) => c.column_name);
-    for (const name of [
-      'id', 'user_id', 'carrier_barcode', 'carrier_barcode_masked', 'verify_code_encrypted',
-      'status', 'auto_sync', 'last_sync_at', 'last_sync_status', 'last_error',
-      'consecutive_failures', 'next_retry_at', 'last_sync_retryable', 'sync_lock_until',
-      'last_invoice_date', 'created_at', 'updated_at',
-    ]) assert.ok(names.includes(name), `invoice_carriers 缺少欄位 ${name}`);
-    assert.equal(names.length, 17);
-  });
-
-  test('invoice_imports migration 含草稿欄位與發票去重唯一鍵', () => {
-    const cols = queryAll(
-      `SELECT column_name FROM information_schema.columns
-       WHERE table_name = 'invoice_imports' ORDER BY ordinal_position`,
-    ) as Array<{ column_name: string }>;
-    const names = cols.map((c) => c.column_name);
-    for (const name of [
-      'id', 'user_id', 'carrier_id', 'invoice_number', 'invoice_date', 'invoice_time',
-      'seller_name', 'amount', 'status', 'transaction_id', 'created_at', 'updated_at', 'imported_at',
-    ]) assert.ok(names.includes(name), `invoice_imports 缺少欄位 ${name}`);
-    assert.equal(names.length, 13);
-
-    const uniqueKeys = queryAll(
-      `SELECT string_agg(kcu.column_name, ',' ORDER BY kcu.ordinal_position) AS columns
-       FROM information_schema.table_constraints tc
-       JOIN information_schema.key_column_usage kcu
-         ON tc.constraint_name = kcu.constraint_name
-        AND tc.constraint_schema = kcu.constraint_schema
-       WHERE tc.table_name = 'invoice_imports' AND tc.constraint_type = 'UNIQUE'
-       GROUP BY tc.constraint_name`,
-    ) as Array<{ columns: string }>;
-    assert.ok(uniqueKeys.some((key) => key.columns === 'user_id,invoice_number'), '缺少 (user_id, invoice_number) 唯一鍵');
-  });
-
-  test('invoice migration 查詢索引存在', () => {
-    const indexes = queryAll(
-      `SELECT indexname FROM pg_indexes
-       WHERE schemaname = current_schema()
-         AND indexname IN (
-           'idx_invoice_carriers_user', 'idx_invoice_carriers_pending',
-           'idx_invoice_imports_user_date', 'idx_invoice_imports_status', 'idx_invoice_imports_carrier'
-         )`,
-    ) as Array<{ indexname: string }>;
-    assert.equal(indexes.length, 5, '應有 5 個載具／發票查詢索引');
+  test('invoice integration migrations neither create nor remove legacy tables', () => {
+    const tables = queryAll(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = current_schema()
+         AND table_name IN ('invoice_carriers', 'invoice_imports')
+       ORDER BY table_name`,
+    ) as Array<{ table_name: string }>;
+    assert.deepEqual(tables.map((table) => table.table_name), existingInvoiceTables);
   });
 
   test('issue #252 智慧輔助設定與建議忽略清單 migration 存在且可冪等重跑', () => {

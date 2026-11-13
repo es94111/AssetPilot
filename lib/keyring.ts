@@ -56,7 +56,6 @@ function valueForPurpose(purpose: KeyringPurpose): Buffer | null {
   const raw = String(process.env[{
     jwt: 'JWT_SECRET',
     'api-token': 'API_TOKEN_ENCRYPTION_KEY',
-    einvoice: 'EINVOICE_ENCRYPTION_KEY',
     photo: 'PHOTO_MASTER_KEY',
   }[purpose]] || '').trim();
   if (!raw) return null;
@@ -158,7 +157,7 @@ function seedInitialKeys(root: Buffer, activate: boolean): void {
       }
     }
 
-    for (const purpose of ['jwt', 'api-token', 'einvoice'] as const) {
+    for (const purpose of ['jwt', 'api-token'] as const) {
       const active = queryOne('SELECT kid FROM keyring_keys WHERE purpose = ? AND status = ?', [purpose, 'active']);
       if (!active) throw new KeyringConfigurationError(`Missing initial ${purpose} key; configure its environment variable`);
     }
@@ -173,7 +172,7 @@ function seedInitialKeys(root: Buffer, activate: boolean): void {
 }
 
 function validateActiveKeys(root: Buffer): void {
-  for (const purpose of ['jwt', 'api-token', 'einvoice'] as const) {
+  for (const purpose of ['jwt', 'api-token'] as const) {
     const row = queryOne(
       "SELECT kid, purpose, wrapped_key, wrap_iv, wrap_tag, status, accept_legacy FROM keyring_keys WHERE purpose = ? AND status = 'active'",
       [purpose],

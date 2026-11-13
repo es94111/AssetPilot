@@ -58,10 +58,10 @@
 
 ## 其他供應商 API
 
-適用 `IPINFO_TOKEN`、`EXCHANGE_RATE_API_KEY`、`RECEIPT_OCR_API_KEY`、`EINVOICE_API_APP_ID`／`EINVOICE_API_KEY`、`PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON` 等設定。
+適用 `IPINFO_TOKEN`、`EXCHANGE_RATE_API_KEY`、`RECEIPT_OCR_API_KEY`、`PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON` 等設定。
 
 1. 依供應商流程建立替代憑證，確認其 scope、限制、配額、環境（測試／正式）及到期時間。
-2. 更新 Secret Manager 並重新部署；逐一測試相應功能，例如 IP 查詢、匯率更新、收據 OCR、發票同步或 App Integrity 驗證。
+2. 更新 Secret Manager 並重新部署；逐一測試相應功能，例如 IP 查詢、匯率更新、收據 OCR 或 App Integrity 驗證。
 3. 觀察供應商回應碼、配額及應用錯誤；確認替代憑證已被所有副本使用，再撤銷舊憑證。若供應商不提供測試憑證，使用最小影響的合成請求並記錄風險。
 
 ## VAPID 緊急輪換
@@ -74,13 +74,13 @@ VAPID 不做固定週期輪換；私鑰外洩或供應商要求時才執行。�
 
 ## 相關用途 keyring 的界線
 
-第三方憑證不由 `/admin` 金鑰自動輪換排程管理。AssetPilot 的 `jwt`、`api-token`、`einvoice`、`photo` 用途金鑰須使用管理後台排程或 `npm run rotate:key`；Root KEK 不可直接替換（見下方 OpenBao 小節的範圍限制）。所有 previous key 在確認線上資料、資料庫備份、匯出及災難復原資料均不再引用前，必須保留並由管理員另行核准退役／銷毀。
+第三方憑證不由 `/admin` 金鑰自動輪換排程管理。AssetPilot 的 `jwt`、`api-token`、`photo` 用途金鑰須使用管理後台排程或 `npm run rotate:key`；Root KEK 不可直接替換（見下方 OpenBao 小節的範圍限制）。所有 previous key 在確認線上資料、資料庫備份、匯出及災難復原資料均不再引用前，必須保留並由管理員另行核准退役／銷毀。
 
 ## OpenBao Root KEK provider（選用）
 
 本節僅適用於自行架設並維運 [OpenBao](https://openbao.org)（Vault API 相容）的部署。預設 `KEYRING_ROOT_KEK_PROVIDER=env` 不受影響；一般自架者可忽略本節。
 
-**此整合的範圍**：OpenBao 只保護「root KEK 這個 32-byte 值本身」被一個 Transit 具名金鑰包裝後的**單一密文**；它從不包裝個別用途金鑰（`jwt`／`api-token`／`einvoice`／`photo`），也從不出現在任何請求的熱路徑上。啟動時 AssetPilot 以 Transit `decrypt` 還原出同一個明文 root KEK，寫入該程序的 `process.env.KEYRING_ROOT_KEK` 後，`lib/keyring.ts`／`lib/keyringCore.ts` 的本地 AES-256-GCM 包裝/解包邏輯完全不變。
+**此整合的範圍**：OpenBao 只保護「root KEK 這個 32-byte 值本身」被一個 Transit 具名金鑰包裝後的**單一密文**；它從不包裝個別用途金鑰（`jwt`／`api-token`／`photo`），也從不出現在任何請求的熱路徑上。啟動時 AssetPilot 以 Transit `decrypt` 還原出同一個明文 root KEK，寫入該程序的 `process.env.KEYRING_ROOT_KEK` 後，`lib/keyring.ts`／`lib/keyringCore.ts` 的本地 AES-256-GCM 包裝/解包邏輯完全不變。
 
 **OpenBao 設定（一次性）**
 
@@ -111,7 +111,7 @@ OPENBAO_TRANSIT_KEY=assetpilot-root-kek
 **範圍限制（刻意不做的事）**
 
 - **不會**自動產生新的 root KEK 明文值並重新包裝所有 `keyring_keys`；真正更換 root KEK 的值仍是未支援的操作，與上方「Root KEK 不可直接替換」一致。
-- **不會**把 `jwt`/`api-token`/`einvoice`/`photo` 用途金鑰的加解密改成呼叫 OpenBao；這些仍由既有、已上線的本地 keyring 處理，`npm run rotate:key` 的操作方式不變。
+- **不會**把 `jwt`/`api-token`/`photo` 用途金鑰的加解密改成呼叫 OpenBao；這些仍由既有、已上線的本地 keyring 處理，`npm run rotate:key` 的操作方式不變。
 - OpenBao 無法連線或回應非預期時會 fail closed（啟動失敗並記錄不含秘密的錯誤訊息），不會退化成明文或自動略過 keyring。
 
 **停用／切換回 env**：移除 `KEYRING_ROOT_KEK_PROVIDER`（或設為 `env`），改設定與目前 `keyring_control.root_kek_wrapped` 對應的明文 `KEYRING_ROOT_KEK`（可用上述 `--status` 確認已建立，再由管理員在 OpenBao 端 `transit/decrypt` 一次取出並妥善銷毀查詢紀錄）。切換前務必先確認新舊設定在同一批副本上不會同時生效，避免同用途金鑰被不同 root KEK 解讀。

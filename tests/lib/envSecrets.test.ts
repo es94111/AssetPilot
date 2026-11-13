@@ -56,7 +56,7 @@ test('concurrent writeEnvVars calls preserve updates to different keys', async (
   }
 });
 
-test('concurrent cold starts sharing ENV_PATH converge on persisted VAPID and e-invoice keys', async () => {
+test('concurrent cold starts sharing ENV_PATH converge on persisted VAPID keys', async () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'assetpilot-vapid-lock-'));
   const envPath = path.join(directory, '.env');
   const worker = fileURLToPath(new URL('../helpers/envSecretsWorker.ts', import.meta.url));
@@ -67,13 +67,9 @@ test('concurrent cold starts sharing ENV_PATH converge on persisted VAPID and e-
     validPair: boolean;
     persisted: boolean;
     privateKeyDigest: string;
-    einvoiceKeyDigest: string;
-    einvoicePersisted: boolean;
     fileMode: number;
     secretStoreMode: number;
-    einvoiceStoreMode: number;
     storeMatches: boolean;
-    einvoiceStoreMatches: boolean;
   }> {
     return new Promise((resolve, reject) => {
       const child = spawn(
@@ -87,7 +83,6 @@ test('concurrent cold starts sharing ENV_PATH converge on persisted VAPID and e-
             ENV_SECRETS_TEST_START_AT: String(startAt),
             JWT_SECRET: 'shared-test-jwt-secret-not-production',
             API_TOKEN_ENCRYPTION_KEY: 'shared-test-api-key-not-production',
-            EINVOICE_ENCRYPTION_KEY: '',
             VAPID_PUBLIC_KEY: '',
             VAPID_PRIVATE_KEY: '',
           },
@@ -110,13 +105,9 @@ test('concurrent cold starts sharing ENV_PATH converge on persisted VAPID and e-
             validPair: boolean;
             persisted: boolean;
             privateKeyDigest: string;
-            einvoiceKeyDigest: string;
-            einvoicePersisted: boolean;
             fileMode: number;
             secretStoreMode: number;
-            einvoiceStoreMode: number;
             storeMatches: boolean;
-            einvoiceStoreMatches: boolean;
           });
         } catch (error) {
           reject(new Error(`cold-start worker returned invalid output: ${stdout}; ${stderr}; ${String(error)}`));
@@ -129,13 +120,9 @@ test('concurrent cold starts sharing ENV_PATH converge on persisted VAPID and e-
     const results = await Promise.all(Array.from({ length: 8 }, () => runWorker()));
     assert.ok(results.every((result) => result.validPair));
     assert.ok(results.every((result) => result.secretStoreMode === 0o600));
-    assert.ok(results.every((result) => result.einvoiceStoreMode === 0o600));
     assert.ok(results.every((result) => result.storeMatches));
-    assert.ok(results.every((result) => result.einvoicePersisted));
-    assert.ok(results.every((result) => result.einvoiceStoreMatches));
     assert.equal(new Set(results.map((result) => result.publicKey)).size, 1);
     assert.equal(new Set(results.map((result) => result.privateKeyDigest)).size, 1);
-    assert.equal(new Set(results.map((result) => result.einvoiceKeyDigest)).size, 1);
     const envValues = Object.fromEntries(
       readFileSync(envPath, 'utf8').split('\n').filter(Boolean).map((line) => {
         const index = line.indexOf('=');
@@ -147,11 +134,6 @@ test('concurrent cold starts sharing ENV_PATH converge on persisted VAPID and e-
       crypto.createHash('sha256').update(envValues.VAPID_PRIVATE_KEY || '').digest('hex'),
       results[0].privateKeyDigest,
       'final ENV_PATH must contain the canonical private key pair',
-    );
-    assert.equal(
-      crypto.createHash('sha256').update(envValues.EINVOICE_ENCRYPTION_KEY || '').digest('hex'),
-      results[0].einvoiceKeyDigest,
-      'final ENV_PATH must contain the canonical e-invoice key',
     );
     assert.equal(statSync(envPath).mode & 0o777, 0o600);
   } finally {

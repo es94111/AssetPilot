@@ -55,7 +55,6 @@ class RotationMemoryDb {
   keys: KeyRow[] = [];
   jobs: JobRow[] = [];
   webhooks: Array<{ id: string; secret_encrypted: string; secret_prefix: string }> = [];
-  invoices: Array<{ id: string; verify_code_encrypted: string }> = [];
   photos: Array<{ user_id: string; wrapped_dek: string; iv: string; tag: string; key_id: string | null }> = [];
 
   prepare(sql: string) {
@@ -143,12 +142,6 @@ class RotationMemoryDb {
       const [secret_encrypted, id, prior] = params.map(String);
       const row = this.webhooks.find((item) => item.id === id && item.secret_encrypted === prior);
       if (row) { row.secret_encrypted = String(secret_encrypted); this.modified = 1; }
-      return;
-    }
-    if (statement.startsWith('UPDATE invoice_carriers')) {
-      const [verify_code_encrypted, id, prior] = params.map(String);
-      const row = this.invoices.find((item) => item.id === id && item.verify_code_encrypted === prior);
-      if (row) { row.verify_code_encrypted = String(verify_code_encrypted); this.modified = 1; }
       return;
     }
     if (statement.startsWith('UPDATE user_photo_keys')) {
@@ -245,16 +238,6 @@ class RotationMemoryDb {
       return this.webhooks.filter((row) => row.id > cursor).sort((a, b) => a.id.localeCompare(b.id))
         .slice(0, Number(limit)).map((row) => ({ id: row.id, payload: row.secret_encrypted, secret_prefix: row.secret_prefix }));
     }
-    if (statement.includes('FROM invoice_carriers')) {
-      if (statement.includes('COUNT(*)')) {
-        const prefix = String(params[0]);
-        return [{ count: this.invoices.filter((row) => row.verify_code_encrypted !== '' && !row.verify_code_encrypted.startsWith(prefix)).length }];
-      }
-      const [cursor, limit] = params.map(String);
-      return this.invoices.filter((row) => row.id > cursor && row.verify_code_encrypted !== '')
-        .sort((a, b) => a.id.localeCompare(b.id)).slice(0, Number(limit))
-        .map((row) => ({ id: row.id, payload: row.verify_code_encrypted }));
-    }
     if (statement.includes('FROM user_photo_keys')) {
       if (statement.includes('WHERE user_id = ?')) {
         const row = this.photos.find((item) => item.user_id === String(params[0]));
@@ -275,7 +258,6 @@ class RotationMemoryDb {
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'assetpilot-keyring-rotation-'));
 const db = new RotationMemoryDb();
 const apiTokenMaster = 'legacy-api-token-secret-for-test';
-const einvoiceMaster = 'legacy-einvoice-secret-for-test';
 const photoMaster = crypto.randomBytes(32);
 const previousPhotoMaster = crypto.randomBytes(32);
 const rootKek = crypto.randomBytes(32);
@@ -285,7 +267,6 @@ process.env.KEYRING_ENABLE = 'true';
 process.env.KEYRING_ROOT_KEK = rootKek.toString('base64');
 process.env.JWT_SECRET = 'legacy-jwt-secret-for-test';
 process.env.API_TOKEN_ENCRYPTION_KEY = apiTokenMaster;
-process.env.EINVOICE_ENCRYPTION_KEY = einvoiceMaster;
 process.env.PHOTO_MASTER_KEY = photoMaster.toString('base64');
 process.env.PHOTO_MASTER_KEY_OLD = previousPhotoMaster.toString('base64');
 process.env.VAPID_PUBLIC_KEY = vapid.publicKey;
@@ -325,17 +306,6 @@ test('manual key rotation previews, prepares, migrates, resumes, and rolls back 
   const apiPrevious = getKeyById('api-token', apiJob.to_kid);
   assert.equal((await import('../../lib/keyringCore.ts')).decryptVersionedSecret(versionedWebhook, apiPrevious.key, 'api-token', apiPrevious.kid), webhookSecret);
   apiPrevious.key.fill(0);
-
-  db.invoices.push({ id: 'carrier-1', verify_code_encrypted: 'unreadable' });
-  const einvoiceRotationId = prepareKeyRotation('einvoice');
-  activatePreparedRotation(einvoiceRotationId, true);
-  await assert.rejects(runKeyRotation(einvoiceRotationId), (error: unknown) =>
-    error instanceof KeyRotationError && error.code === 'ROTATION_BATCH_FAILED');
-  assert.equal(getRotationProgress(einvoiceRotationId).status, 'paused');
-  db.invoices[0].verify_code_encrypted = encryptSecret('ABCD1234', einvoiceMaster);
-  const resumed = await runKeyRotation(einvoiceRotationId);
-  assert.equal(resumed.status, 'completed');
-  assert.equal(resumed.reencrypted, 1);
 
   const dek = crypto.randomBytes(32);
   const wrapped = wrapDek(photoMaster, dek);

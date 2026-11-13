@@ -4,7 +4,7 @@ import * as path from 'node:path';
 const USAGE = `用法：
   npm run migrate:import -- --input=<檔案.apm> [--key-file=<金鑰檔>]
 
-需先設定新的 KEYRING_ROOT_KEK 與全新資料庫。搬遷金鑰以環境變數 ASSETPILOT_MIGRATION_KEY 或 --key-file 提供。
+需先設定全新資料庫與新的 Root KEK（KEYRING_ROOT_KEK，或 KEYRING_ROOT_KEK_PROVIDER=openbao 及 OpenBao 設定）。搬遷金鑰以環境變數 ASSETPILOT_MIGRATION_KEY 或 --key-file 提供。
 匯入會取代目標資料庫內容；失敗時自動還原匯入前狀態。`;
 
 function loadEnvFile(): void {
@@ -38,8 +38,6 @@ async function main(): Promise<void> {
   if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
     throw new Error('請先設定 DATABASE_URL 或 POSTGRES_URL');
   }
-  if (!process.env.KEYRING_ROOT_KEK) throw new Error('請先設定新的 KEYRING_ROOT_KEK');
-
   const { parseMigrationKey } = await import('../lib/migrationArchive.ts');
   const rawKey = options.keyFile
     ? fs.readFileSync(options.keyFile, 'utf8').trim()
@@ -50,6 +48,10 @@ async function main(): Promise<void> {
   const dbModule = await import('../lib/db.ts');
   await dbModule.initDB();
   try {
+    await (await import('../lib/rootKekProvider.ts')).resolveRootKek();
+    if (!process.env.KEYRING_ROOT_KEK) {
+      throw new Error('請先設定新的 KEYRING_ROOT_KEK，或設定 KEYRING_ROOT_KEK_PROVIDER=openbao');
+    }
     const { importMigration } = await import('../lib/keyMigration.ts');
     const stats = importMigration(archive, migrationKey);
     console.log('搬遷匯入完成，已使用新 keyring 重新加密並驗證。');
@@ -62,7 +64,9 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : '';
-  if (/選項|請先設定|搬遷金鑰|解密失敗|匯入失敗|搬遷包/.test(message)) {
+  if (error instanceof Error && error.name === 'RootKekProviderError') {
+    console.error(`${error.name}: ${error.message}`);
+  } else if (/選項|請先設定|搬遷金鑰|解密失敗|匯入失敗|搬遷包/.test(message)) {
     console.error(`${message}\n\n${USAGE}`);
   } else {
     console.error('搬遷匯入失敗；未輸出任何金鑰資料。請檢查部署端錯誤紀錄。');

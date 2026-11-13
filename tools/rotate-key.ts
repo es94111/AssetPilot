@@ -129,6 +129,7 @@ async function main(): Promise<void> {
   const dbModule = await import('../lib/db.ts');
   await dbModule.initDB();
   try {
+    await (await import('../lib/rootKekProvider.ts')).resolveRootKek();
     const rotation = await import('../lib/keyringRotation.ts');
     if (options.action === 'preview') {
       const preview = rotation.previewKeyRotation(options.purpose!);
@@ -168,7 +169,9 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  if (error instanceof Error && error.name === 'KeyRotationError') {
+  if (error instanceof Error && error.name === 'RootKekProviderError') {
+    console.error(`${error.name}: ${error.message}`);
+  } else if (error instanceof Error && error.name === 'KeyRotationError') {
     const coded = error as Error & { code?: string };
     console.error(`${coded.code || 'KEY_ROTATION_ERROR'}: ${error.message}`);
   } else if (error instanceof Error && /用法|選項|操作需要|操作前須|操作不接受|一次只能指定|不支援/.test(error.message)) {

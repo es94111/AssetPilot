@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
-import { collectSecrets, transformBackupRow } from '../../lib/keyMigration.ts';
+import { collectSecrets, preservedRootKekWrap, transformBackupRow } from '../../lib/keyMigration.ts';
+
+assert.equal(preservedRootKekWrap({ root_kek_wrapped: '', root_kek_updated_at: 0 }, 'env'), null);
+assert.throws(() => preservedRootKekWrap({ root_kek_wrapped: '' }, 'openbao'), /OpenBao 模式需先透過 OpenBao 解析 Root KEK/u);
+assert.deepEqual(
+  preservedRootKekWrap({ root_kek_wrapped: 'vault:v1:wrapped', root_kek_updated_at: 123 }, 'openbao'),
+  { provider: 'openbao', wrapped: 'vault:v1:wrapped', updatedAt: 123 },
+);
 
 assert.equal(transformBackupRow('keyring_keys', { kid: 'a' }), null);
 assert.equal(transformBackupRow('keyring_control', { id: 1 }), null);

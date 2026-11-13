@@ -48,6 +48,10 @@ interface JobRow extends Row {
 
 class RotationMemoryDb {
   enabled = 0;
+  rootKekControl: { provider: string; wrapped: string; rootKekUpdatedAt: number; updatedAt: number } = {
+    provider: 'env', wrapped: '', rootKekUpdatedAt: 0, updatedAt: 0,
+  };
+  statements: string[] = [];
   modified = 0;
   advisoryLocks: string[] = [];
   authUser: Row | null = null;
@@ -70,8 +74,10 @@ class RotationMemoryDb {
 
   run(sql: string, params: Value[] = []): void {
     const statement = sql.replace(/\s+/gu, ' ').trim();
+    this.statements.push(statement);
     this.modified = 0;
     if (/^(BEGIN|COMMIT|ROLLBACK)$/iu.test(statement)) return;
+    if (statement.startsWith('CREATE TABLE IF NOT EXISTS keyring_control') || statement.startsWith('ALTER TABLE keyring_control ADD COLUMN IF NOT EXISTS root_kek_')) return;
     if (statement.startsWith('SELECT pg_advisory') || statement.startsWith('SELECT pg_try_advisory')) {
       if (params[0]) this.advisoryLocks.push(String(params[0]));
       return;
@@ -91,6 +97,10 @@ class RotationMemoryDb {
       this.modified = 1;
       return;
     }
+    if (statement.startsWith('DELETE FROM keyring_keys')) {
+      this.keys = [];
+      return;
+    }
     if (statement.startsWith('INSERT INTO keyring_keys')) {
       const [kid, purpose, wrapped_key, wrap_iv, wrap_tag] = params;
       const pending = statement.includes("'pending'");
@@ -107,6 +117,13 @@ class RotationMemoryDb {
     }
     if (statement.startsWith('UPDATE keyring_control SET enabled = 1')) {
       this.enabled = 1;
+      if (statement.includes('root_kek_provider')) {
+        const [provider, wrapped, rootKekUpdatedAt, updatedAt] = params;
+        this.rootKekControl = {
+          provider: String(provider), wrapped: String(wrapped),
+          rootKekUpdatedAt: Number(rootKekUpdatedAt), updatedAt: Number(updatedAt),
+        };
+      }
       this.modified = 1;
       return;
     }
@@ -447,6 +464,33 @@ test('new photo DEKs use the shared rotation lock and active key', async () => {
   assert.deepEqual(decryptPhoto(userId, encrypted), plaintext);
 
   _resetPhotoCryptoCache();
+});
+
+test('fresh migration keyring preserves an OpenBao-wrapped Root KEK', async () => {
+  const { createFreshKeyring } = await import('../../lib/keyring.ts');
+  createFreshKeyring(rootKek, {
+    provider: 'openbao',
+    wrapped: 'vault:v3:preserved-root-kek',
+    updatedAt: 456,
+  });
+  assert.equal(db.rootKekControl.provider, 'openbao');
+  assert.equal(db.rootKekControl.wrapped, 'vault:v3:preserved-root-kek');
+  assert.equal(db.rootKekControl.rootKekUpdatedAt, 456);
+  assert.ok(db.rootKekControl.updatedAt > 0);
+  for (const column of ['root_kek_provider', 'root_kek_wrapped', 'root_kek_updated_at']) {
+    assert.ok(db.statements.some((statement) => statement.includes(`ADD COLUMN IF NOT EXISTS ${column}`)));
+  }
+  assert.ok(db.keys.some((key) => key.purpose === 'jwt' && key.status === 'active'));
+  assert.ok(db.keys.some((key) => key.purpose === 'api-token' && key.status === 'active'));
+  assert.ok(db.keys.some((key) => key.purpose === 'photo' && key.status === 'active'));
+});
+
+test('fresh migration keyring keeps env mode for older archives', async () => {
+  const { createFreshKeyring } = await import('../../lib/keyring.ts');
+  createFreshKeyring(rootKek);
+  assert.equal(db.rootKekControl.provider, 'env');
+  assert.equal(db.rootKekControl.wrapped, '');
+  assert.equal(db.rootKekControl.rootKekUpdatedAt, 0);
 });
 
 test.after(() => {

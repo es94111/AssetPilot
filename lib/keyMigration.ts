@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { getDB, queryAll } from './db.ts';
+import { getDB, queryAll, queryOne } from './db.ts';
 import { clearKeyringCache, createFreshKeyring, getActiveKey, isKeyringEnabled } from './keyring.ts';
 import { parseRootKek } from './keyringCore.ts';
+import { rootKekProviderId } from './rootKekProvider.ts';
 import { createPostgresBackupSql, restorePostgresBackupSql, type AnyRow } from './postgresBackup.ts';
 import { _resetPhotoCryptoCache, unwrapStoredDek } from './photoCrypto.ts';
 import { unwrapDek, wrapDek } from './photoCryptoCore.ts';
@@ -19,6 +20,26 @@ export interface MigrationStats {
   photoDeks: number;
   webhookSecrets: number;
   sqlBytes: number;
+}
+
+export interface PreservedRootKekWrap {
+  provider: 'openbao';
+  wrapped: string;
+  updatedAt: number;
+}
+
+export function preservedRootKekWrap(
+  row: AnyRow | null | undefined,
+  providerId: string,
+): PreservedRootKekWrap | null {
+  if (providerId !== 'openbao') return null;
+  const wrapped = String(row?.root_kek_wrapped || '');
+  if (!wrapped) throw new Error('OpenBao 模式需先透過 OpenBao 解析 Root KEK');
+  return {
+    provider: 'openbao',
+    wrapped,
+    updatedAt: Number(row?.root_kek_updated_at) || 0,
+  };
 }
 
 const DROPPED_TABLES = new Set([
@@ -154,6 +175,10 @@ export function importMigration(
   const payload: MigrationPayload = unpackMigrationArchive(archive, migrationKey);
   const root = parseRootKek(process.env.KEYRING_ROOT_KEK);
   if (!root) throw new Error('必須設定新的 KEYRING_ROOT_KEK 才能匯入');
+  const rootKekControl = queryOne(
+    'SELECT root_kek_provider, root_kek_wrapped, root_kek_updated_at FROM keyring_control WHERE id = 1',
+  ) as AnyRow | undefined;
+  const preservedRoot = preservedRootKekWrap(rootKekControl, rootKekProviderId());
 
   const backupDir = options.backupDir || path.join(process.cwd(), 'backups');
   fs.mkdirSync(backupDir, { recursive: true });
@@ -163,7 +188,7 @@ export function importMigration(
 
   try {
     restorePostgresBackupSql(payload.sql);
-    createFreshKeyring(root);
+    createFreshKeyring(root, preservedRoot);
     resetCaches();
     const db = getDB();
     db.run('BEGIN');

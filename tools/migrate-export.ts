@@ -67,6 +67,7 @@ async function main(): Promise<void> {
   const dbModule = await import('../lib/db.ts');
   await dbModule.initDB();
   try {
+    await (await import('../lib/rootKekProvider.ts')).resolveRootKek();
     const { exportMigration } = await import('../lib/keyMigration.ts');
     const { archive, stats } = exportMigration(migrationKey);
     const tmp = `${output}.tmp`;
@@ -83,7 +84,9 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : '';
-  if (/選項|不支援|PostgreSQL|DATABASE_URL|搬遷金鑰|ASSETPILOT_MIGRATION_KEY|無法解密/.test(message)) {
+  if (error instanceof Error && error.name === 'RootKekProviderError') {
+    console.error(`${error.name}: ${error.message}`);
+  } else if (/選項|不支援|PostgreSQL|DATABASE_URL|搬遷金鑰|ASSETPILOT_MIGRATION_KEY|無法解密/.test(message)) {
     console.error(`${message}\n\n${USAGE}`);
   } else {
     console.error('搬遷匯出失敗；未輸出任何金鑰資料。請檢查部署端錯誤紀錄。');

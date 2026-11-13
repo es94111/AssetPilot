@@ -74,4 +74,44 @@ VAPID 不做固定週期輪換；私鑰外洩或供應商要求時才執行。�
 
 ## 相關用途 keyring 的界線
 
-第三方憑證不由 `/admin` 金鑰自動輪換排程管理。AssetPilot 的 `jwt`、`api-token`、`einvoice`、`photo` 用途金鑰須使用管理後台排程或 `npm run rotate:key`；Root KEK 不可直接替換。所有 previous key 在確認線上資料、資料庫備份、匯出及災難復原資料均不再引用前，必須保留並由管理員另行核准退役／銷毀。
+第三方憑證不由 `/admin` 金鑰自動輪換排程管理。AssetPilot 的 `jwt`、`api-token`、`einvoice`、`photo` 用途金鑰須使用管理後台排程或 `npm run rotate:key`；Root KEK 不可直接替換（見下方 OpenBao 小節的範圍限制）。所有 previous key 在確認線上資料、資料庫備份、匯出及災難復原資料均不再引用前，必須保留並由管理員另行核准退役／銷毀。
+
+## OpenBao Root KEK provider（選用）
+
+本節僅適用於自行架設並維運 [OpenBao](https://openbao.org)（Vault API 相容）的部署。預設 `KEYRING_ROOT_KEK_PROVIDER=env` 不受影響；一般自架者可忽略本節。
+
+**此整合的範圍**：OpenBao 只保護「root KEK 這個 32-byte 值本身」被一個 Transit 具名金鑰包裝後的**單一密文**；它從不包裝個別用途金鑰（`jwt`／`api-token`／`einvoice`／`photo`），也從不出現在任何請求的熱路徑上。啟動時 AssetPilot 以 Transit `decrypt` 還原出同一個明文 root KEK，寫入該程序的 `process.env.KEYRING_ROOT_KEK` 後，`lib/keyring.ts`／`lib/keyringCore.ts` 的本地 AES-256-GCM 包裝/解包邏輯完全不變。
+
+**OpenBao 設定（一次性）**
+
+1. 啟用 Transit secrets engine：`bao secrets enable transit`（若尚未啟用）。
+2. 建立具名金鑰並設定自動輪換：
+   ```
+   bao write -f transit/keys/assetpilot-root-kek
+   bao write transit/keys/assetpilot-root-kek/config auto_rotate_period=2160h
+   ```
+   `auto_rotate_period` 由 OpenBao 自行按排程產生新金鑰版本；舊版本密文仍可解密，不需要 AssetPilot 做任何事。
+3. 建立一個只能對 `transit/datakey/plaintext/assetpilot-root-kek`、`transit/decrypt/assetpilot-root-kek`、`transit/rewrap/assetpilot-root-kek` 操作的 policy/token，不要給予整個 `transit/*` 或更高權限。
+
+**AssetPilot 設定**
+
+```
+KEYRING_ROOT_KEK_PROVIDER=openbao
+OPENBAO_ADDR=https://openbao.internal:8200
+OPENBAO_TOKEN=<上述 policy 對應的 token>
+OPENBAO_TRANSIT_KEY=assetpilot-root-kek
+```
+不需要設定 `KEYRING_ROOT_KEK`；首次啟動會透過 OpenBao 的 datakey API 建立一次，並把 OpenBao 包裝後的密文存入 `keyring_control.root_kek_wrapped`（資料庫中永遠不含明文）。之後每次啟動改呼叫 `decrypt` 還原相同明文，所有副本須指向同一個 OpenBao 與同一個 Transit 金鑰，否則會各自解出不同值而彼此的用途金鑰互不相容。
+
+**日常操作**
+
+- `npm run rootkek:openbao -- --status`：顯示目前供應者、是否已建立包裝後的 root KEK、最後更新時間，並測試 OpenBao 連線；不會建立或變更任何金鑰。
+- `npm run rootkek:openbao -- --rewrap`：在 OpenBao 的 `auto_rotate_period` 產生新金鑰版本後，把資料庫中保存的那一筆密文更新到最新版本；只動那一筆密文，不觸碰任何用途金鑰，也不改變明文 root KEK。可依 OpenBao 的輪換週期手動或排入 cron 執行。
+
+**範圍限制（刻意不做的事）**
+
+- **不會**自動產生新的 root KEK 明文值並重新包裝所有 `keyring_keys`；真正更換 root KEK 的值仍是未支援的操作，與上方「Root KEK 不可直接替換」一致。
+- **不會**把 `jwt`/`api-token`/`einvoice`/`photo` 用途金鑰的加解密改成呼叫 OpenBao；這些仍由既有、已上線的本地 keyring 處理，`npm run rotate:key` 的操作方式不變。
+- OpenBao 無法連線或回應非預期時會 fail closed（啟動失敗並記錄不含秘密的錯誤訊息），不會退化成明文或自動略過 keyring。
+
+**停用／切換回 env**：移除 `KEYRING_ROOT_KEK_PROVIDER`（或設為 `env`），改設定與目前 `keyring_control.root_kek_wrapped` 對應的明文 `KEYRING_ROOT_KEK`（可用上述 `--status` 確認已建立，再由管理員在 OpenBao 端 `transit/decrypt` 一次取出並妥善銷毀查詢紀錄）。切換前務必先確認新舊設定在同一批副本上不會同時生效，避免同用途金鑰被不同 root KEK 解讀。

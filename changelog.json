@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.151.0",
+  "currentVersion": "4.152.0",
   "releases": [
+    {
+      "version": "4.152.0",
+      "date": "2026-11-13",
+      "title": "選用 OpenBao Root KEK provider",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "新增選用的 Root KEK 供應者設定（KEYRING_ROOT_KEK_PROVIDER=openbao），讓自行架設 OpenBao（Vault API 相容）的部署可透過 Transit secrets engine 提供並自動輪換 Root KEK 的保護層；預設 env 供應者行為完全不變，用途金鑰環與既有輪換工具不受影響。"
+        },
+        {
+          "tag": "new",
+          "text": "新增 npm run rootkek:openbao 診斷／維護工具，可檢視供應者狀態、測試 OpenBao 連線，並在 OpenBao 自動輪換金鑰版本後把保存的密文升級到最新版本。"
+        }
+      ]
+    },
     {
       "version": "4.151.0",
       "date": "2026-11-12",

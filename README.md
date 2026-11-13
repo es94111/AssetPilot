@@ -315,8 +315,10 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `JWT_EXPIRES` | 基本 | 瀏覽器登入 JWT 有效期限 | `7d` |
 | `APP_JWT_EXPIRES` | 基本 | App 登入 JWT 有效期限（Token 存於裝置端加密儲存） | `90d` |
 | `JWT_SECRET` | 🔑 自動 | JWT 簽章金鑰，64 字元 hex（首次啟動自動產生） | — |
-| `KEYRING_ROOT_KEK` | 安全 | 用途分離 keyring 的 32-byte Root KEK（base64）；啟用後所有副本必須一致，應由 Secret Manager 提供 | — |
+| `KEYRING_ROOT_KEK` | 安全 | 用途分離 keyring 的 32-byte Root KEK（base64）；啟用後所有副本必須一致，應由 Secret Manager 提供。`KEYRING_ROOT_KEK_PROVIDER=openbao` 時不需設定 | — |
 | `KEYRING_ENABLE` | 安全 | 首次啟用 keyring 的明確屏障；確認所有副本均支援後才設為 `true`，DB 啟用後以資料庫狀態為準 | `false` |
+| `KEYRING_ROOT_KEK_PROVIDER` | 選配 / 安全 | 選用：設為 `openbao` 時改由自架的 OpenBao Transit secrets engine 提供並自動輪換 Root KEK 的保護層（見下方小節），預設 `env` 不受影響 | `env` |
+| `OPENBAO_ADDR` / `OPENBAO_TOKEN` / `OPENBAO_TRANSIT_KEY` | 選配 | `KEYRING_ROOT_KEK_PROVIDER=openbao` 時的連線位址、存取權杖與 Transit 具名金鑰名稱 | `assetpilot-root-kek` |
 | `RECOVERY_CODE_LEGACY_PEPPER` | 舊碼相容 | 僅驗證升級前 HMAC v1 復原碼；輪換 JWT 前填入舊金鑰，直到舊碼用完、撤銷或重新產生 | — |
 | `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
 | `GOOGLE_CLIENT_ID` | SSO | Google OAuth Client ID（留空停用 Google 登入） | — |
@@ -347,6 +349,8 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 此功能預設停用。Root KEK 請用 `openssl rand -base64 32` 產生並放在部署平台的 Secret Manager；所有副本使用相同值，資料庫只保存用途金鑰的包裝值。Keyring 啟用後，Root KEK 缺失或不一致會讓服務 fail closed，切勿遺失或直接更換 Root KEK。
 
 首次啟用前先備份資料庫與相關 Secret，將支援 keyring 的版本部署到所有副本並確認舊版副本已退出，再設定 `KEYRING_ENABLE=true`。資料庫 `keyring_control.enabled` 是啟用後的權威狀態；各副本仍必須持續提供一致的 `KEYRING_ROOT_KEK`。
+
+自行架設 OpenBao（Vault API 相容）的部署可改設定 `KEYRING_ROOT_KEK_PROVIDER=openbao`，由其 Transit secrets engine 提供並自動輪換 Root KEK 的保護層；此時不需設定 `KEYRING_ROOT_KEK`，用途金鑰環與以下輪換指令完全不受影響。設定步驟、`npm run rootkek:openbao` 診斷工具與範圍限制請見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#openbao-root-kek-provider選用)。
 
 手動輪換範例（用途：`jwt`、`api-token`、`einvoice`、`photo`）：
 

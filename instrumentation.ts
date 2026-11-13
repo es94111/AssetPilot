@@ -15,6 +15,9 @@ export async function register() {
     await db.initDB();
     databaseReady = true;
 
+    const { resolveRootKek } = await import('./lib/rootKekProvider');
+    await resolveRootKek();
+
     const { initializeKeyring } = await import('./lib/keyring');
     initializeKeyring();
 

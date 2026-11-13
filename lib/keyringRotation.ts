@@ -86,11 +86,6 @@ function countRowsToReencrypt(purpose: KeyringPurpose, kid: string): number {
       'SELECT COUNT(*) AS count FROM webhook_subscriptions WHERE LEFT(secret_encrypted, LENGTH(?)) <> ?',
       [prefix, prefix],
     );
-  } else if (purpose === 'einvoice') {
-    row = queryOne(
-      "SELECT COUNT(*) AS count FROM invoice_carriers WHERE verify_code_encrypted <> '' AND LEFT(verify_code_encrypted, LENGTH(?)) <> ?",
-      [prefix, prefix],
-    );
   } else if (purpose === 'photo') {
     row = queryOne('SELECT COUNT(*) AS count FROM user_photo_keys WHERE key_id IS DISTINCT FROM ?', [kid]);
   } else {
@@ -221,7 +216,7 @@ function loadJob(rotationId: string): RotationJob {
   return job;
 }
 
-function decryptForRotation(payload: string, purpose: 'api-token' | 'einvoice'): string {
+function decryptForRotation(payload: string, purpose: 'api-token'): string {
   const versioned = parseVersionedSecret(payload);
   if (versioned) {
     const oldKey = getKeyById(purpose, versioned.kid);
@@ -257,22 +252,6 @@ function rotateWebhookRow(row: RotationRow, target: { kid: string; key: Buffer }
   }
   getDB().run(
     'UPDATE webhook_subscriptions SET secret_encrypted = ? WHERE id = ? AND secret_encrypted = ?',
-    [encrypted, row.id, payload],
-  );
-  return getDB().getRowsModified() === 1;
-}
-
-function rotateEinvoiceRow(row: RotationRow, target: { kid: string; key: Buffer }): boolean {
-  const payload = String(row.payload || '');
-  const versioned = parseVersionedSecret(payload);
-  if (versioned?.kid === target.kid) return false;
-  const plaintext = decryptForRotation(payload, 'einvoice');
-  const encrypted = encryptVersionedSecret(plaintext, target.key, 'einvoice', target.kid);
-  if (decryptVersionedSecret(encrypted, target.key, 'einvoice', target.kid) !== plaintext) {
-    throw new KeyRotationError('SECRET_VALIDATION_FAILED', 'E-invoice 新密文驗證失敗');
-  }
-  getDB().run(
-    'UPDATE invoice_carriers SET verify_code_encrypted = ? WHERE id = ? AND verify_code_encrypted = ?',
     [encrypted, row.id, payload],
   );
   return getDB().getRowsModified() === 1;
@@ -316,12 +295,6 @@ function batchQuery(job: RotationJob): RotationRow[] {
   if (job.purpose === 'api-token') {
     return queryAll(
       'SELECT id, secret_encrypted AS payload, secret_prefix FROM webhook_subscriptions WHERE id > ? ORDER BY id LIMIT ?',
-      [cursor, BATCH_SIZE],
-    ) as unknown as RotationRow[];
-  }
-  if (job.purpose === 'einvoice') {
-    return queryAll(
-      "SELECT id, verify_code_encrypted AS payload FROM invoice_carriers WHERE id > ? AND verify_code_encrypted <> '' ORDER BY id LIMIT ?",
       [cursor, BATCH_SIZE],
     ) as unknown as RotationRow[];
   }
@@ -369,11 +342,9 @@ function processBatch(rotationId: string): boolean {
       for (const row of rows) {
         const changed = job.purpose === 'api-token'
           ? rotateWebhookRow(row, target)
-          : job.purpose === 'einvoice'
-            ? rotateEinvoiceRow(row, target)
-            : job.purpose === 'photo'
-              ? rotatePhotoRow(row, target)
-              : false;
+          : job.purpose === 'photo'
+            ? rotatePhotoRow(row, target)
+            : false;
         if (changed) migrated++;
       }
     } finally {

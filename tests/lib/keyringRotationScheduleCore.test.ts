@@ -64,9 +64,10 @@ test('transient retries use the configured bounded delays', () => {
 });
 
 test('only supported keyring purposes are accepted', () => {
-  for (const purpose of ['jwt', 'api-token', 'einvoice', 'photo']) {
+  for (const purpose of ['jwt', 'api-token', 'photo']) {
     assert.equal(isKeyringPurpose(purpose), true);
   }
-  assert.equal(isKeyringPurpose('unknown'), false);
-  assert.equal(isKeyringPurpose(null), false);
+  for (const purpose of ['einvoice', 'unknown', null]) {
+    assert.equal(isKeyringPurpose(purpose), false);
+  }
 });

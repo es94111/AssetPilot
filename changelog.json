@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.152.0",
+  "currentVersion": "4.153.0",
   "releases": [
+    {
+      "version": "4.153.0",
+      "date": "2026-11-13",
+      "title": "移除財政部雲端發票整合",
+      "type": "removed",
+      "changes": [
+        {
+          "tag": "removed",
+          "text": "移除財政部雲端發票 API 載具匯入、同步、設定介面及其金鑰輪換支援；紙本電子發票 QR Code 掃描與收據 OCR 維持可用。"
+        },
+        {
+          "tag": "changed",
+          "text": "新資料庫不再建立 invoice_carriers／invoice_imports 表；既有部署資料可在舊表存在時繼續匯出，還原至缺少舊表的資料庫時會明確停止以避免靜默遺失。"
+        }
+      ]
+    },
     {
       "version": "4.152.0",
       "date": "2026-11-13",

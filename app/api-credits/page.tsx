@@ -77,7 +77,6 @@ function translateApiDescription(name: string, fallback: string, t: T) {
   if (name.startsWith('Zeabur')) return t('public.apiCreditsPage.descriptions.zeabur');
   if (name === 'Resend') return t('public.apiCreditsPage.descriptions.resend');
   if (name === 'MEGA S4 Object Storage') return t('public.apiCreditsPage.descriptions.mega');
-  if (name === '財政部電子發票整合服務平台') return t('public.apiCreditsPage.descriptions.einvoice');
   return fallback;
 }
 

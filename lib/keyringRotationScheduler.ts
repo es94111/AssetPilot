@@ -425,21 +425,27 @@ export function getKeyringRotationAdminStatus(): Record<string, unknown> {
     backup_confirmed_at: number | string;
     backup_confirmed_by: string;
   } | null;
-  const schedules = queryAll('SELECT * FROM keyring_rotation_schedules ORDER BY purpose') as unknown as ScheduleRow[];
+  const schedules = (queryAll('SELECT * FROM keyring_rotation_schedules ORDER BY purpose') as unknown as ScheduleRow[])
+    .filter(schedule => isKeyringPurpose(schedule.purpose));
   const instances = queryAll(
     `SELECT instance_id, started_at, last_seen_at, keyring_enabled, protocol_version
      FROM keyring_rotation_instances WHERE last_seen_at >= ? ORDER BY last_seen_at DESC`,
     [now - 24 * 60 * 60 * 1000],
   ) as unknown as InstanceRow[];
-  const activeKeys = queryAll(
+  const activeKeys = (queryAll(
     `SELECT kid, purpose, status, created_at, retired_at
      FROM keyring_keys WHERE status IN ('active', 'previous', 'pending') ORDER BY purpose, created_at DESC`,
-  ) as unknown as Array<{ kid: string; purpose: KeyringPurpose; status: string; created_at: number | string; retired_at: number | string }>;
-  const rotations = queryAll(
+  ) as unknown as Array<{ kid: string; purpose: KeyringPurpose; status: string; created_at: number | string; retired_at: number | string }>)
+    .filter(key => isKeyringPurpose(key.purpose));
+  const rotationPurposePlaceholders = KEYRING_PURPOSES.map(() => '?').join(', ');
+  const rotations = (queryAll(
     `SELECT id, purpose, from_kid, to_kid, status, cursor_id, scanned_count, reencrypted_count,
             created_at, updated_at, completed_at, last_error_code
-     FROM keyring_rotations ORDER BY updated_at DESC LIMIT 20`,
-  ) as unknown as Array<Record<string, string | number | null>>;
+     FROM keyring_rotations WHERE purpose IN (${rotationPurposePlaceholders})
+     ORDER BY updated_at DESC LIMIT 20`,
+    [...KEYRING_PURPOSES],
+  ) as unknown as Array<Record<string, string | number | null>>)
+    .filter(rotation => isKeyringPurpose(rotation.purpose));
   const expectedCount = asNumber(settings?.expected_instance_count) || 1;
   const readiness = KEYRING_PURPOSES.map(purpose => {
     const pending = currentRotation(purpose);

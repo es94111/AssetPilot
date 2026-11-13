@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { KeyringPurpose } from '../lib/keyringCore.ts';
 
-const PURPOSES: KeyringPurpose[] = ['jwt', 'api-token', 'einvoice', 'photo'];
+const PURPOSES: KeyringPurpose[] = ['jwt', 'api-token', 'photo'];
 type Action = 'preview' | 'prepare' | 'apply' | 'activate' | 'resume' | 'rollback';
 
 interface Options {
@@ -14,7 +14,7 @@ interface Options {
 }
 
 const USAGE = `用法：
-  npm run rotate:key -- --purpose=<jwt|api-token|einvoice|photo> [--dry-run]
+  npm run rotate:key -- --purpose=<jwt|api-token|photo> [--dry-run]
   npm run rotate:key -- --prepare --purpose=<用途> --confirm-backup
   npm run rotate:key -- --apply --purpose=<用途> --confirm-backup --confirm-all-instances-ready
   npm run rotate:key -- --activate --rotation=<id> --confirm-backup --confirm-all-instances-ready

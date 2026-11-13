@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 export const KEYRING_ROTATION_LOCK_NAME = 'assetpilot:keyring:rotation-operations';
-export const KEYRING_PURPOSES = ['jwt', 'api-token', 'einvoice', 'photo'] as const;
+export const KEYRING_PURPOSES = ['jwt', 'api-token', 'photo'] as const;
 export type KeyringPurpose = (typeof KEYRING_PURPOSES)[number];
 
 export interface WrappedKey {

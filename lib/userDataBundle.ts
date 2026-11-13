@@ -50,13 +50,23 @@ const DATA_TABLES: BundleTable[] = [
   { table: "stock_recurring", keys: ["id"] },
   { table: "stock_settings", keys: ["user_id"] },
   { table: "user_settings", keys: ["user_id"] },
-  // 雲端發票載具與匯入的發票草稿（issue #253）。憑證為密文，還原時原樣帶回，
-  // 因此還原後仍可解密（同一把 EINVOICE_ENCRYPTION_KEY 的前提下）。
+];
+
+const LEGACY_DATA_TABLES: BundleTable[] = [
   { table: "invoice_carriers", keys: ["id"] },
   { table: "invoice_imports", keys: ["id"] },
 ];
 
 const ATTACHMENTS_TABLE = "transaction_attachments";
+
+function hasDatabaseTable(table: string): boolean {
+  return Boolean(
+    queryOne(
+      "SELECT 1 AS present FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = ?",
+      [table],
+    ),
+  );
+}
 
 export class BundleError extends Error {}
 
@@ -128,7 +138,11 @@ export async function exportUserBundle(
   const zip = new JSZip();
   const counts: Record<string, number> = {};
 
-  for (const { table } of DATA_TABLES) {
+  const exportTables = [
+    ...DATA_TABLES,
+    ...LEGACY_DATA_TABLES.filter(({ table }) => hasDatabaseTable(table)),
+  ];
+  for (const { table } of exportTables) {
     const rows = queryAll(`SELECT * FROM ${table} WHERE user_id = ?`, [dataOwnerId]);
     counts[table] = rows.length;
     zip.file(
@@ -283,6 +297,15 @@ export async function restoreUserBundle(
   for (const { table } of DATA_TABLES) {
     tableRows.set(table, await readJsonEntry(zip, `data/${table}.json`));
   }
+  for (const { table } of LEGACY_DATA_TABLES) {
+    const rows = await readJsonEntry(zip, `data/${table}.json`);
+    tableRows.set(table, rows);
+    if (Array.isArray(rows) && rows.length > 0 && !hasDatabaseTable(table)) {
+      throw new BundleError(
+        `備份包含舊版雲端發票資料（${table}），但目前資料庫沒有相容資料表；已停止還原以避免遺失資料。請使用仍支援舊資料表的版本還原後再備份。`,
+      );
+    }
+  }
   try {
     if (Array.isArray(attachmentRows)) {
       for (const raw of attachmentRows) {
@@ -324,7 +347,7 @@ export async function restoreUserBundle(
     db.run("BEGIN");
     // 同名（name_key）但 id 不同的既有標籤：沿用既有標籤，並把備份連結改指向它。
     const tagIdMap = new Map<string, string>();
-    for (const { table, keys } of DATA_TABLES) {
+    for (const { table, keys } of [...DATA_TABLES, ...LEGACY_DATA_TABLES]) {
       perTable[table] = { inserted: 0, skipped: 0 };
       const rows = tableRows.get(table);
       if (!Array.isArray(rows)) continue;

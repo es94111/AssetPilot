@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5234,6 +5235,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationScopeTransactionsWrite => 'लेन-देन बनाएँ';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsRead => 'खाते पढ़ें';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'खाते बनाएँ';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'श्रेणियाँ पढ़ें';
 
   @override
   String get settingsApiIntegrationScopeWebhooksManage =>

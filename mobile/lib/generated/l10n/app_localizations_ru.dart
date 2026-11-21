@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5303,6 +5304,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get settingsApiIntegrationScopeTransactionsWrite =>
       'Создание транзакций';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsRead => 'Чтение счетов';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'Создание счетов';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'Чтение категорий';
 
   @override
   String get settingsApiIntegrationScopeWebhooksManage =>

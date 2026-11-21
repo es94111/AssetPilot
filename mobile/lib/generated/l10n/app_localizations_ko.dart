@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -5079,6 +5080,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsApiIntegrationScopeTransactionsWrite => '거래 생성';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsRead => '계좌 조회';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => '계좌 생성';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => '분류 조회';
 
   @override
   String get settingsApiIntegrationScopeWebhooksManage => 'Webhook 관리';

@@ -17,9 +17,13 @@ export const MAX_WEBHOOK_SUBSCRIPTIONS = 10;
 
 // 逐 Token 的權限範圍。刻意分成讀／寫／Webhook 管理三種，
 // 讓第三方整合可取得最小權限（issue #258 驗收條件 1）。
+// 順序即 UI 呈現順序；既有 token 不受新增 scope 影響，無需重新發行。
 export const API_TOKEN_SCOPES = [
   'transactions:read',
   'transactions:write',
+  'accounts:read',
+  'accounts:write',
+  'categories:read',
   'webhooks:manage',
 ] as const;
 

@@ -412,6 +412,9 @@ export const hi = {
       scope: {
         transactionsRead: "लेन-देन पढ़ें",
         transactionsWrite: "लेन-देन बनाएँ",
+        accountsRead: "खाते पढ़ें",
+        accountsWrite: "खाते बनाएँ",
+        categoriesRead: "श्रेणियाँ पढ़ें",
         webhooksManage: "Webhook प्रबंधित करें",
       },
       webhookTitle: "Webhook सदस्यताएँ",

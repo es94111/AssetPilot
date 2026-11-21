@@ -412,6 +412,9 @@ export const es = {
       scope: {
         transactionsRead: "Leer transacciones",
         transactionsWrite: "Crear transacciones",
+        accountsRead: "Leer cuentas",
+        accountsWrite: "Crear cuentas",
+        categoriesRead: "Leer categorías",
         webhooksManage: "Gestionar webhooks",
       },
       webhookTitle: "Suscripciones de webhook",

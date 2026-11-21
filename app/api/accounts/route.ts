@@ -1,12 +1,11 @@
 import { withLedgerWriteAudit } from '../../../lib/ledgerContext';
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "../../../lib/apiHelpers";
-import { getDB, queryAll, queryOne, saveDB } from "../../../lib/db";
+import { queryAll, queryOne } from "../../../lib/db";
 import {
   normalizeCurrency,
   normalizeAccountIcon,
   categoryFromAccountType,
-  accountTypeFromCategory,
   calcBalance,
   getExchangeRateToTwd,
   getUserExchangeRateMap,
@@ -14,10 +13,8 @@ import {
   creditCardStatementCycle,
   creditCardPaymentWindow,
 } from "../../../lib/accountHelpers";
+import { createAccount, type CreateAccountRequest } from "../../../lib/accountWriteCore";
 import { todayInUserTz } from "../../../lib/userTime";
-import { uid, todayStr } from "../../../lib/userDefaults";
-
-type AccountCategory = "bank" | "credit_card" | "cash" | "virtual_wallet" | "securities";
 
 interface AccountRow {
   id: string;
@@ -37,28 +34,6 @@ interface AccountRow {
   updated_at: string | number | null;
 }
 
-interface CreateAccountRequest {
-  name?: string;
-  initialBalance?: number | string;
-  currency?: string;
-  icon?: string;
-  category?: string;
-  accountType?: string;
-  excludeFromTotal?: boolean;
-  linkedBankId?: string | null;
-  overseasFeeRate?: number | string | null;
-  statementClosingDay?: number | string | null;
-  isActive?: boolean;
-}
-
-const VALID_CATEGORIES: AccountCategory[] = [
-  "bank",
-  "credit_card",
-  "cash",
-  "virtual_wallet",
-  "securities",
-];
-
 function asRows<T>(rows: Array<Record<string, string | number | null>>): T[] {
   // SAFETY: callers provide the domain type for the fixed SELECT projection;
   // the adapter exposes database scalar rows through a generic record.
@@ -70,15 +45,6 @@ function asRow<T>(
 ): T | null {
   // SAFETY: the generic is tied to the fixed SELECT columns at each call site.
   return row as unknown as T | null;
-}
-
-function toAccountCategory(
-  value: unknown,
-  accountType?: string,
-): AccountCategory {
-  return VALID_CATEGORIES.includes(value as AccountCategory)
-    ? (value as AccountCategory)
-    : (categoryFromAccountType(accountType || "") as AccountCategory);
 }
 
 export async function GET(request: NextRequest) {
@@ -194,129 +160,12 @@ async function handlePOST(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   const body = (await request.json().catch(() => ({}))) as CreateAccountRequest;
-  const { name, initialBalance, icon, excludeFromTotal, linkedBankId } = body;
-  const currency = normalizeCurrency(body.currency);
-  const safeIcon = normalizeAccountIcon(icon);
-  const safeName = String(name || "").trim();
-  if (safeName.length < 1 || safeName.length > 64) {
-    return NextResponse.json(
-      { error: "名稱必須為 1~64 字元", code: "ValidationError", field: "name" },
-      { status: 400 },
-    );
+  // 建立邏輯與公開 API /api/v1/accounts 共用 lib/accountWriteCore.ts，兩端驗證一致。
+  const result = createAccount(auth.userId, body);
+  if (!result.ok) {
+    return NextResponse.json(result.body, { status: result.status });
   }
-  const category = toAccountCategory(body.category, body.accountType);
-  const safeAccountType = accountTypeFromCategory(category);
-  const safeExclude = excludeFromTotal ? 1 : 0;
-  const safeActive = category === "credit_card" && body.isActive === false ? 0 : 1;
-
-  let safeOverseasFeeRate: number | null = null;
-  if (category === "credit_card" && body.overseasFeeRate != null) {
-    const v = Number(body.overseasFeeRate);
-    if (!Number.isFinite(v) || v < 0 || v > 100) {
-      return NextResponse.json(
-        {
-          error: "海外手續費率須為 0~100（百分比）",
-          code: "ValidationError",
-          field: "overseasFeeRate",
-        },
-        { status: 400 },
-      );
-    }
-    safeOverseasFeeRate = Math.round(v * 100) / 100;
-  }
-
-  let safeClosingDay: number | null = null;
-  if (
-    category === "credit_card" &&
-    body.statementClosingDay != null &&
-    body.statementClosingDay !== ""
-  ) {
-    safeClosingDay = normalizeStatementClosingDay(body.statementClosingDay);
-    if (safeClosingDay == null) {
-      return NextResponse.json(
-        {
-          error: "結帳日須為 1~31",
-          code: "ValidationError",
-          field: "statementClosingDay",
-        },
-        { status: 400 },
-      );
-    }
-  }
-
-  let safeLinkedBankId: string | null = null;
-  if (category === "credit_card" && linkedBankId) {
-    const bankAcc = asRow<{ id: string }>(
-      queryOne(
-        "SELECT id FROM accounts WHERE id = ? AND user_id = ? AND (category = 'bank' OR account_type = '銀行')",
-        [linkedBankId, auth.userId],
-      ),
-    );
-    if (!bankAcc)
-      return NextResponse.json(
-        { error: "指定的銀行帳戶不存在" },
-        { status: 400 },
-      );
-    safeLinkedBankId = linkedBankId;
-  }
-
-  const parsedInitialBalance =
-    initialBalance == null || initialBalance === ""
-      ? 0
-      : Number(initialBalance);
-  if (!Number.isFinite(parsedInitialBalance)) {
-    return NextResponse.json(
-      {
-        error: "初始餘額必須為有限數值",
-        code: "ValidationError",
-        field: "initialBalance",
-      },
-      { status: 400 },
-    );
-  }
-  const id = uid();
-  const nowMs = Date.now();
-  const safeInitialBalance = Math.round(parsedInitialBalance);
-  getDB().run(
-    "INSERT INTO accounts (id, user_id, name, category, initial_balance, currency, icon, exclude_from_total, linked_bank_id, overseas_fee_rate, statement_closing_day, account_type, is_active, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    [
-      id,
-      auth.userId,
-      safeName,
-      category,
-      safeInitialBalance,
-      currency,
-      safeIcon,
-      safeExclude,
-      safeLinkedBankId,
-      safeOverseasFeeRate,
-      safeClosingDay,
-      safeAccountType,
-      safeActive,
-      todayStr(),
-      nowMs,
-    ],
-  );
-  saveDB();
-
-  return NextResponse.json(
-    {
-      id,
-      name: safeName,
-      category,
-      accountType: safeAccountType,
-      initialBalance: safeInitialBalance,
-      currency,
-      icon: safeIcon,
-      excludeFromTotal: safeExclude === 1,
-      linkedBankId: safeLinkedBankId,
-      overseasFeeRate: safeOverseasFeeRate,
-      statementClosingDay: safeClosingDay,
-      isActive: safeActive === 1,
-      updatedAt: nowMs,
-    },
-    { status: 201 },
-  );
+  return NextResponse.json(result.account, { status: 201 });
 }
 
 export const POST = withLedgerWriteAudit(handlePOST);

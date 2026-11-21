@@ -1,6 +1,26 @@
 {
-  "currentVersion": "5.1.0",
+  "currentVersion": "5.2.0",
   "releases": [
+    {
+      "version": "5.2.0",
+      "date": "2026-11-21",
+      "title": "公開 API 帳戶／分類端點與安全防護",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "公開 API（/api/v1）新增查詢帳戶清單、新增支付帳戶（全部帳戶類型與完整欄位）與查詢分類清單端點，並新增 accounts:read／accounts:write／categories:read 權限範圍，供第三方自動化讀取與新增交易、查詢及新增支付帳戶。"
+        },
+        {
+          "tag": "security",
+          "text": "公開 API 新增雙層速率限制（per-IP 與 per-Token，超過回 429 與 Retry-After）、JSON 請求體上限 64KB 與嚴格格式驗證；新增 docs/api-security-hardening.md 說明 Cloudflare API Shield／WAF 加固建議。"
+        },
+        {
+          "tag": "new",
+          "text": "asset_openapi.yaml 補上公開 API 的 OpenAPI 規格（Bearer 認證、完整 schema 與錯誤回應），版本更新至 5.2.0。"
+        }
+      ]
+    },
     {
       "version": "5.1.0",
       "date": "2026-11-20",

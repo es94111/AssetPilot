@@ -412,6 +412,9 @@ export const ko = {
       scope: {
         transactionsRead: "거래 조회",
         transactionsWrite: "거래 생성",
+        accountsRead: "계좌 조회",
+        accountsWrite: "계좌 생성",
+        categoriesRead: "분류 조회",
         webhooksManage: "Webhook 관리",
       },
       webhookTitle: "Webhook 구독",

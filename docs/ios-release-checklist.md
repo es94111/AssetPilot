@@ -209,10 +209,16 @@
 
 ### 4.3 加密出口合規
 
-| 項目 | 狀態 |
-| --- | --- |
-| 確認是否使用僅供內部加密的標準演算法 | ☐ |
-| 若是，在 `ITSEncryptionExportComplianceCode` 宣告 | ☐ |
+| 項目 | 結論 | 狀態 |
+| --- | --- | --- |
+| App 內的加密用途 | 只有兩類：①離線草稿照片以 Apple CryptoKit 的 AES-256-GCM 加密（金鑰在 Keychain，見 `ios/Runner/OfflineFileCrypto.swift`）；②連線自家伺服器的標準 HTTPS（系統與 Flutter 內建的 BoringSSL） | ☑ |
+| 是否有自創或非 Apple 系統提供的自訂加密演算法 | 沒有 | ☑ |
+| 出口合規判定 | 屬可豁免（只保護 App 自己的資料與連線，加密非 App 主要功能） | ☑ |
+| `Info.plist` 宣告 | `ITSAppUsesNonExemptEncryption = false`（`ios/Runner/Info.plist`）；CI 的 `ios-build.yml` 會檢查此值 | ☑ |
+| `ITSEncryptionExportComplianceCode` | 不需要（只有取得出口核准文件的 App 才用） | ☑ |
+
+> 若日後加入非 Apple 系統提供的自訂加密（例如自行實作演算法、端對端加密），
+> 必須重新評估，並把 `ITSAppUsesNonExemptEncryption` 改為 `true`、補齊出口文件。
 
 ### 4.4 權限用途說明
 

@@ -9,6 +9,7 @@ import UIKit
     AppGroupChannel.register(with: registry.registrar(forPlugin: "AppGroupChannel"))
     AppleAuthChannel.register(with: registry.registrar(forPlugin: "AppleAuthChannel"))
     LocaleChannel.register(with: registry.registrar(forPlugin: "LocaleChannel"))
+    OfflineFileCryptoChannel.register(with: registry.registrar(forPlugin: "OfflineFileCryptoChannel"))
     WidgetReloadChannel.register(with: registry.registrar(forPlugin: "WidgetReloadChannel"))
     DeepLinkChannel.register(with: registry.registrar(forPlugin: "DeepLinkChannel"))
   }

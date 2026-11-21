@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../api_client.dart';
 import '../l10n.dart';
+import '../platform/offline_photo_vault.dart';
 import 'offline_draft_core.dart';
 import 'offline_draft_store.dart';
 
@@ -210,13 +211,16 @@ class OfflineDraftService {
           if (transactionId.isEmpty) {
             return await _handlePhotoUploadFailure(inProgress);
           }
+          DecryptedPhotos? photos;
           try {
-            await api.uploadTransactionPhotos(
-              transactionId,
+            photos = await OfflinePhotoVault.decryptToTemp(
               inProgress.photoPaths,
             );
+            await api.uploadTransactionPhotos(transactionId, photos.paths);
           } catch (_) {
             return await _handlePhotoUploadFailure(inProgress);
+          } finally {
+            await photos?.cleanup();
           }
         }
       }

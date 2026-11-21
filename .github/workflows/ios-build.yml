@@ -92,6 +92,10 @@ jobs:
             -list
           # App Intent 必須在主 App target（擴充中無法呼叫 UIApplication.shared）。
           grep -q "RecordTransactionIntent.swift" ios/Runner.xcodeproj/project.pbxproj
+          # 離線照片加密（CryptoKit）必須在主 App target 內。
+          grep -q "OfflineFileCrypto.swift" ios/Runner.xcodeproj/project.pbxproj
+          # 出口合規：App 只使用可豁免的加密，必須在 Info.plist 明確宣告為 false。
+          test "$(plutil -extract ITSAppUsesNonExemptEncryption raw ios/Runner/Info.plist)" = "false"
           # 擴充嵌入必須排在 Thin Binary 之前，否則會造成建置循環。
           ruby -e '
             require "xcodeproj"

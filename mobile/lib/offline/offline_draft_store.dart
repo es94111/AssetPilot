@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:io' show File;
+import 'dart:io' show Directory, File;
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../platform/offline_photo_vault.dart';
 import '../platform/secure_store.dart';
 import 'offline_draft_core.dart';
 
@@ -179,26 +180,31 @@ class OfflineDraftStore {
     await deletePhotos(photoPaths);
   }
 
-  /// 把草稿的照片附件複製到 App 私有目錄。
+  /// 測試用：覆寫照片副本的存放資料夾。
+  @visibleForTesting
+  static Directory? overridePhotosDirectory;
+
+  /// 把草稿的照片附件保存到 App 私有目錄。
   ///
   /// 計畫書 5.5 決定離線草稿「僅文字」：照片不會被靜默丟失，但也不假裝已保存。
-  /// 這裡把使用者已選的照片複製一份到 App 私有目錄，讓草稿在 App 關閉／重啟後
+  /// 這裡把使用者已選的照片保存一份到 App 私有目錄，讓草稿在 App 關閉／重啟後
   /// 仍可看到「有 1 張照片待補上傳」，並在使用者確認送出後再上傳。
+  ///
+  /// iOS 上照片經 [OfflinePhotoVault] 以 AES-256-GCM 加密後才落地；
+  /// 加密失敗的照片不會被保存，也不會留下明文。
   static Future<List<String>> persistPhotos(List<String> sourcePaths) async {
     if (sourcePaths.isEmpty) return const [];
     try {
-      final dir = await getApplicationSupportDirectory();
-      final target = File('${dir.path}/offline_drafts_photos');
+      final target =
+          overridePhotosDirectory ??
+          Directory(
+            '${(await getApplicationSupportDirectory()).path}/offline_drafts_photos',
+          );
       if (!target.existsSync()) await target.create(recursive: true);
       final saved = <String>[];
       for (final src in sourcePaths) {
-        final file = File(src);
-        if (!file.existsSync()) continue;
-        final dest = File(
-          '${target.path}/${DateTime.now().microsecondsSinceEpoch}_${file.uri.pathSegments.last}',
-        );
-        await file.copy(dest.path);
-        saved.add(dest.path);
+        final path = await OfflinePhotoVault.encryptCopy(src, target);
+        if (path != null) saved.add(path);
       }
       return saved;
     } catch (_) {

@@ -1,6 +1,22 @@
 {
-  "currentVersion": "4.153.0",
+  "currentVersion": "5.1.0",
   "releases": [
+    {
+      "version": "5.1.0",
+      "date": "2026-11-20",
+      "title": "iOS 離線照片加密與出口合規宣告",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "new",
+          "text": "iOS 離線草稿的照片改以 AES-256-GCM 加密保存，金鑰存放在 iOS Keychain；上傳前暫時解密、完成後立即刪除暫存檔，並宣告出口合規（只使用可豁免的加密）。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正離線草稿照片副本的存放資料夾被誤建成檔案，導致照片無法保存的問題。"
+        }
+      ]
+    },
     {
       "version": "4.153.0",
       "date": "2026-11-13",

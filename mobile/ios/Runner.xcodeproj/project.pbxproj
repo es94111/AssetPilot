@@ -11,6 +11,7 @@
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		199ADB1E6D34073132BC2DD4 /* AssetPilotWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 39877B5992D76B8DF71D5384 /* AssetPilotWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2A9DCC0B76FA0EEC17F8BF5A /* AppleAuthChannelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C973F96D04377B2620ECA325 /* AppleAuthChannelTests.swift */; };
+		A1B2C3D4E5F60718293A4B14 /* OfflineFileCryptoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B04 /* OfflineFileCryptoTests.swift */; };
 		2D70BDB2FB03ACB3EDA10FA0 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 361FA371848B7595B8A42205 /* WidgetKit.framework */; };
 		340594A09279E4895A03AE78 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B5B167F8C3B6D983A982BB9 /* AppIntents.framework */; };
 		37A3F48188508F9BA24FFD84 /* WidgetBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A208EDACFCB7998DAB9F04 /* WidgetBackground.swift */; };
@@ -23,6 +24,9 @@
 		81A7DC342A39130056C5D81C /* AssetPilotWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 39877B5992D76B8DF71D5384 /* AssetPilotWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8488E8CA0223D159E546A343 /* AssetPilotShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E7F89A31861F47E97F54990 /* AssetPilotShortcuts.swift */; };
 		8E4D3520DEA2B95C0ECF5463 /* AppleAuthChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A826E4528472E21079701F /* AppleAuthChannel.swift */; };
+		A1B2C3D4E5F60718293A4B11 /* OfflineFileCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B01 /* OfflineFileCrypto.swift */; };
+		A1B2C3D4E5F60718293A4B12 /* OfflineKeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B02 /* OfflineKeyStore.swift */; };
+		A1B2C3D4E5F60718293A4B13 /* OfflineFileCryptoChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B03 /* OfflineFileCryptoChannel.swift */; };
 		9559FB180094A0A5BACDC4B4 /* DeepLinkQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F482B191C1B79FEF6029C19D /* DeepLinkQueueTests.swift */; };
 		95C7A46C4E22351E11C158A7 /* LocaleChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB990A04A566C8B03643C1AF /* LocaleChannel.swift */; };
 		96ED90F74B5839E8CC90847B /* DeepLinkDeliveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12500697B81DE3C3B38F4651 /* DeepLinkDeliveryTests.swift */; };
@@ -159,6 +163,9 @@
 		B40236CCB3ADB4E66CF6BC02 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = "<group>"; };
 		B7DBF829218B26684B6169FA /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = "<group>"; };
 		B8A826E4528472E21079701F /* AppleAuthChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleAuthChannel.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B01 /* OfflineFileCrypto.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineFileCrypto.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B02 /* OfflineKeyStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineKeyStore.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B03 /* OfflineFileCryptoChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineFileCryptoChannel.swift; sourceTree = "<group>"; };
 		BC7081F2BDCFA5AE7946756B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = "<group>"; };
 		BD28EC9C2787F3FA4822DE5D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = "<group>"; };
 		C0E0593B804865D63CB12B65 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = "<group>"; };
@@ -167,6 +174,7 @@
 		C4CB9A09A137D8F8AF4DC0A7 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = "<group>"; };
 		C61DCBC0DD145FEA3320F31D /* AssetPilotQuickTransactionWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AssetPilotQuickTransactionWidget.swift; path = AssetPilotWidget/AssetPilotQuickTransactionWidget.swift; sourceTree = "<group>"; };
 		C973F96D04377B2620ECA325 /* AppleAuthChannelTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleAuthChannelTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B04 /* OfflineFileCryptoTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineFileCryptoTests.swift; sourceTree = "<group>"; };
 		CB990A04A566C8B03643C1AF /* LocaleChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocaleChannel.swift; sourceTree = "<group>"; };
 		CD5EC790341BBD907BAED90C /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = "<group>"; };
 		EFAA1BACAB47D1784AD0B393 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = "<group>"; };
@@ -207,6 +215,7 @@
 				F482B191C1B79FEF6029C19D /* DeepLinkQueueTests.swift */,
 				12500697B81DE3C3B38F4651 /* DeepLinkDeliveryTests.swift */,
 				C973F96D04377B2620ECA325 /* AppleAuthChannelTests.swift */,
+				A1B2C3D4E5F60718293A4B04 /* OfflineFileCryptoTests.swift */,
 				AE7FF126B00D15F6C191540D /* DeepLinkQueueLogoutTests.swift */,
 			);
 			path = RunnerTests;
@@ -280,6 +289,9 @@
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 				B8A826E4528472E21079701F /* AppleAuthChannel.swift */,
+				A1B2C3D4E5F60718293A4B01 /* OfflineFileCrypto.swift */,
+				A1B2C3D4E5F60718293A4B02 /* OfflineKeyStore.swift */,
+				A1B2C3D4E5F60718293A4B03 /* OfflineFileCryptoChannel.swift */,
 				CB990A04A566C8B03643C1AF /* LocaleChannel.swift */,
 				4E30D0395670B2EE28A6D65E /* WidgetReloadChannel.swift */,
 				6E7F89A31861F47E97F54990 /* AssetPilotShortcuts.swift */,
@@ -530,6 +542,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A9DCC0B76FA0EEC17F8BF5A /* AppleAuthChannelTests.swift in Sources */,
+				A1B2C3D4E5F60718293A4B14 /* OfflineFileCryptoTests.swift in Sources */,
 				96ED90F74B5839E8CC90847B /* DeepLinkDeliveryTests.swift in Sources */,
 				0B021D077D65B30EA57012D3 /* DeepLinkQueueLogoutTests.swift in Sources */,
 				9559FB180094A0A5BACDC4B4 /* DeepLinkQueueTests.swift in Sources */,
@@ -545,6 +558,9 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				8E4D3520DEA2B95C0ECF5463 /* AppleAuthChannel.swift in Sources */,
+				A1B2C3D4E5F60718293A4B11 /* OfflineFileCrypto.swift in Sources */,
+				A1B2C3D4E5F60718293A4B12 /* OfflineKeyStore.swift in Sources */,
+				A1B2C3D4E5F60718293A4B13 /* OfflineFileCryptoChannel.swift in Sources */,
 				95C7A46C4E22351E11C158A7 /* LocaleChannel.swift in Sources */,
 				D58F63099C6AECEB86893409 /* WidgetReloadChannel.swift in Sources */,
 				8488E8CA0223D159E546A343 /* AssetPilotShortcuts.swift in Sources */,

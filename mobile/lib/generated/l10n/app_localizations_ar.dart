@@ -5225,6 +5225,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsApiIntegrationScopeTransactionsWrite => 'إنشاء المعاملات';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => 'قراءة الحسابات';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'إنشاء الحسابات';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'قراءة الفئات';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage => 'إدارة Webhook';
 
   @override

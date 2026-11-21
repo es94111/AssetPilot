@@ -5008,6 +5008,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsApiIntegrationScopeTransactionsWrite => '新增交易';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => '讀取帳戶';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => '新增帳戶';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => '讀取分類';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage => '管理 Webhook';
 
   @override
@@ -11612,6 +11621,15 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get settingsApiIntegrationScopeTransactionsWrite => '新增交易';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => '读取账户';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => '新增账户';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => '读取分类';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage => '管理 Webhook';
 
   @override
@@ -18130,6 +18148,15 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsApiIntegrationScopeTransactionsWrite => '新增交易';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsRead => '讀取帳戶';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => '新增帳戶';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => '讀取分類';
 
   @override
   String get settingsApiIntegrationScopeWebhooksManage => '管理 Webhook';

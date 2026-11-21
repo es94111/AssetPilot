@@ -5081,6 +5081,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsApiIntegrationScopeTransactionsWrite => '거래 생성';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => '계좌 조회';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => '계좌 생성';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => '분류 조회';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage => 'Webhook 관리';
 
   @override

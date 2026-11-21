@@ -5236,6 +5236,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsApiIntegrationScopeTransactionsWrite => 'लेन-देन बनाएँ';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => 'खाते पढ़ें';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'खाते बनाएँ';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'श्रेणियाँ पढ़ें';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage =>
       'Webhook प्रबंधित करें';
 

@@ -8049,6 +8049,21 @@
     "description": "Web path: settings.apiIntegration.scope.transactionsWrite",
     "x-webPath": "settings.apiIntegration.scope.transactionsWrite"
   },
+  "settingsApiIntegrationScopeAccountsRead": "Ler contas",
+  "@settingsApiIntegrationScopeAccountsRead": {
+    "description": "Web path: settings.apiIntegration.scope.accountsRead",
+    "x-webPath": "settings.apiIntegration.scope.accountsRead"
+  },
+  "settingsApiIntegrationScopeAccountsWrite": "Criar contas",
+  "@settingsApiIntegrationScopeAccountsWrite": {
+    "description": "Web path: settings.apiIntegration.scope.accountsWrite",
+    "x-webPath": "settings.apiIntegration.scope.accountsWrite"
+  },
+  "settingsApiIntegrationScopeCategoriesRead": "Ler categorias",
+  "@settingsApiIntegrationScopeCategoriesRead": {
+    "description": "Web path: settings.apiIntegration.scope.categoriesRead",
+    "x-webPath": "settings.apiIntegration.scope.categoriesRead"
+  },
   "settingsApiIntegrationScopeWebhooksManage": "Gerenciar webhooks",
   "@settingsApiIntegrationScopeWebhooksManage": {
     "description": "Web path: settings.apiIntegration.scope.webhooksManage",

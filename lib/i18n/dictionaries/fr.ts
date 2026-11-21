@@ -412,6 +412,9 @@ export const fr = {
       scope: {
         transactionsRead: "Lire les transactions",
         transactionsWrite: "Créer des transactions",
+        accountsRead: "Lire les comptes",
+        accountsWrite: "Créer des comptes",
+        categoriesRead: "Lire les catégories",
         webhooksManage: "Gérer les webhooks",
       },
       webhookTitle: "Abonnements webhook",

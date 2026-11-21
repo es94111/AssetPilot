@@ -8049,6 +8049,21 @@
     "description": "Web path: settings.apiIntegration.scope.transactionsWrite",
     "x-webPath": "settings.apiIntegration.scope.transactionsWrite"
   },
+  "settingsApiIntegrationScopeAccountsRead": "Чтение счетов",
+  "@settingsApiIntegrationScopeAccountsRead": {
+    "description": "Web path: settings.apiIntegration.scope.accountsRead",
+    "x-webPath": "settings.apiIntegration.scope.accountsRead"
+  },
+  "settingsApiIntegrationScopeAccountsWrite": "Создание счетов",
+  "@settingsApiIntegrationScopeAccountsWrite": {
+    "description": "Web path: settings.apiIntegration.scope.accountsWrite",
+    "x-webPath": "settings.apiIntegration.scope.accountsWrite"
+  },
+  "settingsApiIntegrationScopeCategoriesRead": "Чтение категорий",
+  "@settingsApiIntegrationScopeCategoriesRead": {
+    "description": "Web path: settings.apiIntegration.scope.categoriesRead",
+    "x-webPath": "settings.apiIntegration.scope.categoriesRead"
+  },
   "settingsApiIntegrationScopeWebhooksManage": "Управление вебхуками",
   "@settingsApiIntegrationScopeWebhooksManage": {
     "description": "Web path: settings.apiIntegration.scope.webhooksManage",

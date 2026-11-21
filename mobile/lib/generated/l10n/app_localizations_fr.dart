@@ -5338,6 +5338,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Créer des transactions';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => 'Lire les comptes';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'Créer des comptes';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'Lire les catégories';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage => 'Gérer les webhooks';
 
   @override

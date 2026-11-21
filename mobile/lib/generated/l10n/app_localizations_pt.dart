@@ -5304,6 +5304,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsApiIntegrationScopeTransactionsWrite => 'Criar transações';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => 'Ler contas';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'Criar contas';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'Ler categorias';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage => 'Gerenciar webhooks';
 
   @override
@@ -12307,6 +12316,15 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsApiIntegrationScopeTransactionsWrite => 'Criar transações';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsRead => 'Ler contas';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'Criar contas';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'Ler categorias';
 
   @override
   String get settingsApiIntegrationScopeWebhooksManage => 'Gerenciar webhooks';

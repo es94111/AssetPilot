@@ -412,6 +412,9 @@ export const ru = {
       scope: {
         transactionsRead: "Чтение транзакций",
         transactionsWrite: "Создание транзакций",
+        accountsRead: "Чтение счетов",
+        accountsWrite: "Создание счетов",
+        categoriesRead: "Чтение категорий",
         webhooksManage: "Управление вебхуками",
       },
       webhookTitle: "Подписки на вебхуки",

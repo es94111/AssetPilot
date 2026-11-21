@@ -8049,6 +8049,21 @@
     "description": "Web path: settings.apiIntegration.scope.transactionsWrite",
     "x-webPath": "settings.apiIntegration.scope.transactionsWrite"
   },
+  "settingsApiIntegrationScopeAccountsRead": "계좌 조회",
+  "@settingsApiIntegrationScopeAccountsRead": {
+    "description": "Web path: settings.apiIntegration.scope.accountsRead",
+    "x-webPath": "settings.apiIntegration.scope.accountsRead"
+  },
+  "settingsApiIntegrationScopeAccountsWrite": "계좌 생성",
+  "@settingsApiIntegrationScopeAccountsWrite": {
+    "description": "Web path: settings.apiIntegration.scope.accountsWrite",
+    "x-webPath": "settings.apiIntegration.scope.accountsWrite"
+  },
+  "settingsApiIntegrationScopeCategoriesRead": "분류 조회",
+  "@settingsApiIntegrationScopeCategoriesRead": {
+    "description": "Web path: settings.apiIntegration.scope.categoriesRead",
+    "x-webPath": "settings.apiIntegration.scope.categoriesRead"
+  },
   "settingsApiIntegrationScopeWebhooksManage": "Webhook 관리",
   "@settingsApiIntegrationScopeWebhooksManage": {
     "description": "Web path: settings.apiIntegration.scope.webhooksManage",

@@ -5,7 +5,13 @@
 // 並由 tests/lib/apiIntegrationUi.test.ts 斷言與 apiTokenCore 的權威清單一致，
 // 避免兩邊漂移；同時驗證每個 labelKey 都存在於 zh-TW 字典。
 
-export type ApiTokenScope = 'transactions:read' | 'transactions:write' | 'webhooks:manage';
+export type ApiTokenScope =
+  | 'transactions:read'
+  | 'transactions:write'
+  | 'accounts:read'
+  | 'accounts:write'
+  | 'categories:read'
+  | 'webhooks:manage';
 
 export type WebhookEvent = 'transaction.created' | 'transaction.updated' | 'transaction.deleted';
 
@@ -23,6 +29,9 @@ export interface IntegrationOption<T extends string> {
 export const API_TOKEN_SCOPE_OPTIONS: readonly IntegrationOption<ApiTokenScope>[] = [
   { value: 'transactions:read', labelKey: 'settings.apiIntegration.scope.transactionsRead' },
   { value: 'transactions:write', labelKey: 'settings.apiIntegration.scope.transactionsWrite' },
+  { value: 'accounts:read', labelKey: 'settings.apiIntegration.scope.accountsRead' },
+  { value: 'accounts:write', labelKey: 'settings.apiIntegration.scope.accountsWrite' },
+  { value: 'categories:read', labelKey: 'settings.apiIntegration.scope.categoriesRead' },
   { value: 'webhooks:manage', labelKey: 'settings.apiIntegration.scope.webhooksManage' },
 ];
 

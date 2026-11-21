@@ -167,17 +167,12 @@
 > 這些值**絕不可**放進 App bundle、版控或 CI log。
 > 確認方式：`grep -r "APPLE_PRIVATE_KEY" mobile/ios/` 應無結果。
 
-### CI 環境變數（GitHub Repository secrets）
+### CI 簽署（不適用）
 
-| Secret | 用途 |
-| --- | --- |
-| `APPLE_CERTIFICATE_BASE64` | Distribution 憑證（base64） |
-| `APPLE_CERTIFICATE_PASSWORD` | 憑證密碼 |
-| `APPLE_PROVISIONING_PROFILE_BASE64` | 描述檔（base64） |
-| `APPLE_KEY_ID` | App Store Connect API 金鑰 ID |
-| `APPLE_ISSUER_ID` | App Store Connect API 發行人 ID |
-| `APPLE_PRIVATE_KEY_BASE64` | `.p8` 私鑰（base64） |
-| `APPLE_TEAM_ID` | 團隊 ID |
+GitHub CI（`.github/workflows/ios-build.yml`）只做不需簽署的建置檢查，
+**不做**簽署封存（.ipa）與 TestFlight 上傳——Apple 部署不在 CI 進行，
+改由維護者依第 6 節人工發佈。簽署憑證與 App Store Connect API 金鑰
+只在本機人工流程使用，**無需**設定任何 GitHub Repository secrets。
 
 ---
 

@@ -412,6 +412,9 @@ export const zhCN = {
       scope: {
         transactionsRead: "读取交易",
         transactionsWrite: "新增交易",
+        accountsRead: "读取账户",
+        accountsWrite: "新增账户",
+        categoriesRead: "读取分类",
         webhooksManage: "管理 Webhook",
       },
       webhookTitle: "Webhook 订阅",

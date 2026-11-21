@@ -32,6 +32,7 @@ playwright-report/
 blob-report/
 docs/*
 !docs/key-rotation-runbooks.md
+!docs/api-security-hardening.md
 !docs/ios-app-development-plan.md
 !docs/ios-feature-matrix.md
 !docs/ios-release-checklist.md

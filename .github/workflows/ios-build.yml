@@ -1,20 +1,16 @@
 name: Build iOS App
 
-# iOS 版建置檢查與 TestFlight 封存。
+# iOS 版建置檢查（不需簽署憑證）。
 #
-# 分成兩條路徑：
-# - PR／一般推送：只做「不需簽署憑證」的檢查（Flutter analyze、flutter test、
-#   iOS 模擬器 Debug 建置）。不需要任何 secret，因此 fork 也能跑。
-# - 版本 tag 或手動觸發：額外產生簽署封存（.ipa）並上傳到 App Store Connect
-#   的 TestFlight。這條路徑需要 Apple 憑證（見下方 secrets 清單）。
+# 只做「不需簽署憑證」的檢查（Flutter analyze、flutter test、iOS 模擬器
+# Debug 建置、XCTest 與模擬器整合測試）。不需要任何 secret，因此 fork 也能跑。
 #
-# 簽署與上傳與 PR 檢查分離，確保不需要密鑰的檢查不被憑證卡住。
+# 簽署封存（.ipa）與 TestFlight 上傳（Apple 部署）不在 GitHub CI 進行，
+# 由維護者依 docs/ios-release-checklist.md 人工發佈。
 
 on:
   push:
     branches: [main, dev]
-    tags:
-      - "v*"
   pull_request:
     paths:
       - 'mobile/**'
@@ -234,138 +230,5 @@ jobs:
           flutter test integration_test \
             -d "$IOS_SIMULATOR_ID"
 
-  # ── 簽署封存：需要 Apple 憑證 ─────────────────────────────
-  # 需要的 secrets：
-  #   APPLE_CERTIFICATE_BASE64 / APPLE_CERTIFICATE_PASSWORD  （Distribution 憑證 .p12）
-  #   APPLE_PROVISIONING_PROFILE_BASE64                     （App Store 描述檔）
-  #   APPLE_KEY_ID / APPLE_ISSUER_ID / APPLE_PRIVATE_KEY_BASE64（App Store Connect API 金鑰）
-  archive:
-    needs: verify
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-    runs-on: macos-latest
-    timeout-minutes: 60
-    env:
-      APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
-      APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
-      APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
-      APPLE_PRIVATE_KEY_BASE64: ${{ secrets.APPLE_PRIVATE_KEY_BASE64 }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-
-      - name: Select Xcode version
-        run: |
-          # 與 verify 工作流一致：選用 runner 上可用的最新 Xcode。
-          XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
-          if [ -z "$XCODE" ]; then
-            echo "No Xcode found in /Applications" >&2
-            exit 1
-          fi
-          sudo xcode-select -s "$XCODE"
-          xcodebuild -version
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Install Flutter dependencies
-        working-directory: mobile
-        run: flutter pub get
-
-      - name: Resolve version
-        id: version
-        shell: bash
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="$(jq -r .currentVersion changelog.json)"
-          fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Resolved app version: ${VERSION}"
-
-      - name: Verify Apple signing configuration
-        run: |
-          missing=0
-          for name in APPLE_CERTIFICATE_BASE64 APPLE_CERTIFICATE_PASSWORD \
-                      APPLE_PROVISIONING_PROFILE_BASE64 APPLE_KEY_ID \
-                      APPLE_ISSUER_ID APPLE_PRIVATE_KEY_BASE64 APPLE_TEAM_ID; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Missing secret $name; cannot build a signed iOS archive."
-              missing=1
-            fi
-          done
-          exit "$missing"
-
-      - name: Import signing assets
-        run: |
-          set -euo pipefail
-          CERT_DIR="$RUNNER_TEMP/ios-signing"
-          mkdir -p "$CERT_DIR"
-          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERT_DIR/certificate.p12"
-          echo "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$CERT_DIR/AssetPilot.mobileprovision"
-          echo "$APPLE_PRIVATE_KEY_BASE64" | base64 --decode > "$CERT_DIR/AuthKey_${APPLE_KEY_ID}.p8"
-
-          # 匯入簽署憑證到本次 runner 的 keychain。
-          security create-keychain -p ci "$CERT_DIR/build.keychain"
-          security default-keychain -s "$CERT_DIR/build.keychain"
-          security unlock-keychain -p ci "$CERT_DIR/build.keychain"
-          security import "$CERT_DIR/certificate.p12" \
-            -k "$CERT_DIR/build.keychain" \
-            -P "$APPLE_CERTIFICATE_PASSWORD" \
-            -T /usr/bin/codesign
-          security set-key-partition-list \
-            -S apple-tool:,apple: \
-            -s \
-            -k ci \
-            "$CERT_DIR/build.keychain" >/dev/null
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          cp "$CERT_DIR/AssetPilot.mobileprovision" \
-            "$HOME/Library/MobileDevice/Provisioning Profiles/AssetPilot.mobileprovision"
-
-      - name: Build signed archive
-        working-directory: mobile
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          # ExportOptions.plist 以 $(APPLE_TEAM_ID) 佔位，避免把 team id
-          # 寫死在版控中。
-          sed "s/\$(APPLE_TEAM_ID)/${APPLE_TEAM_ID}/g" \
-            ios/ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
-          flutter build ipa \
-            --release \
-            --build-name=${{ steps.version.outputs.version }} \
-            --build-number=${{ github.run_number }} \
-            --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
-
-      - name: Upload archive artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: assetpilot-ipa
-          path: mobile/build/ios/ipa/*.ipa
-
-      - name: Publish to TestFlight
-        working-directory: mobile
-        run: |
-          set -euo pipefail
-          if [ ! -d "$HOME/private_keys" ]; then
-            mkdir -p "$HOME/private_keys"
-          fi
-          cp "$RUNNER_TEMP/ios-signing/AuthKey_${APPLE_KEY_ID}.p8" \
-            "$HOME/private_keys/AuthKey_${APPLE_KEY_ID}.p8"
-          IPA_PATH="$(ls build/ios/ipa/*.ipa | head -1)"
-          xcrun altool --upload-app --type ios \
-            --file "$IPA_PATH" \
-            --apiKey "$APPLE_KEY_ID" \
-            --apiIssuer "$APPLE_ISSUER_ID" \
-            --verbose
+  # 簽署封存（.ipa）與 TestFlight 上傳（Apple 部署）刻意不在 GitHub CI 進行，
+  # 由維護者依 docs/ios-release-checklist.md 人工發佈。

@@ -5239,6 +5239,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Create transactions';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => 'Read accounts';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'Create accounts';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'Read categories';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage => 'Manage webhooks';
 
   @override

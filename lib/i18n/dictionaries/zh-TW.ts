@@ -410,6 +410,9 @@ export const zhTW = {
       scope: {
         transactionsRead: "讀取交易",
         transactionsWrite: "新增交易",
+        accountsRead: "讀取帳戶",
+        accountsWrite: "新增帳戶",
+        categoriesRead: "讀取分類",
         webhooksManage: "管理 Webhook",
       },
       webhookTitle: "Webhook 訂閱",

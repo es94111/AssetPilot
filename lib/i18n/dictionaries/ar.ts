@@ -412,6 +412,9 @@ export const ar = {
       scope: {
         transactionsRead: "قراءة المعاملات",
         transactionsWrite: "إنشاء المعاملات",
+        accountsRead: "قراءة الحسابات",
+        accountsWrite: "إنشاء الحسابات",
+        categoriesRead: "قراءة الفئات",
         webhooksManage: "إدارة Webhook",
       },
       webhookTitle: "اشتراكات Webhook",

@@ -9163,6 +9163,24 @@ abstract class AppLocalizations {
   /// **'新增交易'**
   String get settingsApiIntegrationScopeTransactionsWrite;
 
+  /// Web path: settings.apiIntegration.scope.accountsRead
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'讀取帳戶'**
+  String get settingsApiIntegrationScopeAccountsRead;
+
+  /// Web path: settings.apiIntegration.scope.accountsWrite
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'新增帳戶'**
+  String get settingsApiIntegrationScopeAccountsWrite;
+
+  /// Web path: settings.apiIntegration.scope.categoriesRead
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'讀取分類'**
+  String get settingsApiIntegrationScopeCategoriesRead;
+
   /// Web path: settings.apiIntegration.scope.webhooksManage
   ///
   /// In zh_Hant_TW, this message translates to:

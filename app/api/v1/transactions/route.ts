@@ -17,27 +17,12 @@ import {
   requireApiToken,
   jsonNoStore,
   readRequestedLedgerId,
+  readJsonBody,
+  ledgerScopeError,
 } from '../../../../lib/apiTokenRequestAuth';
 
 const TRANSACTION_TYPES = new Set(['income', 'expense']);
 const MAX_ITEMS = 200;
-
-/**
- * 帳本授權失敗一律以既有錯誤形狀回覆：不區分「不存在」與「非成員」，
- * 避免洩漏其他帳本的存在。viewer 寫入則明確回 403（與站內 API 一致）。
- */
-function ledgerScopeError(reason: 'not-a-member' | 'read-only' | 'not-found'): NextResponse {
-  if (reason === 'read-only') {
-    return jsonNoStore(
-      { error: '此帳本為唯讀，無法修改資料', code: 'Forbidden' },
-      { status: 403 },
-    );
-  }
-  return jsonNoStore(
-    { error: '找不到帳本或沒有存取權', code: 'NotFound' },
-    { status: 404 },
-  );
-}
 
 interface TransactionRow {
   id: string;
@@ -120,7 +105,8 @@ export async function POST(request: NextRequest) {
   const auth = requireApiToken(request, 'transactions:write');
   if (auth instanceof NextResponse) return auth;
 
-  const body = (await request.json().catch(() => ({}))) as {
+  // 嚴格 body 解析：64KB 上限、必須為 JSON 物件（見 readJsonBody）。
+  const parsed = await readJsonBody<{
     type?: string;
     amount?: unknown;
     originalAmount?: unknown;
@@ -133,7 +119,9 @@ export async function POST(request: NextRequest) {
     note?: string;
     excludeFromStats?: boolean;
     ledgerId?: string;
-  };
+  }>(request);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.body;
 
   const type = String(body?.type || '');
   if (!TRANSACTION_TYPES.has(type)) {

@@ -5305,6 +5305,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Создание транзакций';
 
   @override
+  String get settingsApiIntegrationScopeAccountsRead => 'Чтение счетов';
+
+  @override
+  String get settingsApiIntegrationScopeAccountsWrite => 'Создание счетов';
+
+  @override
+  String get settingsApiIntegrationScopeCategoriesRead => 'Чтение категорий';
+
+  @override
   String get settingsApiIntegrationScopeWebhooksManage =>
       'Управление вебхуками';
 

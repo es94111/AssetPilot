@@ -412,6 +412,9 @@ export const ptBR = {
       scope: {
         transactionsRead: "Ler transações",
         transactionsWrite: "Criar transações",
+        accountsRead: "Ler contas",
+        accountsWrite: "Criar contas",
+        categoriesRead: "Ler categorias",
         webhooksManage: "Gerenciar webhooks",
       },
       webhookTitle: "Assinaturas de webhook",

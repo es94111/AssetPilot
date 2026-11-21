@@ -2,7 +2,7 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "4.134.0"
+  version: "5.2.0"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
@@ -10,6 +10,8 @@ info:
     記帳 API 可用 X-Ledger-Id header 或 ledgerId query 選擇帳本，未指定則使用個人帳本。
     每次請求皆驗證登入者的帳本成員資格；viewer 僅可 GET/HEAD/OPTIONS。
     個人偏好、投資、登入憑證及 MCP/API Token/LINE 整合不採用共享帳本選擇。
+    公開 API（/api/v1/*）供第三方自動化整合：以 Authorization: Bearer <API Token>（ap_api_…）
+    認證並依逐 Token 權限範圍（scope）授權，另有應用層速率限制與嚴格請求體驗證。
 
 servers:
   - url: https://asset.shao.one
@@ -59,6 +61,8 @@ tags:
     description: MCP 個人化存取權杖（PAT）管理（cf-account-update）
   - name: McpOAuthConnections
     description: 已連接 AI 工具（OAuth）清單與新增資料權限管理（cf-account-update）
+  - name: PublicApi
+    description: 第三方自動化公開 API /api/v1（API Token 認證，cf-content）
 
 # ─────────────────────────────────────────
 # 安全性定義
@@ -69,6 +73,17 @@ components:
       type: apiKey
       in: cookie
       name: token
+    apiToken:
+      type: http
+      scheme: bearer
+      bearerFormat: ap_api_
+      description: |
+        公開 API（/api/v1/*）專用 API Token，於「設定 → API 整合」建立。
+        明文僅建立時顯示一次，伺服器只存 SHA-256 雜湊。
+        逐 Token 權限範圍（scope）：transactions:read／transactions:write／
+        accounts:read／accounts:write／categories:read／webhooks:manage。
+        額外安全機制：per-IP 與 per-Token 雙層速率限制（超過回 429 與 Retry-After）、
+        JSON 請求體上限 64KB、所有回應 Cache-Control: no-store。
 
   parameters:
     LedgerId:
@@ -81,6 +96,14 @@ components:
       in: header
       name: X-Ledger-Id
       description: 目前帳本，省略時使用個人帳本；不可用此值冒用非成員帳本。
+      schema:
+        type: string
+    V1LedgerSelection:
+      in: query
+      name: ledgerId
+      description: |
+        公開 API 的帳本選擇（亦可放 JSON body 的 ledgerId）；省略時使用個人帳本。
+        非成員帳本一律以 404 回覆（不揭露帳本存在性）；viewer 對寫入回 403。
       schema:
         type: string
 
@@ -740,6 +763,251 @@ components:
         - createdAt
         - stale
         - allocations
+
+    # ── 公開 API（/api/v1，API Token 認證） ──
+    V1ErrorResponse:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+          description: 人類可讀錯誤訊息
+        code:
+          type: string
+          description: |
+            機器可讀錯誤碼：ValidationError／Unauthorized／InsufficientScope／
+            NotFound／Forbidden／RateLimited／PayloadTooLarge／CreditCardDisabled／WriteFailed
+        field:
+          type: string
+          description: 觸發驗證錯誤的欄位名稱（僅部分 400 回應）
+
+    V1Transaction:
+      type: object
+      required: [id, type, amount, currency, date, note, excludeFromStats]
+      properties:
+        id: { type: string }
+        type:
+          type: string
+          enum: [income, expense]
+        amount:
+          type: number
+          description: TWD 等值金額
+        originalAmount:
+          type: number
+          nullable: true
+          description: 原幣金額（與 currency 同幣別）
+        currency:
+          type: string
+          description: ISO 4217 幣別代碼
+        date:
+          type: string
+          description: 嚴格 ISO `YYYY-MM-DD`
+        categoryId: { type: string, nullable: true }
+        accountId: { type: string, nullable: true }
+        note: { type: string }
+        excludeFromStats: { type: boolean }
+
+    V1TransactionInput:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+        amount:
+          type: number
+          description: 金額（大於 0；未提供 originalAmount 時視為原幣金額）
+        originalAmount:
+          type: number
+          description: 原幣金額；提供時優先於 amount
+        currency:
+          type: string
+          description: ISO 4217 幣別代碼，預設 TWD
+        fxRate:
+          type: number
+          nullable: true
+          description: 自訂匯率；省略時使用使用者匯率設定
+        fxFee:
+          type: number
+          nullable: true
+          description: 海外手續費（原幣）；省略時依帳戶設定自動計提為獨立交易
+        date:
+          type: string
+          description: 嚴格 ISO `YYYY-MM-DD`；省略時以帳本時區的今天
+        categoryId:
+          type: string
+          nullable: true
+          description: 必須為自己的「子分類」（父分類不可直接掛交易）
+        accountId:
+          type: string
+          nullable: true
+          description: 必須為自己的帳戶；停用信用卡不可新增刷卡消費（409 CreditCardDisabled）
+        note: { type: string }
+        excludeFromStats: { type: boolean }
+        ledgerId:
+          type: string
+          nullable: true
+          description: 帳本 ID，亦可以同名 query 參數傳遞
+
+    V1Account:
+      type: object
+      required:
+        [id, name, category, accountType, currency, initialBalance, balance, twdBalance, isActive, excludeFromTotal]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category:
+          type: string
+          enum: [bank, credit_card, cash, virtual_wallet, securities]
+        accountType: { type: string }
+        currency:
+          type: string
+          description: ISO 4217 幣別代碼
+        initialBalance: { type: number }
+        balance:
+          type: number
+          description: 現況餘額（原幣）
+        twdBalance:
+          type: number
+          description: 現況餘額的 TWD 等值
+        icon: { type: string }
+        isActive: { type: boolean }
+        excludeFromTotal: { type: boolean }
+        linkedBankId:
+          type: string
+          nullable: true
+          description: 信用卡自動扣款的銀行帳戶 id
+        overseasFeeRate:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+          description: 海外手續費率（百分比），限信用卡
+        statementClosingDay:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 31
+          description: 每月結帳日，限信用卡
+
+    V1AccountInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        category:
+          type: string
+          enum: [bank, credit_card, cash, virtual_wallet, securities]
+          description: 省略時依 accountType 推導，預設 bank
+        accountType:
+          type: string
+          description: 中文帳戶類型（與 category 二擇一）
+        initialBalance:
+          type: number
+          description: 初始餘額（寫入時取整數）
+        currency:
+          type: string
+          description: ISO 4217 幣別代碼，預設 TWD
+        icon: { type: string }
+        excludeFromTotal: { type: boolean }
+        linkedBankId:
+          type: string
+          nullable: true
+          description: 限信用卡；必須是自己的銀行帳戶
+        overseasFeeRate:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+          description: 限信用卡
+        statementClosingDay:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 31
+          description: 限信用卡
+        isActive:
+          type: boolean
+          description: 僅信用卡可設為停用
+        ledgerId:
+          type: string
+          nullable: true
+      examples:
+        - name: 日常支出帳戶
+          category: bank
+          initialBalance: 50000
+          currency: TWD
+        - name: 萬里遊信用卡
+          category: credit_card
+          currency: TWD
+          statementClosingDay: 25
+          overseasFeeRate: 1.5
+          linkedBankId: "<自己的銀行帳戶 id>"
+
+    V1Category:
+      type: object
+      required: [id, name, type, color, isDefault, sortOrder]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type:
+          type: string
+          enum: [income, expense]
+        color:
+          type: string
+          description: "#RRGGBB"
+        isDefault: { type: boolean }
+        sortOrder: { type: integer }
+        parentId:
+          type: string
+          nullable: true
+          description: 父分類 id；頂層分類為 null
+
+  # 公開 API 的共用錯誤回應（400/401/403/404/429）
+  responses:
+    V1ValidationError:
+      description: 參數驗證失敗（code：ValidationError／PayloadTooLarge；413 為請求體超過 64KB）
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/V1ErrorResponse"
+    V1Unauthorized:
+      description: 未提供或無效／過期／已撤銷的 API Token（code：Unauthorized；不揭露個別原因）
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/V1ErrorResponse"
+    V1Forbidden:
+      description: 權限範圍不足或帳本唯讀（code：InsufficientScope／Forbidden）
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/V1ErrorResponse"
+    V1NotFound:
+      description: 帳本不存在或非成員（code：NotFound；統一回應，不揭露存在性）
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/V1ErrorResponse"
+    V1RateLimited:
+      description: 速率限制（code：RateLimited；per-IP 與 per-Token 雙層限制）
+      headers:
+        Retry-After:
+          description: 建議重試等待秒數
+          schema: { type: integer }
+        RateLimit-Limit:
+          description: 額度上限（次／5 分鐘）
+          schema: { type: integer }
+        RateLimit-Remaining:
+          description: 剩餘額度
+          schema: { type: integer }
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/V1ErrorResponse"
 
 # ─────────────────────────────────────────
 # 預設安全性（全域）
@@ -3340,6 +3608,221 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  # ─────────────────────────────────────────
+  # 公開 API（/api/v1）：API Token（Bearer ap_api_…）認證，供第三方自動化整合。
+  # 每個端點需對應的權限範圍（scope）；請求體上限 64KB；所有回應 Cache-Control: no-store；
+  # 並受 per-IP 與 per-Token 雙層速率限制（超過 429 與 Retry-After）。
+  # ─────────────────────────────────────────
+  /api/v1/transactions:
+    get:
+      operationId: getV1Transactions
+      tags: [PublicApi]
+      summary: 查詢交易清單（需 scope：transactions:read）
+      description: |
+        回傳一般收支交易（不含自動計提的手續費副交易與轉帳腳），依日期與建立時間倒序。
+      security:
+        - apiToken: []
+      parameters:
+        - $ref: "#/components/parameters/V1LedgerSelection"
+        - name: dateFrom
+          in: query
+          description: 起始日（含），嚴格 ISO `YYYY-MM-DD`
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+        - name: dateTo
+          in: query
+          description: 結束日（含），嚴格 ISO `YYYY-MM-DD`
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: limit
+          in: query
+          description: 回傳筆數上限（預設 50，最大 200）
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: 交易清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [transactions]
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/V1Transaction"
+        "400":
+          $ref: "#/components/responses/V1ValidationError"
+        "401":
+          $ref: "#/components/responses/V1Unauthorized"
+        "403":
+          $ref: "#/components/responses/V1Forbidden"
+        "404":
+          $ref: "#/components/responses/V1NotFound"
+        "429":
+          $ref: "#/components/responses/V1RateLimited"
+    post:
+      operationId: createV1Transaction
+      tags: [PublicApi]
+      summary: 新增交易（需 scope：transactions:write）
+      description: |
+        與站內新增交易共用寫入核心與匯率換算邏輯；建立成功時觸發 `transaction.created`
+        Webhook（若有訂閱）。分類必須為自己的子分類、帳戶必須為自己的帳戶。
+      security:
+        - apiToken: []
+      parameters:
+        - $ref: "#/components/parameters/V1LedgerSelection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1TransactionInput"
+      responses:
+        "201":
+          description: 新增成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [transaction]
+                properties:
+                  transaction:
+                    $ref: "#/components/schemas/V1Transaction"
+        "400":
+          $ref: "#/components/responses/V1ValidationError"
+        "401":
+          $ref: "#/components/responses/V1Unauthorized"
+        "403":
+          $ref: "#/components/responses/V1Forbidden"
+        "404":
+          $ref: "#/components/responses/V1NotFound"
+        "409":
+          description: 信用卡已停用，無法新增刷卡消費（code：CreditCardDisabled）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1ErrorResponse"
+        "413":
+          $ref: "#/components/responses/V1ValidationError"
+        "429":
+          $ref: "#/components/responses/V1RateLimited"
+
+  /api/v1/accounts:
+    get:
+      operationId: getV1Accounts
+      tags: [PublicApi]
+      summary: 查詢帳戶清單（需 scope：accounts:read）
+      description: 回傳支付帳戶（銀行／信用卡／現金／電子錢包／證券）清單與餘額。
+      security:
+        - apiToken: []
+      parameters:
+        - $ref: "#/components/parameters/V1LedgerSelection"
+      responses:
+        "200":
+          description: 帳戶清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accounts]
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/V1Account"
+        "401":
+          $ref: "#/components/responses/V1Unauthorized"
+        "403":
+          $ref: "#/components/responses/V1Forbidden"
+        "404":
+          $ref: "#/components/responses/V1NotFound"
+        "429":
+          $ref: "#/components/responses/V1RateLimited"
+    post:
+      operationId: createV1Account
+      tags: [PublicApi]
+      summary: 新增支付帳戶（需 scope：accounts:write）
+      description: |
+        新增支付帳戶，全部帳戶類型與完整欄位，與站內新增帳戶共用相同驗證核心。
+        viewer 帳本無法新增（403）。
+      security:
+        - apiToken: []
+      parameters:
+        - $ref: "#/components/parameters/V1LedgerSelection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V1AccountInput"
+      responses:
+        "201":
+          description: 新增成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [account]
+                properties:
+                  account:
+                    $ref: "#/components/schemas/V1Account"
+        "400":
+          $ref: "#/components/responses/V1ValidationError"
+        "401":
+          $ref: "#/components/responses/V1Unauthorized"
+        "403":
+          $ref: "#/components/responses/V1Forbidden"
+        "404":
+          $ref: "#/components/responses/V1NotFound"
+        "413":
+          $ref: "#/components/responses/V1ValidationError"
+        "429":
+          $ref: "#/components/responses/V1RateLimited"
+
+  /api/v1/categories:
+    get:
+      operationId: getV1Categories
+      tags: [PublicApi]
+      summary: 查詢分類清單（需 scope：categories:read）
+      description: 回傳收入／支出分類（含父子結構、顏色與排序），依 sortOrder 排序。
+      security:
+        - apiToken: []
+      parameters:
+        - $ref: "#/components/parameters/V1LedgerSelection"
+      responses:
+        "200":
+          description: 分類清單
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [categories]
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/V1Category"
+        "401":
+          $ref: "#/components/responses/V1Unauthorized"
+        "403":
+          $ref: "#/components/responses/V1Forbidden"
+        "404":
+          $ref: "#/components/responses/V1NotFound"
+        "429":
+          $ref: "#/components/responses/V1RateLimited"
 
   # ── 管理員 / 系統 / 資料庫備份（不經過 Cloudflare，不納入 API Shield） ──
   # /api/admin/*        — 管理員設定、使用者管理、登入紀錄、憑證管理

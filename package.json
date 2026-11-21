@@ -110,7 +110,7 @@
     "jsonwebtoken": "^9.0.3",
     "jszip": "^3.10.2",
     "lucide-react": "^1.55.0",
-    "next": "^16.4.1",
+    "next": "^16.4.5",
     "nodemailer": "^10.1.4",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
@@ -120,9 +120,9 @@
     "sharp": "^0.35.5",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
+    "web-push": "^3.6.7",
     "xlsx-stream-writer": "^1.3.2",
-    "zod": "^4.6.7",
-    "web-push": "^3.6.7"
+    "zod": "^4.6.7"
   },
   "overrides": {
     "postcss": "^8.5.29",
@@ -141,11 +141,11 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/web-push": "^3.6.4",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "autoprefixer": "^10.6.1",
     "pino-pretty": "^13.2.0",
     "postcss": "^8.5.29",
-    "typescript": "^7.0.2",
-    "@types/web-push": "^3.6.4"
+    "typescript": "^7.0.2"
   }
 }

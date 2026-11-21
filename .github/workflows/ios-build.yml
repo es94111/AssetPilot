@@ -4,13 +4,13 @@ name: Build iOS App
 #
 # 只做「不需簽署憑證」的檢查（Flutter analyze、flutter test、iOS 模擬器
 # Debug 建置、XCTest 與模擬器整合測試）。不需要任何 secret，因此 fork 也能跑。
+# 只在 pull_request（限 mobile/**、shared/i18n/** 變更）與手動觸發執行，
+# 不在 push 執行（macOS runner 昂貴，PR 檢查已足夠）。
 #
 # 簽署封存（.ipa）與 TestFlight 上傳（Apple 部署）不在 GitHub CI 進行，
 # 由維護者依 docs/ios-release-checklist.md 人工發佈。
 
 on:
-  push:
-    branches: [main, dev]
   pull_request:
     paths:
       - 'mobile/**'
@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 jobs:
-  # ── 不需簽署憑證的檢查：PR 與日常推送都會跑 ────────────────
+  # ── 不需簽署憑證的檢查：PR 與手動觸發會跑 ────────────────
   verify:
     runs-on: macos-latest
     timeout-minutes: 45

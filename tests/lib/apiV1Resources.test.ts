@@ -22,6 +22,7 @@ if (!DB_URL) {
   const accountsRoute = await import('../../app/api/v1/accounts/route.ts');
   const categoriesRoute = await import('../../app/api/v1/categories/route.ts');
   const transactionsRoute = await import('../../app/api/v1/transactions/route.ts');
+  const transactionCategoryRoute = await import('../../app/api/v1/transactions/[id]/category/route.ts');
 
   await initDB();
   beforeEach(() => _resetApiRateLimitsForTests());
@@ -219,6 +220,78 @@ if (!DB_URL) {
       const forbidden = await categoriesRoute.GET(buildRequest('/api/v1/categories', { token: noScope, ip: '198.51.100.5' }));
       assert.equal(forbidden.status, 403);
     } finally {
+      cleanupUser(userId);
+    }
+  });
+
+  test('PATCH 支出分類保留交易內容、同步手續費，並防止覆蓋其他分類', async () => {
+    const userId = 'test_v1tx_category_' + uid();
+    const outsider = 'test_v1tx_outsider_' + uid();
+    createTestUser(userId);
+    createTestUser(outsider);
+    try {
+      const parent = uid();
+      const lunch = uid();
+      const dinner = uid();
+      const income = uid();
+      const addCategory = (id: string, name: string, type: string, parentId: string) =>
+        getDB().run('INSERT INTO categories (id, user_id, name, type, parent_id) VALUES (?,?,?,?,?)',
+          [id, userId, name, type, parentId]);
+      addCategory(parent, '餐飲', 'expense', '');
+      addCategory(lunch, '午餐', 'expense', parent);
+      addCategory(dinner, '晚餐', 'expense', parent);
+      addCategory(income, '收入子類', 'income', parent);
+
+      const token = createApiToken(userId, '讀寫交易', ['transactions:read', 'transactions:write']).token;
+      const readOnly = createApiToken(userId, '唯讀', ['transactions:read']).token;
+      const stranger = createApiToken(outsider, '其他帳本', ['transactions:write']).token;
+      const note = '測試餐廳｜信用卡末四碼 0000｜12:43｜中國信託消費通知';
+      const created = await transactionsRoute.POST(buildRequest('/api/v1/transactions', {
+        token,
+        ip: '198.51.100.33',
+        body: { type: 'expense', amount: 5, currency: 'USD', fxRate: 32, fxFee: 3, date: '2026-11-20', note },
+      }));
+      assert.equal(created.status, 201);
+      const initial = (await created.json()).transaction;
+      assert.equal(initial.categoryId, null);
+      const readTransactions = async () => (await transactionsRoute.GET(
+        buildRequest('/api/v1/transactions', { token, ip: '198.51.100.33' }),
+      )).json();
+      const before = (await readTransactions()).transactions[0];
+      assert.equal(before.id, initial.id);
+
+      const patchCategory = (body: unknown, authToken = token, id = initial.id) =>
+        transactionCategoryRoute.PATCH(buildRequest('/api/v1/transactions/' + id + '/category', {
+          token: authToken, method: 'PATCH', ip: '198.51.100.33', body,
+        }), { params: Promise.resolve({ id }) });
+      const choice = { categoryId: lunch, expectedCategoryId: null };
+      assert.equal((await patchCategory(choice, readOnly)).status, 403);
+      assert.equal((await patchCategory(choice, stranger)).status, 404);
+      assert.equal((await patchCategory({ categoryId: lunch })).status, 400);
+      assert.equal((await patchCategory({ ...choice, categoryId: parent })).status, 400);
+      assert.equal((await patchCategory({ ...choice, categoryId: income })).status, 400);
+
+      const updated = await patchCategory(choice);
+      assert.equal(updated.status, 200);
+      const updatedBody = await updated.json();
+      assert.equal(updatedBody.transaction.id, initial.id);
+      assert.equal(updatedBody.transaction.categoryId, lunch);
+      const replay = await patchCategory(choice);
+      assert.equal(replay.status, 200);
+      assert.deepEqual(await replay.json(), updatedBody);
+      const conflict = await patchCategory({ ...choice, categoryId: dinner });
+      assert.equal(conflict.status, 409);
+      assert.equal((await conflict.json()).code, 'CategoryConflict');
+
+      assert.deepEqual((await readTransactions()).transactions, [{ ...before, categoryId: lunch }]);
+      const fee = queryAll('SELECT id, category_id, amount FROM transactions WHERE linked_id = ? AND is_fx_fee = 1',
+        [initial.id]);
+      assert.equal(fee.length, 1);
+      assert.equal(fee[0].category_id, lunch);
+      assert.equal(Number(fee[0].amount), 3);
+      assert.equal((await patchCategory(choice, token, fee[0].id)).status, 404);
+    } finally {
+      cleanupUser(outsider);
       cleanupUser(userId);
     }
   });

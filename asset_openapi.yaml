@@ -3720,6 +3720,77 @@ paths:
         "429":
           $ref: "#/components/responses/V1RateLimited"
 
+  /api/v1/transactions/{id}/category:
+    patch:
+      operationId: updateV1ExpenseCategory
+      tags: [PublicApi]
+      summary: 更新既有支出的分類（需 scope：transactions:write）
+      description: |
+        以 expectedCategoryId 核對原分類，未分類時傳 null。已是目標分類時回傳成功。
+        目標限同帳本的支出子分類，並同步更新交易已連動的外幣手續費分類。
+      security:
+        - apiToken: []
+      parameters:
+        - $ref: "#/components/parameters/V1LedgerSelection"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryId, expectedCategoryId]
+              properties:
+                categoryId:
+                  type: string
+                  minLength: 1
+                expectedCategoryId:
+                  type: string
+                  nullable: true
+                  minLength: 1
+      responses:
+        "200":
+          description: 已套用目標分類
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [transaction]
+                properties:
+                  transaction:
+                    type: object
+                    required: [id, categoryId, updatedAt]
+                    properties:
+                      id:
+                        type: string
+                      categoryId:
+                        type: string
+                      updatedAt:
+                        type: integer
+                        format: int64
+        "400":
+          $ref: "#/components/responses/V1ValidationError"
+        "401":
+          $ref: "#/components/responses/V1Unauthorized"
+        "403":
+          $ref: "#/components/responses/V1Forbidden"
+        "404":
+          $ref: "#/components/responses/V1NotFound"
+        "409":
+          description: 目前分類與預期不同（code：CategoryConflict）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/V1ErrorResponse"
+        "413":
+          $ref: "#/components/responses/V1ValidationError"
+        "429":
+          $ref: "#/components/responses/V1RateLimited"
+
   /api/v1/accounts:
     get:
       operationId: getV1Accounts

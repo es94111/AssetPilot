@@ -9,22 +9,22 @@ import PackageDescription
 let package = Package(
     name: "FlutterGeneratedPluginSwiftPackage",
     platforms: [
-        .iOS("16.0")
+        .iOS("15.0")
     ],
     products: [
         .library(name: "FlutterGeneratedPluginSwiftPackage", type: .static, targets: ["FlutterGeneratedPluginSwiftPackage"])
     ],
     dependencies: [
-        .package(name: "app_links", path: "../.packages/app_links-7.2.1"),
-        .package(name: "connectivity_plus", path: "../.packages/connectivity_plus-6.1.5"),
-        .package(name: "flutter_secure_storage_darwin", path: "../.packages/flutter_secure_storage_darwin-0.4.0"),
-        .package(name: "image_picker_ios", path: "../.packages/image_picker_ios-0.8.13+6"),
+        .package(name: "app_links", path: "../.packages/app_links-7.2.2"),
+        .package(name: "connectivity_plus", path: "../.packages/connectivity_plus-7.3.2"),
+        .package(name: "flutter_secure_storage_darwin", path: "../.packages/flutter_secure_storage_darwin-0.4.3"),
+        .package(name: "image_picker_ios", path: "../.packages/image_picker_ios-0.8.13+16"),
         .package(name: "integration_test", path: "../.packages/integration_test"),
-        .package(name: "package_info_plus", path: "../.packages/package_info_plus-10.2.1"),
-        .package(name: "sentry_flutter", path: "../.packages/sentry_flutter-9.27.0"),
-        .package(name: "shared_preferences_foundation", path: "../.packages/shared_preferences_foundation-2.5.6"),
-        .package(name: "url_launcher_ios", path: "../.packages/url_launcher_ios-6.4.1"),
-        .package(name: "webview_flutter_wkwebview", path: "../.packages/webview_flutter_wkwebview-3.26.0"),
+        .package(name: "package_info_plus", path: "../.packages/package_info_plus-10.2.2"),
+        .package(name: "sentry_flutter", path: "../.packages/sentry_flutter-10.6.0"),
+        .package(name: "shared_preferences_foundation", path: "../.packages/shared_preferences_foundation-2.6.2"),
+        .package(name: "url_launcher_ios", path: "../.packages/url_launcher_ios-6.4.2"),
+        .package(name: "webview_flutter_wkwebview", path: "../.packages/webview_flutter_wkwebview-3.27.2"),
         .package(name: "FlutterFramework", path: "../.packages/FlutterFramework")
     ],
     targets: [

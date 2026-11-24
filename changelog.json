@@ -1,6 +1,26 @@
 {
-  "currentVersion": "5.2.0",
+  "currentVersion": "5.2.1",
   "releases": [
+    {
+      "version": "5.2.1",
+      "date": "2026-11-24",
+      "title": "相依套件全面升級至最新版",
+      "type": "changed",
+      "changes": [
+        {
+          "tag": "changed",
+          "text": "全面升級相依套件至最新版：根目錄 npm（next 16.4.6、react 19.3.1、web-push 4.0 等，含 overrides）、行動端 Flutter（sentry_flutter 10.6、connectivity_plus 7.3、cupertino_icons 2.0 等，共 60 個相依更新）與行銷截圖工具（TypeScript 7、@types/react 19、dnd-kit 10、sonner 2、lucide-react 1.79）。"
+        },
+        {
+          "tag": "fixed",
+          "text": "相容 Sentry Flutter 10 的破壞性變更：移除已廢除的 enableLogs 設定（Logs／Metrics 改為恆常啟用），Android minSdk 提高至 26（Sentry 10 要求），iOS 維持 Swift Package Manager 建置。"
+        },
+        {
+          "tag": "security",
+          "text": "依賴全面更新後 npm audit 無已知漏洞（0 vulnerabilities）。"
+        }
+      ]
+    },
     {
       "version": "5.2.0",
       "date": "2026-11-21",

@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.12.0
+  sdk: ^3.13.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -35,36 +35,36 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
 
   # 與 AssetPilot 後端 REST API 溝通
   http: ^1.3.0
   # 持久化登入 Cookie 與後端位址
-  shared_preferences: ^2.3.5
+  shared_preferences: ^2.5.6
   # App 私有目錄路徑（iOS 離線草稿持久化、App Group 快照 fallback）
   path_provider: ^2.1.4
   # 網路連線狀態：離線記帳草稿要能判斷「目前是否連線」並在使用者確認後提示送出
-  connectivity_plus: ^6.1.0
+  connectivity_plus: ^7.3.2
   # 金額格式化（千分位、貨幣）
   intl: ^0.20.2
   # 圓餅圖／趨勢圖（對應 Web 的 Chart.js）
-  fl_chart: ^1.2.0
+  fl_chart: ^1.3.1
   # 登入頁的 Cloudflare Turnstile（真人驗證）以 WebView 呈現
   webview_flutter: ^4.10.0
   # Google SSO：以系統瀏覽器開授權頁
-  url_launcher: ^6.3.1
+  url_launcher: ^6.3.3
   # 接收 Google OAuth 完成後導回的 App Link（深層連結）
-  app_links: ^7.2.0
+  app_links: ^7.2.2
   # 記帳憑證照片選取與 multipart 上傳 Content-Type
-  image_picker: ^1.1.2
+  image_picker: ^1.2.4
   http_parser: ^4.0.2
   # 登入憑證（JWT Cookie）加密儲存：Android 走 Keystore 加密的 EncryptedSharedPreferences
-  flutter_secure_storage: ^11.0.0
+  flutter_secure_storage: ^11.2.0
   # 讀取 App 自身版本（versionName/Code），用於「版本資訊」頁判斷是否有新版
-  package_info_plus: ^10.2.0
+  package_info_plus: ^10.2.2
   # 錯誤／崩潰監控（Sentry）。release/dist 由 package_info 自動帶入；
   # DSN 與過濾設定見 lib/sentry_config.dart。
-  sentry_flutter: ^9.22.0
+  sentry_flutter: ^10.6.0
 
 dev_dependencies:
   flutter_test:

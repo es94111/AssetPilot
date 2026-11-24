@@ -28,12 +28,10 @@ void configureSentry(SentryFlutterOptions options) {
   // log 記錄 path／status／例外型別。關閉 SentryHttpClient 的重複 error event，
   // 仍保留 HTTP performance spans 與 breadcrumbs。
   options.captureFailedRequests = false;
-  // 啟用結構化日誌（Sentry Logs），可用 `Sentry.logger` 送出 info/warn/error 等級日誌。
-  // 注意：寫 log 時不要帶入金額、Cookie、JWT 等機敏內容。
-  options.enableLogs = true;
-  // 指標（Sentry Metrics）於 SDK >= 9.11.0 預設自動啟用，無需額外設定旗標；
-  // 直接以 `Sentry.metrics.count/gauge/distribution(...)` 發送即可。
-  // 同樣注意：指標名稱與標籤勿帶入金額、個資等機敏內容。
+  // 結構化日誌（Sentry Logs）與指標（Sentry Metrics）自 SDK 10 起恆常啟用，
+  // 無需（也沒有）啟用旗標；可用 `Sentry.logger` 送出 info/warn/error 等級日誌、
+  // 以 `Sentry.metrics.count/gauge/distribution(...)` 發送指標。
+  // 注意：寫 log／指標時不要帶入金額、Cookie、JWT 等機敏內容。
 
   // Session Replay（畫面回溯錄製）。本 App 為財務性質，採最保守策略：
   //   - 正式版（release）：平時完全不錄一般 session，只有發生錯誤/當機時才回溯

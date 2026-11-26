@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -81,6 +83,24 @@ class AssetPilotApp extends StatelessWidget {
           navigatorObservers: [SentryNavigatorObserver()],
           theme: _buildTheme(Brightness.light),
           darkTheme: _buildTheme(Brightness.dark),
+          builder: (context, child) {
+            if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) {
+              return child!;
+            }
+            // 留白輕點交給 App 處理，欄位、按鈕與捲動保留各自的手勢。
+            return GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              excludeFromSemantics: true,
+              supportedDevices: const {PointerDeviceKind.touch},
+              onTap: () {
+                final focus = FocusManager.instance.primaryFocus;
+                if (focus != null && focus is! FocusScopeNode) {
+                  focus.unfocus();
+                }
+              },
+              child: child,
+            );
+          },
           home: RootGate(),
           // 系統或深層連結可能推送 App 未註冊的路由（例如背景啟動時 OS 傳來的
           // route information）。本 App 採純 home 導覽、未設定具名路由，若不提供

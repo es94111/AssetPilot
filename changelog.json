@@ -1,6 +1,22 @@
 {
-  "currentVersion": "6.1.2",
+  "currentVersion": "6.1.3",
   "releases": [
+    {
+      "version": "6.1.3",
+      "date": "2026-11-26",
+      "title": "修正 iOS 鍵盤與 App 圖示",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "在 iPhone 表單輕點留白即可收起鍵盤。捲動表單時會保留輸入焦點及已輸入的內容。"
+        },
+        {
+          "tag": "fixed",
+          "text": "補齊 iOS App 圖示，使用滿版且不透明的 AssetPilot 圖示。"
+        }
+      ]
+    },
     {
       "version": "6.1.2",
       "date": "2026-11-26",

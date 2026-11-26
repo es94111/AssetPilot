@@ -1,8 +1,9 @@
 """依 logo.svg 的設計以 PIL 程式繪製 App 圖示來源。
-產生 3 張：
-  app_icon.png  — 完整圖示（漸層圓角底 + 內容），給 legacy mipmap
-  ic_bg.png     — 漸層方底（不圓角，滿版），給 adaptive 背景層
-  ic_fg.png     — 僅內容、透明底、置中留安全區，給 adaptive 前景層
+產生 4 張：
+  app_icon.png     — 完整圖示（漸層圓角底 + 內容），給 Android legacy mipmap
+  app_icon_ios.png — 滿版不透明的方形圖示，由 iOS 套用圓角
+  ic_bg.png        — 漸層方底（不圓角，滿版），給 adaptive 背景層
+  ic_fg.png        — 僅內容、透明底、置中留安全區，給 adaptive 前景層
 """
 import os
 from PIL import Image, ImageDraw, ImageFont
@@ -90,10 +91,14 @@ app_icon.paste(grad, (0, 0), mask)
 app_icon = Image.alpha_composite(app_icon, content)
 app_icon.save(os.path.join(OUT, "app_icon.png"))
 
-# 4) adaptive 背景（滿版方形漸層）
+# 4) iOS 圖示：用同一個漸層填滿四角，由系統套用圓角。
+app_icon_ios = Image.alpha_composite(grad.convert("RGBA"), app_icon).convert("RGB")
+app_icon_ios.save(os.path.join(OUT, "app_icon_ios.png"))
+
+# 5) adaptive 背景（滿版方形漸層）
 grad.convert("RGBA").save(os.path.join(OUT, "ic_bg.png"))
 
-# 5) adaptive 前景：裁到內容邊界再放大到畫布 ~80%（再加上 XML 的 16% inset
+# 6) adaptive 前景：裁到內容邊界再放大到畫布 ~80%（再加上 XML 的 16% inset
 #    剛好落在 adaptive 安全區），置中、透明底。
 fg = Image.new("RGBA", (S, S), (0, 0, 0, 0))
 bbox = content.getbbox()

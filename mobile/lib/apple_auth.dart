@@ -39,7 +39,7 @@ class AppleAuth {
     final bindingToken = stateData['bindingToken'] ?? '';
     final nonce = stateData['nonce'] ?? '';
     if (state.isEmpty || nonce.isEmpty || bindingToken.isEmpty) {
-      throw ApiException(0, trKey('mobileLegacyUnableToCreateLineSignInState'));
+      throw ApiException(0, trKey('authErrorsLoginFailed'));
     }
 
     final result = await _authorize(clientId: clientId, nonce: nonce);
@@ -82,7 +82,7 @@ class AppleAuth {
     final bindingToken = stateData['bindingToken'] ?? '';
     final nonce = stateData['nonce'] ?? '';
     if (state.isEmpty || nonce.isEmpty || bindingToken.isEmpty) {
-      throw ApiException(0, trKey('mobileLegacyUnableToCreateLineSignInState'));
+      throw ApiException(0, trKey('authErrorsLoginFailed'));
     }
 
     final result = await _authorize(clientId: clientId, nonce: nonce);

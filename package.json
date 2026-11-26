@@ -75,7 +75,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:a11y": "playwright test tests/e2e/accessibility.test.ts",
     "test:visual": "playwright test tests/e2e/visual.test.ts",
-    "i18n:generate": "node tools/generate-shared-i18n.mjs && cd mobile && flutter gen-l10n",
+    "i18n:generate": "node tools/generate-shared-i18n.mjs && cd mobile && flutter gen-l10n && cd .. && node tools/generate-shared-i18n.mjs --normalize-flutter-dart",
     "check:iso": "node tools/check-iso-utc-format.ts",
     "check:contrast": "node tools/check-contrast.mjs",
     "check:i18n": "node tools/generate-shared-i18n.mjs --check && node tools/check-i18n-parity.ts",

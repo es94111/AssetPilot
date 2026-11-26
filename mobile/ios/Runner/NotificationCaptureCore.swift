@@ -8,20 +8,30 @@ struct PaymentNotification: Codable, Sendable {
   let body: String
   let receivedAt: String
 
-  static func prepare(sourceId: String, title: String?, subtitle: String?, body: String?, receivedAt: Date) -> Self? {
+  static func prepare(sourceId: String, title: String?, subtitle: String?, body: String?, receivedAt: Date,
+                      identityKey: SymmetricKey) -> (notice: Self, eventId: String)? {
     guard [title, subtitle, body].allSatisfy({ ($0?.utf8.count ?? 0) <= 16_384 }) else { return nil }
     let title = (title ?? "").precomposedStringWithCompatibilityMapping
     let subtitle = (subtitle ?? "").precomposedStringWithCompatibilityMapping
     let body = (body ?? "").precomposedStringWithCompatibilityMapping
     let text = "\(title)\n\(subtitle)\n\(body)"
-    guard !matches(nonPurchase, in: text), matches(purchaseClue, in: text) else { return nil }
-    return Self(
+    guard !matches(nonPurchase, in: text), !matches(authenticationCode, in: text),
+          matches(purchaseClue, in: text) else { return nil }
+    let timestamp = notificationTimestamp(receivedAt)
+    // Preserve distinct source events even when their redacted text is identical.
+    // A device-keyed identifier cannot expose masked digits via the transaction clientRef.
+    let key = HKDF<SHA256>.deriveKey(inputKeyMaterial: identityKey, info: Data("assetpilot.notification.event.v1".utf8), outputByteCount: 32)
+    let material = [sourceId, timestamp, title, subtitle, body].map { "\($0.utf8.count):\($0)" }.joined()
+    let eventId = HMAC<SHA256>.authenticationCode(for: Data(material.utf8), using: key)
+      .prefix(16).map { String(format: "%02x", $0) }.joined()
+    let notice = Self(
       sourceId: sourceId,
       title: bounded(redact(title), units: 240, bytes: 720),
       subtitle: bounded(redact(subtitle), units: 240, bytes: 720),
       body: bounded(redact(body), units: 2100, bytes: 4300),
-      receivedAt: notificationTimestamp(receivedAt)
+      receivedAt: timestamp
     )
+    return (notice, eventId)
   }
 
   private static func bounded(_ value: String?, units: Int, bytes: Int) -> String {
@@ -33,11 +43,13 @@ struct PaymentNotification: Codable, Sendable {
   // The backend independently screens and redacts input from the device.
   private static let nonPurchase = #"\b(?:OTP|one[- ]time (?:code|password)|verification code|login alert|payment (?:failed|declined)|refund(?:ed)?|cash withdrawal|funds transfer|statement reminder)\b|(?:一次性|動態|簡訊|授權|交易|消費|刷卡)驗證碼|驗證碼\s*[:：]?\s*\d|您的驗證碼|登入(?:成功|通知|提醒|異常|驗證)|優惠活動|限時優惠|抽獎|付款失敗|交易失敗|消費失敗|交易拒絕|刷卡失敗|授權失敗|授權未成功|退(?:款|刷|貨)(?:成功|完成|通知|金額|[:：])|(?:完成|已)退(?:款|刷|貨)|轉帳(?:成功|完成|通知|金額|[:：])|(?:完成|已)轉帳|扣繳|繳款(?:成功|完成|期限|提醒)|帳單(?:提醒|已出帳)|存款(?:通知|成功)|提款(?:通知|成功)"#
   private static let purchaseClue = #"消費|刷卡|交易|付款|支付|扣款|授權|\b(?:purchase|paid|payment|transaction|card spend|debited)\b"#
+  private static let authenticationCode = #"(?:驗證碼|認證碼|安全碼|動態密碼)\s*(?:為|是|[:：=])?\s*[(【\[]?\s*\d(?:[ \t-]?\d){2,11}|\b(?:CVV|CVC|security code|authentication code|passcode)\b"#
 
   private static let redactions: [(String, String)] = [
     (#"https?://\S+"#, "[連結已遮蔽]"),
     (#"[\w.%+-]+@[\w.-]+\.[a-z]{2,}"#, "[信箱已遮蔽]"),
-    (#"(?:卡號|信用卡|金融卡|帳號|帳戶|賬號|card(?: number)?|account(?: number)?)(?:\s*(?:末[四4]碼|末碼|尾號|ending in|last four))?\s*[:：#]?\s*(?:[x*•-]+\s*)?\d(?:[ \t-]?\d){3,18}(?![\d.])"#, "[識別資料已遮蔽]"),
+    (#"(?<![a-z\d*•×])(?:\d{2,6}[ \t-]*)?(?:[*x•×][ \t-]*){2,18}\d{2,6}(?!\d)"#, "[識別資料已遮蔽]"),
+    (#"(?:卡號|卡片|信用卡|金融卡|簽帳卡|帳號|帳戶|賬號|card(?: number)?|account(?: number)?)(?:\s*(?:末[四4]碼|末碼|尾號|ending in|last four))?\s*[:：#]?\s*[(【\[]?\s*\d(?:[ \t-]?\d){3,18}(?![\d.])"#, "[識別資料已遮蔽]"),
     (#"(?:末[四4]碼|尾號|ending in)\s*[:：]?\s*\d{4}(?!\d)"#, "[末碼已遮蔽]"),
     (#"(?<!\d)(?:\d[ \t-]?){11,18}\d(?!\d)"#, "[識別資料已遮蔽]"),
     (#"\b[A-Z][12]\d{8}\b"#, "[識別資料已遮蔽]"),
@@ -55,10 +67,6 @@ struct PaymentNotification: Codable, Sendable {
     }.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
-  var fingerprint: String {
-    let input = [sourceId, receivedAt, title, subtitle, body].joined(separator: "\u{1F}")
-    return SHA256.hash(data: Data(input.utf8)).prefix(16).map { String(format: "%02x", $0) }.joined()
-  }
 }
 
 func normalizedNotificationAppName(_ name: String) -> String {

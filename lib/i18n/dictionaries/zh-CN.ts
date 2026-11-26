@@ -9,7 +9,7 @@ export const zhCN = {
     unavailable: "管理员尚未开放识别服务。",
     service: "识别服务",
     consentTitle: "允许分享消费通知？",
-    consentBody: "你选取的 App 发出消费通知时，AssetPilot 会筛选并遮蔽卡号、账号等资料，再将来源、标题、副标题、正文与时间发给 {service} 的 {model} 模型识别。识别内容依该服务的数据政策处理。草稿保存在这部 iPhone，你可以随时在这里关闭。",
+    consentBody: "你选取的 App 发出消费通知时，AssetPilot 会筛选并遮蔽卡号、账号等资料，再将来源、标题、副标题、正文、时间与账号设置的时区发给 {service} 的 {model} 模型识别。识别内容依该服务的数据政策处理。草稿保存在这部 iPhone，你可以随时在这里关闭。",
     agree: "同意并启用",
     recent: "最近一次接收",
     noRecent: "还没收到通知。",

@@ -15,6 +15,7 @@ if (!process.env.DATABASE_URL) {
   const { NextRequest } = await import('next/server');
   const { getDB, initDB, queryOne } = await import('../../lib/db');
   const { createLoginSession, revokeLoginSession } = await import('../../lib/sessionHelpers');
+  const { issueCaptureToken } = await import('../../lib/notificationCaptureStore');
   const admin = await import('../../app/api/admin/notification-ai/route');
   const capture = await import('../../app/api/app/notification-capture/route');
   const parse = await import('../../app/api/app/notification-capture/parse/route');
@@ -142,6 +143,10 @@ if (!process.env.DATABASE_URL) {
     assert.equal(posted.status, 201, JSON.stringify(postedBody));
     const retry = await transactions.POST(request('POST', txPath, mobileHeaders, explicitlyReviewed));
     assert.equal((await retry.json()).id, postedBody.id);
+    const retryAfterCategoryChange = await transactions.POST(request('POST', txPath, mobileHeaders, {
+      ...explicitlyReviewed, categoryId: 'category-removed-after-first-submit',
+    }));
+    assert.equal((await retryAfterCategoryChange.json()).id, postedBody.id);
     assert.equal(await balance(), 925, 'retry should post exactly once');
 
     // A destination or model change requires explicit consent before any egress.
@@ -151,6 +156,10 @@ if (!process.env.DATABASE_URL) {
     assert.equal(providerCalls, 3);
     const newConfig = await (await capture.GET(request('GET', capturePath, mobileHeaders))).json();
     const grant = await (await capture.PUT(request('PUT', capturePath, mobileHeaders, { revision: newConfig.revision }))).json();
+    db.run('UPDATE users SET token_version = 1 WHERE id = ?', [userId]);
+    assert.equal(issueCaptureToken({ userId, sessionId: mobileSession.sessionId, tokenVersion: 0 },
+      new Headers(appHeaders), newConfig.revision), null);
+    assert.equal((await parse.POST(request('POST', parsePath, { authorization: `Bearer ${grant.token}` }, notification))).status, 401);
     revokeLoginSession(userId, mobileSession.sessionId);
     assert.equal((await parse.POST(request('POST', parsePath, { authorization: `Bearer ${grant.token}` }, notification))).status, 401);
   });

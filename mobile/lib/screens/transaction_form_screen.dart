@@ -664,19 +664,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       }
 
       if (notification != null) {
-        await _saveNotificationEdits(notification);
-        // The await above can overlap a sign-out or a ledger change.
-        if (!mounted ||
-            !api.isLoggedIn ||
-            !api.isPersonalLedgerFor(notification.ownerId)) {
-          throw StateError(trKey('notificationCapturePersonalLedger'));
-        }
-        if (!ConnectivityService.instance.online) {
-          toast(context, trKey('notificationCaptureConfirmLater'));
-          setState(() => _saving = false);
-          return;
-        }
-        body['clientRef'] = notification.id;
+        await _confirmNotificationDraft(notification, body);
+        return;
       }
 
       // 編輯既有交易不支援離線草稿（計畫書 4.3：離線草稿僅涵蓋「新增」）。
@@ -722,24 +711,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         if (!isRetryableStatus(e.statusCode)) {
           rethrow;
         }
-        if (notification != null) {
-          if (mounted) {
-            toast(context, trKey('notificationCaptureConfirmLater'));
-            setState(() => _saving = false);
-          }
-          return;
-        }
         await _saveAsDraft(body, isTransfer: isTransfer);
         return;
-      }
-      if (notification != null) {
-        try {
-          await NotificationCapturePlatform.discard(notification);
-        } catch (_) {
-          if (mounted) {
-            toast(context, trKey('notificationCapturePostedCleanup'));
-          }
-        }
       }
       await _refreshDashboardWidgets();
       if (mounted) Navigator.pop(context, true);
@@ -749,6 +722,71 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         toast(context, '$e');
       }
     }
+  }
+
+  Future<void> _confirmNotificationDraft(
+    NotificationDraft draft,
+    Map<String, dynamic> body,
+  ) async {
+    final api = ApiClient.instance;
+    await _saveNotificationEdits(draft);
+    if (!mounted) return;
+    if (!api.isLoggedIn ||
+        !api.isPersonalLedgerFor(draft.ownerId) ||
+        NotificationCapturePlatform.snapshot.value.ownerId != draft.ownerId) {
+      throw StateError(trKey('notificationCapturePersonalLedger'));
+    }
+    if (!ConnectivityService.instance.online) {
+      toast(context, trKey('notificationCaptureConfirmLater'));
+      setState(() => _saving = false);
+      return;
+    }
+
+    final Map<String, dynamic> created;
+    try {
+      created = await api.createTransaction({...body, 'clientRef': draft.id});
+    } on ApiException catch (error) {
+      if (!isRetryableStatus(error.statusCode)) rethrow;
+      if (mounted) {
+        toast(context, trKey('notificationCaptureConfirmLater'));
+        setState(() => _saving = false);
+      }
+      return;
+    }
+    final id = '${created['id'] ?? ''}';
+    if (id.isEmpty) throw StateError(trKey('notificationCaptureConfirmLater'));
+
+    // Posting and uploading optional photos are distinct outcomes. Retire the
+    // draft once the ledger acknowledges the transaction, even if photos fail.
+    final notices = <String>[];
+    try {
+      await NotificationCapturePlatform.discard(draft);
+    } catch (_) {
+      notices.add(trKey('notificationCapturePostedCleanup'));
+    }
+    if (!mounted ||
+        !api.isLoggedIn ||
+        NotificationCapturePlatform.snapshot.value.ownerId != draft.ownerId) {
+      return;
+    }
+    if (created['inserted'] == false) {
+      notices.add(trKey('offlineDraftsSynced'));
+    }
+    if (_photos.isNotEmpty && api.isPersonalLedgerFor(draft.ownerId)) {
+      try {
+        await api.uploadTransactionPhotos(
+          id,
+          _photos.map((photo) => photo.path).toList(),
+        );
+      } catch (_) {
+        notices.add(trKey('featuresTransactionsMessagesPhotoUploadFailed'));
+      }
+    }
+    if (mounted && notices.isNotEmpty) {
+      toast(context, notices.join('\n'));
+    }
+    await _refreshDashboardWidgets();
+    if (mounted) Navigator.pop(context, true);
   }
 
   Future<void> _saveNotificationEdits(NotificationDraft draft) async {

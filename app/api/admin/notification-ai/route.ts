@@ -22,13 +22,15 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  const initialAuth = await requireAdmin(request);
+  if (initialAuth instanceof NextResponse) return initialAuth;
   let body: unknown;
   try { body = await readJsonBodyWithLimit(request.body, request.headers.get('content-length'), 4096); }
   catch (error) {
     return NextResponse.json({ error: '設定內容格式或大小無效。' }, { status: error instanceof RequestBodyTooLargeError ? 413 : 400 });
   }
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
   try {
     const settings = saveNotificationSettings(body);
     auditSensitiveAction(request, auth, { action: 'admin.notification_ai.update', metadata: { enabled: settings.enabled } });

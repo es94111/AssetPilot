@@ -40,7 +40,8 @@ export async function PUT(request: NextRequest) {
   if (!settings.revision || revision !== settings.revision) {
     return NextResponse.json({ code: 'consent_required', error: '辨識服務已變更，請重新查看並同意。' }, { status: 409 });
   }
-  const token = issueCaptureToken(auth.actorUserId, auth.sessionId ?? '', request.headers, settings.revision);
+  const token = issueCaptureToken({ userId: auth.actorUserId, sessionId: auth.sessionId ?? '', tokenVersion: auth.sessionTokenVersion },
+    request.headers, settings.revision);
   if (!token) return NextResponse.json({ error: '請從 iPhone App 重新登入後啟用。' }, { status: 403 });
   return NextResponse.json({ token, revision: settings.revision }, { headers });
 }

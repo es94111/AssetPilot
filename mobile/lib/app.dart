@@ -182,6 +182,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _homeEpoch = 0;
   final DeepLinkService _deepLinks = DeepLinkService.instance;
   StreamSubscription<Uri>? _linkSubscription;
+  Timer? _notificationRetryTimer;
   bool _openingDeepLink = false;
 
   @override
@@ -189,7 +190,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ConnectivityService.instance.isOnline.addListener(
-      _retryNotificationCaptureOnConnect,
+      _scheduleNotificationRetry,
+    );
+    NotificationCapturePlatform.snapshot.addListener(
+      _scheduleNotificationRetry,
     );
     unawaited(NotificationCapturePlatform.initialize());
     _linkSubscription = _deepLinks.links.listen(_handleIncomingLink);
@@ -233,23 +237,48 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _scheduleNotificationRetry();
     if (state == AppLifecycleState.resumed && ApiClient.instance.isLoggedIn) {
       unawaited(NotificationCapturePlatform.retry());
     }
   }
 
-  void _retryNotificationCaptureOnConnect() {
-    if (ConnectivityService.instance.online && ApiClient.instance.isLoggedIn) {
-      unawaited(NotificationCapturePlatform.retry());
+  void _scheduleNotificationRetry() {
+    _notificationRetryTimer?.cancel();
+    final nextRetry = NotificationCapturePlatform.snapshot.value.nextRetryAt;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (nextRetry == null ||
+        !ApiClient.instance.isLoggedIn ||
+        !ConnectivityService.instance.online ||
+        lifecycle != AppLifecycleState.resumed) {
+      return;
     }
+    final remaining = nextRetry.difference(DateTime.now());
+    const minimumDelay = Duration(seconds: 1);
+    _notificationRetryTimer = Timer(
+      remaining < minimumDelay ? minimumDelay : remaining,
+      () {
+        if (mounted &&
+            ApiClient.instance.isLoggedIn &&
+            ConnectivityService.instance.online &&
+            WidgetsBinding.instance.lifecycleState ==
+                AppLifecycleState.resumed) {
+          unawaited(NotificationCapturePlatform.retry());
+        }
+      },
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     ConnectivityService.instance.isOnline.removeListener(
-      _retryNotificationCaptureOnConnect,
+      _scheduleNotificationRetry,
     );
+    NotificationCapturePlatform.snapshot.removeListener(
+      _scheduleNotificationRetry,
+    );
+    _notificationRetryTimer?.cancel();
     _linkSubscription?.cancel();
     super.dispose();
   }

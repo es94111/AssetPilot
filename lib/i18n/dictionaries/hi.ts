@@ -9,7 +9,7 @@ export const hi = {
     unavailable: "The administrator has yet to enable recognition.",
     service: "Recognition service",
     consentTitle: "Share payment notifications?",
-    consentBody: "When a selected app sends a payment alert, AssetPilot screens the alert and masks identifiers such as card or account numbers. It sends the source, title, subtitle, body, and time to {service} for recognition by {model}, subject to that service’s data policy. Drafts stay on this iPhone. You can pause capture here at any time.",
+    consentBody: "When a selected app sends a payment alert, AssetPilot screens the alert and masks identifiers such as card or account numbers. It sends the source, title, subtitle, body, and time of the alert, along with your account time zone, to {service} for recognition by {model}, subject to that service’s data policy. Drafts stay on this iPhone. You can pause capture here at any time.",
     agree: "Agree and enable",
     recent: "Last notification",
     noRecent: "Waiting for your first notification.",

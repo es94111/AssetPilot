@@ -84,6 +84,24 @@ final class NotificationCaptureTests: XCTestCase {
     XCTAssertNil(encrypted.range(of: Data("星星商店".utf8)))
   }
 
+  func testIdentifierUsesUnmaskedIdentityOnlyInMemory() async throws {
+    let recognizer = Recognizer()
+    let (service, _, _) = try fixture(recognizer: recognizer, clock: Clock(time))
+    try await enable(service)
+    for lastFour in ["1234", "7890", "1234"] {
+      _ = try await service.capture(appName: "中國信託行動銀行", title: "消費通知", subtitle: nil,
+        body: "卡片 4312-****-****-\(lastFour) 於星星商店支付 NT$75。", receivedAt: time)
+    }
+    _ = try await service.capture(appName: "中國信託行動銀行", title: "付款驗證", subtitle: nil,
+      body: "請輸入驗證碼為 625-810 以完成信用卡交易。", receivedAt: time)
+    let sent = await recognizer.sent
+    let drafts = try await service.snapshot().drafts
+    XCTAssertEqual(drafts.count, 2)
+    XCTAssertEqual(sent.count, 2)
+    XCTAssertEqual(sent.first?.body, sent.last?.body)
+    XCTAssertTrue(sent.allSatisfy { !$0.body.contains("4312") && !$0.body.contains("1234") && !$0.body.contains("7890") })
+  }
+
   func testQueueSurvivesRestartAndHonorsRateLimit() async throws {
     let recognizer = Recognizer([429, 200])
     let clock = Clock(time)
@@ -94,6 +112,7 @@ final class NotificationCaptureTests: XCTestCase {
     let before = try await restarted.snapshot()
     XCTAssertEqual(before.drafts.first?.status, .queued)
     XCTAssertEqual(before.lastStatus, "limited")
+    XCTAssertEqual(before.nextRetryAt, time.addingTimeInterval(120))
     clock.advance(60)
     try await restarted.process(ownerId: "alice")
     let limitedAttempts = await recognizer.sent.count
@@ -103,6 +122,7 @@ final class NotificationCaptureTests: XCTestCase {
     let after = try await restarted.snapshot()
     XCTAssertEqual(after.drafts.first?.status, .ready)
     XCTAssertNil(after.drafts.first?.notice)
+    XCTAssertNil(after.nextRetryAt)
     XCTAssertEqual(before.drafts.first?.id, after.drafts.first?.id)
   }
 

@@ -52,6 +52,21 @@ test('blocks non-purchases, redacts identifiers and validates notification age',
   assert.match(outgoing, /NT\$1,255\.50/);
 });
 
+test('drops authentication alerts and masks partial payment-card identifiers before egress', () => {
+  for (const body of [
+    '請輸入驗證碼為 625-810 以完成信用卡交易。',
+    '安全碼是 1258，請完成付款驗證。',
+    'Card security code: 291. Complete your payment.',
+  ]) {
+    assert.equal(prepareNotificationInput({ ...notice, body }, now).status, 'ignored', body);
+  }
+  const card = prepareNotificationInput({ ...notice, body: '卡片 4312-****-****-5678 及信用卡(9876) 在範例超市消費 NT$75。' }, now);
+  assert.equal(card.status, 'ok');
+  assert.ok('notice' in card);
+  assert.doesNotMatch(card.notice.body, /4312|5678|9876/);
+  assert.match(card.notice.body, /NT\$75/);
+});
+
 test('extracts TWD and preserves original foreign currency with evidenced fields', () => {
   assert.deepEqual(parseNotificationCompletion(completion(purchase), accepted, 'Asia/Taipei'), {
     outcome: 'draft',
@@ -63,6 +78,30 @@ test('extracts TWD and preserves original foreign currency with evidenced fields
   assert.ok('draft' in result);
   assert.equal(result.draft.amount, '12.34');
   assert.equal(result.draft.currency, 'USD');
+});
+
+test('keeps a converted amount or a reference number out of the original money fields', () => {
+  const foreign = { ...accepted, body: '2026/11/26 12:18 Cedar Shop 刷卡消費 USD12.34，折合 TWD395。' };
+  const converted = parseNotificationCompletion(completion({ ...purchase, amount: '395', currency: 'TWD' }), foreign, 'Asia/Taipei');
+  assert.ok('draft' in converted);
+  assert.equal(converted.draft.amount, null);
+  assert.equal(converted.draft.currency, null);
+  const reference = { ...accepted, body: '範例超市刷卡消費，交易編號 REF 935。' };
+  const guessed = parseNotificationCompletion(completion({ ...purchase, amount: '935', currency: null }), reference, 'Asia/Taipei');
+  assert.ok('draft' in guessed);
+  assert.equal(guessed.draft.amount, null);
+});
+
+test('does not confuse a displayed balance or a fee with the purchase amount', () => {
+  const spend = { ...accepted, body: '於範例超市刷卡消費 NT$75，餘額 NT$4,500，手續費 NT$15。' };
+  for (const amount of ['4500', '15']) {
+    const result = parseNotificationCompletion(completion({ ...purchase, amount }), spend, 'Asia/Taipei');
+    assert.ok('draft' in result);
+    assert.equal(result.draft.amount, null);
+  }
+  const result = parseNotificationCompletion(completion({ ...purchase, amount: '75' }), spend, 'Asia/Taipei');
+  assert.ok('draft' in result);
+  assert.equal(result.draft.amount, '75');
 });
 
 test('keeps missing fields empty, rejects fabricated values and classifies non-purchases', () => {

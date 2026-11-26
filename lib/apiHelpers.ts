@@ -33,6 +33,7 @@ type ApiAuthResult = {
   isSuperAdmin: boolean;
   themeMode: string;
   sessionId?: string;
+  sessionTokenVersion: number;
 };
 
 // 重新匯出：既有呼叫端（各登入路由）沿用 from "lib/apiHelpers" 匯入，
@@ -261,6 +262,7 @@ export async function requireAuth(
       ),
       themeMode: (user.theme_mode as string) || "system",
       sessionId,
+      sessionTokenVersion: tokenVersion,
     };
     const ledgerDataRequest = isLedgerDataApiRequest(request);
     let processPersonalRecurring = !ledgerDataRequest;

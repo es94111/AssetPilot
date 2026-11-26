@@ -38,6 +38,7 @@ class NotificationCaptureSnapshot {
   final String? revision;
   final String? lastStatus;
   final DateTime? lastReceivedAt;
+  final DateTime? nextRetryAt;
   final List<NotificationDraft> drafts;
 
   const NotificationCaptureSnapshot()
@@ -45,6 +46,7 @@ class NotificationCaptureSnapshot {
       revision = null,
       lastStatus = null,
       lastReceivedAt = null,
+      nextRetryAt = null,
       drafts = const [];
 
   NotificationCaptureSnapshot.fromMap(Map<dynamic, dynamic> data)
@@ -54,6 +56,7 @@ class NotificationCaptureSnapshot {
       lastReceivedAt = DateTime.tryParse(
         data['lastReceivedAt'] as String? ?? '',
       ),
+      nextRetryAt = DateTime.tryParse(data['nextRetryAt'] as String? ?? ''),
       drafts = [
         if (data['ownerId'] case final String owner)
           for (final row
@@ -71,9 +74,12 @@ class NotificationCapturePlatform {
   static final supported = ValueNotifier(false);
   static final snapshot = ValueNotifier(const NotificationCaptureSnapshot());
   static Future<void>? _initialization;
+  static Future<void>? _processingQueue;
   static int _readGeneration = 0;
   static int _sessionGeneration = 0;
   static bool _sessionEnded = false;
+
+  static int get sessionGeneration => _sessionGeneration;
 
   static Future<void> initialize() => _initialization ??= _initialize();
 
@@ -174,7 +180,12 @@ class NotificationCapturePlatform {
     await refresh();
   }
 
-  static Future<void> retry() async {
+  static Future<void> retry() =>
+      _processingQueue ??= _processQueue().whenComplete(() {
+        _processingQueue = null;
+      });
+
+  static Future<void> _processQueue() async {
     await initialize();
     if (!supported.value || _sessionEnded) return;
     await refresh();

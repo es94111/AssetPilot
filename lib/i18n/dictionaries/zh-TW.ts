@@ -7,7 +7,7 @@ export const zhTW = {
     unavailable: "管理員尚未開放辨識服務。",
     service: "辨識服務",
     consentTitle: "允許分享消費通知？",
-    consentBody: "你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文與時間送到 {service} 的 {model} 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。",
+    consentBody: "你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文、時間與帳號設定的時區送到 {service} 的 {model} 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。",
     agree: "同意並啟用",
     recent: "最近一次接收",
     noRecent: "還沒收到通知。",

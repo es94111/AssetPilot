@@ -94,18 +94,26 @@ export function saveNotificationSettings(body: unknown) {
   return adminNotificationSettings(proposed);
 }
 
-export function issueCaptureToken(userId: string, sessionId: string, headers: Headers, revision: string): string | null {
+export function issueCaptureToken(
+  session: { userId: string; sessionId: string; tokenVersion: number },
+  headers: Headers,
+  revision: string,
+): string | null {
   const deviceId = getAppDeviceIdFromHeaders(headers);
-  const session = queryOne(`SELECT l.device_id, u.token_version FROM login_sessions l
-    JOIN users u ON l.user_id = u.id WHERE l.id = ? AND l.user_id = ? AND l.revoked_at = 0`, [sessionId, userId]);
-  if (!deviceId || deviceId !== session?.device_id) return null;
+  if (!deviceId) return null;
 
   const token = `ap_notice_${randomBytes(32).toString('base64url')}`;
-  getDB().run(`INSERT INTO notification_capture_grants (session_id, token_hash, token_version, revision)
-    VALUES (?, ?, ?, ?) ON CONFLICT (session_id) DO UPDATE SET token_hash = EXCLUDED.token_hash,
+  const db = getDB();
+  // Grant the same authenticated login epoch. A concurrent session revocation
+  // or token-version change must never promote an old login to the new epoch.
+  db.run(`INSERT INTO notification_capture_grants (session_id, token_hash, token_version, revision)
+    SELECT l.id, ?, ?, ? FROM login_sessions l JOIN users u ON l.user_id = u.id
+    WHERE l.id = ? AND l.user_id = ? AND l.device_id = ? AND l.revoked_at = 0
+      AND u.is_active = 1 AND COALESCE(u.token_version, 0) = ?
+    ON CONFLICT (session_id) DO UPDATE SET token_hash = EXCLUDED.token_hash,
     token_version = EXCLUDED.token_version, revision = EXCLUDED.revision`,
-  [sessionId, hashToken(token), Number(session.token_version) || 0, revision]);
-  return token;
+  [hashToken(token), session.tokenVersion, revision, session.sessionId, session.userId, deviceId, session.tokenVersion]);
+  return db.getRowsModified() === 1 ? token : null;
 }
 
 export function revokeCaptureToken(sessionId: string) {

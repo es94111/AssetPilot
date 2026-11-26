@@ -541,7 +541,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
           "通知郵件可能透過 SMTP、Zeabur Email 或 Resend 寄送。",
           "管理員備份可能上傳至 MEGA S4 物件儲存。",
           "行動版診斷資料可能傳送至 Sentry。",
-          "啟用 iPhone 手機通知自動記帳時，AssetPilot 會將已篩選與遮蔽識別資料的消費通知來源、標題、副標題、本文及時間，送到您在啟用時同意的第三方辨識服務，例如 Google Gemini。服務提供者依其資料政策處理資料。",
+          "啟用 iPhone 手機通知自動記帳時，AssetPilot 會將已篩選與遮蔽識別資料的消費通知來源、標題、副標題、本文、時間和帳號設定的時區，送到您在啟用時同意的第三方辨識服務，例如 Google Gemini。服務提供者依其資料政策處理資料。",
         ],
       },
       {
@@ -762,7 +762,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
           "Notification emails may be sent through SMTP, Zeabur Email, or Resend.",
           "Administrator backups may be uploaded to MEGA S4 object storage.",
           "Mobile diagnostics may be sent to Sentry.",
-          "If you enable iPhone payment notification capture, AssetPilot sends the screened, redacted source, title, subtitle, body, and time of payment alerts to the recognition provider you approved, such as Google Gemini. The provider processes the information under its own data policy.",
+          "If you enable iPhone payment notification capture, AssetPilot sends the screened and redacted alert source, title, subtitle, body, and time, along with your account time zone, to the recognition provider you approved, such as Google Gemini. The provider processes the information under its own data policy.",
         ],
       },
       {

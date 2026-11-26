@@ -64,6 +64,7 @@ class _NotificationCaptureSettingsScreenState
     }
 
     setState(() => _busy = true);
+    final generation = NotificationCapturePlatform.sessionGeneration;
     var issued = false;
     try {
       if (enabled) {
@@ -76,6 +77,9 @@ class _NotificationCaptureSettingsScreenState
           configuration['revision'] as String,
         );
         issued = true;
+        if (generation != NotificationCapturePlatform.sessionGeneration) {
+          throw StateError('capture_session_changed');
+        }
         final active = await NotificationCapturePlatform.enable(
           ownerId: widget.ownerId,
           baseURL: _api.baseUrl,
@@ -87,14 +91,18 @@ class _NotificationCaptureSettingsScreenState
       } else {
         await NotificationCapturePlatform.disable(widget.ownerId);
         // Local stop takes effect even if the device is offline.
-        try {
-          await _api.revokeNotificationCapture();
-        } on ApiException catch (error) {
-          if (error.statusCode != 0) rethrow;
+        if (generation == NotificationCapturePlatform.sessionGeneration &&
+            _api.isLoggedIn) {
+          try {
+            await _api.revokeNotificationCapture();
+          } on ApiException catch (error) {
+            if (error.statusCode != 0) rethrow;
+          }
         }
       }
     } catch (error) {
       if (issued &&
+          generation == NotificationCapturePlatform.sessionGeneration &&
           _api.isLoggedIn &&
           NotificationCapturePlatform.snapshot.value.ownerId ==
               widget.ownerId) {
@@ -126,20 +134,20 @@ class _NotificationCaptureSettingsScreenState
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(trKey('notificationCaptureTitle'))),
-    body: AsyncView<Map<String, dynamic>>(
+    body: FutureBuilder<Map<String, dynamic>>(
       future: _configuration,
-      onRetry: _reload,
-      builder: (context, configuration) => ValueListenableBuilder(
+      builder: (context, response) => ValueListenableBuilder(
         valueListenable: NotificationCapturePlatform.snapshot,
         builder: (context, snapshot, _) {
+          final configuration = response.data ?? const <String, dynamic>{};
           final available = configuration['available'] == true;
-          final active =
-              snapshot.ownerId == widget.ownerId && snapshot.revision != null;
+          final belongsToOwner = snapshot.ownerId == widget.ownerId;
+          final active = belongsToOwner && snapshot.revision != null;
           final changed =
               active &&
               available &&
               snapshot.revision != configuration['revision'];
-          final sources = (configuration['sources'] as List)
+          final sources = (configuration['sources'] as List? ?? const [])
               .whereType<Map>()
               .toList();
           return ListView(
@@ -162,7 +170,17 @@ class _NotificationCaptureSettingsScreenState
                     ? (value) => _change(value, configuration)
                     : null,
               ),
-              if (_busy) const LinearProgressIndicator(),
+              if (_busy || response.connectionState == ConnectionState.waiting)
+                const LinearProgressIndicator(),
+              if (response.hasError)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: _reload,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(trKey('mobileLegacyRetry')),
+                  ),
+                ),
               if (available)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -176,9 +194,14 @@ class _NotificationCaptureSettingsScreenState
                 title: Text(trKey('notificationCaptureRecent')),
                 subtitle: Text(
                   [
-                    if (snapshot.lastReceivedAt case final DateTime time)
+                    if (snapshot.lastReceivedAt case final DateTime time
+                        when belongsToOwner)
                       _displayTime(context, time),
-                    trKey(_captureStatusKey(snapshot.lastStatus)),
+                    trKey(
+                      _captureStatusKey(
+                        belongsToOwner ? snapshot.lastStatus : null,
+                      ),
+                    ),
                   ].join('\n'),
                 ),
               ),

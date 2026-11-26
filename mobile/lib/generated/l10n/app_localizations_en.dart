@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -31,7 +30,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String notificationCaptureConsentBody(String service, String model) {
-    return 'When a selected app sends a payment alert, AssetPilot screens the alert and masks identifiers such as card or account numbers. It sends the source, title, subtitle, body, and time to $service for recognition by $model, subject to that service’s data policy. Drafts stay on this iPhone. You can pause capture here at any time.';
+    return 'When a selected app sends a payment alert, AssetPilot screens the alert and masks identifiers such as card or account numbers. It sends the source, title, subtitle, body, and time of the alert, along with your account time zone, to $service for recognition by $model, subject to that service’s data policy. Drafts stay on this iPhone. You can pause capture here at any time.';
   }
 
   @override

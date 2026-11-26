@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -30,7 +29,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String notificationCaptureConsentBody(String service, String model) {
-    return '你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文與時間送到 $service 的 $model 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。';
+    return '你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文、時間與帳號設定的時區送到 $service 的 $model 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。';
   }
 
   @override
@@ -6714,7 +6713,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String notificationCaptureConsentBody(String service, String model) {
-    return '你选取的 App 发出消费通知时，AssetPilot 会筛选并遮蔽卡号、账号等资料，再将来源、标题、副标题、正文与时间发给 $service 的 $model 模型识别。识别内容依该服务的数据政策处理。草稿保存在这部 iPhone，你可以随时在这里关闭。';
+    return '你选取的 App 发出消费通知时，AssetPilot 会筛选并遮蔽卡号、账号等资料，再将来源、标题、副标题、正文、时间与账号设置的时区发给 $service 的 $model 模型识别。识别内容依该服务的数据政策处理。草稿保存在这部 iPhone，你可以随时在这里关闭。';
   }
 
   @override
@@ -13303,7 +13302,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String notificationCaptureConsentBody(String service, String model) {
-    return '你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文與時間送到 $service 的 $model 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。';
+    return '你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文、時間與帳號設定的時區送到 $service 的 $model 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。';
   }
 
   @override

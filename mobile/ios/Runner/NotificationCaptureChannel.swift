@@ -112,6 +112,7 @@ final class NotificationCaptureChannel: NSObject, FlutterPlugin {
     if let revision = snapshot.revision { result["revision"] = revision }
     if let status = snapshot.lastStatus { result["lastStatus"] = status }
     if let time = snapshot.lastReceivedAt { result["lastReceivedAt"] = notificationTimestamp(time) }
+    if let time = snapshot.nextRetryAt { result["nextRetryAt"] = notificationTimestamp(time) }
     return result
   }
 }

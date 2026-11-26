@@ -5,9 +5,54 @@ import 'package:assetpilot/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 void main() {
   const channel = MethodChannel('assetpilot/notification_capture');
+
+  testWidgets('can stop capture when configuration is unavailable', (
+    tester,
+  ) async {
+    final messenger = tester.binding.defaultBinaryMessenger;
+    NotificationCapturePlatform.supported.value = true;
+    addTearDown(() {
+      NotificationCapturePlatform.supported.value = false;
+      NotificationCapturePlatform.snapshot.value =
+          const NotificationCaptureSnapshot();
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+    var active = true;
+    messenger.setMockMethodCallHandler(channel, (method) async {
+      switch (method.method) {
+        case 'snapshot':
+          return {
+            'ownerId': 'fixture-owner',
+            if (active) 'revision': 'consented',
+          };
+        case 'disable':
+          expect(method.arguments, {'ownerId': 'fixture-owner'});
+          active = false;
+          return null;
+        default:
+          fail('Unexpected native call ${method.method}');
+      }
+    });
+    await http.runWithClient(() async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: NotificationCaptureSettingsScreen(ownerId: 'fixture-owner'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final toggle = find.byType(SwitchListTile);
+      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+      expect(active, isFalse);
+    }, () => MockClient((_) async => http.Response('{}', 500)));
+  });
 
   for (final brightness in Brightness.values) {
     testWidgets(

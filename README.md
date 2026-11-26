@@ -464,7 +464,7 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 1. 在伺服器設定 `NOTIFICATION_AI_SETTINGS_KEY`。以超級管理員開啟 Web **管理後台 → 系統設定 → 手機通知自動記帳**，填入 OpenAI 相容的公開 HTTPS Base URL 或完整 `/chat/completions` 網址、API Key 和模型名稱。畫面預填 Gemini 官方相容端點與 `gemini-3.5-flash-lite`，請使用已開啟計費的 Gemini 專案。 [Gemini 相容 API](https://ai.google.dev/gemini-api/docs/openai) · [Gemini 資料使用條款](https://ai.google.dev/gemini-api/terms)
 2. 儲存後用「測試連線」驗證合成消費通知。後端預設關閉，完成 App 端驗收後再開放使用。更換網址時重新輸入 Key。更換網址或模型後，iPhone 會要求重新同意。
 3. 在 iOS 27 或更新版本的 iPhone 開啟 **AssetPilot → 設定 → 手機通知自動記帳**，確認辨識服務資料後啟用。在捷徑加入「收到通知」自動化和 AssetPilot 的「從通知建立記帳草稿」動作，設定來源及通知變數。已首次解鎖的 iPhone 可在允許鎖定時執行後由捷徑呼叫背景動作。 [Apple 通知觸發器](https://support.apple.com/en-us/guide/shortcuts/apd932ff833f/10.0/ios/27)
-4. 付款後在 **交易 → 通知草稿** 核對幣別、金額、日期、商家及帳戶，於個人帳本確認入帳。草稿加密留在接收通知的 iPhone。離線或供應商限流時，下次開啟 App 或執行捷徑會重試符合重試時間的通知，逾期的暫存文字在下次處理時清除。
+4. 付款後在 **交易 → 通知草稿** 核對幣別、金額、日期、商家及帳戶，於個人帳本確認入帳。草稿加密留在接收通知的 iPhone。若離線或遇到供應商限流，App 在前景連線時會到期重試。下次開啟 App 或執行捷徑也會處理等待重試的通知及清除逾期文字。
 
 來源清單顯示 App 名稱與驗證狀態。Google 錢包的感應付款與 Samsung Pay 無法在 iPhone 上直接提供付款 App 通知，可選擇會發送消費通知的發卡銀行 App。 [Google 錢包](https://support.google.com/wallet/answer/12059331?hl=en) · [Samsung Wallet](https://www.samsung.com/tw/samsung-pay/supported-devices/)
 

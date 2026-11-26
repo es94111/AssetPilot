@@ -92,6 +92,7 @@ struct NotificationCaptureSnapshot: Sendable {
   let drafts: [NotificationCaptureDraft]
   let lastStatus: String?
   let lastReceivedAt: Date?
+  let nextRetryAt: Date?
 }
 
 /// Serializes file mutations across Flutter and background Shortcuts runs. A
@@ -216,9 +217,14 @@ actor NotificationCaptureService {
       try write(state)
     }
     let revision = preferences.bool(forKey: activationKey) ? state.binding?.revision : nil
+    let nextRetryAt = revision.flatMap { _ in
+      inbox.drafts.values.lazy.filter { entry in
+        entry.status == .queued && entry.notice != nil && !self.inFlight.contains("\(owner ?? "")/\(entry.id)")
+      }.map { $0.retryAt ?? $0.queuedAt }.min()
+    }
     return NotificationCaptureSnapshot(ownerId: owner, revision: revision,
       drafts: inbox.drafts.values.sorted { $0.receivedAt > $1.receivedAt },
-      lastStatus: inbox.lastStatus, lastReceivedAt: inbox.lastReceivedAt)
+      lastStatus: inbox.lastStatus, lastReceivedAt: inbox.lastReceivedAt, nextRetryAt: nextRetryAt)
   }
 
   func discard(ownerId: String, draftId: String) throws {
@@ -246,17 +252,18 @@ actor NotificationCaptureService {
     var id: String?
     let cleanApp = normalizedNotificationAppName(appName)
     let source = binding.sources.first { $0.appNames.contains { normalizedNotificationAppName($0) == cleanApp } }
-    if let source, let notice = PaymentNotification.prepare(sourceId: source.id, title: title, subtitle: subtitle,
-      body: body, receivedAt: captureTime), now.timeIntervalSince(captureTime) < Self.retention,
-      captureTime.timeIntervalSince(now) < 5 * 60 {
-      id = notice.fingerprint
-      if inbox.seen[notice.fingerprint] != nil || inbox.drafts[notice.fingerprint] != nil {
+    if let source, now.timeIntervalSince(captureTime) < Self.retention,
+      captureTime.timeIntervalSince(now) < 5 * 60,
+      let (notice, eventId) = PaymentNotification.prepare(sourceId: source.id, title: title, subtitle: subtitle,
+        body: body, receivedAt: captureTime, identityKey: try keys.key()) {
+      id = eventId
+      if inbox.seen[eventId] != nil || inbox.drafts[eventId] != nil {
         status = "duplicate"
       } else if inbox.drafts.count >= maxDrafts || inbox.seen.count >= maxSeen {
         status = "full"
       } else {
-        inbox.seen[notice.fingerprint] = now
-        inbox.drafts[notice.fingerprint] = NotificationCaptureDraft(id: notice.fingerprint, sourceId: source.id,
+        inbox.seen[eventId] = now
+        inbox.drafts[eventId] = NotificationCaptureDraft(id: eventId, sourceId: source.id,
           sourceName: source.name, receivedAt: captureTime, queuedAt: now, notice: notice)
         status = "queued"
       }

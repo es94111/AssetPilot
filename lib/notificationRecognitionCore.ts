@@ -1,4 +1,4 @@
-import { isValidCurrency } from './iso4217';
+import { ISO_4217_CODES, isValidCurrency } from './iso4217';
 import { isValidIsoDate, partsInTz } from './userTime';
 import { findNotificationSource } from './notificationSources';
 
@@ -7,6 +7,7 @@ export const NOTIFICATION_REQUEST_MAX_BYTES = 8192;
 
 const nonPurchase = /\b(?:OTP|one[- ]time (?:code|password)|verification code|login alert|payment (?:failed|declined)|refund(?:ed)?|cash withdrawal|funds transfer|statement reminder)\b|(?:一次性|動態|簡訊|授權|交易|消費|刷卡)驗證碼|驗證碼\s*[:：]?\s*\d|您的驗證碼|登入(?:成功|通知|提醒|異常|驗證)|優惠活動|限時優惠|抽獎|付款失敗|交易失敗|消費失敗|交易拒絕|刷卡失敗|授權失敗|授權未成功|退(?:款|刷|貨)(?:成功|完成|通知|金額|[:：])|(?:完成|已)退(?:款|刷|貨)|轉帳(?:成功|完成|通知|金額|[:：])|(?:完成|已)轉帳|扣繳|繳款(?:成功|完成|期限|提醒)|帳單(?:提醒|已出帳)|存款(?:通知|成功)|提款(?:通知|成功)/iu;
 const purchaseClue = /消費|刷卡|交易|付款|支付|扣款|授權|\b(?:purchase|paid|payment|transaction|card spend|debited)\b/iu;
+const authenticationCode = /(?:驗證碼|認證碼|安全碼|動態密碼)\s*(?:為|是|[:：=])?\s*[(【\[]?\s*\d(?:[ \t-]?\d){2,11}|\b(?:CVV|CVC|security code|authentication code|passcode)\b/iu;
 
 // The same first-pass rules run in iOS before queueing. Repeat them server-side
 // so a caller with a valid credential cannot send raw account identifiers.
@@ -14,7 +15,8 @@ export function redactNotificationText(value: string): string {
   return value.normalize('NFKC')
     .replace(/https?:\/\/\S+/giu, '[連結已遮蔽]')
     .replace(/[\w.%+-]+@[\w.-]+\.[a-z]{2,}/giu, '[信箱已遮蔽]')
-    .replace(/(?:卡號|信用卡|金融卡|帳號|帳戶|賬號|card(?: number)?|account(?: number)?)(?:\s*(?:末[四4]碼|末碼|尾號|ending in|last four))?\s*[:：#]?\s*(?:[x*•-]+\s*)?\d(?:[ \t-]?\d){3,18}(?![\d.])/giu, '[識別資料已遮蔽]')
+    .replace(/(?<![a-z\d*•×])(?:\d{2,6}[ \t-]*)?(?:[*x•×][ \t-]*){2,18}\d{2,6}(?!\d)/giu, '[識別資料已遮蔽]')
+    .replace(/(?:卡號|卡片|信用卡|金融卡|簽帳卡|帳號|帳戶|賬號|card(?: number)?|account(?: number)?)(?:\s*(?:末[四4]碼|末碼|尾號|ending in|last four))?\s*[:：#]?\s*[(【\[]?\s*\d(?:[ \t-]?\d){3,18}(?![\d.])/giu, '[識別資料已遮蔽]')
     .replace(/(?:末[四4]碼|尾號|ending in)\s*[:：]?\s*\d{4}(?!\d)/giu, '[末碼已遮蔽]')
     .replace(/(?<!\d)(?:\d[ \t-]?){11,18}\d(?!\d)/gu, '[識別資料已遮蔽]')
     .replace(/\b[A-Z][12]\d{8}\b/giu, '[識別資料已遮蔽]')
@@ -65,7 +67,7 @@ export function prepareNotificationInput(value: unknown, now = Date.now()):
     return { status: 'invalid' };
   }
   const text = `${title}\n${subtitle}\n${body}`.normalize('NFKC');
-  if (nonPurchase.test(text) || !purchaseClue.test(text)) return { status: 'ignored' };
+  if (nonPurchase.test(text) || authenticationCode.test(text) || !purchaseClue.test(text)) return { status: 'ignored' };
   return {
     status: 'ok',
     notice: {
@@ -92,6 +94,21 @@ const currencyNames: Record<string, string> = {
   SGD: '(?:SG?\\s*\\$|新加坡[幣元])',
 };
 
+const currencyCodeMarker = `(?<![A-Z])(?:${ISO_4217_CODES.join('|')})(?![A-Z])`;
+const genericCurrencyMarker = `${currencyCodeMarker}|(?:NT|US|HK|JP|AU|CA|SG)?\\s*[$¥€£₩]|${Object.values(currencyNames).join('|')}`;
+const convertedAmountLabel = /折合|換算(?:為|成)?|約合|\bequivalent(?: to)?\b|\bconverted(?: to| amount)?\b/iu;
+const originalAmountLabel = /原幣(?:別|金額)?|\boriginal (?:amount|currency)\b/iu;
+const otherAmountLabel = /餘額|可用(?:信用)?額度|手續費|回饋點數|\b(?:balance|available credit|(?:service |transaction )?fee|reward points)\b/iu;
+
+function originalMoneyEvidence(text: string): string {
+  const explicitOriginal = originalAmountLabel.exec(text);
+  const original = explicitOriginal ? text.slice(explicitOriginal.index + explicitOriginal[0].length) : text;
+  return original.split(convertedAmountLabel, 1)[0]
+    .split(/,(?!\d)|[，。；;、\n]/u)
+    .map((clause) => clause.split(otherAmountLabel, 1)[0])
+    .join('\n');
+}
+
 function amountString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const clean = value.trim();
@@ -99,7 +116,8 @@ function amountString(value: unknown): string | null {
   return String(Number(clean));
 }
 
-function validatedMoney(rawAmount: unknown, rawCurrency: unknown, text: string) {
+function validatedMoney(rawAmount: unknown, rawCurrency: unknown, noticeText: string) {
+  const text = originalMoneyEvidence(noticeText);
   let amount = amountString(rawAmount);
   let currency = typeof rawCurrency === 'string' && isValidCurrency(rawCurrency)
     ? rawCurrency.toUpperCase() : null;
@@ -109,7 +127,6 @@ function validatedMoney(rawAmount: unknown, rawCurrency: unknown, text: string) 
   if (amount) {
     // Compare typed decimal values with literal monetary amounts, excluding
     // bare date/day/card digits and numbers embedded in a longer amount.
-    const genericMarker = '(?<![A-Z])[A-Z]{3}(?![A-Z])|(?:NT|US|HK|JP|AU|CA|SG)?\\s*[$¥€£₩]|新?[台臺]幣|美元|美金|日[元圓幣]|港幣|人民幣|英鎊|歐元|韓元|澳幣|加幣';
     const literal = '(\\d{1,3}(?:,\\d{3})+(?:\\.\\d{1,2})?|\\d{1,9}(?:\\.\\d{1,2})?)';
     const find = (marker: string) => {
       const before = new RegExp(`(?:${marker})\\s*[:：]?\\s*${literal}(?![\\d.,])`, 'giu');
@@ -117,15 +134,9 @@ function validatedMoney(rawAmount: unknown, rawCurrency: unknown, text: string) 
       return [...text.matchAll(before), ...text.matchAll(after)]
         .some((match) => amountString(match[1].replace(/,/g, '')) === amount);
     };
-    if (currency && currencyMarker) {
-      if (!find(currencyMarker)) {
-        // A currency elsewhere in the same alert may be a conversion or a
-        // balance. Keep a documented amount, and have the user select currency.
-        currency = null;
-        if (!find(genericMarker) && !find('金額|amount|元(?![\u4e00-\u9fff])')) amount = null;
-      }
-    } else if (!find(genericMarker) && !find('金額|amount|元(?![\u4e00-\u9fff])')) {
-      amount = null;
+    if (!currencyMarker || !find(currencyMarker)) {
+      currency = null;
+      if (!find(genericCurrencyMarker) && !find('金額|amount|元(?![\u4e00-\u9fff])')) amount = null;
     }
   }
   return { amount, currency };

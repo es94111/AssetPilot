@@ -1,6 +1,18 @@
 {
-  "currentVersion": "6.1.0",
+  "currentVersion": "6.1.1",
   "releases": [
+    {
+      "version": "6.1.1",
+      "date": "2026-11-26",
+      "title": "修正通知金額與幣別比對",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "使用固定規則核對消費通知的金額與相鄰幣別，並查驗 ISO 4217 代碼。保留原幣資料，無法確認時交由使用者在草稿補齊。"
+        }
+      ]
+    },
     {
       "version": "6.1.0",
       "date": "2026-11-26",

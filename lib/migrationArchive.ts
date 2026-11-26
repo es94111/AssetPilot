@@ -79,7 +79,7 @@ export function packMigrationArchive(payload: MigrationPayload, key: Buffer): Bu
   if (key.length !== 32) throw new Error('搬遷金鑰長度錯誤');
   const plain = zlib.gzipSync(Buffer.from(JSON.stringify(payload), 'utf8'));
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv, { authTagLength: TAG_LENGTH });
   cipher.setAAD(MIGRATION_ARCHIVE_MAGIC);
   const body = Buffer.concat([cipher.update(plain), cipher.final()]);
   return Buffer.concat([MIGRATION_ARCHIVE_MAGIC, iv, cipher.getAuthTag(), body]);
@@ -96,7 +96,7 @@ export function unpackMigrationArchive(archive: Buffer, key: Buffer): MigrationP
 
   let json: string;
   try {
-    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv, { authTagLength: TAG_LENGTH });
     decipher.setAAD(MIGRATION_ARCHIVE_MAGIC);
     decipher.setAuthTag(tag);
     const plain = Buffer.concat([decipher.update(body), decipher.final()]);

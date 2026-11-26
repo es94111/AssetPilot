@@ -1,6 +1,22 @@
 {
-  "currentVersion": "6.0.0",
+  "currentVersion": "6.0.1",
   "releases": [
+    {
+      "version": "6.0.1",
+      "date": "2026-11-26",
+      "title": "修正 Android 小工具建置與備份驗證",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "讓 Android 桌面小工具使用新版安全儲存套件的非同步讀取介面，修正 APK 與 App Bundle 編譯失敗。"
+        },
+        {
+          "tag": "security",
+          "text": "備份搬遷包的 AES-256-GCM 加密與解密都明確指定既有格式的 16 位元組驗證標籤。舊搬遷包可照常匯入。"
+        }
+      ]
+    },
     {
       "version": "6.0.0",
       "date": "2026-11-26",

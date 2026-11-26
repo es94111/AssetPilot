@@ -178,21 +178,32 @@ internal object AssetPilotWidgetBackgroundSync {
             )
             val storage = FlutterSecureStorage(context)
             var cookie: String? = null
-            val initialized = CountDownLatch(1)
+            val cookieRead = CountDownLatch(1)
             storage.initialize(
                 config,
                 object : SecurePreferencesCallback<Void> {
                     override fun onSuccess(result: Void?) {
-                        cookie = storage.read(storage.addPrefixToKey(AUTH_COOKIE_KEY))
-                        initialized.countDown()
+                        storage.read(
+                            storage.addPrefixToKey(AUTH_COOKIE_KEY),
+                            object : SecurePreferencesCallback<String> {
+                                override fun onSuccess(result: String?) {
+                                    cookie = result
+                                    cookieRead.countDown()
+                                }
+
+                                override fun onError(error: Exception) {
+                                    cookieRead.countDown()
+                                }
+                            },
+                        )
                     }
 
                     override fun onError(error: Exception) {
-                        initialized.countDown()
+                        cookieRead.countDown()
                     }
                 },
             )
-            if (initialized.await(5, TimeUnit.SECONDS)) {
+            if (cookieRead.await(5, TimeUnit.SECONDS)) {
                 cookie?.takeIf { it.isNotBlank() }
             } else {
                 null

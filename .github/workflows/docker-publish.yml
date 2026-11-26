@@ -8,6 +8,7 @@ on:
 
 env:
   IMAGE_NAME: assetpilot
+  IMAGE_PLATFORMS: linux/amd64,linux/arm64
 
 jobs:
   build-and-push:
@@ -25,7 +26,9 @@ jobs:
 
       - name: Read version from changelog.json
         id: ver
-        run: echo "version=$(jq -r .currentVersion changelog.json)" >> $GITHUB_OUTPUT
+        run: |
+          version="$(jq -er '.currentVersion | strings | select(length > 0)' changelog.json)"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
 
       - name: Create git tag if missing
         id: tag
@@ -33,40 +36,37 @@ jobs:
         env:
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          # 以「遠端」是否已存在該 tag 為準（CI checkout 預設不會抓 tag，用本地
-          # git rev-parse 會誤判為不存在，接著 push 撞上遠端既有 tag 而失敗）。
-          # 若改版流程中已手動打過 vX.Y.Z（/update-docs 步驟），這裡會正確略過。
-          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION already exists on remote, skipping"
+          TAG="v$VERSION"
+          TAG_REF="refs/tags/$TAG"
+          remote_tag="$(git ls-remote --refs origin "$TAG_REF")"
+          if [[ -n "$remote_tag" ]]; then
+            echo "Tag $TAG already exists on remote, skipping"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git tag "$TAG"
+          if git push origin "$TAG_REF"; then
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --refs origin "$TAG_REF" >/dev/null; then
+            echo "Tag $TAG was created concurrently, continuing"
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git tag "v$VERSION"
-            # 容忍極端競態（同時有人剛推上同名 tag）：被拒時不讓整個工作流程失敗。
-            if git push origin "v$VERSION"; then
-              echo "created=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "Tag v$VERSION push rejected (already on remote), continuing"
-              echo "created=false" >> "$GITHUB_OUTPUT"
-            fi
+            echo "::error::無法推送 Tag $TAG"
+            exit 1
           fi
 
       # 用 GITHUB_TOKEN push 出去的 tag 不會觸發其他 workflow（GitHub 防遞迴規則），
       # 所以這裡顯式以 workflow_dispatch 觸發 android-apk 去建置並上傳 .aab 到 Google Play。
       # workflow_dispatch 是 GITHUB_TOKEN 能觸發的少數例外，毋需額外 PAT。
-      # android-apk 在 dispatch 時會自 changelog.json 讀出同一版本號。
       - name: Trigger Android build & Play upload for new tag
         if: github.ref == 'refs/heads/main' && steps.tag.outputs.created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          echo "Dispatching android-apk.yml for v$VERSION on main"
-          gh workflow run android-apk.yml --ref main
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+          echo "Dispatching android-apk.yml for v$VERSION"
+          gh workflow run android-apk.yml --ref "v$VERSION"
 
       # ── Docker Hub 登入（主要；偶發網路逾時 → 重試 3 次）──
       - name: Login to Docker Hub (with retry)
@@ -99,6 +99,14 @@ jobs:
             echo "ghcr.io 登入第 $i 次失敗，$((i * 5))s 後重試..."; sleep $((i * 5))
           done
           [ "$ok" = 1 ] || { echo "::warning::ghcr.io 登入連續 3 次失敗，將略過 ghcr 推送"; exit 1; }
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
       # ── 標籤：Docker Hub ──
       - name: Docker metadata (Docker Hub)
@@ -135,30 +143,31 @@ jobs:
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: .
-          platforms: linux/amd64
+          platforms: ${{ env.IMAGE_PLATFORMS }}
           push: true
           tags: ${{ steps.meta_dockerhub.outputs.tags }}
           labels: ${{ steps.meta_dockerhub.outputs.labels }}
           build-args: |
             APK_UPGRADE_CACHE_BUST=${{ github.run_id }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # 保留雙架構快取，避免 Trivy 的 AMD64 建置覆寫 ARM64 的 layers。
+          cache-from: type=gha,scope=docker-publish
+          cache-to: type=gha,scope=docker-publish,mode=max
 
       # ── 建置 & 推送：ghcr（備用；僅在 ghcr 登入成功時執行，且失敗不中斷）──
-      # 重用上一步寫入的 gha cache，實際不會重新編譯，只是把同一份 image 推到 ghcr。
+      # 重用 Docker Hub 步驟的建置快取。
       - name: Build and push to ghcr
         if: steps.ghcr_login.outcome == 'success'
         continue-on-error: true
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: .
-          platforms: linux/amd64
+          platforms: ${{ env.IMAGE_PLATFORMS }}
           push: true
           tags: ${{ steps.meta_ghcr.outputs.tags }}
           labels: ${{ steps.meta_ghcr.outputs.labels }}
           build-args: |
             APK_UPGRADE_CACHE_BUST=${{ github.run_id }}
-          cache-from: type=gha
+          cache-from: type=gha,scope=docker-publish
 
       # ── GitHub Release（內文自 changelog.json 產生；已存在就略過）──
       # 刻意排在推送映像檔之後：Release 一出現就代表該版本的 image 已經可以拉取。
@@ -178,9 +187,9 @@ jobs:
           else
             TAG="v$VERSION"
           fi
-          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-            echo "::warning::$TAG 不在遠端（tag 建立可能失敗），略過建立 Release"
-            exit 0
+          if ! git ls-remote --exit-code --refs origin "refs/tags/$TAG" >/dev/null; then
+            echo "::error::無法在遠端確認 Tag $TAG"
+            exit 1
           fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists, skipping"
@@ -189,7 +198,7 @@ jobs:
           NOTES_FILE="$RUNNER_TEMP/release-notes.md"
           TITLE="$(NOTES_FILE="$NOTES_FILE" node .github/scripts/release-notes.mjs)"
           echo "Creating release $TAG: $TITLE"
-          if gh release create "$TAG" --title "$TITLE" --notes-file "$NOTES_FILE"; then
+          if gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file "$NOTES_FILE"; then
             echo "Created release $TAG"
           elif gh release view "$TAG" >/dev/null 2>&1; then
             # 競態：另一次執行剛好搶先建立，視為成功。

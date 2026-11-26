@@ -103,6 +103,10 @@ function readPageSizeParam(searchParams: QueryParams) {
   return PAGE_SIZE_OPTIONS.includes(value) ? value : 20;
 }
 
+function pageCount(total: number, pageSize: number) {
+  return Math.max(1, Math.ceil(total / pageSize));
+}
+
 function readFilters(searchParams: QueryParams) {
   // Excluding transfers wins over a transfer type filter so the pair can never
   // contradict each other, even from a hand-written URL.
@@ -201,6 +205,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [suggestionsHidden, setSuggestionsHidden] = useState(false);
   const latestSuggestionsLoadId = useRef(0);
   const latestLoadId = useRef(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const ocrRequestGate = useRef(createReceiptOcrRequestGate()).current;
   const manuallyEditedOcrFields = useRef(new Set<'amount' | 'date' | 'note'>());
 
@@ -222,8 +227,19 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       });
       const data = await apiGet(`/api/transactions?${params}`);
       if (loadId === latestLoadId.current) {
+        const nextTotal = Number(data.total) || 0;
+        const lastPage = pageCount(nextTotal, pageSize);
+        if (p > lastPage) {
+          // 頁碼超出範圍（例如篩選中把最後一頁唯一一筆改為其他分類，或刪光最後一頁）：
+          // 改載入新的最後一頁，維持 loading 以免先閃現空白清單。reloadKey 讓頁碼本來
+          // 就已是最後一頁時（較晚回應的舊請求）也會重新載入，不會卡在載入中。
+          setTotal(nextTotal);
+          setPage(lastPage);
+          setReloadKey((key) => key + 1);
+          return;
+        }
         setTxs(data.items || data.data || []);
-        setTotal(data.total || 0);
+        setTotal(nextTotal);
         setLoadFailed(false);
       }
     } catch (_) {
@@ -287,7 +303,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       .then((data) => setPhotoStorageStatus(data))
       .catch(() => setPhotoStorageStatus(null));
   }, []);
-  useEffect(() => { load(page); }, [page, load]);
+  useEffect(() => { load(page); }, [page, load, reloadKey]);
 
   // 追蹤瀏覽器離線狀態，供清單載入失敗時顯示正確說明（不再誤顯示「尚無資料」）；
   // 並訂閱資料變更事件，讓離線佇列同步成功後（flushOfflineQueue 會 notifyDataChanged）
@@ -683,7 +699,6 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             return;
           }
           closeTransactionModal();
-          setPage(1);
           // 離線路徑不送出照片；若使用者有選照片必須明確告知會被捨棄（與線上路的警告一致）。
           if (photoFiles.length > 0) {
             showToast(t('features.offline.queuedPhotosSkipped', { count: photoFiles.length }), 'info');
@@ -701,9 +716,9 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           setFormError(t('features.transactions.createdWithWarning', { message }));
         }
       }
+      // 新增／編輯後留在目前頁碼與篩選（URL 的 page／limit 不變），只重新載入當頁。
       closeTransactionModal();
-      setPage(1);
-      await load(1);
+      await load(page);
       notifyDataChanged('transactions');
     } catch (e: any) {
       setFormError(e.message);
@@ -738,8 +753,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     try {
       await apiPost('/api/transactions/transfer', { ...transferPayload, clientRef });
       setTransferModal(false);
-      setPage(1);
-      await load(1);
+      await load(page);
       notifyDataChanged('transactions');
     } catch (e: any) {
       if (isNetworkError(e)) {
@@ -749,7 +763,6 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           setFormError(t('features.offline.saveFailed'));
         } else {
           setTransferModal(false);
-          setPage(1);
           showToast(t('features.offline.queued'), 'info');
         }
       } else {
@@ -902,7 +915,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const allParents = categories.filter((c: any) => !c.parentId && parentIds.has(c.id));
   const allChildren = categories.filter((c: any) => !!c.parentId);
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = pageCount(total, pageSize);
   const pageTotals = txs.reduce(
     (acc, tx) => {
       const amount = Math.abs(Number(tx.amount) || 0);

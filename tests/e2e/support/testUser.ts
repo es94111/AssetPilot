@@ -77,14 +77,14 @@ export async function createE2EStock(
  */
 export async function createE2ETransaction(
   userId: string,
-  options: { type?: 'income' | 'expense'; amount?: number; date?: string; note?: string },
+  options: { type?: 'income' | 'expense'; amount?: number; date?: string; note?: string; categoryId?: string },
 ): Promise<string> {
   await ensureDb();
   const id = uid();
   const now = Date.now();
   const db = getDB();
   db.run(
-    'INSERT INTO transactions (id, user_id, type, amount, currency, date, note, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+    'INSERT INTO transactions (id, user_id, type, amount, currency, date, note, category_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
     [
       id,
       userId,
@@ -93,6 +93,7 @@ export async function createE2ETransaction(
       'TWD',
       options.date || new Date().toISOString().slice(0, 10),
       options.note || 'E2E seed',
+      options.categoryId ?? null,
       now,
       now,
     ],

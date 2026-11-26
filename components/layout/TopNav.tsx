@@ -3,10 +3,11 @@
 import { Menu, Sun, Moon, Monitor, Plus } from 'lucide-react';
 import type { RefObject } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 import { useT } from '@/components/i18n/I18nProvider';
 import { useTheme, type Theme } from '@/hooks/useTheme';
+import { TRANSACTIONS_PATH, transactionsQuickAddHref } from '@/lib/transactionsQuickAdd';
 
 const THEME_OPTIONS: { value: Theme; icon: typeof Sun; labelKey: string }[] = [
   { value: 'light', icon: Sun, labelKey: 'shell.theme.light' },
@@ -23,6 +24,14 @@ export default function TopNav({ title, menuOpen, menuButtonRef, onMenuClick }: 
   const { t } = useT();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // 已在交易記錄頁時沿用目前的查詢字串，快速新增才不會把清單重設回第 1 頁。
+  const quickAddHref = useMemo(
+    () => transactionsQuickAddHref(pathname === TRANSACTIONS_PATH ? searchParams.toString() : ''),
+    [pathname, searchParams],
+  );
 
   // 全域快捷鍵：Alt+N 快速開啟新增記帳
   useEffect(() => {
@@ -39,12 +48,12 @@ export default function TopNav({ title, menuOpen, menuButtonRef, onMenuClick }: 
       }
       if (e.altKey && e.key.toLowerCase() === 'n') {
         e.preventDefault();
-        router.push('/finance/transactions?action=add');
+        router.push(quickAddHref);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router]);
+  }, [quickAddHref, router]);
 
   return (
     <header
@@ -66,7 +75,7 @@ export default function TopNav({ title, menuOpen, menuButtonRef, onMenuClick }: 
       
       {/* 快速新增記帳（Global Quick Action） */}
       <Link
-        href="/finance/transactions?action=add"
+        href={quickAddHref}
         title={`${t('features.transactions.add')} (Alt+N)`}
         aria-label={t('features.transactions.add')}
         className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 text-xs font-semibold shadow-sm transition-all duration-150 cursor-pointer hover:opacity-90 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"

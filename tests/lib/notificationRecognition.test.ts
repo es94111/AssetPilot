@@ -104,6 +104,21 @@ test('does not confuse a displayed balance or a fee with the purchase amount', (
   assert.equal(result.draft.amount, '75');
 });
 
+test('checks an amount against a neighboring currency code, name or symbol', () => {
+  for (const [body, amount, currency, expected] of [
+    ['消費金額 CHF: 35.50', '35.5', 'CHF', 'CHF'],
+    ['消費金額 2,000 日圓', '2000', 'JPY', 'JPY'],
+    ['消費金額 A$8.50', '8.5', 'AUD', 'AUD'],
+    ['消費金額 $75', '75', 'TWD', null],
+    ['消費 EUR75，餘額 USD500', '75', 'USD', null],
+  ] as const) {
+    const result = parseNotificationCompletion(completion({ ...purchase, amount, currency }), { ...accepted, body }, 'Asia/Taipei');
+    assert.ok('draft' in result);
+    assert.equal(result.draft.amount, amount);
+    assert.equal(result.draft.currency, expected);
+  }
+});
+
 test('keeps missing fields empty, rejects fabricated values and classifies non-purchases', () => {
   const result = parseNotificationCompletion(completion({ ...purchase, amount: '5678', currency: 'JPY', merchant: 'False shop',
     occurredAt: '2026-11-26T12:13:00+08:00' }), accepted, 'Asia/Taipei');

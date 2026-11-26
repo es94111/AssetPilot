@@ -1,4 +1,4 @@
-import { ISO_4217_CODES, isValidCurrency } from './iso4217';
+import { isValidCurrency } from './iso4217';
 import { isValidIsoDate, partsInTz } from './userTime';
 import { findNotificationSource } from './notificationSources';
 
@@ -80,22 +80,23 @@ export function prepareNotificationInput(value: unknown, now = Date.now()):
   };
 }
 
-const currencyNames: Record<string, string> = {
-  TWD: '(?:NT\\s*\\$|新?[台臺]幣|新[台臺]幣)',
-  USD: '(?:US\\s*\\$|美元|美金)',
-  JPY: '(?:JP\\s*¥|日[元圓幣])',
-  CNY: '(?:人民幣|RMB)',
-  HKD: '(?:HK\\s*\\$|港[幣元])',
-  KRW: '(?:韓[元圜幣]|₩)',
-  EUR: '(?:歐[元圓]|€)',
-  GBP: '(?:英鎊|£)',
-  AUD: '(?:AU?\\s*\\$|澳幣|澳元)',
-  CAD: '(?:CA?\\s*\\$|加幣|加元)',
-  SGD: '(?:SG?\\s*\\$|新加坡[幣元])',
+const currencyNames: Record<string, RegExp> = {
+  TWD: /NT\s*\$|新?[台臺]幣/giu,
+  USD: /US\s*\$|美元|美金/giu,
+  JPY: /JP\s*¥|日[元圓幣]/giu,
+  CNY: /人民幣|(?<![A-Z])RMB(?![A-Z])/giu,
+  HKD: /HK\s*\$|港[幣元]/giu,
+  KRW: /韓[元圜幣]|₩/giu,
+  EUR: /歐[元圓]|€/giu,
+  GBP: /英鎊|£/giu,
+  AUD: /(?<![A-Z])AU?\s*\$|澳幣|澳元/giu,
+  CAD: /(?<![A-Z])CA?\s*\$|加幣|加元/giu,
+  SGD: /(?<![A-Z])SG?\s*\$|新加坡[幣元]/giu,
 };
 
-const currencyCodeMarker = `(?<![A-Z])(?:${ISO_4217_CODES.join('|')})(?![A-Z])`;
-const genericCurrencyMarker = `${currencyCodeMarker}|(?:NT|US|HK|JP|AU|CA|SG)?\\s*[$¥€£₩]|${Object.values(currencyNames).join('|')}`;
+const currencyCodePattern = /(?<![A-Z])[A-Z]{3}(?![A-Z])/giu;
+const amountLabelPattern = /[$¥€£₩]|金額|\bamount\b|元(?![\u4e00-\u9fff])/giu;
+const monetaryAmountPattern = /(?<![\d.,])(?:\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d{1,9}(?:\.\d{1,2})?)(?![\d.,])/gu;
 const convertedAmountLabel = /折合|換算(?:為|成)?|約合|\bequivalent(?: to)?\b|\bconverted(?: to| amount)?\b/iu;
 const originalAmountLabel = /原幣(?:別|金額)?|\boriginal (?:amount|currency)\b/iu;
 const otherAmountLabel = /餘額|可用(?:信用)?額度|手續費|回饋點數|\b(?:balance|available credit|(?:service |transaction )?fee|reward points)\b/iu;
@@ -116,30 +117,49 @@ function amountString(value: unknown): string | null {
   return String(Number(clean));
 }
 
-function validatedMoney(rawAmount: unknown, rawCurrency: unknown, noticeText: string) {
-  const text = originalMoneyEvidence(noticeText);
-  let amount = amountString(rawAmount);
-  let currency = typeof rawCurrency === 'string' && isValidCurrency(rawCurrency)
-    ? rawCurrency.toUpperCase() : null;
-  const currencyMarker = currency ? `(?:(?<![A-Z])${currency}(?![A-Z])|${currencyNames[currency] ?? '(?!)'})` : null;
-  if (currencyMarker && !new RegExp(currencyMarker, 'iu').test(text)) currency = null;
-
-  if (amount) {
-    // Compare typed decimal values with literal monetary amounts, excluding
-    // bare date/day/card digits and numbers embedded in a longer amount.
-    const literal = '(\\d{1,3}(?:,\\d{3})+(?:\\.\\d{1,2})?|\\d{1,9}(?:\\.\\d{1,2})?)';
-    const find = (marker: string) => {
-      const before = new RegExp(`(?:${marker})\\s*[:：]?\\s*${literal}(?![\\d.,])`, 'giu');
-      const after = new RegExp(`(?<![\\d.,])${literal}(?![\\d.,])\\s*(?:${marker})`, 'giu');
-      return [...text.matchAll(before), ...text.matchAll(after)]
-        .some((match) => amountString(match[1].replace(/,/g, '')) === amount);
-    };
-    if (!currencyMarker || !find(currencyMarker)) {
-      currency = null;
-      if (!find(genericCurrencyMarker) && !find('金額|amount|元(?![\u4e00-\u9fff])')) amount = null;
+function moneyMarkers(text: string) {
+  const markers: { start: number; end: number; currency: string | null }[] = [];
+  for (const [currency, aliases] of Object.entries(currencyNames)) {
+    for (const match of text.matchAll(aliases)) {
+      markers.push({ start: match.index, end: match.index + match[0].length, currency });
     }
   }
-  return { amount, currency };
+  for (const match of text.matchAll(currencyCodePattern)) {
+    const code = match[0].toUpperCase();
+    if (isValidCurrency(code)) markers.push({ start: match.index, end: match.index + code.length, currency: code });
+  }
+  for (const match of text.matchAll(amountLabelPattern)) {
+    markers.push({ start: match.index, end: match.index + match[0].length, currency: null });
+  }
+  return markers;
+}
+
+function validatedMoney(rawAmount: unknown, rawCurrency: unknown, noticeText: string) {
+  const text = originalMoneyEvidence(noticeText);
+  const amount = amountString(rawAmount);
+  const currency = typeof rawCurrency === 'string' && isValidCurrency(rawCurrency)
+    ? rawCurrency.toUpperCase() : null;
+  const markers = moneyMarkers(text);
+  if (!amount) {
+    return { amount: null, currency: markers.some((marker) => marker.currency === currency) ? currency : null };
+  }
+
+  // A number must be adjacent to a currency or amount label. The model supplies
+  // comparison values only. Every text pattern is fixed before parsing.
+  const precedingLabelEnds = new Set<number>();
+  const followingLabelStarts = new Set<number>();
+  for (const match of text.matchAll(monetaryAmountPattern)) {
+    if (amountString(match[0].replace(/,/g, '')) !== amount) continue;
+    const before = text.slice(0, match.index).trimEnd().replace(/[:：]$/u, '').trimEnd();
+    const after = text.slice(match.index + match[0].length).trimStart();
+    precedingLabelEnds.add(before.length);
+    followingLabelStarts.add(text.length - after.length);
+  }
+  const evidence = markers.filter((marker) => precedingLabelEnds.has(marker.end) || followingLabelStarts.has(marker.start));
+  return {
+    amount: evidence.length ? amount : null,
+    currency: evidence.some((marker) => marker.currency === currency) ? currency : null,
+  };
 }
 
 const prompt = `Extract a potential expense draft from one Taiwan bank or wallet push notification.

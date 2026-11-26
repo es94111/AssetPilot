@@ -11,6 +11,7 @@ import 'offline/connectivity_service.dart';
 import 'offline/offline_draft_service.dart';
 import 'offline/offline_draft_store.dart';
 import 'platform/deep_link_service.dart';
+import 'platform/notification_capture.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/ledger_screen.dart';
 import 'screens/login_screen.dart';
@@ -174,7 +175,7 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   int _index = 0;
 
   /// 帳本切換時遞增，讓 IndexedStack 內的分頁全部重建（不保留舊帳本快取）。
@@ -186,6 +187,11 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    ConnectivityService.instance.isOnline.addListener(
+      _retryNotificationCaptureOnConnect,
+    );
+    unawaited(NotificationCapturePlatform.initialize());
     _linkSubscription = _deepLinks.links.listen(_handleIncomingLink);
     // 離線草稿需要知道目前連線狀態，以及草稿所屬的使用者／帳本。
     unawaited(ConnectivityService.instance.start());
@@ -201,10 +207,15 @@ class _HomeShellState extends State<HomeShell> {
   Future<void> _bindOfflineDrafts() async {
     try {
       final me = await ApiClient.instance.me();
+      if (!mounted || !ApiClient.instance.isLoggedIn) return;
+      final userId = '${me['id'] ?? ''}';
       await OfflineDraftService.instance.bind(
-        userId: '${me['id'] ?? ''}',
+        userId: userId,
         ledgerId: ApiClient.instance.activeLedgerId,
       );
+      if (mounted && ApiClient.instance.isLoggedIn) {
+        await NotificationCapturePlatform.bindOwner(userId);
+      }
     } catch (_) {
       if (ApiClient.instance.isLoggedIn) {
         await OfflineDraftService.instance.restoreRememberedBinding(
@@ -213,11 +224,32 @@ class _HomeShellState extends State<HomeShell> {
       } else {
         await OfflineDraftStore.clearRememberedUserId();
       }
+    } finally {
+      if (mounted && ApiClient.instance.isLoggedIn) {
+        unawaited(NotificationCapturePlatform.retry());
+      }
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && ApiClient.instance.isLoggedIn) {
+      unawaited(NotificationCapturePlatform.retry());
+    }
+  }
+
+  void _retryNotificationCaptureOnConnect() {
+    if (ConnectivityService.instance.online && ApiClient.instance.isLoggedIn) {
+      unawaited(NotificationCapturePlatform.retry());
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    ConnectivityService.instance.isOnline.removeListener(
+      _retryNotificationCaptureOnConnect,
+    );
     _linkSubscription?.cancel();
     super.dispose();
   }
@@ -340,7 +372,10 @@ class _HomeShellState extends State<HomeShell> {
     // 高頻功能（帳戶、預算）則由 Dashboard 快速入口與「更多」分區進入。
     final pages = [
       DashboardScreen(key: ValueKey('dashboard-$_homeEpoch')),
-      TransactionsScreen(key: ValueKey('transactions-$_homeEpoch')),
+      TransactionsScreen(
+        key: ValueKey('transactions-$_homeEpoch'),
+        onLedgerChanged: _reloadAll,
+      ),
       StocksScreen(key: ValueKey('stocks-$_homeEpoch')),
       ReportsScreen(key: ValueKey('reports-$_homeEpoch')),
       MoreScreen(

@@ -1,5 +1,253 @@
 {
   "@@locale": "ar",
+  "notificationCaptureTitle": "Payment notification capture",
+  "@notificationCaptureTitle": {
+    "description": "Web path: notificationCapture.title",
+    "x-webPath": "notificationCapture.title"
+  },
+  "notificationCaptureEnable": "Capture payment notifications",
+  "@notificationCaptureEnable": {
+    "description": "Web path: notificationCapture.enable",
+    "x-webPath": "notificationCapture.enable"
+  },
+  "notificationCaptureEnableHint": "Shortcuts passes alerts from the apps you select and prepares drafts on this iPhone.",
+  "@notificationCaptureEnableHint": {
+    "description": "Web path: notificationCapture.enableHint",
+    "x-webPath": "notificationCapture.enableHint"
+  },
+  "notificationCaptureUnavailable": "The administrator has yet to enable recognition.",
+  "@notificationCaptureUnavailable": {
+    "description": "Web path: notificationCapture.unavailable",
+    "x-webPath": "notificationCapture.unavailable"
+  },
+  "notificationCaptureService": "Recognition service",
+  "@notificationCaptureService": {
+    "description": "Web path: notificationCapture.service",
+    "x-webPath": "notificationCapture.service"
+  },
+  "notificationCaptureConsentTitle": "Share payment notifications?",
+  "@notificationCaptureConsentTitle": {
+    "description": "Web path: notificationCapture.consentTitle",
+    "x-webPath": "notificationCapture.consentTitle"
+  },
+  "notificationCaptureConsentBody": "When a selected app sends a payment alert, AssetPilot screens the alert and masks identifiers such as card or account numbers. It sends the source, title, subtitle, body, and time to {service} for recognition by {model}, subject to that service’s data policy. Drafts stay on this iPhone. You can pause capture here at any time.",
+  "@notificationCaptureConsentBody": {
+    "description": "Web path: notificationCapture.consentBody",
+    "x-webPath": "notificationCapture.consentBody",
+    "placeholders": {
+      "service": {
+        "type": "String"
+      },
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCaptureAgree": "Agree and enable",
+  "@notificationCaptureAgree": {
+    "description": "Web path: notificationCapture.agree",
+    "x-webPath": "notificationCapture.agree"
+  },
+  "notificationCaptureRecent": "Last notification",
+  "@notificationCaptureRecent": {
+    "description": "Web path: notificationCapture.recent",
+    "x-webPath": "notificationCapture.recent"
+  },
+  "notificationCaptureNoRecent": "Waiting for your first notification.",
+  "@notificationCaptureNoRecent": {
+    "description": "Web path: notificationCapture.noRecent",
+    "x-webPath": "notificationCapture.noRecent"
+  },
+  "notificationCaptureSetup": "Set up iPhone Shortcuts",
+  "@notificationCaptureSetup": {
+    "description": "Web path: notificationCapture.setup",
+    "x-webPath": "notificationCapture.setup"
+  },
+  "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
+  "@notificationCaptureStepTrigger": {
+    "description": "Web path: notificationCapture.stepTrigger",
+    "x-webPath": "notificationCapture.stepTrigger"
+  },
+  "notificationCaptureStepAction": "2. Add the AssetPilot action “Capture a payment notification”.",
+  "@notificationCaptureStepAction": {
+    "description": "Web path: notificationCapture.stepAction",
+    "x-webPath": "notificationCapture.stepAction"
+  },
+  "notificationCaptureStepInput": "3. Map the notification’s app name, title, subtitle, body, and date when available to the matching action fields.",
+  "@notificationCaptureStepInput": {
+    "description": "Web path: notificationCapture.stepInput",
+    "x-webPath": "notificationCapture.stepInput"
+  },
+  "notificationCaptureStepRun": "4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.",
+  "@notificationCaptureStepRun": {
+    "description": "Web path: notificationCapture.stepRun",
+    "x-webPath": "notificationCapture.stepRun"
+  },
+  "notificationCaptureOpenShortcuts": "Open Shortcuts",
+  "@notificationCaptureOpenShortcuts": {
+    "description": "Web path: notificationCapture.openShortcuts",
+    "x-webPath": "notificationCapture.openShortcuts"
+  },
+  "notificationCaptureShortcutsError": "Open the Shortcuts app from your iPhone Home Screen.",
+  "@notificationCaptureShortcutsError": {
+    "description": "Web path: notificationCapture.shortcutsError",
+    "x-webPath": "notificationCapture.shortcutsError"
+  },
+  "notificationCaptureBanks": "Banks",
+  "@notificationCaptureBanks": {
+    "description": "Web path: notificationCapture.banks",
+    "x-webPath": "notificationCapture.banks"
+  },
+  "notificationCapturePayments": "Payment apps",
+  "@notificationCapturePayments": {
+    "description": "Web path: notificationCapture.payments",
+    "x-webPath": "notificationCapture.payments"
+  },
+  "notificationCaptureNoIosSource": "Direct payment alerts are unavailable on iPhone. You can still select your card issuer’s app if it sends alerts.",
+  "@notificationCaptureNoIosSource": {
+    "description": "Web path: notificationCapture.noIosSource",
+    "x-webPath": "notificationCapture.noIosSource"
+  },
+  "notificationCaptureVerified": "Verified on iPhone",
+  "@notificationCaptureVerified": {
+    "description": "Web path: notificationCapture.verified",
+    "x-webPath": "notificationCapture.verified"
+  },
+  "notificationCaptureUnverified": "Awaiting iPhone verification",
+  "@notificationCaptureUnverified": {
+    "description": "Web path: notificationCapture.unverified",
+    "x-webPath": "notificationCapture.unverified"
+  },
+  "notificationCaptureDrafts": "Notification drafts",
+  "@notificationCaptureDrafts": {
+    "description": "Web path: notificationCapture.drafts",
+    "x-webPath": "notificationCapture.drafts"
+  },
+  "notificationCaptureEmptyDrafts": "Payment alerts appear here as drafts when they are recognized.",
+  "@notificationCaptureEmptyDrafts": {
+    "description": "Web path: notificationCapture.emptyDrafts",
+    "x-webPath": "notificationCapture.emptyDrafts"
+  },
+  "notificationCaptureDraftReady": "Ready to review",
+  "@notificationCaptureDraftReady": {
+    "description": "Web path: notificationCapture.draftReady",
+    "x-webPath": "notificationCapture.draftReady"
+  },
+  "notificationCaptureQueued": "Waiting for recognition",
+  "@notificationCaptureQueued": {
+    "description": "Web path: notificationCapture.queued",
+    "x-webPath": "notificationCapture.queued"
+  },
+  "notificationCaptureReview": "Missing details",
+  "@notificationCaptureReview": {
+    "description": "Web path: notificationCapture.review",
+    "x-webPath": "notificationCapture.review"
+  },
+  "notificationCaptureIgnored": "Notification skipped.",
+  "@notificationCaptureIgnored": {
+    "description": "Web path: notificationCapture.ignored",
+    "x-webPath": "notificationCapture.ignored"
+  },
+  "notificationCaptureUnknownSource": "Check that Shortcuts is passing the source app’s name.",
+  "@notificationCaptureUnknownSource": {
+    "description": "Web path: notificationCapture.unknownSource",
+    "x-webPath": "notificationCapture.unknownSource"
+  },
+  "notificationCaptureEmptyInput": "Check the Shortcuts input mapping and notification preview settings to pass the alert text.",
+  "@notificationCaptureEmptyInput": {
+    "description": "Web path: notificationCapture.emptyInput",
+    "x-webPath": "notificationCapture.emptyInput"
+  },
+  "notificationCaptureDuplicate": "This alert was already received.",
+  "@notificationCaptureDuplicate": {
+    "description": "Web path: notificationCapture.duplicate",
+    "x-webPath": "notificationCapture.duplicate"
+  },
+  "notificationCaptureFull": "The inbox is full. Review or discard some drafts.",
+  "@notificationCaptureFull": {
+    "description": "Web path: notificationCapture.full",
+    "x-webPath": "notificationCapture.full"
+  },
+  "notificationCaptureExpired": "The queued alert expired. You can fill in the draft manually.",
+  "@notificationCaptureExpired": {
+    "description": "Web path: notificationCapture.expired",
+    "x-webPath": "notificationCapture.expired"
+  },
+  "notificationCaptureRetry": "Saved for another attempt when you open the app or the shortcut runs again.",
+  "@notificationCaptureRetry": {
+    "description": "Web path: notificationCapture.retry",
+    "x-webPath": "notificationCapture.retry"
+  },
+  "notificationCaptureConsentChanged": "Review the updated service and agree to resume capture.",
+  "@notificationCaptureConsentChanged": {
+    "description": "Web path: notificationCapture.consentChanged",
+    "x-webPath": "notificationCapture.consentChanged"
+  },
+  "notificationCaptureSessionExpired": "Re-enable notification capture in AssetPilot.",
+  "@notificationCaptureSessionExpired": {
+    "description": "Web path: notificationCapture.sessionExpired",
+    "x-webPath": "notificationCapture.sessionExpired"
+  },
+  "notificationCaptureCompare": "Another source may have reported this purchase. Compare the drafts before posting.",
+  "@notificationCaptureCompare": {
+    "description": "Web path: notificationCapture.compare",
+    "x-webPath": "notificationCapture.compare"
+  },
+  "notificationCaptureDiscard": "Discard notification draft",
+  "@notificationCaptureDiscard": {
+    "description": "Web path: notificationCapture.discard",
+    "x-webPath": "notificationCapture.discard"
+  },
+  "notificationCaptureDiscardHint": "This draft will be removed from this iPhone.",
+  "@notificationCaptureDiscardHint": {
+    "description": "Web path: notificationCapture.discardHint",
+    "x-webPath": "notificationCapture.discardHint"
+  },
+  "notificationCapturePersonalLedger": "Review notification drafts in your personal ledger.",
+  "@notificationCapturePersonalLedger": {
+    "description": "Web path: notificationCapture.personalLedger",
+    "x-webPath": "notificationCapture.personalLedger"
+  },
+  "notificationCapturePickLedger": "Select your personal ledger",
+  "@notificationCapturePickLedger": {
+    "description": "Web path: notificationCapture.pickLedger",
+    "x-webPath": "notificationCapture.pickLedger"
+  },
+  "notificationCaptureStorageError": "Unable to update your notification drafts on this iPhone. Try again shortly.",
+  "@notificationCaptureStorageError": {
+    "description": "Web path: notificationCapture.storageError",
+    "x-webPath": "notificationCapture.storageError"
+  },
+  "notificationCaptureChooseDate": "Choose the payment date",
+  "@notificationCaptureChooseDate": {
+    "description": "Web path: notificationCapture.chooseDate",
+    "x-webPath": "notificationCapture.chooseDate"
+  },
+  "notificationCaptureReviewTitle": "Review notification draft",
+  "@notificationCaptureReviewTitle": {
+    "description": "Web path: notificationCapture.reviewTitle",
+    "x-webPath": "notificationCapture.reviewTitle"
+  },
+  "notificationCaptureSaveDraft": "Save draft edits",
+  "@notificationCaptureSaveDraft": {
+    "description": "Web path: notificationCapture.saveDraft",
+    "x-webPath": "notificationCapture.saveDraft"
+  },
+  "notificationCaptureConfirm": "Confirm and post",
+  "@notificationCaptureConfirm": {
+    "description": "Web path: notificationCapture.confirm",
+    "x-webPath": "notificationCapture.confirm"
+  },
+  "notificationCaptureConfirmLater": "The draft is saved. Try posting it again when you are connected.",
+  "@notificationCaptureConfirmLater": {
+    "description": "Web path: notificationCapture.confirmLater",
+    "x-webPath": "notificationCapture.confirmLater"
+  },
+  "notificationCapturePostedCleanup": "The transaction was posted. You can discard the remaining draft from the inbox.",
+  "@notificationCapturePostedCleanup": {
+    "description": "Web path: notificationCapture.postedCleanup",
+    "x-webPath": "notificationCapture.postedCleanup"
+  },
   "commonSave": "حفظ",
   "@commonSave": {
     "description": "Web path: common.save",

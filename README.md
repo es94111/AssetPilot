@@ -335,6 +335,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `MEGA_S4_*` | 選配 | MEGA S4 雲端備份的 S3 相容 bucket 設定 | — |
 | `TRANSACTION_PHOTO_*` | 選配 | 交易照片本機或 S3 儲存設定 | — |
 | `RECEIPT_OCR_PROVIDER` / `RECEIPT_OCR_ENDPOINT` / `RECEIPT_OCR_API_KEY` | 選配 | 收據 OCR 自動帶入的供應商設定：`http`（自訂 OCR 端點；設定 API Key 時必須使用 HTTPS）或 `ocrspace`（[OCR.space](https://ocr.space/ocrapi)，只需 API Key，可用 `RECEIPT_OCR_LANGUAGE` 指定語言，預設 `cht`）。未設定供應商時維持手動輸入 | — |
+| `NOTIFICATION_AI_SETTINGS_KEY` | 選配 | 通知辨識 API Key 的加密金鑰。以 `openssl rand -hex 32` 產生，所有伺服器副本使用相同的值，還原資料庫時也需要這把金鑰 | — |
 | `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` | 寄信 | 主要／備用寄信通道：`smtp` / `zeabur` / `resend` | — |
 | `SMTP_*` / `ZEABUR_*` / `RESEND_*` | 寄信 | 各寄信通道的連線設定 | — |
 | `APP_URL` | 公開網址 | 正式環境的對外 HTTPS origin | — |
@@ -457,6 +458,17 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 - **分類管理**：父子兩層、自訂顏色、CSV 匯出匯入
 - **固定收支**：週期性收支自動產生交易，支援外幣；登入時 server-side 觸發、並發冪等保護
 
+
+### iPhone 手機通知自動記帳
+
+1. 在伺服器設定 `NOTIFICATION_AI_SETTINGS_KEY`。以超級管理員開啟 Web **管理後台 → 系統設定 → 手機通知自動記帳**，填入 OpenAI 相容的公開 HTTPS Base URL 或完整 `/chat/completions` 網址、API Key 和模型名稱。畫面預填 Gemini 官方相容端點與 `gemini-3.5-flash-lite`，請使用已開啟計費的 Gemini 專案。 [Gemini 相容 API](https://ai.google.dev/gemini-api/docs/openai) · [Gemini 資料使用條款](https://ai.google.dev/gemini-api/terms)
+2. 儲存後用「測試連線」驗證合成消費通知。後端預設關閉，完成 App 端驗收後再開放使用。更換網址時重新輸入 Key。更換網址或模型後，iPhone 會要求重新同意。
+3. 在 iOS 27 或更新版本的 iPhone 開啟 **AssetPilot → 設定 → 手機通知自動記帳**，確認辨識服務資料後啟用。在捷徑加入「收到通知」自動化和 AssetPilot 的「從通知建立記帳草稿」動作，設定來源及通知變數。已首次解鎖的 iPhone 可在允許鎖定時執行後由捷徑呼叫背景動作。 [Apple 通知觸發器](https://support.apple.com/en-us/guide/shortcuts/apd932ff833f/10.0/ios/27)
+4. 付款後在 **交易 → 通知草稿** 核對幣別、金額、日期、商家及帳戶，於個人帳本確認入帳。草稿加密留在接收通知的 iPhone。離線或供應商限流時，下次開啟 App 或執行捷徑會重試符合重試時間的通知，逾期的暫存文字在下次處理時清除。
+
+來源清單顯示 App 名稱與驗證狀態。Google 錢包的感應付款與 Samsung Pay 無法在 iPhone 上直接提供付款 App 通知，可選擇會發送消費通知的發卡銀行 App。 [Google 錢包](https://support.google.com/wallet/answer/12059331?hl=en) · [Samsung Wallet](https://www.samsung.com/tw/samsung-pay/supported-devices/)
+
+使用 `npm run test:notification-capture` 驗證辨識契約，搭配測試資料庫的 `DATABASE_URL` 可另驗證授權、餘額和交易重送。實機驗收項目列於 [iOS 發布檢查表](docs/ios-release-checklist.md#4-隱私與合規)。
 
 ### 共享帳本（家庭／情侶）
 

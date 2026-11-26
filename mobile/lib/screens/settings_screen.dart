@@ -7,10 +7,12 @@ import '../offline/offline_draft_core.dart';
 import '../offline/offline_draft_service.dart';
 import '../offline/offline_draft_store.dart';
 import '../platform/platform_info.dart';
+import '../platform/notification_capture.dart';
 import '../platform/widget_snapshot_service.dart';
 import '../widgets.dart';
 import 'admin_screen.dart';
 import 'changelog_screen.dart';
+import 'notification_capture_screens.dart';
 import 'report_schedule_screen.dart';
 import 'security_screens.dart';
 import '../l10n.dart';
@@ -332,6 +334,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trKey('mobileLegacyCustomizeScheduledCashFlowReports'),
               ),
               onTap: () => _push(ReportScheduleScreen()),
+            ),
+            ValueListenableBuilder(
+              valueListenable: NotificationCapturePlatform.supported,
+              builder: (context, supported, _) => supported
+                  ? ListTile(
+                      leading: const Icon(Icons.receipt_long_outlined),
+                      title: Text(trKey('notificationCaptureTitle')),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _push(
+                        NotificationCaptureSettingsScreen(ownerId: user.id),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
             if (PlatformInfo.isIOS)
               FutureBuilder<bool>(

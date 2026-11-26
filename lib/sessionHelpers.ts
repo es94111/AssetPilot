@@ -60,15 +60,18 @@ const SESSION_IDLE_TIMEOUT_MS =
   (Number(process.env.SESSION_IDLE_TIMEOUT_DAYS) || 14) * 24 * 60 * 60 * 1000;
 const LAST_SEEN_UPDATE_THROTTLE_MS = 5 * 60 * 1000;
 
+export function isLoginSessionFresh(row: { expires_at?: unknown; last_seen_at?: unknown }, now = Date.now()): boolean {
+  const lastSeenAt = Number(row.last_seen_at) || 0;
+  return !(row.expires_at && Number(row.expires_at) <= now)
+    && !(lastSeenAt && now - lastSeenAt > SESSION_IDLE_TIMEOUT_MS);
+}
+
 export function verifyLoginSession(userId: string, sessionId: string | undefined, token: string): boolean {
   if (!sessionId) return false;
   const row = queryOne('SELECT token_hash, expires_at, last_seen_at FROM login_sessions WHERE id = ? AND user_id = ? AND revoked_at = 0', [sessionId, userId]);
-  if (!row) return false;
-  if (row.expires_at && Number(row.expires_at) <= Date.now()) return false;
-
   const now = Date.now();
+  if (!row || !isLoginSessionFresh(row, now)) return false;
   const lastSeenAt = Number(row.last_seen_at) || 0;
-  if (lastSeenAt && (now - lastSeenAt) > SESSION_IDLE_TIMEOUT_MS) return false;
 
   if (String(row.token_hash || '') !== hashToken(token)) return false;
 

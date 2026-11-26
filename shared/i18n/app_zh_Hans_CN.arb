@@ -1,5 +1,253 @@
 {
   "@@locale": "zh_Hans_CN",
+  "notificationCaptureTitle": "手机通知自动记账",
+  "@notificationCaptureTitle": {
+    "description": "Web path: notificationCapture.title",
+    "x-webPath": "notificationCapture.title"
+  },
+  "notificationCaptureEnable": "接收消费通知",
+  "@notificationCaptureEnable": {
+    "description": "Web path: notificationCapture.enable",
+    "x-webPath": "notificationCapture.enable"
+  },
+  "notificationCaptureEnableHint": "由快捷指令接收所选 App 的通知，在这部 iPhone 建立待确认草稿。",
+  "@notificationCaptureEnableHint": {
+    "description": "Web path: notificationCapture.enableHint",
+    "x-webPath": "notificationCapture.enableHint"
+  },
+  "notificationCaptureUnavailable": "管理员尚未开放识别服务。",
+  "@notificationCaptureUnavailable": {
+    "description": "Web path: notificationCapture.unavailable",
+    "x-webPath": "notificationCapture.unavailable"
+  },
+  "notificationCaptureService": "识别服务",
+  "@notificationCaptureService": {
+    "description": "Web path: notificationCapture.service",
+    "x-webPath": "notificationCapture.service"
+  },
+  "notificationCaptureConsentTitle": "允许分享消费通知？",
+  "@notificationCaptureConsentTitle": {
+    "description": "Web path: notificationCapture.consentTitle",
+    "x-webPath": "notificationCapture.consentTitle"
+  },
+  "notificationCaptureConsentBody": "你选取的 App 发出消费通知时，AssetPilot 会筛选并遮蔽卡号、账号等资料，再将来源、标题、副标题、正文与时间发给 {service} 的 {model} 模型识别。识别内容依该服务的数据政策处理。草稿保存在这部 iPhone，你可以随时在这里关闭。",
+  "@notificationCaptureConsentBody": {
+    "description": "Web path: notificationCapture.consentBody",
+    "x-webPath": "notificationCapture.consentBody",
+    "placeholders": {
+      "service": {
+        "type": "String"
+      },
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCaptureAgree": "同意并启用",
+  "@notificationCaptureAgree": {
+    "description": "Web path: notificationCapture.agree",
+    "x-webPath": "notificationCapture.agree"
+  },
+  "notificationCaptureRecent": "最近一次接收",
+  "@notificationCaptureRecent": {
+    "description": "Web path: notificationCapture.recent",
+    "x-webPath": "notificationCapture.recent"
+  },
+  "notificationCaptureNoRecent": "还没收到通知。",
+  "@notificationCaptureNoRecent": {
+    "description": "Web path: notificationCapture.noRecent",
+    "x-webPath": "notificationCapture.noRecent"
+  },
+  "notificationCaptureSetup": "设置 iPhone 快捷指令",
+  "@notificationCaptureSetup": {
+    "description": "Web path: notificationCapture.setup",
+    "x-webPath": "notificationCapture.setup"
+  },
+  "notificationCaptureStepTrigger": "1. 在快捷指令新增“收到通知”自动化，选取要接收的银行或支付 App。需要多组自动化时，可复制快捷指令再更换来源。",
+  "@notificationCaptureStepTrigger": {
+    "description": "Web path: notificationCapture.stepTrigger",
+    "x-webPath": "notificationCapture.stepTrigger"
+  },
+  "notificationCaptureStepAction": "2. 加入 AssetPilot 的“Capture a payment notification”动作。",
+  "@notificationCaptureStepAction": {
+    "description": "Web path: notificationCapture.stepAction",
+    "x-webPath": "notificationCapture.stepAction"
+  },
+  "notificationCaptureStepInput": "3. 从通知输入选择变量，将 App 名称、标题、副标题、正文与可取得的日期填入对应字段。",
+  "@notificationCaptureStepInput": {
+    "description": "Web path: notificationCapture.stepInput",
+    "x-webPath": "notificationCapture.stepInput"
+  },
+  "notificationCaptureStepRun": "4. 开启自动运行与“允许在锁定时运行”。收到第一条真实消费通知后，回来查看最近一次接收状态。",
+  "@notificationCaptureStepRun": {
+    "description": "Web path: notificationCapture.stepRun",
+    "x-webPath": "notificationCapture.stepRun"
+  },
+  "notificationCaptureOpenShortcuts": "打开快捷指令",
+  "@notificationCaptureOpenShortcuts": {
+    "description": "Web path: notificationCapture.openShortcuts",
+    "x-webPath": "notificationCapture.openShortcuts"
+  },
+  "notificationCaptureShortcutsError": "无法打开快捷指令。请确认 iPhone 已安装快捷指令 App。",
+  "@notificationCaptureShortcutsError": {
+    "description": "Web path: notificationCapture.shortcutsError",
+    "x-webPath": "notificationCapture.shortcutsError"
+  },
+  "notificationCaptureBanks": "银行",
+  "@notificationCaptureBanks": {
+    "description": "Web path: notificationCapture.banks",
+    "x-webPath": "notificationCapture.banks"
+  },
+  "notificationCapturePayments": "移动支付",
+  "@notificationCapturePayments": {
+    "description": "Web path: notificationCapture.payments",
+    "x-webPath": "notificationCapture.payments"
+  },
+  "notificationCaptureNoIosSource": "iPhone 无直接付款通知来源。发卡银行的通知仍可通过银行 App 接收。",
+  "@notificationCaptureNoIosSource": {
+    "description": "Web path: notificationCapture.noIosSource",
+    "x-webPath": "notificationCapture.noIosSource"
+  },
+  "notificationCaptureVerified": "已通过真机验证",
+  "@notificationCaptureVerified": {
+    "description": "Web path: notificationCapture.verified",
+    "x-webPath": "notificationCapture.verified"
+  },
+  "notificationCaptureUnverified": "等待真机验证",
+  "@notificationCaptureUnverified": {
+    "description": "Web path: notificationCapture.unverified",
+    "x-webPath": "notificationCapture.unverified"
+  },
+  "notificationCaptureDrafts": "通知草稿",
+  "@notificationCaptureDrafts": {
+    "description": "Web path: notificationCapture.drafts",
+    "x-webPath": "notificationCapture.drafts"
+  },
+  "notificationCaptureEmptyDrafts": "还没有通知草稿。识别出的消费通知会出现在这里。",
+  "@notificationCaptureEmptyDrafts": {
+    "description": "Web path: notificationCapture.emptyDrafts",
+    "x-webPath": "notificationCapture.emptyDrafts"
+  },
+  "notificationCaptureDraftReady": "待确认",
+  "@notificationCaptureDraftReady": {
+    "description": "Web path: notificationCapture.draftReady",
+    "x-webPath": "notificationCapture.draftReady"
+  },
+  "notificationCaptureQueued": "等待识别",
+  "@notificationCaptureQueued": {
+    "description": "Web path: notificationCapture.queued",
+    "x-webPath": "notificationCapture.queued"
+  },
+  "notificationCaptureReview": "需补资料",
+  "@notificationCaptureReview": {
+    "description": "Web path: notificationCapture.review",
+    "x-webPath": "notificationCapture.review"
+  },
+  "notificationCaptureIgnored": "已跳过这条通知。",
+  "@notificationCaptureIgnored": {
+    "description": "Web path: notificationCapture.ignored",
+    "x-webPath": "notificationCapture.ignored"
+  },
+  "notificationCaptureUnknownSource": "来源未对应。请检查快捷指令传入的 App 名称。",
+  "@notificationCaptureUnknownSource": {
+    "description": "Web path: notificationCapture.unknownSource",
+    "x-webPath": "notificationCapture.unknownSource"
+  },
+  "notificationCaptureEmptyInput": "这条通知没有可用的正文。请检查快捷指令变量设置和通知预览。",
+  "@notificationCaptureEmptyInput": {
+    "description": "Web path: notificationCapture.emptyInput",
+    "x-webPath": "notificationCapture.emptyInput"
+  },
+  "notificationCaptureDuplicate": "已接收过这条通知。",
+  "@notificationCaptureDuplicate": {
+    "description": "Web path: notificationCapture.duplicate",
+    "x-webPath": "notificationCapture.duplicate"
+  },
+  "notificationCaptureFull": "草稿空间已满。请先处理几笔草稿。",
+  "@notificationCaptureFull": {
+    "description": "Web path: notificationCapture.full",
+    "x-webPath": "notificationCapture.full"
+  },
+  "notificationCaptureExpired": "等待识别的通知已过期，可以手动补充草稿资料。",
+  "@notificationCaptureExpired": {
+    "description": "Web path: notificationCapture.expired",
+    "x-webPath": "notificationCapture.expired"
+  },
+  "notificationCaptureRetry": "已暂存。下次打开 App 或运行快捷指令时会再尝试识别。",
+  "@notificationCaptureRetry": {
+    "description": "Web path: notificationCapture.retry",
+    "x-webPath": "notificationCapture.retry"
+  },
+  "notificationCaptureConsentChanged": "识别服务已变更。请重新查看并同意后启用。",
+  "@notificationCaptureConsentChanged": {
+    "description": "Web path: notificationCapture.consentChanged",
+    "x-webPath": "notificationCapture.consentChanged"
+  },
+  "notificationCaptureSessionExpired": "请在 AssetPilot 重新启用通知接收。",
+  "@notificationCaptureSessionExpired": {
+    "description": "Web path: notificationCapture.sessionExpired",
+    "x-webPath": "notificationCapture.sessionExpired"
+  },
+  "notificationCaptureCompare": "可能是同一笔消费，请与其他来源的草稿比对。",
+  "@notificationCaptureCompare": {
+    "description": "Web path: notificationCapture.compare",
+    "x-webPath": "notificationCapture.compare"
+  },
+  "notificationCaptureDiscard": "丢弃通知草稿",
+  "@notificationCaptureDiscard": {
+    "description": "Web path: notificationCapture.discard",
+    "x-webPath": "notificationCapture.discard"
+  },
+  "notificationCaptureDiscardHint": "这笔草稿会从这部 iPhone 移除。",
+  "@notificationCaptureDiscardHint": {
+    "description": "Web path: notificationCapture.discardHint",
+    "x-webPath": "notificationCapture.discardHint"
+  },
+  "notificationCapturePersonalLedger": "请在个人账本确认通知草稿。",
+  "@notificationCapturePersonalLedger": {
+    "description": "Web path: notificationCapture.personalLedger",
+    "x-webPath": "notificationCapture.personalLedger"
+  },
+  "notificationCapturePickLedger": "选择个人账本",
+  "@notificationCapturePickLedger": {
+    "description": "Web path: notificationCapture.pickLedger",
+    "x-webPath": "notificationCapture.pickLedger"
+  },
+  "notificationCaptureStorageError": "这部 iPhone 暂时无法更新通知草稿。请稍后重试。",
+  "@notificationCaptureStorageError": {
+    "description": "Web path: notificationCapture.storageError",
+    "x-webPath": "notificationCapture.storageError"
+  },
+  "notificationCaptureChooseDate": "选择交易日期",
+  "@notificationCaptureChooseDate": {
+    "description": "Web path: notificationCapture.chooseDate",
+    "x-webPath": "notificationCapture.chooseDate"
+  },
+  "notificationCaptureReviewTitle": "确认通知草稿",
+  "@notificationCaptureReviewTitle": {
+    "description": "Web path: notificationCapture.reviewTitle",
+    "x-webPath": "notificationCapture.reviewTitle"
+  },
+  "notificationCaptureSaveDraft": "保存草稿修改",
+  "@notificationCaptureSaveDraft": {
+    "description": "Web path: notificationCapture.saveDraft",
+    "x-webPath": "notificationCapture.saveDraft"
+  },
+  "notificationCaptureConfirm": "确认入账",
+  "@notificationCaptureConfirm": {
+    "description": "Web path: notificationCapture.confirm",
+    "x-webPath": "notificationCapture.confirm"
+  },
+  "notificationCaptureConfirmLater": "草稿已保留。连接恢复后可再次确认入账。",
+  "@notificationCaptureConfirmLater": {
+    "description": "Web path: notificationCapture.confirmLater",
+    "x-webPath": "notificationCapture.confirmLater"
+  },
+  "notificationCapturePostedCleanup": "交易已入账。草稿移除失败，可以返回列表后丢弃。",
+  "@notificationCapturePostedCleanup": {
+    "description": "Web path: notificationCapture.postedCleanup",
+    "x-webPath": "notificationCapture.postedCleanup"
+  },
   "commonSave": "保存",
   "@commonSave": {
     "description": "Web path: common.save",

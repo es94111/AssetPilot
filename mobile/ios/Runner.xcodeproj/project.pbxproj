@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A7CB92CE07514ADFAAC694B1 /* CapturePaymentNotificationIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7CB92CE07514ADFAAC694A1 /* CapturePaymentNotificationIntent.swift */; };
+		A7CB92CE07514ADFAAC694B2 /* NotificationCaptureCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7CB92CE07514ADFAAC694A2 /* NotificationCaptureCore.swift */; };
+		A7CB92CE07514ADFAAC694B3 /* NotificationCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7CB92CE07514ADFAAC694A3 /* NotificationCaptureService.swift */; };
+		A7CB92CE07514ADFAAC694B4 /* NotificationCaptureChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7CB92CE07514ADFAAC694A4 /* NotificationCaptureChannel.swift */; };
+		A7CB92CE07514ADFAAC694B5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A7CB92CE07514ADFAAC694A5 /* Localizable.xcstrings */; };
+		A7CB92CE07514ADFAAC694B6 /* NotificationCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7CB92CE07514ADFAAC694A6 /* NotificationCaptureTests.swift */; };
 		0B021D077D65B30EA57012D3 /* DeepLinkQueueLogoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE7FF126B00D15F6C191540D /* DeepLinkQueueLogoutTests.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		199ADB1E6D34073132BC2DD4 /* AssetPilotWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 39877B5992D76B8DF71D5384 /* AssetPilotWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -85,6 +91,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A7CB92CE07514ADFAAC694A1 /* CapturePaymentNotificationIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePaymentNotificationIntent.swift; sourceTree = "<group>"; };
+		A7CB92CE07514ADFAAC694A2 /* NotificationCaptureCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCaptureCore.swift; sourceTree = "<group>"; };
+		A7CB92CE07514ADFAAC694A3 /* NotificationCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCaptureService.swift; sourceTree = "<group>"; };
+		A7CB92CE07514ADFAAC694A4 /* NotificationCaptureChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCaptureChannel.swift; sourceTree = "<group>"; };
+		A7CB92CE07514ADFAAC694A5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		A7CB92CE07514ADFAAC694A6 /* NotificationCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCaptureTests.swift; sourceTree = "<group>"; };
 		0460292111D950D153438961 /* AssetPilotWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AssetPilotWidgetBundle.swift; path = AssetPilotWidget/AssetPilotWidgetBundle.swift; sourceTree = "<group>"; };
 		07E763DE698983C17B843C4E /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = "<group>"; };
 		0F1B65F1064FC75559F9331D /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = "<group>"; };
@@ -216,6 +228,7 @@
 				12500697B81DE3C3B38F4651 /* DeepLinkDeliveryTests.swift */,
 				C973F96D04377B2620ECA325 /* AppleAuthChannelTests.swift */,
 				A1B2C3D4E5F60718293A4B04 /* OfflineFileCryptoTests.swift */,
+				A7CB92CE07514ADFAAC694A6 /* NotificationCaptureTests.swift */,
 				AE7FF126B00D15F6C191540D /* DeepLinkQueueLogoutTests.swift */,
 			);
 			path = RunnerTests;
@@ -296,6 +309,11 @@
 				4E30D0395670B2EE28A6D65E /* WidgetReloadChannel.swift */,
 				6E7F89A31861F47E97F54990 /* AssetPilotShortcuts.swift */,
 				293D9D6DBEA8F3473F057DCC /* RecordTransactionIntent.swift */,
+				A7CB92CE07514ADFAAC694A1 /* CapturePaymentNotificationIntent.swift */,
+				A7CB92CE07514ADFAAC694A2 /* NotificationCaptureCore.swift */,
+				A7CB92CE07514ADFAAC694A3 /* NotificationCaptureService.swift */,
+				A7CB92CE07514ADFAAC694A4 /* NotificationCaptureChannel.swift */,
+				A7CB92CE07514ADFAAC694A5 /* Localizable.xcstrings */,
 				5060C7C2D9BD7A90FDF3C902 /* DeepLinkChannel.swift */,
 				1DC802E9A106B8D85D695D2D /* DeepLinkQueue.swift */,
 			);
@@ -457,6 +475,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				"zh-Hant",
 				Base,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
@@ -496,6 +515,7 @@
 				97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */,
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
+				A7CB92CE07514ADFAAC694B5 /* Localizable.xcstrings in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -543,6 +563,7 @@
 			files = (
 				2A9DCC0B76FA0EEC17F8BF5A /* AppleAuthChannelTests.swift in Sources */,
 				A1B2C3D4E5F60718293A4B14 /* OfflineFileCryptoTests.swift in Sources */,
+				A7CB92CE07514ADFAAC694B6 /* NotificationCaptureTests.swift in Sources */,
 				96ED90F74B5839E8CC90847B /* DeepLinkDeliveryTests.swift in Sources */,
 				0B021D077D65B30EA57012D3 /* DeepLinkQueueLogoutTests.swift in Sources */,
 				9559FB180094A0A5BACDC4B4 /* DeepLinkQueueTests.swift in Sources */,
@@ -565,6 +586,10 @@
 				D58F63099C6AECEB86893409 /* WidgetReloadChannel.swift in Sources */,
 				8488E8CA0223D159E546A343 /* AssetPilotShortcuts.swift in Sources */,
 				C785C864072588668C6E070E /* RecordTransactionIntent.swift in Sources */,
+				A7CB92CE07514ADFAAC694B1 /* CapturePaymentNotificationIntent.swift in Sources */,
+				A7CB92CE07514ADFAAC694B2 /* NotificationCaptureCore.swift in Sources */,
+				A7CB92CE07514ADFAAC694B3 /* NotificationCaptureService.swift in Sources */,
+				A7CB92CE07514ADFAAC694B4 /* NotificationCaptureChannel.swift in Sources */,
 				598B4DA1E8A41322795E97CA /* DeepLinkChannel.swift in Sources */,
 				C443399699BE2BFEACF8E9CD /* DeepLinkQueue.swift in Sources */,
 			);

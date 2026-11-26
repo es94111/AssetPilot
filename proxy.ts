@@ -39,6 +39,7 @@ const PUBLIC_PREFIXES = ['/api/auth/passkey/', '/api/auth/recovery/', '/api/setu
 // 這組路由不使用 authToken Cookie，改以 `Authorization: Bearer ap_api_…` 驗證，
 // 因此必須先放行 proxy 的 cookie 檢查，再由路由本身完成權杖與權限範圍驗證。
 const API_TOKEN_PREFIXES = ['/api/v1/'];
+const NOTIFICATION_CAPTURE_PARSE_PATH = '/api/app/notification-capture/parse';
 
 // Next.js 內部路由 + 靜態資源
 const SKIP_PREFIXES = ['/_next/', '/favicon.', '/logo.'];
@@ -140,7 +141,8 @@ function isOriginAllowed(originValue: string, request: NextRequest): boolean {
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const isPublicPath = PUBLIC_PATHS.has(pathname) || PUBLIC_PREFIXES.some(p => pathname.startsWith(p))
-    || API_TOKEN_PREFIXES.some(p => pathname.startsWith(p));
+    || API_TOKEN_PREFIXES.some(p => pathname.startsWith(p))
+    || pathname === NOTIFICATION_CAPTURE_PARSE_PATH; // The route requires a capture-only Bearer credential.
 
   // 略過 Next.js 內部路由與靜態資源
   if (SKIP_PREFIXES.some(p => pathname.startsWith(p))) {

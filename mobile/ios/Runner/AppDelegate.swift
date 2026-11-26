@@ -12,6 +12,9 @@ import UIKit
     OfflineFileCryptoChannel.register(with: registry.registrar(forPlugin: "OfflineFileCryptoChannel"))
     WidgetReloadChannel.register(with: registry.registrar(forPlugin: "WidgetReloadChannel"))
     DeepLinkChannel.register(with: registry.registrar(forPlugin: "DeepLinkChannel"))
+    if let registrar = registry.registrar(forPlugin: "NotificationCaptureChannel") {
+      NotificationCaptureChannel.register(with: registrar)
+    }
   }
 
   /// 舊式（無場景）的 URL 回呼入口。

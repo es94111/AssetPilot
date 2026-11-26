@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
 import 'package:image_picker/image_picker.dart';
 
 import '../api_client.dart';
@@ -9,6 +10,7 @@ import '../models.dart';
 import '../offline/connectivity_service.dart';
 import '../offline/offline_draft_core.dart';
 import '../offline/offline_draft_service.dart';
+import '../platform/notification_capture.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import '../l10n.dart';
@@ -30,6 +32,7 @@ const _kDefaultCurrencies = [
 /// 新增／編輯交易。轉帳僅支援新增。
 class TransactionFormScreen extends StatefulWidget {
   final Txn? existing;
+  final NotificationDraft? notificationDraft;
   final String? initialType;
   final String? initialCategoryShortcut;
 
@@ -45,6 +48,7 @@ class TransactionFormScreen extends StatefulWidget {
   const TransactionFormScreen({
     super.key,
     this.existing,
+    this.notificationDraft,
     this.initialType,
     this.initialCategoryShortcut,
     this.initialAmount,
@@ -76,6 +80,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   /// 已指定時不讓分類快捷方式覆寫成支出。
   bool _typeExplicit = false;
   DateTime _date = DateTime.now();
+  bool _notificationDateChosen = false;
   String? _categoryId; // 實際存到後端的子分類 id
   String? _parentCatId; // 兩段式選擇用：目前選到的父分類 id（不送後端）
   String? _accountId;
@@ -107,6 +112,23 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       final rate = num.tryParse(e.fxRate) ?? 1;
       if (_currency != 'TWD' && rate > 0 && rate != 1) _fxRate.text = e.fxRate;
       if (e.fxFee > 0) _fxFee.text = e.fxFee.round().toString();
+    } else if (widget.notificationDraft case final NotificationDraft draft) {
+      final edits = draft.edits;
+      _amount.text = edits?['amount'] as String? ?? draft.amount ?? '';
+      _currency = edits?['currency'] as String? ?? draft.currency ?? '';
+      _note.text = edits?['note'] as String? ?? draft.merchant ?? '';
+      final date = DateTime.tryParse(
+        (edits == null ? draft.date : edits['date'] as String?) ?? '',
+      );
+      if (date != null) {
+        _date = date;
+        _notificationDateChosen = true;
+      }
+      _accountId = edits?['accountId'] as String?;
+      _categoryId = edits?['categoryId'] as String?;
+      _fxRate.text = edits?['fxRate'] as String? ?? '';
+      _fxFee.text = edits?['fxFee'] as String? ?? '';
+      _excludeFromStats = edits?['excludeFromStats'] == true;
     } else {
       final initialType = widget.initialType;
       if (initialType == 'expense' ||
@@ -162,6 +184,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   Future<void> _loadRefs() async {
     final api = ApiClient.instance;
+    final notificationDraft = widget.notificationDraft;
+    if (notificationDraft != null &&
+        !api.isPersonalLedgerFor(notificationDraft.ownerId)) {
+      throw StateError(trKey('notificationCapturePersonalLedger'));
+    }
     final acc = await api.accounts();
     final cat = await api.categories();
     _accounts = acc
@@ -170,9 +197,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     _categories = cat
         .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
-    _accountId ??= _accounts.isNotEmpty ? _accounts.first.id : null;
+    if (notificationDraft == null) {
+      _accountId ??= _accounts.isNotEmpty ? _accounts.first.id : null;
+    } else if (_selectedAccount == null) {
+      _accountId = null;
+    }
     // 新增模式：幣別預設跟隨預選帳戶。編輯模式維持原交易幣別（已於 initState 帶入）。
-    if (!_isEdit) {
+    if (!_isEdit && notificationDraft == null) {
       _applyInitialAccount();
       final a = _selectedAccount;
       if (a != null) {
@@ -238,10 +269,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     if (name == null || name.isEmpty) return;
 
     // 先找同類型的子分類（使用者最可能指的那一筆）。
-    final direct = _findCategory(
-      _categories.where((c) => c.type == _type),
-      [name],
-    );
+    final direct = _findCategory(_categories.where((c) => c.type == _type), [
+      name,
+    ]);
     if (direct != null) {
       _categoryId = direct.id;
       _parentCatId = direct.isParent ? null : direct.parentId;
@@ -364,7 +394,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (d != null) setState(() => _date = d);
+    if (d != null && mounted) {
+      setState(() {
+        _date = d;
+        _notificationDateChosen = true;
+      });
+    }
   }
 
   String get _dateStr =>
@@ -454,7 +489,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 ? amount.toInt().toString()
                 : amount.toString();
           }
-          if (date != null) _date = date;
+          if (date != null) {
+            _date = date;
+            _notificationDateChosen = true;
+          }
           if (merchant.isNotEmpty && _note.text.trim().isEmpty) {
             _note.text = merchant.length > 200
                 ? merchant.substring(0, 200)
@@ -576,10 +614,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     if (!_formKey.currentState!.validate()) return;
     // 離線草稿不經過 API 的統一唯讀防線，所以在這裡先擋。
     if (ApiClient.instance.activeLedgerReadOnly) {
       toast(context, trKey('ledgerReadOnlyNotice'), isError: true);
+      return;
+    }
+    final notification = widget.notificationDraft;
+    if (notification != null && !_notificationDateChosen) {
+      toast(context, trKey('notificationCaptureChooseDate'), isError: true);
       return;
     }
     final amount = num.parse(_amount.text.trim());
@@ -617,6 +661,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         if (_overseasApplies && feeText.isNotEmpty) {
           body['fxFee'] = num.tryParse(feeText) ?? 0;
         }
+      }
+
+      if (notification != null) {
+        await _saveNotificationEdits(notification);
+        // The await above can overlap a sign-out or a ledger change.
+        if (!mounted ||
+            !api.isLoggedIn ||
+            !api.isPersonalLedgerFor(notification.ownerId)) {
+          throw StateError(trKey('notificationCapturePersonalLedger'));
+        }
+        if (!ConnectivityService.instance.online) {
+          toast(context, trKey('notificationCaptureConfirmLater'));
+          setState(() => _saving = false);
+          return;
+        }
+        body['clientRef'] = notification.id;
       }
 
       // 編輯既有交易不支援離線草稿（計畫書 4.3：離線草稿僅涵蓋「新增」）。
@@ -662,8 +722,24 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         if (!isRetryableStatus(e.statusCode)) {
           rethrow;
         }
+        if (notification != null) {
+          if (mounted) {
+            toast(context, trKey('notificationCaptureConfirmLater'));
+            setState(() => _saving = false);
+          }
+          return;
+        }
         await _saveAsDraft(body, isTransfer: isTransfer);
         return;
+      }
+      if (notification != null) {
+        try {
+          await NotificationCapturePlatform.discard(notification);
+        } catch (_) {
+          if (mounted) {
+            toast(context, trKey('notificationCapturePostedCleanup'));
+          }
+        }
       }
       await _refreshDashboardWidgets();
       if (mounted) Navigator.pop(context, true);
@@ -671,6 +747,40 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       if (mounted) {
         setState(() => _saving = false);
         toast(context, '$e');
+      }
+    }
+  }
+
+  Future<void> _saveNotificationEdits(NotificationDraft draft) async {
+    final validScope =
+        ApiClient.instance.isLoggedIn &&
+        ApiClient.instance.isPersonalLedgerFor(draft.ownerId);
+    if (!validScope) {
+      throw StateError(trKey('notificationCapturePersonalLedger'));
+    }
+    final saved = await NotificationCapturePlatform.saveEdits(draft, {
+      'amount': _amount.text.trim(),
+      'currency': _currency,
+      'note': _note.text.trim(),
+      if (_notificationDateChosen) 'date': _dateStr,
+      if (_accountId != null) 'accountId': _accountId,
+      if (_categoryId != null) 'categoryId': _categoryId,
+      'fxRate': _fxRate.text.trim(),
+      'fxFee': _fxFee.text.trim(),
+      'excludeFromStats': _excludeFromStats,
+    });
+    if (!saved) throw StateError(trKey('notificationCaptureStorageError'));
+  }
+
+  Future<void> _saveNotificationAndClose(NotificationDraft draft) async {
+    setState(() => _saving = true);
+    try {
+      await _saveNotificationEdits(draft);
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        toast(context, trKey('notificationCaptureStorageError'), isError: true);
+        setState(() => _saving = false);
       }
     }
   }
@@ -686,7 +796,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     final service = OfflineDraftService.instance;
     await service.save(
       payload: body,
-      kind: isTransfer ? OfflineDraftKind.transfer : OfflineDraftKind.transaction,
+      kind: isTransfer
+          ? OfflineDraftKind.transfer
+          : OfflineDraftKind.transaction,
       photoPaths: _photos.map((p) => p.path).toList(),
     );
     if (!mounted) return;
@@ -761,14 +873,25 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final notification = widget.notificationDraft;
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _isEdit
+          notification != null
+              ? trKey('notificationCaptureReviewTitle')
+              : _isEdit
               ? trKey('featuresTransactionsEdit')
               : trKey('featuresTransactionsAdd'),
         ),
         actions: [
+          if (notification != null)
+            IconButton(
+              tooltip: trKey('notificationCaptureSaveDraft'),
+              icon: const Icon(Icons.save_outlined),
+              onPressed: _saving
+                  ? null
+                  : () => _saveNotificationAndClose(notification),
+            ),
           if (_isEdit)
             IconButton(
               tooltip: trKey('mobileLegacyDeleteTransaction'),
@@ -787,6 +910,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             saving: _saving,
             onCancel: () => Navigator.pop(context),
             onSave: _save,
+            saveLabel: notification == null
+                ? null
+                : trKey('notificationCaptureConfirm'),
           );
         },
       ),
@@ -841,7 +967,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           16 + MediaQuery.of(context).padding.bottom,
         ),
         children: [
-          if (!_isEdit)
+          if (widget.notificationDraft case final NotificationDraft draft)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: Text(draft.sourceName),
+              subtitle: Text(
+                draft.possibleDuplicate
+                    ? trKey('notificationCaptureCompare')
+                    : trKey('dashboardOverviewExpense'),
+              ),
+            )
+          else if (!_isEdit)
             SegmentedButton<String>(
               segments: [
                 ButtonSegment(
@@ -876,7 +1013,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             onChanged: (_) => setState(() {}),
             validator: (v) {
               final n = num.tryParse(v?.trim() ?? '');
-              if (n == null || n <= 0) {
+              if (n == null || !n.isFinite || n <= 0) {
                 return trKey('mobileLegacyEnterAnAmountGreaterThan0');
               }
               return null;
@@ -924,7 +1061,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
             leading: Icon(Icons.calendar_today),
             title: Text(trKey('dashboardTableDate')),
-            trailing: Text(_dateStr),
+            trailing: Text(
+              widget.notificationDraft != null && !_notificationDateChosen
+                  ? trKey('notificationCaptureChooseDate')
+                  : _dateStr,
+            ),
             onTap: _pickDate,
           ),
           SizedBox(height: 16),
@@ -1030,7 +1171,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 _accountId = v;
                 // 換帳戶時幣別跟著帳戶走，並清掉手動匯率（與網頁版一致）。
                 final a = _selectedAccount;
-                if (a != null) {
+                if (a != null && widget.notificationDraft == null) {
                   _currency = a.currency;
                   _currencyInput?.text = _currency;
                   _fxRate.clear();
@@ -1199,9 +1340,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               errorBuilder: (c, e, s) => Container(
                                 width: 76,
                                 height: 76,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
                                 child: Icon(Icons.broken_image_outlined),
                               ),
                             ),
@@ -1350,11 +1491,13 @@ class _TransactionFormFooter extends StatelessWidget {
   final bool saving;
   final VoidCallback onCancel;
   final VoidCallback onSave;
+  final String? saveLabel;
 
   const _TransactionFormFooter({
     required this.saving,
     required this.onCancel,
     required this.onSave,
+    this.saveLabel,
   });
 
   @override
@@ -1385,7 +1528,7 @@ class _TransactionFormFooter extends StatelessWidget {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(trKey('commonSave')),
+                      : Text(saveLabel ?? trKey('commonSave')),
                 ),
               ),
             ],

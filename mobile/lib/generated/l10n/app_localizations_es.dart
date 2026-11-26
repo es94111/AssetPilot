@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -7,6 +8,175 @@ import 'app_localizations.dart';
 /// The translations for Spanish Castilian (`es`).
 class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
+
+  @override
+  String get notificationCaptureTitle => 'Payment notification capture';
+
+  @override
+  String get notificationCaptureEnable => 'Capture payment notifications';
+
+  @override
+  String get notificationCaptureEnableHint =>
+      'Shortcuts passes alerts from the apps you select and prepares drafts on this iPhone.';
+
+  @override
+  String get notificationCaptureUnavailable =>
+      'The administrator has yet to enable recognition.';
+
+  @override
+  String get notificationCaptureService => 'Recognition service';
+
+  @override
+  String get notificationCaptureConsentTitle => 'Share payment notifications?';
+
+  @override
+  String notificationCaptureConsentBody(String service, String model) {
+    return 'When a selected app sends a payment alert, AssetPilot screens the alert and masks identifiers such as card or account numbers. It sends the source, title, subtitle, body, and time to $service for recognition by $model, subject to that service’s data policy. Drafts stay on this iPhone. You can pause capture here at any time.';
+  }
+
+  @override
+  String get notificationCaptureAgree => 'Agree and enable';
+
+  @override
+  String get notificationCaptureRecent => 'Last notification';
+
+  @override
+  String get notificationCaptureNoRecent =>
+      'Waiting for your first notification.';
+
+  @override
+  String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
+
+  @override
+  String get notificationCaptureStepTrigger =>
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+
+  @override
+  String get notificationCaptureStepAction =>
+      '2. Add the AssetPilot action “Capture a payment notification”.';
+
+  @override
+  String get notificationCaptureStepInput =>
+      '3. Map the notification’s app name, title, subtitle, body, and date when available to the matching action fields.';
+
+  @override
+  String get notificationCaptureStepRun =>
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
+
+  @override
+  String get notificationCaptureOpenShortcuts => 'Open Shortcuts';
+
+  @override
+  String get notificationCaptureShortcutsError =>
+      'Open the Shortcuts app from your iPhone Home Screen.';
+
+  @override
+  String get notificationCaptureBanks => 'Banks';
+
+  @override
+  String get notificationCapturePayments => 'Payment apps';
+
+  @override
+  String get notificationCaptureNoIosSource =>
+      'Direct payment alerts are unavailable on iPhone. You can still select your card issuer’s app if it sends alerts.';
+
+  @override
+  String get notificationCaptureVerified => 'Verified on iPhone';
+
+  @override
+  String get notificationCaptureUnverified => 'Awaiting iPhone verification';
+
+  @override
+  String get notificationCaptureDrafts => 'Notification drafts';
+
+  @override
+  String get notificationCaptureEmptyDrafts =>
+      'Payment alerts appear here as drafts when they are recognized.';
+
+  @override
+  String get notificationCaptureDraftReady => 'Ready to review';
+
+  @override
+  String get notificationCaptureQueued => 'Waiting for recognition';
+
+  @override
+  String get notificationCaptureReview => 'Missing details';
+
+  @override
+  String get notificationCaptureIgnored => 'Notification skipped.';
+
+  @override
+  String get notificationCaptureUnknownSource =>
+      'Check that Shortcuts is passing the source app’s name.';
+
+  @override
+  String get notificationCaptureEmptyInput =>
+      'Check the Shortcuts input mapping and notification preview settings to pass the alert text.';
+
+  @override
+  String get notificationCaptureDuplicate => 'This alert was already received.';
+
+  @override
+  String get notificationCaptureFull =>
+      'The inbox is full. Review or discard some drafts.';
+
+  @override
+  String get notificationCaptureExpired =>
+      'The queued alert expired. You can fill in the draft manually.';
+
+  @override
+  String get notificationCaptureRetry =>
+      'Saved for another attempt when you open the app or the shortcut runs again.';
+
+  @override
+  String get notificationCaptureConsentChanged =>
+      'Review the updated service and agree to resume capture.';
+
+  @override
+  String get notificationCaptureSessionExpired =>
+      'Re-enable notification capture in AssetPilot.';
+
+  @override
+  String get notificationCaptureCompare =>
+      'Another source may have reported this purchase. Compare the drafts before posting.';
+
+  @override
+  String get notificationCaptureDiscard => 'Discard notification draft';
+
+  @override
+  String get notificationCaptureDiscardHint =>
+      'This draft will be removed from this iPhone.';
+
+  @override
+  String get notificationCapturePersonalLedger =>
+      'Review notification drafts in your personal ledger.';
+
+  @override
+  String get notificationCapturePickLedger => 'Select your personal ledger';
+
+  @override
+  String get notificationCaptureStorageError =>
+      'Unable to update your notification drafts on this iPhone. Try again shortly.';
+
+  @override
+  String get notificationCaptureChooseDate => 'Choose the payment date';
+
+  @override
+  String get notificationCaptureReviewTitle => 'Review notification draft';
+
+  @override
+  String get notificationCaptureSaveDraft => 'Save draft edits';
+
+  @override
+  String get notificationCaptureConfirm => 'Confirm and post';
+
+  @override
+  String get notificationCaptureConfirmLater =>
+      'The draft is saved. Try posting it again when you are connected.';
+
+  @override
+  String get notificationCapturePostedCleanup =>
+      'The transaction was posted. You can discard the remaining draft from the inbox.';
 
   @override
   String get commonSave => 'Guardar';

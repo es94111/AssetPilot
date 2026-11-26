@@ -70,8 +70,9 @@ function blocked(reason: string, statusCode = 0): WebhookDeliveryResult {
  * 解析主機名為位址清單；IP 字面值直接回傳自身（不經 DNS，也就沒有 rebinding 風險）。
  * 逾時與解析失敗皆以 `null` 表示，交由呼叫端轉成可重試的連線錯誤。
  */
-async function resolveTargetAddresses(
+export async function resolveTargetAddresses(
   hostname: string,
+  timeoutMs = DNS_LOOKUP_TIMEOUT_MS,
 ): Promise<Array<{ address: string; family: number }> | null> {
   const literalFamily = net.isIP(hostname);
   if (literalFamily !== 0) return [{ address: hostname, family: literalFamily }];
@@ -81,7 +82,7 @@ async function resolveTargetAddresses(
     const addresses = await Promise.race([
       dns.promises.lookup(hostname, { all: true, verbatim: true }),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error('DNS 解析逾時')), DNS_LOOKUP_TIMEOUT_MS);
+        timer = setTimeout(() => reject(new Error('DNS 解析逾時')), timeoutMs);
       }),
     ]);
     return addresses.map((entry) => ({ address: String(entry.address), family: Number(entry.family) || 4 }));

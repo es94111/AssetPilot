@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -7,6 +8,159 @@ import 'app_localizations.dart';
 /// The translations for Chinese (`zh`).
 class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
+
+  @override
+  String get notificationCaptureTitle => '手機通知自動記帳';
+
+  @override
+  String get notificationCaptureEnable => '接收消費通知';
+
+  @override
+  String get notificationCaptureEnableHint =>
+      '由捷徑接收所選 App 的通知，在這支 iPhone 建立待確認草稿。';
+
+  @override
+  String get notificationCaptureUnavailable => '管理員尚未開放辨識服務。';
+
+  @override
+  String get notificationCaptureService => '辨識服務';
+
+  @override
+  String get notificationCaptureConsentTitle => '允許分享消費通知？';
+
+  @override
+  String notificationCaptureConsentBody(String service, String model) {
+    return '你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文與時間送到 $service 的 $model 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。';
+  }
+
+  @override
+  String get notificationCaptureAgree => '同意並啟用';
+
+  @override
+  String get notificationCaptureRecent => '最近一次接收';
+
+  @override
+  String get notificationCaptureNoRecent => '還沒收到通知。';
+
+  @override
+  String get notificationCaptureSetup => '設定 iPhone 捷徑';
+
+  @override
+  String get notificationCaptureStepTrigger =>
+      '1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。';
+
+  @override
+  String get notificationCaptureStepAction =>
+      '2. 加入 AssetPilot 的「從通知建立記帳草稿」動作。';
+
+  @override
+  String get notificationCaptureStepInput =>
+      '3. 從通知輸入選擇變數，將 App 名稱、標題、副標題、內文和可取得的日期帶入對應欄位。';
+
+  @override
+  String get notificationCaptureStepRun =>
+      '4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。';
+
+  @override
+  String get notificationCaptureOpenShortcuts => '開啟捷徑';
+
+  @override
+  String get notificationCaptureShortcutsError =>
+      '無法開啟捷徑。請確認 iPhone 已安裝捷徑 App。';
+
+  @override
+  String get notificationCaptureBanks => '銀行';
+
+  @override
+  String get notificationCapturePayments => '行動支付';
+
+  @override
+  String get notificationCaptureNoIosSource =>
+      'iPhone 無直接付款通知來源。發卡銀行的通知仍可透過銀行 App 接收。';
+
+  @override
+  String get notificationCaptureVerified => '已通過實機驗證';
+
+  @override
+  String get notificationCaptureUnverified => '等待實機驗證';
+
+  @override
+  String get notificationCaptureDrafts => '通知草稿';
+
+  @override
+  String get notificationCaptureEmptyDrafts => '還沒有通知草稿。成功辨識的消費通知會出現在這裡。';
+
+  @override
+  String get notificationCaptureDraftReady => '待確認';
+
+  @override
+  String get notificationCaptureQueued => '等待辨識';
+
+  @override
+  String get notificationCaptureReview => '需補資料';
+
+  @override
+  String get notificationCaptureIgnored => '已略過這則通知。';
+
+  @override
+  String get notificationCaptureUnknownSource => '來源未對應。請檢查捷徑傳入的 App 名稱。';
+
+  @override
+  String get notificationCaptureEmptyInput => '這則通知沒有可用的內文。請檢查捷徑的變數設定與通知預覽。';
+
+  @override
+  String get notificationCaptureDuplicate => '已接收過這則通知。';
+
+  @override
+  String get notificationCaptureFull => '草稿空間已滿。請先處理幾筆草稿。';
+
+  @override
+  String get notificationCaptureExpired => '等待辨識的通知已逾期，可以手動補上草稿資料。';
+
+  @override
+  String get notificationCaptureRetry => '已暫存。下次開啟 App 或執行捷徑時會再嘗試辨識。';
+
+  @override
+  String get notificationCaptureConsentChanged => '辨識服務已變更。請重新查看並同意後啟用。';
+
+  @override
+  String get notificationCaptureSessionExpired => '請在 AssetPilot 重新啟用通知接收。';
+
+  @override
+  String get notificationCaptureCompare => '可能是同一筆消費，請與其他來源的草稿比對。';
+
+  @override
+  String get notificationCaptureDiscard => '捨棄通知草稿';
+
+  @override
+  String get notificationCaptureDiscardHint => '這筆草稿會從這支 iPhone 移除。';
+
+  @override
+  String get notificationCapturePersonalLedger => '請在個人帳本確認通知草稿。';
+
+  @override
+  String get notificationCapturePickLedger => '選擇個人帳本';
+
+  @override
+  String get notificationCaptureStorageError => '這支 iPhone 暫時無法更新通知草稿。請稍後重試。';
+
+  @override
+  String get notificationCaptureChooseDate => '選擇交易日期';
+
+  @override
+  String get notificationCaptureReviewTitle => '確認通知草稿';
+
+  @override
+  String get notificationCaptureSaveDraft => '儲存草稿修改';
+
+  @override
+  String get notificationCaptureConfirm => '確認入帳';
+
+  @override
+  String get notificationCaptureConfirmLater => '草稿已保留。連線恢復後可再次確認入帳。';
+
+  @override
+  String get notificationCapturePostedCleanup => '交易已入帳。草稿移除失敗，可以回到清單後捨棄。';
 
   @override
   String get commonSave => '儲存';
@@ -6540,6 +6694,159 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   AppLocalizationsZhHansCn() : super('zh_Hans_CN');
 
   @override
+  String get notificationCaptureTitle => '手机通知自动记账';
+
+  @override
+  String get notificationCaptureEnable => '接收消费通知';
+
+  @override
+  String get notificationCaptureEnableHint =>
+      '由快捷指令接收所选 App 的通知，在这部 iPhone 建立待确认草稿。';
+
+  @override
+  String get notificationCaptureUnavailable => '管理员尚未开放识别服务。';
+
+  @override
+  String get notificationCaptureService => '识别服务';
+
+  @override
+  String get notificationCaptureConsentTitle => '允许分享消费通知？';
+
+  @override
+  String notificationCaptureConsentBody(String service, String model) {
+    return '你选取的 App 发出消费通知时，AssetPilot 会筛选并遮蔽卡号、账号等资料，再将来源、标题、副标题、正文与时间发给 $service 的 $model 模型识别。识别内容依该服务的数据政策处理。草稿保存在这部 iPhone，你可以随时在这里关闭。';
+  }
+
+  @override
+  String get notificationCaptureAgree => '同意并启用';
+
+  @override
+  String get notificationCaptureRecent => '最近一次接收';
+
+  @override
+  String get notificationCaptureNoRecent => '还没收到通知。';
+
+  @override
+  String get notificationCaptureSetup => '设置 iPhone 快捷指令';
+
+  @override
+  String get notificationCaptureStepTrigger =>
+      '1. 在快捷指令新增“收到通知”自动化，选取要接收的银行或支付 App。需要多组自动化时，可复制快捷指令再更换来源。';
+
+  @override
+  String get notificationCaptureStepAction =>
+      '2. 加入 AssetPilot 的“Capture a payment notification”动作。';
+
+  @override
+  String get notificationCaptureStepInput =>
+      '3. 从通知输入选择变量，将 App 名称、标题、副标题、正文与可取得的日期填入对应字段。';
+
+  @override
+  String get notificationCaptureStepRun =>
+      '4. 开启自动运行与“允许在锁定时运行”。收到第一条真实消费通知后，回来查看最近一次接收状态。';
+
+  @override
+  String get notificationCaptureOpenShortcuts => '打开快捷指令';
+
+  @override
+  String get notificationCaptureShortcutsError =>
+      '无法打开快捷指令。请确认 iPhone 已安装快捷指令 App。';
+
+  @override
+  String get notificationCaptureBanks => '银行';
+
+  @override
+  String get notificationCapturePayments => '移动支付';
+
+  @override
+  String get notificationCaptureNoIosSource =>
+      'iPhone 无直接付款通知来源。发卡银行的通知仍可通过银行 App 接收。';
+
+  @override
+  String get notificationCaptureVerified => '已通过真机验证';
+
+  @override
+  String get notificationCaptureUnverified => '等待真机验证';
+
+  @override
+  String get notificationCaptureDrafts => '通知草稿';
+
+  @override
+  String get notificationCaptureEmptyDrafts => '还没有通知草稿。识别出的消费通知会出现在这里。';
+
+  @override
+  String get notificationCaptureDraftReady => '待确认';
+
+  @override
+  String get notificationCaptureQueued => '等待识别';
+
+  @override
+  String get notificationCaptureReview => '需补资料';
+
+  @override
+  String get notificationCaptureIgnored => '已跳过这条通知。';
+
+  @override
+  String get notificationCaptureUnknownSource => '来源未对应。请检查快捷指令传入的 App 名称。';
+
+  @override
+  String get notificationCaptureEmptyInput => '这条通知没有可用的正文。请检查快捷指令变量设置和通知预览。';
+
+  @override
+  String get notificationCaptureDuplicate => '已接收过这条通知。';
+
+  @override
+  String get notificationCaptureFull => '草稿空间已满。请先处理几笔草稿。';
+
+  @override
+  String get notificationCaptureExpired => '等待识别的通知已过期，可以手动补充草稿资料。';
+
+  @override
+  String get notificationCaptureRetry => '已暂存。下次打开 App 或运行快捷指令时会再尝试识别。';
+
+  @override
+  String get notificationCaptureConsentChanged => '识别服务已变更。请重新查看并同意后启用。';
+
+  @override
+  String get notificationCaptureSessionExpired => '请在 AssetPilot 重新启用通知接收。';
+
+  @override
+  String get notificationCaptureCompare => '可能是同一笔消费，请与其他来源的草稿比对。';
+
+  @override
+  String get notificationCaptureDiscard => '丢弃通知草稿';
+
+  @override
+  String get notificationCaptureDiscardHint => '这笔草稿会从这部 iPhone 移除。';
+
+  @override
+  String get notificationCapturePersonalLedger => '请在个人账本确认通知草稿。';
+
+  @override
+  String get notificationCapturePickLedger => '选择个人账本';
+
+  @override
+  String get notificationCaptureStorageError => '这部 iPhone 暂时无法更新通知草稿。请稍后重试。';
+
+  @override
+  String get notificationCaptureChooseDate => '选择交易日期';
+
+  @override
+  String get notificationCaptureReviewTitle => '确认通知草稿';
+
+  @override
+  String get notificationCaptureSaveDraft => '保存草稿修改';
+
+  @override
+  String get notificationCaptureConfirm => '确认入账';
+
+  @override
+  String get notificationCaptureConfirmLater => '草稿已保留。连接恢复后可再次确认入账。';
+
+  @override
+  String get notificationCapturePostedCleanup => '交易已入账。草稿移除失败，可以返回列表后丢弃。';
+
+  @override
   String get commonSave => '保存';
 
   @override
@@ -12974,6 +13281,159 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
 class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   AppLocalizationsZhHantTw() : super('zh_Hant_TW');
+
+  @override
+  String get notificationCaptureTitle => '手機通知自動記帳';
+
+  @override
+  String get notificationCaptureEnable => '接收消費通知';
+
+  @override
+  String get notificationCaptureEnableHint =>
+      '由捷徑接收所選 App 的通知，在這支 iPhone 建立待確認草稿。';
+
+  @override
+  String get notificationCaptureUnavailable => '管理員尚未開放辨識服務。';
+
+  @override
+  String get notificationCaptureService => '辨識服務';
+
+  @override
+  String get notificationCaptureConsentTitle => '允許分享消費通知？';
+
+  @override
+  String notificationCaptureConsentBody(String service, String model) {
+    return '你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文與時間送到 $service 的 $model 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。';
+  }
+
+  @override
+  String get notificationCaptureAgree => '同意並啟用';
+
+  @override
+  String get notificationCaptureRecent => '最近一次接收';
+
+  @override
+  String get notificationCaptureNoRecent => '還沒收到通知。';
+
+  @override
+  String get notificationCaptureSetup => '設定 iPhone 捷徑';
+
+  @override
+  String get notificationCaptureStepTrigger =>
+      '1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。';
+
+  @override
+  String get notificationCaptureStepAction =>
+      '2. 加入 AssetPilot 的「從通知建立記帳草稿」動作。';
+
+  @override
+  String get notificationCaptureStepInput =>
+      '3. 從通知輸入選擇變數，將 App 名稱、標題、副標題、內文和可取得的日期帶入對應欄位。';
+
+  @override
+  String get notificationCaptureStepRun =>
+      '4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。';
+
+  @override
+  String get notificationCaptureOpenShortcuts => '開啟捷徑';
+
+  @override
+  String get notificationCaptureShortcutsError =>
+      '無法開啟捷徑。請確認 iPhone 已安裝捷徑 App。';
+
+  @override
+  String get notificationCaptureBanks => '銀行';
+
+  @override
+  String get notificationCapturePayments => '行動支付';
+
+  @override
+  String get notificationCaptureNoIosSource =>
+      'iPhone 無直接付款通知來源。發卡銀行的通知仍可透過銀行 App 接收。';
+
+  @override
+  String get notificationCaptureVerified => '已通過實機驗證';
+
+  @override
+  String get notificationCaptureUnverified => '等待實機驗證';
+
+  @override
+  String get notificationCaptureDrafts => '通知草稿';
+
+  @override
+  String get notificationCaptureEmptyDrafts => '還沒有通知草稿。成功辨識的消費通知會出現在這裡。';
+
+  @override
+  String get notificationCaptureDraftReady => '待確認';
+
+  @override
+  String get notificationCaptureQueued => '等待辨識';
+
+  @override
+  String get notificationCaptureReview => '需補資料';
+
+  @override
+  String get notificationCaptureIgnored => '已略過這則通知。';
+
+  @override
+  String get notificationCaptureUnknownSource => '來源未對應。請檢查捷徑傳入的 App 名稱。';
+
+  @override
+  String get notificationCaptureEmptyInput => '這則通知沒有可用的內文。請檢查捷徑的變數設定與通知預覽。';
+
+  @override
+  String get notificationCaptureDuplicate => '已接收過這則通知。';
+
+  @override
+  String get notificationCaptureFull => '草稿空間已滿。請先處理幾筆草稿。';
+
+  @override
+  String get notificationCaptureExpired => '等待辨識的通知已逾期，可以手動補上草稿資料。';
+
+  @override
+  String get notificationCaptureRetry => '已暫存。下次開啟 App 或執行捷徑時會再嘗試辨識。';
+
+  @override
+  String get notificationCaptureConsentChanged => '辨識服務已變更。請重新查看並同意後啟用。';
+
+  @override
+  String get notificationCaptureSessionExpired => '請在 AssetPilot 重新啟用通知接收。';
+
+  @override
+  String get notificationCaptureCompare => '可能是同一筆消費，請與其他來源的草稿比對。';
+
+  @override
+  String get notificationCaptureDiscard => '捨棄通知草稿';
+
+  @override
+  String get notificationCaptureDiscardHint => '這筆草稿會從這支 iPhone 移除。';
+
+  @override
+  String get notificationCapturePersonalLedger => '請在個人帳本確認通知草稿。';
+
+  @override
+  String get notificationCapturePickLedger => '選擇個人帳本';
+
+  @override
+  String get notificationCaptureStorageError => '這支 iPhone 暫時無法更新通知草稿。請稍後重試。';
+
+  @override
+  String get notificationCaptureChooseDate => '選擇交易日期';
+
+  @override
+  String get notificationCaptureReviewTitle => '確認通知草稿';
+
+  @override
+  String get notificationCaptureSaveDraft => '儲存草稿修改';
+
+  @override
+  String get notificationCaptureConfirm => '確認入帳';
+
+  @override
+  String get notificationCaptureConfirmLater => '草稿已保留。連線恢復後可再次確認入帳。';
+
+  @override
+  String get notificationCapturePostedCleanup => '交易已入帳。草稿移除失敗，可以回到清單後捨棄。';
 
   @override
   String get commonSave => '儲存';

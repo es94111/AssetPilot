@@ -1,5 +1,253 @@
 {
   "@@locale": "zh",
+  "notificationCaptureTitle": "手機通知自動記帳",
+  "@notificationCaptureTitle": {
+    "description": "Web path: notificationCapture.title",
+    "x-webPath": "notificationCapture.title"
+  },
+  "notificationCaptureEnable": "接收消費通知",
+  "@notificationCaptureEnable": {
+    "description": "Web path: notificationCapture.enable",
+    "x-webPath": "notificationCapture.enable"
+  },
+  "notificationCaptureEnableHint": "由捷徑接收所選 App 的通知，在這支 iPhone 建立待確認草稿。",
+  "@notificationCaptureEnableHint": {
+    "description": "Web path: notificationCapture.enableHint",
+    "x-webPath": "notificationCapture.enableHint"
+  },
+  "notificationCaptureUnavailable": "管理員尚未開放辨識服務。",
+  "@notificationCaptureUnavailable": {
+    "description": "Web path: notificationCapture.unavailable",
+    "x-webPath": "notificationCapture.unavailable"
+  },
+  "notificationCaptureService": "辨識服務",
+  "@notificationCaptureService": {
+    "description": "Web path: notificationCapture.service",
+    "x-webPath": "notificationCapture.service"
+  },
+  "notificationCaptureConsentTitle": "允許分享消費通知？",
+  "@notificationCaptureConsentTitle": {
+    "description": "Web path: notificationCapture.consentTitle",
+    "x-webPath": "notificationCapture.consentTitle"
+  },
+  "notificationCaptureConsentBody": "你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文與時間送到 {service} 的 {model} 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。",
+  "@notificationCaptureConsentBody": {
+    "description": "Web path: notificationCapture.consentBody",
+    "x-webPath": "notificationCapture.consentBody",
+    "placeholders": {
+      "service": {
+        "type": "String"
+      },
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCaptureAgree": "同意並啟用",
+  "@notificationCaptureAgree": {
+    "description": "Web path: notificationCapture.agree",
+    "x-webPath": "notificationCapture.agree"
+  },
+  "notificationCaptureRecent": "最近一次接收",
+  "@notificationCaptureRecent": {
+    "description": "Web path: notificationCapture.recent",
+    "x-webPath": "notificationCapture.recent"
+  },
+  "notificationCaptureNoRecent": "還沒收到通知。",
+  "@notificationCaptureNoRecent": {
+    "description": "Web path: notificationCapture.noRecent",
+    "x-webPath": "notificationCapture.noRecent"
+  },
+  "notificationCaptureSetup": "設定 iPhone 捷徑",
+  "@notificationCaptureSetup": {
+    "description": "Web path: notificationCapture.setup",
+    "x-webPath": "notificationCapture.setup"
+  },
+  "notificationCaptureStepTrigger": "1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。",
+  "@notificationCaptureStepTrigger": {
+    "description": "Web path: notificationCapture.stepTrigger",
+    "x-webPath": "notificationCapture.stepTrigger"
+  },
+  "notificationCaptureStepAction": "2. 加入 AssetPilot 的「從通知建立記帳草稿」動作。",
+  "@notificationCaptureStepAction": {
+    "description": "Web path: notificationCapture.stepAction",
+    "x-webPath": "notificationCapture.stepAction"
+  },
+  "notificationCaptureStepInput": "3. 從通知輸入選擇變數，將 App 名稱、標題、副標題、內文和可取得的日期帶入對應欄位。",
+  "@notificationCaptureStepInput": {
+    "description": "Web path: notificationCapture.stepInput",
+    "x-webPath": "notificationCapture.stepInput"
+  },
+  "notificationCaptureStepRun": "4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。",
+  "@notificationCaptureStepRun": {
+    "description": "Web path: notificationCapture.stepRun",
+    "x-webPath": "notificationCapture.stepRun"
+  },
+  "notificationCaptureOpenShortcuts": "開啟捷徑",
+  "@notificationCaptureOpenShortcuts": {
+    "description": "Web path: notificationCapture.openShortcuts",
+    "x-webPath": "notificationCapture.openShortcuts"
+  },
+  "notificationCaptureShortcutsError": "無法開啟捷徑。請確認 iPhone 已安裝捷徑 App。",
+  "@notificationCaptureShortcutsError": {
+    "description": "Web path: notificationCapture.shortcutsError",
+    "x-webPath": "notificationCapture.shortcutsError"
+  },
+  "notificationCaptureBanks": "銀行",
+  "@notificationCaptureBanks": {
+    "description": "Web path: notificationCapture.banks",
+    "x-webPath": "notificationCapture.banks"
+  },
+  "notificationCapturePayments": "行動支付",
+  "@notificationCapturePayments": {
+    "description": "Web path: notificationCapture.payments",
+    "x-webPath": "notificationCapture.payments"
+  },
+  "notificationCaptureNoIosSource": "iPhone 無直接付款通知來源。發卡銀行的通知仍可透過銀行 App 接收。",
+  "@notificationCaptureNoIosSource": {
+    "description": "Web path: notificationCapture.noIosSource",
+    "x-webPath": "notificationCapture.noIosSource"
+  },
+  "notificationCaptureVerified": "已通過實機驗證",
+  "@notificationCaptureVerified": {
+    "description": "Web path: notificationCapture.verified",
+    "x-webPath": "notificationCapture.verified"
+  },
+  "notificationCaptureUnverified": "等待實機驗證",
+  "@notificationCaptureUnverified": {
+    "description": "Web path: notificationCapture.unverified",
+    "x-webPath": "notificationCapture.unverified"
+  },
+  "notificationCaptureDrafts": "通知草稿",
+  "@notificationCaptureDrafts": {
+    "description": "Web path: notificationCapture.drafts",
+    "x-webPath": "notificationCapture.drafts"
+  },
+  "notificationCaptureEmptyDrafts": "還沒有通知草稿。成功辨識的消費通知會出現在這裡。",
+  "@notificationCaptureEmptyDrafts": {
+    "description": "Web path: notificationCapture.emptyDrafts",
+    "x-webPath": "notificationCapture.emptyDrafts"
+  },
+  "notificationCaptureDraftReady": "待確認",
+  "@notificationCaptureDraftReady": {
+    "description": "Web path: notificationCapture.draftReady",
+    "x-webPath": "notificationCapture.draftReady"
+  },
+  "notificationCaptureQueued": "等待辨識",
+  "@notificationCaptureQueued": {
+    "description": "Web path: notificationCapture.queued",
+    "x-webPath": "notificationCapture.queued"
+  },
+  "notificationCaptureReview": "需補資料",
+  "@notificationCaptureReview": {
+    "description": "Web path: notificationCapture.review",
+    "x-webPath": "notificationCapture.review"
+  },
+  "notificationCaptureIgnored": "已略過這則通知。",
+  "@notificationCaptureIgnored": {
+    "description": "Web path: notificationCapture.ignored",
+    "x-webPath": "notificationCapture.ignored"
+  },
+  "notificationCaptureUnknownSource": "來源未對應。請檢查捷徑傳入的 App 名稱。",
+  "@notificationCaptureUnknownSource": {
+    "description": "Web path: notificationCapture.unknownSource",
+    "x-webPath": "notificationCapture.unknownSource"
+  },
+  "notificationCaptureEmptyInput": "這則通知沒有可用的內文。請檢查捷徑的變數設定與通知預覽。",
+  "@notificationCaptureEmptyInput": {
+    "description": "Web path: notificationCapture.emptyInput",
+    "x-webPath": "notificationCapture.emptyInput"
+  },
+  "notificationCaptureDuplicate": "已接收過這則通知。",
+  "@notificationCaptureDuplicate": {
+    "description": "Web path: notificationCapture.duplicate",
+    "x-webPath": "notificationCapture.duplicate"
+  },
+  "notificationCaptureFull": "草稿空間已滿。請先處理幾筆草稿。",
+  "@notificationCaptureFull": {
+    "description": "Web path: notificationCapture.full",
+    "x-webPath": "notificationCapture.full"
+  },
+  "notificationCaptureExpired": "等待辨識的通知已逾期，可以手動補上草稿資料。",
+  "@notificationCaptureExpired": {
+    "description": "Web path: notificationCapture.expired",
+    "x-webPath": "notificationCapture.expired"
+  },
+  "notificationCaptureRetry": "已暫存。下次開啟 App 或執行捷徑時會再嘗試辨識。",
+  "@notificationCaptureRetry": {
+    "description": "Web path: notificationCapture.retry",
+    "x-webPath": "notificationCapture.retry"
+  },
+  "notificationCaptureConsentChanged": "辨識服務已變更。請重新查看並同意後啟用。",
+  "@notificationCaptureConsentChanged": {
+    "description": "Web path: notificationCapture.consentChanged",
+    "x-webPath": "notificationCapture.consentChanged"
+  },
+  "notificationCaptureSessionExpired": "請在 AssetPilot 重新啟用通知接收。",
+  "@notificationCaptureSessionExpired": {
+    "description": "Web path: notificationCapture.sessionExpired",
+    "x-webPath": "notificationCapture.sessionExpired"
+  },
+  "notificationCaptureCompare": "可能是同一筆消費，請與其他來源的草稿比對。",
+  "@notificationCaptureCompare": {
+    "description": "Web path: notificationCapture.compare",
+    "x-webPath": "notificationCapture.compare"
+  },
+  "notificationCaptureDiscard": "捨棄通知草稿",
+  "@notificationCaptureDiscard": {
+    "description": "Web path: notificationCapture.discard",
+    "x-webPath": "notificationCapture.discard"
+  },
+  "notificationCaptureDiscardHint": "這筆草稿會從這支 iPhone 移除。",
+  "@notificationCaptureDiscardHint": {
+    "description": "Web path: notificationCapture.discardHint",
+    "x-webPath": "notificationCapture.discardHint"
+  },
+  "notificationCapturePersonalLedger": "請在個人帳本確認通知草稿。",
+  "@notificationCapturePersonalLedger": {
+    "description": "Web path: notificationCapture.personalLedger",
+    "x-webPath": "notificationCapture.personalLedger"
+  },
+  "notificationCapturePickLedger": "選擇個人帳本",
+  "@notificationCapturePickLedger": {
+    "description": "Web path: notificationCapture.pickLedger",
+    "x-webPath": "notificationCapture.pickLedger"
+  },
+  "notificationCaptureStorageError": "這支 iPhone 暫時無法更新通知草稿。請稍後重試。",
+  "@notificationCaptureStorageError": {
+    "description": "Web path: notificationCapture.storageError",
+    "x-webPath": "notificationCapture.storageError"
+  },
+  "notificationCaptureChooseDate": "選擇交易日期",
+  "@notificationCaptureChooseDate": {
+    "description": "Web path: notificationCapture.chooseDate",
+    "x-webPath": "notificationCapture.chooseDate"
+  },
+  "notificationCaptureReviewTitle": "確認通知草稿",
+  "@notificationCaptureReviewTitle": {
+    "description": "Web path: notificationCapture.reviewTitle",
+    "x-webPath": "notificationCapture.reviewTitle"
+  },
+  "notificationCaptureSaveDraft": "儲存草稿修改",
+  "@notificationCaptureSaveDraft": {
+    "description": "Web path: notificationCapture.saveDraft",
+    "x-webPath": "notificationCapture.saveDraft"
+  },
+  "notificationCaptureConfirm": "確認入帳",
+  "@notificationCaptureConfirm": {
+    "description": "Web path: notificationCapture.confirm",
+    "x-webPath": "notificationCapture.confirm"
+  },
+  "notificationCaptureConfirmLater": "草稿已保留。連線恢復後可再次確認入帳。",
+  "@notificationCaptureConfirmLater": {
+    "description": "Web path: notificationCapture.confirmLater",
+    "x-webPath": "notificationCapture.confirmLater"
+  },
+  "notificationCapturePostedCleanup": "交易已入帳。草稿移除失敗，可以回到清單後捨棄。",
+  "@notificationCapturePostedCleanup": {
+    "description": "Web path: notificationCapture.postedCleanup",
+    "x-webPath": "notificationCapture.postedCleanup"
+  },
   "commonSave": "儲存",
   "@commonSave": {
     "description": "Web path: common.save",

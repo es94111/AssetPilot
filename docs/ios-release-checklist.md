@@ -193,6 +193,13 @@ GitHub CI（`.github/workflows/ios-build.yml`）只做不需簽署的建置檢�
 > 既有 Sentry 整合會傳送錯誤報告，須如實揭露。
 > 確認 `mobile/lib/sentry_config.dart` 的 DSN 與過濾設定符合揭露內容。
 
+#### 手機通知自動記帳發布驗收
+
+- [ ] 在 iOS 27 或更新版本的實體 iPhone，替一個銀行 App 及一個行動支付 App 設定捷徑，確認來源 App 名稱、標題、內文和日期變數能帶入背景動作。使用已遮蔽個資的樣本記錄來源與 App 版本。
+- [ ] 分別測試鎖屏、AssetPilot 在背景、斷線再恢復、關閉功能、登出後換帳號，以及辨識服務網址或模型變更後同意流程。將通過實機測試的來源標為已驗證。
+- [ ] 確認同一通知重送只產生一筆草稿，同額個別消費可各自保存，跨來源疑似重複有提示。草稿存在時餘額維持原值，重新確認已入帳草稿回傳原交易。
+- [ ] App Privacy 與服務隱私頁包含辨識用的財務資訊和通知文字，並依實際供應商的資料處理與保存政策填報。測試環境用合成通知驗證管理後台連線，實機結果齊備後才開放辨識服務。
+
 ### 4.2 隱私清單（Privacy Manifest）
 
 | 項目 | 狀態 |
@@ -206,7 +213,7 @@ GitHub CI（`.github/workflows/ios-build.yml`）只做不需簽署的建置檢�
 
 | 項目 | 結論 | 狀態 |
 | --- | --- | --- |
-| App 內的加密用途 | 只有兩類：①離線草稿照片以 Apple CryptoKit 的 AES-256-GCM 加密（金鑰在 Keychain，見 `ios/Runner/OfflineFileCrypto.swift`）；②連線自家伺服器的標準 HTTPS（系統與 Flutter 內建的 BoringSSL） | ☑ |
+| App 內的加密用途 | 離線草稿照片與通知草稿使用 Apple CryptoKit 的 AES-256-GCM，裝置金鑰存在 Keychain。App 以系統與 Flutter 內建的標準 HTTPS 連線。 | ☑ |
 | 是否有自創或非 Apple 系統提供的自訂加密演算法 | 沒有 | ☑ |
 | 出口合規判定 | 屬可豁免（只保護 App 自己的資料與連線，加密非 App 主要功能） | ☑ |
 | `Info.plist` 宣告 | `ITSAppUsesNonExemptEncryption = false`（`ios/Runner/Info.plist`）；CI 的 `ios-build.yml` 會檢查此值 | ☑ |

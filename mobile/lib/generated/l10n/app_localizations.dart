@@ -123,6 +123,294 @@ abstract class AppLocalizations {
     ),
   ];
 
+  /// Web path: notificationCapture.title
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'手機通知自動記帳'**
+  String get notificationCaptureTitle;
+
+  /// Web path: notificationCapture.enable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'接收消費通知'**
+  String get notificationCaptureEnable;
+
+  /// Web path: notificationCapture.enableHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'由捷徑接收所選 App 的通知，在這支 iPhone 建立待確認草稿。'**
+  String get notificationCaptureEnableHint;
+
+  /// Web path: notificationCapture.unavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'管理員尚未開放辨識服務。'**
+  String get notificationCaptureUnavailable;
+
+  /// Web path: notificationCapture.service
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'辨識服務'**
+  String get notificationCaptureService;
+
+  /// Web path: notificationCapture.consentTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'允許分享消費通知？'**
+  String get notificationCaptureConsentTitle;
+
+  /// Web path: notificationCapture.consentBody
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'你選取的 App 送出消費通知時，AssetPilot 會篩選並遮蔽卡號、帳號等資料，再將來源、標題、副標題、內文、時間與帳號設定的時區送到 {service} 的 {model} 模型辨識。辨識內容依該服務的資料政策處理。草稿存在這支 iPhone，你可以隨時在這裡關閉。'**
+  String notificationCaptureConsentBody(String service, String model);
+
+  /// Web path: notificationCapture.agree
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'同意並啟用'**
+  String get notificationCaptureAgree;
+
+  /// Web path: notificationCapture.recent
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'最近一次接收'**
+  String get notificationCaptureRecent;
+
+  /// Web path: notificationCapture.noRecent
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還沒收到通知。'**
+  String get notificationCaptureNoRecent;
+
+  /// Web path: notificationCapture.setup
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'設定 iPhone 捷徑'**
+  String get notificationCaptureSetup;
+
+  /// Web path: notificationCapture.stepTrigger
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。'**
+  String get notificationCaptureStepTrigger;
+
+  /// Web path: notificationCapture.stepAction
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'2. 加入 AssetPilot 的「從通知建立記帳草稿」動作。'**
+  String get notificationCaptureStepAction;
+
+  /// Web path: notificationCapture.stepInput
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'3. 從通知輸入選擇變數，將 App 名稱、標題、副標題、內文和可取得的日期帶入對應欄位。'**
+  String get notificationCaptureStepInput;
+
+  /// Web path: notificationCapture.stepRun
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。'**
+  String get notificationCaptureStepRun;
+
+  /// Web path: notificationCapture.openShortcuts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'開啟捷徑'**
+  String get notificationCaptureOpenShortcuts;
+
+  /// Web path: notificationCapture.shortcutsError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法開啟捷徑。請確認 iPhone 已安裝捷徑 App。'**
+  String get notificationCaptureShortcutsError;
+
+  /// Web path: notificationCapture.banks
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'銀行'**
+  String get notificationCaptureBanks;
+
+  /// Web path: notificationCapture.payments
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'行動支付'**
+  String get notificationCapturePayments;
+
+  /// Web path: notificationCapture.noIosSource
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'iPhone 無直接付款通知來源。發卡銀行的通知仍可透過銀行 App 接收。'**
+  String get notificationCaptureNoIosSource;
+
+  /// Web path: notificationCapture.verified
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已通過實機驗證'**
+  String get notificationCaptureVerified;
+
+  /// Web path: notificationCapture.unverified
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'等待實機驗證'**
+  String get notificationCaptureUnverified;
+
+  /// Web path: notificationCapture.drafts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'通知草稿'**
+  String get notificationCaptureDrafts;
+
+  /// Web path: notificationCapture.emptyDrafts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還沒有通知草稿。成功辨識的消費通知會出現在這裡。'**
+  String get notificationCaptureEmptyDrafts;
+
+  /// Web path: notificationCapture.draftReady
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'待確認'**
+  String get notificationCaptureDraftReady;
+
+  /// Web path: notificationCapture.queued
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'等待辨識'**
+  String get notificationCaptureQueued;
+
+  /// Web path: notificationCapture.review
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'需補資料'**
+  String get notificationCaptureReview;
+
+  /// Web path: notificationCapture.ignored
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已略過這則通知。'**
+  String get notificationCaptureIgnored;
+
+  /// Web path: notificationCapture.unknownSource
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'來源未對應。請檢查捷徑傳入的 App 名稱。'**
+  String get notificationCaptureUnknownSource;
+
+  /// Web path: notificationCapture.emptyInput
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'這則通知沒有可用的內文。請檢查捷徑的變數設定與通知預覽。'**
+  String get notificationCaptureEmptyInput;
+
+  /// Web path: notificationCapture.duplicate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已接收過這則通知。'**
+  String get notificationCaptureDuplicate;
+
+  /// Web path: notificationCapture.full
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'草稿空間已滿。請先處理幾筆草稿。'**
+  String get notificationCaptureFull;
+
+  /// Web path: notificationCapture.expired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'等待辨識的通知已逾期，可以手動補上草稿資料。'**
+  String get notificationCaptureExpired;
+
+  /// Web path: notificationCapture.retry
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已暫存。下次開啟 App 或執行捷徑時會再嘗試辨識。'**
+  String get notificationCaptureRetry;
+
+  /// Web path: notificationCapture.consentChanged
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'辨識服務已變更。請重新查看並同意後啟用。'**
+  String get notificationCaptureConsentChanged;
+
+  /// Web path: notificationCapture.sessionExpired
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請在 AssetPilot 重新啟用通知接收。'**
+  String get notificationCaptureSessionExpired;
+
+  /// Web path: notificationCapture.compare
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'可能是同一筆消費，請與其他來源的草稿比對。'**
+  String get notificationCaptureCompare;
+
+  /// Web path: notificationCapture.discard
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'捨棄通知草稿'**
+  String get notificationCaptureDiscard;
+
+  /// Web path: notificationCapture.discardHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'這筆草稿會從這支 iPhone 移除。'**
+  String get notificationCaptureDiscardHint;
+
+  /// Web path: notificationCapture.personalLedger
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請在個人帳本確認通知草稿。'**
+  String get notificationCapturePersonalLedger;
+
+  /// Web path: notificationCapture.pickLedger
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'選擇個人帳本'**
+  String get notificationCapturePickLedger;
+
+  /// Web path: notificationCapture.storageError
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'這支 iPhone 暫時無法更新通知草稿。請稍後重試。'**
+  String get notificationCaptureStorageError;
+
+  /// Web path: notificationCapture.chooseDate
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'選擇交易日期'**
+  String get notificationCaptureChooseDate;
+
+  /// Web path: notificationCapture.reviewTitle
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確認通知草稿'**
+  String get notificationCaptureReviewTitle;
+
+  /// Web path: notificationCapture.saveDraft
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'儲存草稿修改'**
+  String get notificationCaptureSaveDraft;
+
+  /// Web path: notificationCapture.confirm
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'確認入帳'**
+  String get notificationCaptureConfirm;
+
+  /// Web path: notificationCapture.confirmLater
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'草稿已保留。連線恢復後可再次確認入帳。'**
+  String get notificationCaptureConfirmLater;
+
+  /// Web path: notificationCapture.postedCleanup
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易已入帳。草稿移除失敗，可以回到清單後捨棄。'**
+  String get notificationCapturePostedCleanup;
+
   /// Web path: common.save
   ///
   /// In zh_Hant_TW, this message translates to:

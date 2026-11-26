@@ -13,6 +13,7 @@ import 'app_widget_sync.dart';
 import 'play_integrity.dart';
 import 'platform/platform_info.dart';
 import 'platform/deep_link_service.dart';
+import 'platform/notification_capture.dart';
 import 'platform/secure_store.dart';
 import 'platform/widget_snapshot_service.dart';
 import 'offline/offline_draft_store.dart';
@@ -85,6 +86,9 @@ class ApiClient {
 
   bool get activeLedgerReadOnly => _activeLedgerReadOnly;
 
+  bool isPersonalLedgerFor(String userId) =>
+      _activeLedgerId.isEmpty || _activeLedgerId == 'personal:$userId';
+
   /// 該路徑是否屬於記帳資料（需套用帳本範圍）。
   static bool isLedgerDataPath(String path) {
     final clean = path.split('?').first;
@@ -146,6 +150,7 @@ class ApiClient {
       await p.remove(_kCookie);
     }
     _activeLedgerId = p.getString(_kActiveLedger) ?? '';
+    if (_cookie == null) await NotificationCapturePlatform.endSession();
     authState.value = isLoggedIn;
   }
 
@@ -243,6 +248,7 @@ class ApiClient {
 
   Future<void> _clearAuth() async {
     _cookie = null;
+    await NotificationCapturePlatform.endSession();
     await _persistCookie();
     authState.value = false;
     await clearActiveLedger();
@@ -257,6 +263,7 @@ class ApiClient {
   }
 
   Future<void> _persistLogin() async {
+    await NotificationCapturePlatform.endSession();
     await _persistCookie();
     authState.value = isLoggedIn;
   }
@@ -675,6 +682,7 @@ class ApiClient {
   }
 
   Future<void> logout() async {
+    await NotificationCapturePlatform.endSession();
     try {
       await _send('POST', '/api/auth/logout');
     } catch (_) {}
@@ -703,8 +711,26 @@ class ApiClient {
       '/api/account/settings/delete',
       body: {'confirmEmail': confirmEmail},
     );
+    try {
+      await NotificationCapturePlatform.clearUser(null);
+    } catch (_) {
+      // The server has already deleted the account and revoked every session.
+    }
     await _clearAuth();
   }
+
+  Future<Map<String, dynamic>> notificationCaptureConfiguration() =>
+      _getMap('/api/app/notification-capture');
+
+  Future<Map<String, dynamic>> authorizeNotificationCapture(String revision) =>
+      _getMapFromSend(
+        'PUT',
+        '/api/app/notification-capture',
+        body: {'revision': revision},
+      );
+
+  Future<void> revokeNotificationCapture() =>
+      _send('DELETE', '/api/app/notification-capture');
 
   // ── 帳戶 ────────────────────────────────────────────────────
 

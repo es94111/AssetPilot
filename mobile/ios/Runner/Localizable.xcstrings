@@ -1,0 +1,27 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Capture a payment notification" : {
+      "localizations" : { "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "從通知建立記帳草稿" } } }
+    },
+    "Send a payment alert from the selected app to AssetPilot for draft review." : {
+      "localizations" : { "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "將所選 App 的付款通知送到 AssetPilot，建立待確認草稿。" } } }
+    },
+    "Source app name" : {
+      "localizations" : { "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "來源 App 名稱" } } }
+    },
+    "Notification title" : {
+      "localizations" : { "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "通知標題" } } }
+    },
+    "Notification subtitle" : {
+      "localizations" : { "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "通知副標題" } } }
+    },
+    "Notification body" : {
+      "localizations" : { "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "通知內文" } } }
+    },
+    "Notification date" : {
+      "localizations" : { "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "通知時間" } } }
+    }
+  },
+  "version" : "1.0"
+}

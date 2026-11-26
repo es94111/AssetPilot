@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { apiGet, apiPut, apiPost, apiDelete } from "@/lib/clientApi";
 import { Button } from "@/components/ui/button";
 import KeyringRotationPanel from "@/components/features/admin/KeyringRotationPanel";
+import NotificationAiSettings from "@/components/features/admin/NotificationAiSettings";
 import { Input } from "@/components/ui/Input";
 import {
   Table,
@@ -79,6 +80,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   "admin.user.delete": "刪除使用者帳號",
   "admin.user.password_reset": "重設使用者密碼",
   "admin.system_settings.update": "變更系統設定",
+  "admin.notification_ai.update": "更新手機通知辨識設定",
   "admin.audit.purge": "清空資料稽核日誌",
   "admin.login_audit.delete": "刪除登入紀錄",
   "admin.login_audit.batch_delete": "批次刪除登入紀錄",
@@ -832,6 +834,7 @@ export default function AdminClient(
       {activeTab === "system" && (
         <div className="space-y-6">
           <KeyringRotationPanel canWrite={canWrite} />
+          <NotificationAiSettings canWrite={canWrite} />
           <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold mb-4">系統設定</h3>
             <form onSubmit={saveSystemSettings} className="space-y-4">

@@ -20,9 +20,15 @@ final class KeychainOfflineKeyStore: OfflineKeyProviding {
   static let account = "v1"
 
   static let shared = KeychainOfflineKeyStore()
+  static let notificationCapture = KeychainOfflineKeyStore(service: "com.assetpilot.notification-capture-key")
 
+  private let service: String
   private let lock = NSLock()
   private var cached: SymmetricKey?
+
+  init(service: String = KeychainOfflineKeyStore.service) {
+    self.service = service
+  }
 
   func key() throws -> SymmetricKey {
     lock.lock()
@@ -53,7 +59,7 @@ final class KeychainOfflineKeyStore: OfflineKeyProviding {
   private var baseQuery: [String: Any] {
     [
       kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: Self.service,
+      kSecAttrService as String: service,
       kSecAttrAccount as String: Self.account,
     ]
   }

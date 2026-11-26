@@ -4,13 +4,16 @@ import '../api_client.dart';
 import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
+import '../platform/notification_capture.dart';
 import '../widgets.dart';
 import '../theme.dart';
 import 'transaction_form_screen.dart';
+import 'notification_capture_screens.dart';
 import '../l10n.dart';
 
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key});
+  final VoidCallback? onLedgerChanged;
+  const TransactionsScreen({super.key, this.onLedgerChanged});
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -377,6 +380,34 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       appBar: AppBar(
         title: Text(trKey('mobileLegacyTransactions8084a8ea')),
         actions: [
+          ValueListenableBuilder(
+            valueListenable: NotificationCapturePlatform.supported,
+            builder: (context, supported, _) => supported
+                ? ValueListenableBuilder(
+                    valueListenable: NotificationCapturePlatform.snapshot,
+                    builder: (context, capture, _) => IconButton(
+                      tooltip: trKey('notificationCaptureDrafts'),
+                      icon: Badge.count(
+                        count: capture.drafts.length,
+                        isLabelVisible: capture.drafts.isNotEmpty,
+                        child: const Icon(Icons.receipt_long_outlined),
+                      ),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => NotificationDraftsScreen(
+                            onLedgerChanged: widget.onLedgerChanged,
+                            onPosted:
+                                widget.onLedgerChanged ??
+                                () {
+                                  if (mounted) _reload();
+                                },
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
           if (_hasAdvancedFilter)
             IconButton(
               tooltip: trKey('mobileLegacyClearFilters'),

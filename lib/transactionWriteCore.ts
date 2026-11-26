@@ -45,10 +45,10 @@ export interface InsertIncomeExpenseResult {
  *
  * 離線佇列恢復連線後可能重送同一筆交易；伺服器以唯一索引
  * `idx_transactions_client_ref` 保證冪等，本函式負責在 INSERT 未新增任何列時
- * 把既有列以與新建完全相同的回應形狀回傳，讓前端無法區分「新建」與「去重」。
+ * 把既有列以與新建完全相同的回應形狀回傳，並用 inserted 標記重送。
  * `clientRef` 為空字串（線上直接新增）時永遠回傳 null，維持既有行為不變。
  */
-function findExistingByClientRef(
+export function findExistingByClientRef(
   userId: string,
   clientRef: string | undefined,
   inserted = false,

@@ -5,7 +5,7 @@ import { queryAll, queryOne, saveDB } from '../../../lib/db';
 import { normalizeCurrency, convertToTwd, normalizeDate, resolveOverseasFee } from '../../../lib/accountHelpers';
 import { todayInUserTz, isValidIsoDate } from '../../../lib/userTime';
 import { computeTwdAmount } from '../../../lib/moneyDecimal';
-import { insertIncomeExpenseTransaction } from '../../../lib/transactionWriteCore';
+import { findExistingByClientRef, insertIncomeExpenseTransaction } from '../../../lib/transactionWriteCore';
 import { emitTransactionEvent } from '../../../lib/transactionWebhooks';
 import { assertTagsUsable, buildTagFilter, getTagsForTransactions, setTransactionTags, TagError, type TagDto } from '../../../lib/transactionTags';
 import { dedupeIds, parseTagMode } from '../../../lib/transactionTagRules';
@@ -261,7 +261,13 @@ async function handlePOST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth instanceof NextResponse) return auth;
 
-  const body = await request.json().catch(() => ({})) as CreateTransactionRequest;
+  const parsed: unknown = await request.json().catch(() => null);
+  const body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as CreateTransactionRequest : {} as CreateTransactionRequest;
+  const clientRef = typeof body.clientRef === 'string' && CLIENT_REF_REGEX.test(body.clientRef) ? body.clientRef : undefined;
+  // A successful post whose response was lost stays successful even when an
+  // account or category in the original request changes before the retry.
+  const previous = findExistingByClientRef(auth.userId, clientRef);
+  if (previous) return NextResponse.json(previous, { status: 201 });
   const { type, amount, categoryId, accountId, note, excludeFromStats } = body;
   const rawDate = body.date;
 
@@ -343,7 +349,7 @@ async function handlePOST(request: NextRequest) {
     accountId: accountId || null,
     note: note || '',
     excludeFromStats: !!excludeFromStats,
-    clientRef: typeof body.clientRef === 'string' && CLIENT_REF_REGEX.test(body.clientRef) ? body.clientRef : undefined,
+    clientRef,
   });
 
   if (result.inserted && tagIdsInput.length > 0) {

@@ -333,6 +333,22 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_login_sessions_token ON login_sessions(token_hash)`,
   );
 
+  db.run(`CREATE TABLE IF NOT EXISTS notification_ai_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    endpoint TEXT NOT NULL,
+    model TEXT NOT NULL,
+    key_encrypted TEXT NOT NULL DEFAULT '',
+    enabled INTEGER NOT NULL DEFAULT 0,
+    revision TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1
+  )`);
+  db.run(`CREATE TABLE IF NOT EXISTS notification_capture_grants (
+    session_id TEXT PRIMARY KEY REFERENCES login_sessions(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    token_version INTEGER NOT NULL,
+    revision TEXT NOT NULL
+  )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS passkey_credentials (
     credential_id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,

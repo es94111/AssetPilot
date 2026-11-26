@@ -17,7 +17,6 @@ export interface SystemSettings {
   allowedRegistrationEmails: string[];
   adminIpAllowlist: string[];
   routeAuditMode: "security" | "extended" | "minimal";
-  lineLoginEnabled: boolean;
   transactionPhotoStorage: "local" | "s3" | null;
   transactionPhotoMaxBytes: number | null;
   stockAutoUpdateEnabled: boolean;
@@ -273,13 +272,12 @@ export async function fetchIpCountry(ipAddress: string): Promise<string> {
 
 export function getSystemSettings(): SystemSettings {
   const row = queryOne(
-    "SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode, line_login_enabled, transaction_photo_storage, transaction_photo_max_bytes, stock_auto_update_enabled, stock_auto_update_interval_min, stock_auto_update_last_run, stock_auto_update_last_summary FROM system_settings WHERE id = 1",
+    "SELECT public_registration, allowed_registration_emails, admin_ip_allowlist, route_audit_mode, transaction_photo_storage, transaction_photo_max_bytes, stock_auto_update_enabled, stock_auto_update_interval_min, stock_auto_update_last_run, stock_auto_update_last_summary FROM system_settings WHERE id = 1",
   ) || {
     public_registration: 1,
     allowed_registration_emails: "",
     admin_ip_allowlist: "",
     route_audit_mode: "security",
-    line_login_enabled: 0,
     transaction_photo_storage: "",
     transaction_photo_max_bytes: 0,
     stock_auto_update_enabled: 1,
@@ -318,7 +316,6 @@ export function getSystemSettings(): SystemSettings {
     allowedRegistrationEmails,
     adminIpAllowlist: mergedAdminIpAllowlist,
     routeAuditMode,
-    lineLoginEnabled: !!row.line_login_enabled,
     transactionPhotoStorage,
     transactionPhotoMaxBytes,
     stockAutoUpdateEnabled: row.stock_auto_update_enabled !== 0,
@@ -361,7 +358,7 @@ export function canOAuthRegister(email: string): {
   if (!settings.publicRegistration)
     return {
       ok: false,
-      error: "目前已關閉第三方服務註冊，請聯絡管理員開放 Google 或 LINE 登入",
+      error: "目前已關閉第三方服務註冊，請聯絡管理員開放第三方登入",
     };
   return { ok: true };
 }

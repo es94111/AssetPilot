@@ -1,4 +1,4 @@
-import { getDB, queryAll } from "./db";
+import { disableReportsWithoutEmail, getDB, queryOne, queryAll } from "./db";
 
 export type AnyRow = Record<string, unknown>;
 
@@ -385,4 +385,8 @@ export function restorePostgresBackupSql(sql: string): void {
   }
   assertRestorableBackupSql(sql);
   getDB().run(sql);
+  const emailColumn = queryOne(
+    "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'report_schedules' AND column_name = 'notify_email'",
+  );
+  if (emailColumn) disableReportsWithoutEmail();
 }

@@ -72,10 +72,10 @@ test('非法的 state 值一律被拒絕', () => {
 });
 
 // ── 路由層（需要 PostgreSQL）────────────────────────────────
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('appleLinkFlow 路由（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('appleLinkFlow 路由（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
@@ -193,12 +193,16 @@ if (!DB_URL) {
     });
 
   test('appleLinkFlow 路由整合驗證', async (t) => {
+    const stockSetting = Number(queryOne('SELECT stock_auto_update_enabled FROM system_settings WHERE id = 1')?.stock_auto_update_enabled);
+    db.run('UPDATE system_settings SET stock_auto_update_enabled = 0 WHERE id = 1');
     t.after(async () => {
-      db.run('DELETE FROM users WHERE id = ? OR id = ?', [
-        APPLE_USER,
-        OTHER_USER,
-      ]);
-      await new Promise<void>((resolve) => jwksServer.close(() => resolve()));
+      try {
+        db.run('DELETE FROM users WHERE id = ? OR id = ?', [APPLE_USER, OTHER_USER]);
+        db.run('UPDATE system_settings SET stock_auto_update_enabled = ? WHERE id = 1', [stockSetting]);
+      } finally {
+        db.close();
+        await new Promise<void>((resolve) => jwksServer.close(() => resolve()));
+      }
     });
 
     // 建立兩位使用者。
@@ -282,8 +286,8 @@ if (!DB_URL) {
           bindingToken: issued.bindingToken,
         }),
       );
-      assert.equal(res.status, 200);
       const data = await res.json();
+      assert.equal(res.status, 200, data.error);
       assert.equal(data.success, true);
       assert.equal(data.appleEmail, 'link-test@example.com');
 

@@ -60,7 +60,7 @@ class DeepLinkQueueTests: XCTestCase {
   func test依Host過濾只取回對應類別的連結() {
     queue.record("assetpilot://google-callback?code=abc", hasListener: false)
     queue.record("assetpilot://transaction/new?amount=50", hasListener: false)
-    queue.record("assetpilot://line-callback?code=xyz", hasListener: false)
+    queue.record("assetpilot://auth-ticket?code=xyz", hasListener: false)
 
     // 記帳入口只取 transaction／ledger，不會把登入回呼一起取走。
     XCTAssertEqual(
@@ -73,8 +73,8 @@ class DeepLinkQueueTests: XCTestCase {
       "assetpilot://google-callback?code=abc"
     )
     XCTAssertEqual(
-      queue.takePending(hosts: ["line-callback"]),
-      "assetpilot://line-callback?code=xyz"
+      queue.takePending(hosts: ["auth-ticket"]),
+      "assetpilot://auth-ticket?code=xyz"
     )
     XCTAssertTrue(queue.pending.isEmpty)
   }
@@ -101,7 +101,7 @@ class DeepLinkQueueTests: XCTestCase {
 
   func testHistory依Host取最近一筆相符的連結() {
     queue.record("assetpilot://google-callback?code=first", hasListener: false)
-    queue.record("assetpilot://line-callback?code=second", hasListener: false)
+    queue.record("assetpilot://auth-ticket?code=second", hasListener: false)
     queue.record("assetpilot://google-callback?code=third", hasListener: false)
 
     XCTAssertEqual(
@@ -109,8 +109,8 @@ class DeepLinkQueueTests: XCTestCase {
       "assetpilot://google-callback?code=third"
     )
     XCTAssertEqual(
-      queue.latest(hosts: ["line-callback"]),
-      "assetpilot://line-callback?code=second"
+      queue.latest(hosts: ["auth-ticket"]),
+      "assetpilot://auth-ticket?code=second"
     )
   }
 

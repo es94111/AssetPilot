@@ -1,4 +1,4 @@
-// tests/lib/transactionWriteCore.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/transactionWriteCore.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 // 針對 lib/transactionWriteCore.ts 抽出的共用交易寫入核心撰寫回歸測試，涵蓋既有
 // POST /api/transactions、POST /api/transactions/transfer 依賴的既有情境（Constitution
@@ -7,10 +7,10 @@
 import assert from 'node:assert/strict';
 import test, { after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('transactionWriteCore（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('transactionWriteCore（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

@@ -51,7 +51,7 @@ const zhTermsSections: LegalDocumentContent["sections"] = [
       { type: "h3", text: "帳號建立" },
       {
         type: "p",
-        text: "使用本服務須建立帳號。您只能透過管理員啟用的 Google、LINE、Passkey 等外部登入方式完成註冊或登入；本服務不提供電子郵件與密碼登入。",
+        text: "使用本服務須建立帳號。您只能透過管理員啟用的 Google、Apple、Passkey 等外部登入方式完成註冊或登入；本服務不提供電子郵件與密碼登入。",
       },
       { type: "h3", text: "帳號安全" },
       {
@@ -245,7 +245,7 @@ const enTermsSections: LegalDocumentContent["sections"] = [
       { type: "h3", text: "Account creation" },
       {
         type: "p",
-        text: "You must create an account to use the service. Sign-up and sign-in are available only through administrator-enabled external providers such as Google, LINE, or Passkey; this service does not provide email/password authentication.",
+        text: "You must create an account to use the service. Sign-up and sign-in are available only through administrator-enabled external providers such as Google, Apple, or Passkey; this service does not provide email/password authentication.",
       },
       { type: "h3", text: "Account security" },
       {
@@ -442,7 +442,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
         items: [
           "電子信箱與顯示名稱。",
           "Google 帳號資料（僅 Google SSO 登入時）。",
-          "LINE 使用者識別碼（僅 LINE 登入或綁定時）。",
+          "退役前已儲存的舊 LINE 使用者識別碼。",
           "Passkey 公開金鑰資料（僅啟用 Passkey 時）。",
         ],
       },
@@ -506,7 +506,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
       { type: "h3", text: "登入安全" },
       {
         type: "p",
-        text: "登入由 Google、LINE 或 Passkey 等外部認證方式完成；本服務不提供或儲存本機密碼。",
+        text: "登入由 Google、Apple 或 Passkey 等外部認證方式完成；本服務不提供或儲存本機密碼。",
       },
       { type: "h3", text: "傳輸安全" },
       {
@@ -566,7 +566,7 @@ const zhPrivacySections: LegalDocumentContent["sections"] = [
       {
         type: "ul",
         items: [
-          "Google Identity Services、LINE Login、Passkey 相關服務用於登入或帳號綁定。",
+          "Google Identity Services、Sign in with Apple、Passkey 相關服務用於登入或帳號綁定。",
           "TWSE、exchangerate-api.com、IPinfo 用於市場資料、匯率與登入位置查詢。",
           "SMTP / Zeabur Email / Resend 用於寄送通知郵件。",
           "MEGA S4 用於管理員備份。",
@@ -658,7 +658,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
         items: [
           "Email and display name.",
           "Google account data when using Google SSO.",
-          "LINE user identifier when using LINE sign-in or linking.",
+          "Legacy LINE user identifier saved before the integration was retired.",
           "Passkey public-key data when Passkey is enabled.",
         ],
       },
@@ -722,7 +722,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
       { type: "h3", text: "Sign-in security" },
       {
         type: "p",
-        text: "Sign-in is completed through external methods such as Google, LINE, or Passkey; this service does not provide or store local passwords.",
+        text: "Sign-in is completed through external methods such as Google, Apple, or Passkey; this service does not provide or store local passwords.",
       },
       { type: "h3", text: "Transport security" },
       {
@@ -782,7 +782,7 @@ const enPrivacySections: LegalDocumentContent["sections"] = [
       {
         type: "ul",
         items: [
-          "Google Identity Services, LINE Login, and Passkey-related services for sign-in and account linking.",
+          "Google Identity Services, Sign in with Apple, and Passkey-related services for sign-in and account linking.",
           "TWSE, exchangerate-api.com, and IPinfo for market data, exchange rates, and sign-in location lookup.",
           "SMTP, Zeabur Email, and Resend for notification email delivery.",
           "MEGA S4 for administrator backups.",

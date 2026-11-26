@@ -3,6 +3,7 @@
 // 與 admin/report-schedules 共用 report_schedules 資料表，但一律鎖定 auth.userId，
 // 使用者只能看到與建立屬於自己的排程。
 import { NextResponse } from 'next/server';
+import { reportDeliveryInputError } from '@/lib/reportScheduleDelivery';
 import { requireAuth } from '../../../../lib/apiHelpers';
 import { getDB, queryOne, queryAll, saveDB } from '../../../../lib/db';
 import { resolveLedgerScope } from '../../../../lib/ledgerScope';
@@ -12,8 +13,8 @@ function serializeSchedule(row) {
     id: row.id, userId: row.user_id, ledgerId: row.ledger_id || `personal:${row.user_id}`,
     freq: row.freq,
     hour: Number(row.hour) || 0, minute: Number(row.minute) || 0, weekday: Number(row.weekday) || 0,
-    dayOfMonth: Number(row.day_of_month) || 0, enabled: row.enabled === 1,
-    notifyEmail: row.notify_email !== 0, notifyLine: row.notify_line === 1,
+    dayOfMonth: Number(row.day_of_month) || 0, enabled: row.enabled === 1 && row.notify_email !== 0,
+    notifyEmail: row.notify_email !== 0,
     lastRun: Number(row.last_run) || 0, lastSummary: row.last_summary || '',
     createdAt: Number(row.created_at) || 0, updatedAt: Number(row.updated_at) || 0,
   };
@@ -38,6 +39,8 @@ export async function POST(request) {
   if (auth instanceof NextResponse) return auth;
 
   const body = await request.json().catch(() => ({}));
+  const deliveryError = reportDeliveryInputError(body);
+  if (deliveryError) return NextResponse.json({ error: deliveryError }, { status: 400 });
   const freq = String(body?.freq || '').trim();
   if (!['daily', 'weekly', 'monthly'].includes(freq)) {
     return NextResponse.json({ error: 'freq 須為 daily/weekly/monthly' }, { status: 400 });
@@ -60,17 +63,16 @@ export async function POST(request) {
   // dayOfMonth 0 = 每月最後一天，1-28 = 指定日期
   const dayOfMonth = clampInt(body?.dayOfMonth, 0, 28, 1);
   const notifyEmail = body?.notifyEmail === false ? 0 : 1;
-  const notifyLine = body?.notifyLine === true ? 1 : 0;
-  if (!notifyEmail && !notifyLine) {
-    return NextResponse.json({ error: '請至少選擇一種通知方式' }, { status: 400 });
+  if (!notifyEmail) {
+    return NextResponse.json({ error: '請啟用 Email 報表' }, { status: 400 });
   }
   const enabled = body?.enabled === false ? 0 : 1;
   const nowMs = Date.now();
   const id = 'rs_' + nowMs + '_' + Math.random().toString(36).slice(2, 10);
 
   getDB().run(
-    'INSERT INTO report_schedules (id, user_id, ledger_id, freq, hour, minute, weekday, day_of_month, notify_email, notify_line, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
-    [id, auth.userId, scope.ledgerId, freq, hour, minute, weekday, dayOfMonth, notifyEmail, notifyLine, enabled, nowMs, nowMs]
+    'INSERT INTO report_schedules (id, user_id, ledger_id, freq, hour, minute, weekday, day_of_month, notify_email, enabled, last_run, last_summary, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, \'\', ?, ?)',
+    [id, auth.userId, scope.ledgerId, freq, hour, minute, weekday, dayOfMonth, notifyEmail, enabled, nowMs, nowMs]
   );
   saveDB();
   const row = queryOne('SELECT * FROM report_schedules WHERE id = ?', [id]);

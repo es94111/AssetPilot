@@ -1,6 +1,6 @@
 // 009-multi-timezone US3 整合測試（T041 / T042 / T043 / T044）
 // 範圍：以 in-memory sql.js 模擬 monthly_report_send_log + 排程器邏輯
-//   - PST 月初觸發（FAKE_NOW）
+//   - PST 月初觸發（注入測試時間）
 //   - UNIQUE 防重寄
 //   - DST 邊界（PST 秋季重複 01:00）
 //   - 失敗保留 + 不自動重試

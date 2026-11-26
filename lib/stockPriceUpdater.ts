@@ -33,22 +33,6 @@ function clampInt(value, min, max, fallback) {
   return Math.min(max, Math.max(min, n));
 }
 
-// 環境變數覆寫：未設定回 null（沿用 DB 設定）
-function envEnabledOverride() {
-  const raw = process.env.STOCK_AUTO_UPDATE_ENABLED;
-  if (raw == null || raw === "") return null;
-  return !["0", "false", "no", "off"].includes(
-    String(raw).trim().toLowerCase(),
-  );
-}
-
-function resolveIntervalMin(dbValue) {
-  const envRaw = process.env.STOCK_AUTO_UPDATE_INTERVAL_MIN;
-  if (envRaw != null && envRaw !== "")
-    return clampInt(envRaw, 1, 1440, DEFAULT_INTERVAL_MIN);
-  return clampInt(dbValue, 1, 1440, DEFAULT_INTERVAL_MIN);
-}
-
 function resolveConcurrency() {
   return clampInt(process.env.TWSE_MAX_CONCURRENCY, 1, 20, 5);
 }
@@ -234,16 +218,13 @@ export async function checkAndRunStockPriceUpdate(triggeredBy = '使用者操作
     );
     if (!row) return;
 
-    const envEnabled = envEnabledOverride();
-    const enabled =
-      envEnabled == null ? row.stock_auto_update_enabled !== 0 : envEnabled;
-    if (!enabled) return;
+    if (row.stock_auto_update_enabled === 0) return;
 
     const now = Date.now();
     if (!isWithinTradingWindow(now)) return;
 
     const intervalMs =
-      resolveIntervalMin(row.stock_auto_update_interval_min) * 60 * 1000;
+      clampInt(row.stock_auto_update_interval_min ?? DEFAULT_INTERVAL_MIN, 1, 1440, DEFAULT_INTERVAL_MIN) * 60 * 1000;
     const lastRun = Number(row.stock_auto_update_last_run) || 0;
     if (now - lastRun < intervalMs) return;
 

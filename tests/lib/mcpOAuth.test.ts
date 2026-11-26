@@ -378,11 +378,9 @@ test('MCP endpoint 在 production 未設定 APP_URL 時保留 PAT-only 401，且
   const mutableEnv = process.env as Record<string, string | undefined>;
   const previousNodeEnv = process.env.NODE_ENV;
   const previousAppUrl = process.env.APP_URL;
-  const previousPublicAppUrl = process.env.NEXT_PUBLIC_APP_URL;
   try {
     mutableEnv.NODE_ENV = 'production';
     delete mutableEnv.APP_URL;
-    delete mutableEnv.NEXT_PUBLIC_APP_URL;
     const [{ NextRequest }, mcpRoute] = await Promise.all([
       import('next/server'),
       import('../../app/api/mcp/route.ts'),
@@ -432,8 +430,6 @@ test('MCP endpoint 在 production 未設定 APP_URL 時保留 PAT-only 401，且
     else mutableEnv.NODE_ENV = previousNodeEnv;
     if (previousAppUrl == null) delete mutableEnv.APP_URL;
     else mutableEnv.APP_URL = previousAppUrl;
-    if (previousPublicAppUrl == null) delete mutableEnv.NEXT_PUBLIC_APP_URL;
-    else mutableEnv.NEXT_PUBLIC_APP_URL = previousPublicAppUrl;
   }
 });
 
@@ -451,10 +447,10 @@ test('OAuth token endpoint 拒絕重複安全參數，不需查詢 client', asyn
   assert.equal((await response.json()).error, 'invalid_request');
 });
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('MCP OAuth DB lifecycle（略過：未設定 DATABASE_URL/POSTGRES_URL）', () => {});
+  test('MCP OAuth DB lifecycle（略過：未設定 DATABASE_URL）', () => {});
 } else {
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   await initDB();

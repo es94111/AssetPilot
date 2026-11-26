@@ -40,14 +40,6 @@
                       android:host="asset.shao.one"
                       android:pathPrefix="/app/google-callback"/>
             </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https"
-                      android:host="asset.shao.one"
-                      android:pathPrefix="/app/line-callback"/>
-            </intent-filter>
             <!-- Shared-ledger invitation links are issued as /settings/ledgers?invite=... -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
@@ -65,13 +57,6 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="assetpilot"
                       android:host="google-callback"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="assetpilot"
-                      android:host="line-callback"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>

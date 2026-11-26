@@ -12,11 +12,11 @@ type TurnstileSiteVerifyResponse = {
 };
 
 export function getTurnstileSiteKey(): string {
-  return process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || process.env.TURNSTILE_SITE_KEY || '';
+  return process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || '';
 }
 
 export function getTurnstileSecretKey(): string {
-  return process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET_KEY || '';
+  return process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || '';
 }
 
 export function isTurnstileConfigured(): boolean {

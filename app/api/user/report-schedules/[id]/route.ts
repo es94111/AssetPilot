@@ -2,6 +2,7 @@
 // 使用者自助管理「定期報表通知」排程：更新 / 刪除自己的排程。
 // 一律以 auth.userId 驗證擁有權，使用者無法操作他人排程。
 import { NextResponse } from 'next/server';
+import { reportDeliveryInputError } from '@/lib/reportScheduleDelivery';
 import { requireAuth } from '../../../../../lib/apiHelpers';
 import { getDB, queryOne, saveDB } from '../../../../../lib/db';
 import { resolveLedgerScope } from '../../../../../lib/ledgerScope';
@@ -11,8 +12,8 @@ function serializeSchedule(row) {
     id: row.id, userId: row.user_id, ledgerId: row.ledger_id || `personal:${row.user_id}`,
     freq: row.freq,
     hour: Number(row.hour) || 0, minute: Number(row.minute) || 0, weekday: Number(row.weekday) || 0,
-    dayOfMonth: Number(row.day_of_month) || 0, enabled: row.enabled === 1,
-    notifyEmail: row.notify_email !== 0, notifyLine: row.notify_line === 1,
+    dayOfMonth: Number(row.day_of_month) || 0, enabled: row.enabled === 1 && row.notify_email !== 0,
+    notifyEmail: row.notify_email !== 0,
     lastRun: Number(row.last_run) || 0, lastSummary: row.last_summary || '',
     createdAt: Number(row.created_at) || 0, updatedAt: Number(row.updated_at) || 0,
   };
@@ -33,6 +34,8 @@ export async function PUT(request, { params }) {
   if (!row) return NextResponse.json({ error: '排程不存在或無權限' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
+  const deliveryError = reportDeliveryInputError(body);
+  if (deliveryError) return NextResponse.json({ error: deliveryError }, { status: 400 });
   const updates = {};
   if (body?.freq !== undefined && ['daily', 'weekly', 'monthly'].includes(String(body.freq))) updates.freq = String(body.freq);
   if (body?.hour !== undefined) updates.hour = clampInt(body.hour, 0, 23, row.hour);
@@ -41,7 +44,6 @@ export async function PUT(request, { params }) {
   if (body?.dayOfMonth !== undefined) updates.day_of_month = clampInt(body.dayOfMonth, 0, 28, row.day_of_month);
   if (body?.enabled !== undefined) updates.enabled = body.enabled ? 1 : 0;
   if (body?.notifyEmail !== undefined) updates.notify_email = body.notifyEmail ? 1 : 0;
-  if (body?.notifyLine !== undefined) updates.notify_line = body.notifyLine ? 1 : 0;
   // issue #281：切換排程的帳本前，重新確認呼叫者對目標帳本仍有寫入權限；
   // 已離開的帳本不可再被指定，避免把既有排程留在無權限的共享帳本上繼續寄送。
   if (body?.ledgerId !== undefined) {
@@ -57,13 +59,15 @@ export async function PUT(request, { params }) {
   }
 
   const nextNotifyEmail = updates.notify_email !== undefined ? updates.notify_email : (row.notify_email !== 0 ? 1 : 0);
-  const nextNotifyLine = updates.notify_line !== undefined ? updates.notify_line : (row.notify_line === 1 ? 1 : 0);
-  if (!nextNotifyEmail && !nextNotifyLine) {
-    return NextResponse.json({ error: '請至少選擇一種通知方式' }, { status: 400 });
+  const previouslyEnabled = row.enabled === 1 && row.notify_email !== 0;
+  const nextEnabled = updates.enabled === undefined ? previouslyEnabled : updates.enabled === 1;
+  if (nextEnabled && !nextNotifyEmail) {
+    return NextResponse.json({ error: '請先啟用 Email 報表' }, { status: 400 });
   }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '請至少更新一個欄位' }, { status: 400 });
   }
+  if (updates.enabled === undefined && row.enabled === 1 && !previouslyEnabled) updates.enabled = 0;
   const cols = Object.keys(updates).map(k => `${k} = ?`).join(', ');
   const vals = [...Object.values(updates), Date.now(), id, auth.userId];
   getDB().run(`UPDATE report_schedules SET ${cols}, updated_at = ? WHERE id = ? AND user_id = ?`, vals);

@@ -17,9 +17,6 @@ export async function POST(request, { params }) {
     if (result.status === 'no_email_service') {
       return NextResponse.json({ ...result, reason: '寄信服務未設定', error: '寄信服務未設定（請設定 EMAIL_PROVIDER_PRIMARY 環境變數）' }, { status: 503 });
     }
-    if (result.status === 'no_line_service') {
-      return NextResponse.json({ ...result, reason: 'LINE Messaging API 未設定', error: 'LINE Messaging API 未設定' }, { status: 503 });
-    }
     return NextResponse.json(result);
   } catch (e) {
     return NextResponse.json({ error: e.message || '排程執行失敗' }, { status: 500 });

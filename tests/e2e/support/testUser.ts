@@ -1,7 +1,7 @@
 // tests/e2e/support/testUser.ts — E2E 測試使用者 fixture
 //
 // 密碼登入已停用（app/api/auth/login/route.ts 回 410），一般使用者只能透過
-// Google／LINE／Passkey 登入，無法在自動化測試中重現且會依賴正式環境憑證。
+// Google／Apple／Passkey 登入，無法在自動化測試中重現且會依賴正式環境憑證。
 // 因此改用與 tests/lib/*.test.ts 相同的作法：直接寫入 PostgreSQL 建立使用者，
 // 以 lib/sessionHelpers.createLoginSession() 產生合法的 authToken JWT，
 // 再由 Playwright 以 context.addCookies() 注入瀏覽器，等效於「已登入」狀態。

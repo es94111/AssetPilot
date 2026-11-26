@@ -420,7 +420,6 @@ export function resolveMcpOAuthOrigin(options: {
   const configured = (
     options.configuredOrigin ||
     process.env.APP_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
     ''
   ).trim();
   const environment = options.nodeEnv || process.env.NODE_ENV || 'development';

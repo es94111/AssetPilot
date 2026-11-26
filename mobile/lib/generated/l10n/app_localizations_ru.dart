@@ -326,32 +326,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get authGoogleVerifying => 'Проверка Google…';
 
   @override
-  String get authLineButton => 'Войти с LINE';
-
-  @override
-  String get authLineVerifying => 'Проверка LINE…';
-
-  @override
   String get authRegisterSubmit => 'Создать аккаунт';
 
   @override
   String get authRegistering => 'Создание аккаунта…';
-
-  @override
-  String get authLineCallbackCompleting => 'Завершаем проверку LINE...';
-
-  @override
-  String get authLineCallbackMissingCode =>
-      'LINE не вернул код авторизации. Попробуйте еще раз.';
-
-  @override
-  String get authLineCallbackLinkFailed => 'Не удалось привязать аккаунт LINE';
-
-  @override
-  String get authLineCallbackLoginFailed => 'Не удалось войти через LINE';
-
-  @override
-  String get authLineCallbackVerifyFailed => 'Проверка LINE не удалась';
 
   @override
   String get authErrorsTurnstileRequired => 'Сначала пройдите проверку';
@@ -394,12 +372,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get authErrorsPasskeyFailed => 'Не удалось войти с Passkey';
 
   @override
-  String get authErrorsLineNotConfigured => 'Вход через LINE не настроен';
-
-  @override
-  String get authErrorsLineFailed => 'Не удалось войти через LINE';
-
-  @override
   String get settingsTitle => 'Настройки';
 
   @override
@@ -407,7 +379,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsLanguageDescription =>
-      'Выберите язык интерфейса и уведомлений (Email / LINE).';
+      'Выберите язык интерфейса и уведомлений (Email).';
 
   @override
   String get settingsLanguageSaved => 'Язык обновлен';
@@ -500,9 +472,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsAccountGoogleTitle => 'Связь с Google';
 
   @override
-  String get settingsAccountLineTitle => 'Связь с LINE';
-
-  @override
   String get settingsAccountStatusPrefix => 'Текущий статус: ';
 
   @override
@@ -516,18 +485,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsAccountUnlink => 'Отвязать';
-
-  @override
-  String get settingsAccountLinkedLine => 'Аккаунт LINE привязан';
-
-  @override
-  String get settingsAccountNotLinkedLine => 'Аккаунт LINE не привязан';
-
-  @override
-  String get settingsAccountLinkLine => 'Привязать аккаунт LINE';
-
-  @override
-  String get settingsAccountLineVerifying => 'Проверка LINE…';
 
   @override
   String get settingsAccountSessionsTitle => 'Устройства с входом';
@@ -710,21 +667,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get settingsAccountMessagesGoogleUnlinkFailed =>
       'Не удалось отвязать аккаунт Google';
-
-  @override
-  String get settingsAccountMessagesLineNotConfigured =>
-      'Вход через LINE не настроен';
-
-  @override
-  String get settingsAccountMessagesLineLinkFailed =>
-      'Не удалось привязать аккаунт LINE';
-
-  @override
-  String get settingsAccountMessagesLineUnlinked => 'Аккаунт LINE отвязан';
-
-  @override
-  String get settingsAccountMessagesLineUnlinkFailed =>
-      'Не удалось отвязать аккаунт LINE';
 
   @override
   String get settingsAccountMessagesDeletePasswordRequired =>
@@ -1180,7 +1122,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageUsageNotesLoginText =>
-      'Google и LINE используются только когда вы сами входите или привязываете аккаунт.';
+      'Вход через Google используется при входе или привязке аккаунта.';
 
   @override
   String get publicApiCreditsPageUsageNotesBackupTitle =>
@@ -1231,10 +1173,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageDescriptionsGoogle => 'Вход Google SSO';
-
-  @override
-  String get publicApiCreditsPageDescriptionsLine =>
-      'Вход через LINE и привязка аккаунта';
 
   @override
   String get publicApiCreditsPageDescriptionsSmtp =>
@@ -3225,9 +3163,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notificationsCtaViewFullReport => 'Открыть полный отчет';
 
   @override
-  String get notificationsCtaViewLineRecord => 'Открыть записи LINE';
-
-  @override
   String get notificationsReminderAltText => 'Напоминание о расходах';
 
   @override
@@ -3709,19 +3644,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Видите всю картину денежного потока';
 
   @override
-  String get mobileLegacyUnableToCreateLineSignInState =>
-      'Unable to create LINE sign-in state';
-
-  @override
   String get mobileLegacyUnableToOpenBrowser => 'Не удалось открыть браузер';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign =>
       'Unable to open the browser for Google sign-in';
-
-  @override
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign =>
-      'Unable to open the browser for LINE sign-in';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForPasskeySign =>
@@ -3846,10 +3773,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mobileLegacyBankBalance => 'Баланс банка';
-
-  @override
-  String get mobileLegacyRequiresALinkedLineAccount =>
-      'Нужен привязанный аккаунт LINE';
 
   @override
   String get mobileLegacyACreditCardAndANonCreditCard =>
@@ -4053,21 +3976,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled =>
       'Google sign-in timed out or was cancelled';
-
-  @override
-  String get mobileLegacyLineNotifications => 'Уведомления LINE';
-
-  @override
-  String get mobileLegacyTheLineSignInResponseDidNotInclude =>
-      'Ответ LINE не содержит cookie аутентификации';
-
-  @override
-  String get mobileLegacyLineSignInStateMismatchTryAgain =>
-      'LINE sign-in state mismatch. Try again.';
-
-  @override
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled =>
-      'LINE sign-in timed out or was cancelled';
 
   @override
   String get mobileLegacyPasskeySignInTimedOutOrWasCancelled =>
@@ -4872,9 +4780,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get adminPublicRegistration => 'Открытая регистрация';
-
-  @override
-  String get adminLineLoginEnabled => 'Вход через LINE';
 
   @override
   String get adminAllowedRegistrationEmails =>
@@ -6284,7 +6189,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsNotificationsDescription =>
-      'Если включено, подходящие события мгновенно отправляются на ваши подписанные устройства. На уведомления отчётов по Email/LINE это не влияет.';
+      'Если включено, подходящие события мгновенно отправляются на ваши подписанные устройства. На уведомления отчётов по Email это не влияет.';
 
   @override
   String get settingsNotificationsUnsupported =>

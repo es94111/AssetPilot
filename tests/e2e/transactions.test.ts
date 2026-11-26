@@ -67,12 +67,14 @@ test('user gets an explicit category suggestion from matching transaction histor
   const categoriesResponse = await authedPage.request.get('/api/categories');
   expect(categoriesResponse.ok()).toBeTruthy();
   const categories = await categoriesResponse.json();
-  const category = categories.find((item: { parentId?: string; id: string; name: string }) => item.parentId);
-  expect(category, 'the test user has at least one default leaf category').toBeTruthy();
+  const category = categories.find((item: { type: string; parentId?: string; id: string; name: string }) => item.type === 'expense' && item.parentId);
+  expect(category, 'the test user has a default expense leaf category').toBeTruthy();
+  const origin = new URL(categoriesResponse.url()).origin;
 
-  for (const date of ['2026-09-10', '2026-09-17', '2026-09-24']) {
+  for (const daysAgo of [21, 14, 7]) {
+    const date = new Date(Date.now() - daysAgo * 86400_000).toISOString().slice(0, 10);
     const response = await authedPage.request.post('/api/transactions', {
-      headers: { Origin: 'http://localhost:3000' },
+      headers: { Origin: origin },
       data: {
         type: 'expense', amount: 420, date, categoryId: category.id,
         note: 'coffee shop', currency: 'TWD',

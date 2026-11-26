@@ -14,20 +14,12 @@
 
 ## OAuth 與登入供應商
 
-適用 Google、LINE Login、Apple Sign in 等登入整合。
+適用 Google、Apple Sign in 等登入整合。
 
 1. 在供應商後台建立替代 client secret／signing key，核對 client ID、team/key ID、允許的 origin 與 callback URI。
-2. 更新部署 Secret Manager 中對應設定（例如 `GOOGLE_CLIENT_SECRET`、`LINE_CHANNEL_SECRET`；Apple 的 key material 依目前部署設定管理），確認 redirect URI 與 `APP_URL` 一致。
+2. 更新部署 Secret Manager 中對應設定（例如 `GOOGLE_CLIENT_SECRET`；Apple 的 key material 依目前部署設定管理），確認 redirect URI 與 `APP_URL` 一致。
 3. 部署所有副本後，分別測試新登入、既有帳號登入與帳號連結回呼；確認 callback state／nonce 驗證正常且沒有 redirect mismatch。
 4. 觀察登入錯誤及供應商事件記錄。只有供應商允許並行且測試成功時才保留雙憑證窗口；否則執行已排程的單次切換。確認穩定後撤銷舊憑證。
-
-## LINE Messaging webhook
-
-適用 `LINE_MESSAGING_CHANNEL_SECRET` 與 `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`。
-
-1. 先確認 LINE Developers Console 是否允許兩組憑證並行。Webhook 簽章驗證若不支援雙 secret，不可先撤銷舊 secret；安排切換窗口並準備立即回復舊值。
-2. 更新部署秘密並重新部署，確認 webhook 驗章、事件處理及回覆訊息均成功；不得在日誌輸出 channel secret、access token 或完整簽章。
-3. 確認 webhook 重送／失敗率正常、測試訊息可往返後，再撤銷舊 token／secret。任一驗證失敗即回復舊設定並重新部署。
 
 ## 郵件通道
 
@@ -49,7 +41,7 @@
 
 ## PostgreSQL 連線憑證
 
-適用 `DATABASE_URL`／`POSTGRES_URL`。不可直接改同一資料庫角色密碼後假設既有連線池會自動更新。
+適用 `DATABASE_URL`。不可直接改同一資料庫角色密碼後假設既有連線池會自動更新。
 
 1. 建立替代登入角色（例如 `app_b` 對應目前 `app_a`），設定必要 schema/table/sequence 權限及預設權限。核對 migration、排程工作及物件 owner 的需求；不得將應用角色升為 superuser。
 2. 以新角色在 staging 測試連線、讀寫、migration、備份／還原及所有副本啟動。確認權限與 `search_path` 相容。

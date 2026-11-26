@@ -323,31 +323,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authGoogleVerifying => 'Google 확인 중…';
 
   @override
-  String get authLineButton => 'LINE으로 로그인';
-
-  @override
-  String get authLineVerifying => 'LINE 확인 중…';
-
-  @override
   String get authRegisterSubmit => '계정 만들기';
 
   @override
   String get authRegistering => '계정 생성 중…';
-
-  @override
-  String get authLineCallbackCompleting => 'LINE 인증을 완료하는 중...';
-
-  @override
-  String get authLineCallbackMissingCode => 'LINE에서 인증 코드를 받지 못했습니다. 다시 시도하세요.';
-
-  @override
-  String get authLineCallbackLinkFailed => 'LINE 계정 연결 실패';
-
-  @override
-  String get authLineCallbackLoginFailed => 'LINE 로그인 실패';
-
-  @override
-  String get authLineCallbackVerifyFailed => 'LINE 인증 실패';
 
   @override
   String get authErrorsTurnstileRequired => '먼저 사람 인증을 완료하세요';
@@ -388,20 +367,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authErrorsPasskeyFailed => 'Passkey 로그인 실패';
 
   @override
-  String get authErrorsLineNotConfigured => 'LINE 로그인이 설정되어 있지 않습니다';
-
-  @override
-  String get authErrorsLineFailed => 'LINE 로그인 실패';
-
-  @override
   String get settingsTitle => '설정';
 
   @override
   String get settingsLanguageTitle => '언어';
 
   @override
-  String get settingsLanguageDescription =>
-      '인터페이스와 알림(Email / LINE)에 사용할 언어를 선택하세요.';
+  String get settingsLanguageDescription => '인터페이스와 알림(Email)에 사용할 언어를 선택하세요.';
 
   @override
   String get settingsLanguageSaved => '언어 설정이 업데이트되었습니다';
@@ -492,9 +464,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsAccountGoogleTitle => 'Google 연결';
 
   @override
-  String get settingsAccountLineTitle => 'LINE 연결';
-
-  @override
   String get settingsAccountStatusPrefix => '현재 상태: ';
 
   @override
@@ -508,18 +477,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsAccountUnlink => '연결 해제';
-
-  @override
-  String get settingsAccountLinkedLine => 'LINE 계정이 연결되었습니다';
-
-  @override
-  String get settingsAccountNotLinkedLine => 'LINE 계정이 연결되지 않았습니다';
-
-  @override
-  String get settingsAccountLinkLine => 'LINE 계정 연결';
-
-  @override
-  String get settingsAccountLineVerifying => 'LINE 확인 중…';
 
   @override
   String get settingsAccountSessionsTitle => '로그인된 기기';
@@ -689,20 +646,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get settingsAccountMessagesGoogleUnlinkFailed =>
       'Google 계정 연결을 해제하지 못했습니다';
-
-  @override
-  String get settingsAccountMessagesLineNotConfigured =>
-      'LINE 로그인이 설정되어 있지 않습니다';
-
-  @override
-  String get settingsAccountMessagesLineLinkFailed => 'LINE 계정을 연결하지 못했습니다';
-
-  @override
-  String get settingsAccountMessagesLineUnlinked => 'LINE 계정 연결이 해제되었습니다';
-
-  @override
-  String get settingsAccountMessagesLineUnlinkFailed =>
-      'LINE 계정 연결을 해제하지 못했습니다';
 
   @override
   String get settingsAccountMessagesDeletePasswordRequired =>
@@ -1128,7 +1071,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageUsageNotesLoginText =>
-      'Google과 LINE은 사용자가 직접 로그인하거나 계정을 연결할 때만 사용됩니다.';
+      'Google 로그인은 로그인하거나 계정을 연결할 때 사용됩니다.';
 
   @override
   String get publicApiCreditsPageUsageNotesBackupTitle => '클라우드 백업';
@@ -1177,9 +1120,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageDescriptionsGoogle => 'Google SSO 로그인';
-
-  @override
-  String get publicApiCreditsPageDescriptionsLine => 'LINE 로그인 및 계정 연결';
 
   @override
   String get publicApiCreditsPageDescriptionsSmtp =>
@@ -3091,9 +3031,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get notificationsCtaViewFullReport => '전체 보고서 보기';
 
   @override
-  String get notificationsCtaViewLineRecord => 'LINE 기록 보기';
-
-  @override
   String get notificationsReminderAltText => '지출 기록 알림';
 
   @override
@@ -3560,19 +3497,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mobileLegacySeeYourCompleteCashFlow => '현금흐름을 한눈에';
 
   @override
-  String get mobileLegacyUnableToCreateLineSignInState =>
-      'Unable to create LINE sign-in state';
-
-  @override
   String get mobileLegacyUnableToOpenBrowser => '브라우저를 열 수 없습니다';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign =>
       'Unable to open the browser for Google sign-in';
-
-  @override
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign =>
-      'Unable to open the browser for LINE sign-in';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForPasskeySign =>
@@ -3690,9 +3619,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get mobileLegacyBankBalance => '은행 잔액';
-
-  @override
-  String get mobileLegacyRequiresALinkedLineAccount => 'LINE 계정 연결 필요';
 
   @override
   String get mobileLegacyACreditCardAndANonCreditCard =>
@@ -3880,21 +3806,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled =>
       'Google sign-in timed out or was cancelled';
-
-  @override
-  String get mobileLegacyLineNotifications => 'LINE 알림';
-
-  @override
-  String get mobileLegacyTheLineSignInResponseDidNotInclude =>
-      'LINE 로그인 응답에 인증 Cookie가 없습니다';
-
-  @override
-  String get mobileLegacyLineSignInStateMismatchTryAgain =>
-      'LINE sign-in state mismatch. Try again.';
-
-  @override
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled =>
-      'LINE sign-in timed out or was cancelled';
 
   @override
   String get mobileLegacyPasskeySignInTimedOutOrWasCancelled =>
@@ -4659,9 +4570,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminPublicRegistration => '공개 가입';
-
-  @override
-  String get adminLineLoginEnabled => 'LINE 로그인';
 
   @override
   String get adminAllowedRegistrationEmails => '허용된 가입 이메일 (한 줄에 하나)';
@@ -6021,7 +5929,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsNotificationsDescription =>
-      '활성화하면 조건에 맞는 이벤트가 구독한 기기에 즉시 전송됩니다. Email/LINE 보고서 알림에는 영향을 주지 않습니다.';
+      '활성화하면 조건에 맞는 이벤트가 구독한 기기에 즉시 전송됩니다. Email 보고서 알림에는 영향을 주지 않습니다.';
 
   @override
   String get settingsNotificationsUnsupported =>

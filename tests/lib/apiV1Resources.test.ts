@@ -3,15 +3,15 @@
 // 涵蓋：查詢帳戶清單／新增支付帳戶／查詢分類清單、scope 最小權限、帳本範圍防護
 // （非成員 404 不揭露存在性、viewer 寫入 403）、輸入驗證（400/413）與
 // 雙層速率限制（429 + Retry-After）。
-// 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；未設定時略過（與 apiTokenWebhook.test.ts 相同策略）。
+// 需要真實 PostgreSQL（DATABASE_URL）；未設定時略過（與 apiTokenWebhook.test.ts 相同策略）。
 // 執行方式：node --experimental-transform-types --import tests/setup/register.mjs tests/lib/apiV1Resources.test.ts
 import assert from 'node:assert/strict';
 import test, { after, beforeEach } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('apiV1Resources（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('apiV1Resources（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryAll } = await import('../../lib/db.ts');
   after(() => { getDB().close(); });

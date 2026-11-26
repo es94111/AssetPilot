@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 4.139.0
-**日期：** 2026-10-08
+**版本：** 6.0.0
+**日期：** 2026-11-26
 **狀態：** 已實作
 
 ---
@@ -49,7 +49,7 @@
 | 前端     | Next.js 16、React、TypeScript、Tailwind CSS、Chart.js                                              |
 | 後端     | Node.js 24+、Next.js API Routes                                                                   |
 | 資料庫   | PostgreSQL                                                                                         |
-| 驗證     | JWT（httpOnly Cookie）、Google OAuth、LINE Login、Passkey（WebAuthn）；不提供本機 Email／密碼登入註冊 |
+| 驗證     | JWT（httpOnly Cookie）、Google OAuth、Sign in with Apple、Passkey（WebAuthn）；不提供本機 Email／密碼登入註冊 |
 | 外部 API | TWSE OpenAPI、exchangerate-api.com、ipinfo.io、Google Identity Services、SMTP（Nodemailer）、Zeabur Email（ZSend）、Resend、MEGA S4 Object Storage |
 | 部署     | 原生 Node.js 或 Docker；CI 自動從 `changelog.json.currentVersion` 推導 Docker tag 與 git tag      |
 
@@ -112,9 +112,9 @@ Email 邀請使用高熵單次 token，資料庫只存 SHA-256 雜湊，7 天到
 
 #### 註冊與首次登入
 
-使用者不得以電子郵件與密碼建立帳號或登入；註冊與登入僅透過已設定的外部身份服務。Google SSO 採 OAuth Authorization Code Flow，LINE Login 採官方授權流程，前端先取得一次性 state，回呼時由後端驗證後才建立登入狀態。未設定或未啟用的外部服務按鈕會隱藏，不影響其他可用方式。
+使用者不得以電子郵件與密碼建立帳號或登入；註冊與登入僅透過已設定的外部身份服務。Google SSO 採 OAuth Authorization Code Flow，Apple 登入由後端驗證身分令牌。前端先取得一次性 state，回呼時由後端驗證後才建立登入狀態。未設定或未啟用的外部服務按鈕會隱藏，不影響其他可用方式。
 
-Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立帳號、預設分類與預設帳戶；若已存在則更新對應的外部身份綁定。Passkey 僅供既有帳號註冊與登入使用。資料庫保留舊密碼欄位作相容用途，但應用程式不再接受、設定或驗證本機密碼。
+首次透過外部服務登入時，系統依註冊政策建立帳號、預設分類與預設帳戶，依各供應商流程處理既有帳號綁定。Passkey 僅供既有帳號註冊與登入使用。資料庫保留舊密碼欄位作相容用途，但應用程式不再接受、設定或驗證本機密碼。
 
 登入成功會發放 JWT Token，瀏覽器端存於 httpOnly Cookie（防 XSS 竊取），搭配 `SameSite=Strict` 屬性（防 CSRF），有效期由 `JWT_EXPIRES` 控制；行動 App 端 Token 存於裝置端加密儲存，有效期由 `APP_JWT_EXPIRES` 控制。後端依請求是否帶有 App 專屬裝置識別 header 判斷要套用哪一組效期。登出會清除目前裝置的 Cookie，不影響其他裝置的登入狀態；登入 API 回傳 `currentLogin`，讓前端立即顯示本次登入資訊。
 
@@ -128,7 +128,7 @@ Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立
 
 系統建立的第一個使用者自動成為管理員；若資料庫升級時尚無任何管理員，最早建立的使用者會被追認升級。這條規則沒有例外，目的是確保系統**永遠至少有一位管理員**。
 
-管理員可以控制外部服務註冊政策，包含：是否開放公開註冊、以及一份 Email 白名單。白名單非空時，只有白名單上的 Email 可以透過 Google 或 LINE 首次建立帳號；白名單為空且公開註冊關閉時，訪客無法自行註冊。管理員可直接建立沒有本機密碼的使用者資料，待該使用者以外部服務登入後完成綁定；不提供設定或重設本機密碼。刪除帳號會一併刪除該使用者的所有關聯資料（交易、帳戶、分類、預算、股票等）。**管理員不可刪除自己，也不可讓系統剩餘的管理員歸零** — 這兩條規則對自刪與被刪皆適用。
+管理員可以控制外部服務註冊政策，包含：是否開放公開註冊、以及一份 Email 白名單。白名單非空時，只有白名單上的 Email 可以透過已設定的外部服務首次建立帳號；白名單為空且公開註冊關閉時，訪客無法自行註冊。管理員可直接建立沒有本機密碼的使用者資料，待該使用者以外部服務登入後完成綁定；不提供設定或重設本機密碼。刪除帳號會一併刪除該使用者的所有關聯資料（交易、帳戶、分類、預算、股票等）。**管理員不可刪除自己，也不可讓系統剩餘的管理員歸零** — 這兩條規則對自刪與被刪皆適用。
 
 #### 登入稽核
 
@@ -146,7 +146,7 @@ Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立
 
 #### 安全基線
 
-- Google／LINE／Passkey 外部登入與相容停用端點套用速率限制（每 IP 每 15 分鐘 20 次）
+- Google／Apple／Passkey 外部登入與相容停用端點套用速率限制（每 IP 每 15 分鐘 20 次）
 - 本機密碼登入、註冊、修改與重設流程均不建立或驗證密碼
 - `/privacy`、`/terms` 亦套用速率限制
 - 所有使用者輸入經 `escHtml()` 跳脫後插入 DOM；分類顏色僅允許 `#RRGGBB` 格式（雙端驗證）
@@ -156,7 +156,7 @@ Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立
 
 #### 不做什麼
 
-- 不提供本機電子郵件密碼登入、註冊、修改或重設；外部身份服務僅支援已設定的 Google、LINE 與 Passkey
+- 不提供本機電子郵件密碼登入、註冊、修改或重設；外部身份服務僅支援已設定的 Google、Apple 與 Passkey
 - 不做雙因素認證（2FA）；Passkey 已取代此需求
 - 不做帳號鎖定策略（連續失敗 N 次鎖定 M 分鐘），僅靠速率限制
 
@@ -315,7 +315,7 @@ Google 或 LINE 首次登入時，若 Email 尚未存在，系統會自動建立
 - 不做超支推播／email 通知，僅在儀表板視覺提示
 - 不自動建立固定收支：偵測結果一律需使用者確認
 - 不做目標的自動存入／自動轉帳，也不做還款的自動記帳（僅計算與追蹤）
-- 不做進度落後的外部通知（推播／LINE／email），僅於儀表板顯示提醒卡片
+- 不做進度落後的外部通知（推播／Email），僅於儀表板顯示提醒卡片
 
 ---
 
@@ -542,7 +542,7 @@ XLSX 具備欄位標題列，日期寫入為 UTC 午夜對應的 Excel 日期序
 
 #### 交易照片附件
 
-新增交易時可附加最多 5 張照片，每張預設上限 10 MB。使用者可在新增 Modal 中選擇照片儲存位置：Server 本機儲存或 S3 相容物件儲存；S3 未設定時該選項停用。手機網頁需提供「拍照」與「選擇圖片」兩個入口，前者使用 `capture="environment"` 呼叫相機，後者允許從相簿或檔案上傳。LINE 新增記錄 wizard 中可於確認前傳送照片，系統先暫存 LINE image message id，確認新增後透過 LINE message content API 下載並附到該筆交易；LINE 端使用 `TRANSACTION_PHOTO_DEFAULT_STORAGE` 決定本機或 S3。系統新增 `transaction_attachments` metadata 表，實際檔案不放 public 目錄，讀取照片需經 `/api/transactions/{txId}/attachments/{attachmentId}/file` 驗證交易與附件皆屬於目前使用者。本機儲存預設位於 `uploads/transaction-photos`，S3 設定可使用 `TRANSACTION_PHOTO_S3_*`，未設定時可 fallback 使用 `MEGA_S4_*`。
+新增交易時可附加最多 5 張照片，每張預設上限 10 MiB。管理員可在後台設定照片上限和儲存位置。預設使用伺服器本機儲存，S3 相容物件儲存需另配置連線。手機網頁提供拍照和選擇圖片入口。
 
 #### 不做什麼
 
@@ -946,7 +946,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | POST | /api/auth/logout         | 登出目前裝置（撤銷目前 session 並清除 Cookie） |
 | GET  | /api/auth/me             | 取得當前使用者資訊                          |
 | POST | /api/auth/google         | Google SSO 登入／註冊（驗證授權碼並簽發 JWT） |
-| POST | /api/auth/line           | LINE Login 登入／註冊（驗證授權碼並簽發 JWT） |
+| POST | /api/auth/line           | 退役端點，回覆 HTTP 410 |
 | GET  | /api/account/login-logs  | 取得目前使用者登入稽核紀錄（最近 100 筆）   |
 | GET  | /api/account/sessions    | 取得目前有效登入裝置                         |
 | DELETE | /api/account/sessions/:id | 登出指定登入裝置                           |
@@ -1191,6 +1191,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 6.0.0 | 2026-11-26 | 退役 LINE 整合，Email 延續報表寄送。股價更新及照片上傳政策由網頁後台管理，部署改用統一的網址、資料庫和 Turnstile 變數。修正 Apple 驗證 Email、信用卡還款餘額與帳本初始化。 |
 | 4.149.1 | 2026-10-15 | 修復投資組合績效「部分持股缺乏歷史收盤價」警告：`lib/stockHistory.ts` 將 TWSE／TPEx 月度請求並行數上限設為 4、失敗重試 3 次（線性退避）、非 2xx 回應拋錯而不寫入快取、容許尚無資料的當月，避免上游限流的空結果被快取為有效資料；`/api/stock-performance` 於價格抓取失敗時記錄警告。 |
 | 4.149.0 | 2026-10-15 | 新增 #310 投資組合績效分析：新增 `/stocks/performance` 頁面與 `/api/stock-performance` 路由，提供金額加權報酬率 (XIRR，Newton-Raphson 求解，Actual/365)、時間加權報酬率 (TWR，分割期間連乘)、大盤基準比較 (S&P 500 / 0050) 與五因子收益歸因（期初/期末市值、已實現、未實現變動、股利、手續費與稅，維持金額守恆）；支援區間快選、資產市值與累計淨投入走勢圖、現金流明細，以及 CSV / Excel 匯出與帳本權限政策整合。新增 10 種語言完整翻譯與自動化單元測試。 |
 | 4.141.0 | 2026-10-08 | 新增 #250 收據 OCR 自動帶入：新增交易可上傳收據影像辨識金額／日期／店家，僅以草稿預填、由使用者確認後儲存；HTTP OCR 供應商可由環境變數設定，未設定時回報無供應商並保留手動輸入。OCR API 不觸發自動背景寫入，讀取既有附件沿用 photoCrypto 與 S3 授權路徑。 |

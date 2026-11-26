@@ -1,7 +1,7 @@
 // tests/lib/twStockDripAndDayTrade.test.ts — issue #263
 // 台股進階：股利再投資（DRIP）與現股當沖證交稅減半。
 //
-// 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；未設定時略過
+// 需要真實 PostgreSQL（DATABASE_URL）；未設定時略過
 // （保持 `npm test` 在無 DB 環境下仍可通過）。
 //
 // 覆蓋驗收條件：
@@ -15,14 +15,11 @@
 import assert from 'node:assert/strict';
 import test, { after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('twStockDripAndDayTrade（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('twStockDripAndDayTrade（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
-  // Route auth can trigger the optional server-wide stock price updater during integration tests.
-  const originalStockAutoUpdate = process.env.STOCK_AUTO_UPDATE_ENABLED;
-  process.env.STOCK_AUTO_UPDATE_ENABLED = 'false';
   const { initDB, getDB, queryOne, queryAll } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
   const { accountTypeFromCategory, categoryFromAccountType } = await import('../../lib/accountHelpers.ts');
@@ -60,11 +57,12 @@ if (!DB_URL) {
   const dividendBatchDeleteRoute = await import('../../app/api/stock-dividends/batch-delete/route.ts');
 
   await initDB();
+  const stockSetting = Number(queryOne("SELECT stock_auto_update_enabled FROM system_settings WHERE id = 1")?.stock_auto_update_enabled);
+  getDB().run("UPDATE system_settings SET stock_auto_update_enabled = 0 WHERE id = 1");
   // Postgres worker thread 不會自動結束行程，測試結束後需顯式關閉。
   after(() => {
+    getDB().run("UPDATE system_settings SET stock_auto_update_enabled = ? WHERE id = 1", [stockSetting]);
     getDB().close();
-    if (originalStockAutoUpdate === undefined) delete process.env.STOCK_AUTO_UPDATE_ENABLED;
-    else process.env.STOCK_AUTO_UPDATE_ENABLED = originalStockAutoUpdate;
   });
 
   const userId = 'test_drip_dt_' + uid();

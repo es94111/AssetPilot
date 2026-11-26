@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   if (auth instanceof NextResponse) return auth;
 
   const rows = queryAll(
-    "SELECT id, email, display_name, created_at, google_id, line_id, is_admin, admin_role FROM users ORDER BY created_at DESC, email ASC",
+    "SELECT id, email, display_name, created_at, google_id, is_admin, admin_role FROM users ORDER BY created_at DESC, email ASC",
   );
   const users = rows.map((r) => {
     const isSuperAdmin =
@@ -20,7 +20,6 @@ export async function GET(request: Request) {
       displayName: r.display_name,
       createdAt: r.created_at,
       googleId: r.google_id || "",
-      lineId: r.line_id || "",
       hasPassword: false,
       isAdmin: !!r.is_admin,
       // adminRole 僅在 is_admin 時有意義：'super' | 'readonly'。

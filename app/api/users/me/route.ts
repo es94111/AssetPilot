@@ -10,7 +10,7 @@ export async function GET(request) {
   if (auth instanceof NextResponse) return auth;
 
   const u = queryOne(
-    "SELECT id, email, display_name, google_id, line_id, has_password, avatar_url, theme_mode, is_admin, is_active, created_at, timezone FROM users WHERE id = ?",
+    "SELECT id, email, display_name, google_id, has_password, avatar_url, theme_mode, is_admin, is_active, created_at, timezone FROM users WHERE id = ?",
     [auth.userId],
   );
   if (!u)
@@ -27,7 +27,6 @@ export async function GET(request) {
     timezone: u.timezone || "Asia/Taipei",
     has_password: false,
     google_id: u.google_id || "",
-    line_id: u.line_id || "",
     avatar_url: u.avatar_url || "",
     theme_mode: normalizeThemeMode(u.theme_mode),
     default_currency: currencySettings.defaultCurrency,

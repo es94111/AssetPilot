@@ -376,14 +376,13 @@ export function isValidVapidKeyPair(publicKey: unknown, privateKey: unknown): bo
 
 /**
  * VAPID subject（RFC 8292 的 `sub`）必須是 https URL 或 mailto。
- * 未設定 APP_URL 時回退專案慣用的 APP_HOST 推導值。
+ * 未設定 APP_URL 時使用備援信箱。
  */
 export function resolveVapidSubject(
   appUrl: unknown,
-  appHost: unknown,
   fallbackEmail: unknown = 'admin@localhost',
 ): string {
-  const url = String(appUrl ?? '').trim() || String(appHost ?? '').trim();
+  const url = String(appUrl ?? '').trim();
   if (url) {
     const withScheme = /^https?:\/\//i.test(url) ? url : `https://${url}`;
     try {

@@ -327,33 +327,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authGoogleVerifying => 'Vérification Google…';
 
   @override
-  String get authLineButton => 'Connexion avec LINE';
-
-  @override
-  String get authLineVerifying => 'Vérification LINE…';
-
-  @override
   String get authRegisterSubmit => 'Créer le compte';
 
   @override
   String get authRegistering => 'Création du compte…';
-
-  @override
-  String get authLineCallbackCompleting =>
-      'Finalisation de la vérification LINE...';
-
-  @override
-  String get authLineCallbackMissingCode =>
-      'LINE n’a pas renvoyé de code d’autorisation. Veuillez réessayer.';
-
-  @override
-  String get authLineCallbackLinkFailed => 'Échec de la liaison du compte LINE';
-
-  @override
-  String get authLineCallbackLoginFailed => 'Échec de la connexion LINE';
-
-  @override
-  String get authLineCallbackVerifyFailed => 'Échec de la vérification LINE';
 
   @override
   String get authErrorsTurnstileRequired =>
@@ -398,13 +375,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authErrorsPasskeyFailed => 'Échec de la connexion Passkey';
 
   @override
-  String get authErrorsLineNotConfigured =>
-      'La connexion LINE n’est pas configurée';
-
-  @override
-  String get authErrorsLineFailed => 'Échec de la connexion LINE';
-
-  @override
   String get settingsTitle => 'Paramètres';
 
   @override
@@ -412,7 +382,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsLanguageDescription =>
-      'Choisissez la langue de l’interface et des notifications (e-mail / LINE).';
+      'Choisissez la langue de l’interface et des notifications (e-mail).';
 
   @override
   String get settingsLanguageSaved => 'Préférence de langue mise à jour';
@@ -506,9 +476,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsAccountGoogleTitle => 'Lien Google';
 
   @override
-  String get settingsAccountLineTitle => 'Lien LINE';
-
-  @override
   String get settingsAccountStatusPrefix => 'État actuel : ';
 
   @override
@@ -522,18 +489,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsAccountUnlink => 'Dissocier';
-
-  @override
-  String get settingsAccountLinkedLine => 'Compte LINE lié';
-
-  @override
-  String get settingsAccountNotLinkedLine => 'Compte LINE non lié';
-
-  @override
-  String get settingsAccountLinkLine => 'Lier un compte LINE';
-
-  @override
-  String get settingsAccountLineVerifying => 'Vérification LINE…';
 
   @override
   String get settingsAccountSessionsTitle => 'Appareils connectés';
@@ -717,21 +672,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get settingsAccountMessagesGoogleUnlinkFailed =>
       'Échec de la dissociation du compte Google';
-
-  @override
-  String get settingsAccountMessagesLineNotConfigured =>
-      'La connexion LINE n’est pas configurée';
-
-  @override
-  String get settingsAccountMessagesLineLinkFailed =>
-      'Échec de la liaison du compte LINE';
-
-  @override
-  String get settingsAccountMessagesLineUnlinked => 'Compte LINE dissocié';
-
-  @override
-  String get settingsAccountMessagesLineUnlinkFailed =>
-      'Échec de la dissociation du compte LINE';
 
   @override
   String get settingsAccountMessagesDeletePasswordRequired =>
@@ -1186,7 +1126,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageUsageNotesLoginText =>
-      'Google et LINE ne sont utilisés que lorsque vous vous connectez ou liez un compte volontairement.';
+      'La connexion avec Google intervient lorsque vous vous connectez ou associez un compte.';
 
   @override
   String get publicApiCreditsPageUsageNotesBackupTitle => 'Sauvegarde cloud';
@@ -1237,10 +1177,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageDescriptionsGoogle => 'Connexion Google SSO';
-
-  @override
-  String get publicApiCreditsPageDescriptionsLine =>
-      'Connexion LINE et liaison de compte';
 
   @override
   String get publicApiCreditsPageDescriptionsSmtp =>
@@ -3246,9 +3182,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationsCtaViewFullReport => 'Voir le rapport complet';
 
   @override
-  String get notificationsCtaViewLineRecord => 'Voir les enregistrements LINE';
-
-  @override
   String get notificationsReminderAltText => 'Rappel de dépense';
 
   @override
@@ -3730,20 +3663,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Gardez une vue complète de vos flux';
 
   @override
-  String get mobileLegacyUnableToCreateLineSignInState =>
-      'Unable to create LINE sign-in state';
-
-  @override
   String get mobileLegacyUnableToOpenBrowser =>
       'Impossible d’ouvrir le navigateur';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign =>
       'Unable to open the browser for Google sign-in';
-
-  @override
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign =>
-      'Unable to open the browser for LINE sign-in';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForPasskeySign =>
@@ -3870,10 +3795,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mobileLegacyBankBalance => 'Solde bancaire';
-
-  @override
-  String get mobileLegacyRequiresALinkedLineAccount =>
-      'Nécessite un compte LINE lié';
 
   @override
   String get mobileLegacyACreditCardAndANonCreditCard =>
@@ -4083,21 +4004,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled =>
       'Google sign-in timed out or was cancelled';
-
-  @override
-  String get mobileLegacyLineNotifications => 'Notifications LINE';
-
-  @override
-  String get mobileLegacyTheLineSignInResponseDidNotInclude =>
-      'La réponse LINE ne contient pas le cookie d’authentification';
-
-  @override
-  String get mobileLegacyLineSignInStateMismatchTryAgain =>
-      'LINE sign-in state mismatch. Try again.';
-
-  @override
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled =>
-      'LINE sign-in timed out or was cancelled';
 
   @override
   String get mobileLegacyPasskeySignInTimedOutOrWasCancelled =>
@@ -4900,9 +4806,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminPublicRegistration => 'Inscription publique';
-
-  @override
-  String get adminLineLoginEnabled => 'Connexion LINE';
 
   @override
   String get adminAllowedRegistrationEmails =>
@@ -6332,7 +6235,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsNotificationsDescription =>
-      'Lorsqu\'elles sont activées, les événements correspondants sont envoyés instantanément à vos appareils abonnés. Cela n\'affecte pas les notifications de rapport Email/LINE.';
+      'Lorsqu\'elles sont activées, les événements correspondants sont envoyés instantanément à vos appareils abonnés. Cela n\'affecte pas les notifications de rapport Email.';
 
   @override
   String get settingsNotificationsUnsupported =>

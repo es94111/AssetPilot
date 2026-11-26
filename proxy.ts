@@ -16,12 +16,16 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/register',
   '/api/auth/google',
   '/api/auth/google/state',
+  '/api/app/auth-ticket/exchange',
+  '/api/config',
+  // Retired routes return 410 without requiring authentication.
   '/api/auth/line',
   '/api/auth/line/authorize',
   '/api/auth/line/state',
-  '/api/app/auth-ticket/exchange',
   '/api/line/webhook',
-  '/api/config',
+  '/api/account/link-line',
+  '/api/account/settings/line',
+  '/api/admin/line-expense-reminders',
   '/api/health',
   '/api/i18n/locale',
   '/api/mcp',
@@ -29,7 +33,7 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 // passkey / MCP OAuth 端點前綴
-const PUBLIC_PREFIXES = ['/api/auth/passkey/', '/api/auth/recovery/', '/api/setup/', '/api/oauth/'];
+const PUBLIC_PREFIXES = ['/api/auth/passkey/', '/api/auth/recovery/', '/api/setup/', '/api/oauth/', '/api/admin/line-expense-reminders/'];
 
 // API Token（第三方自動化整合，issue #258）端點前綴：
 // 這組路由不使用 authToken Cookie，改以 `Authorization: Bearer ap_api_…` 驗證，
@@ -62,8 +66,6 @@ const AUTH_RATE_LIMITED_PATHS = new Set([
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/google',
-  '/api/auth/line',
-  '/api/auth/line/authorize',
   '/api/auth/passkey/challenge',
   '/api/auth/passkey/login',
 ]);

@@ -1,6 +1,30 @@
 {
-  "currentVersion": "5.2.2",
+  "currentVersion": "6.0.0",
   "releases": [
+    {
+      "version": "6.0.0",
+      "date": "2026-11-26",
+      "title": "退役 LINE 整合與精簡部署設定",
+      "type": "removed",
+      "changes": [
+        {
+          "tag": "warning",
+          "text": "升級前請改用 APP_URL、DATABASE_URL 與 CLOUDFLARE_TURNSTILE_*。請先在管理後台儲存目前使用的股價更新狀態與間隔，以及照片儲存位置與上限。"
+        },
+        {
+          "tag": "removed",
+          "text": "退役 LINE 登入、綁定、記帳機器人、支出提醒及報表。原本只使用 LINE 的報表排程會停用，重新選用 Email 並啟用即可恢復寄送。"
+        },
+        {
+          "tag": "improved",
+          "text": "由管理後台統一管理股價更新和照片上傳設定。帳號解除綁定或移除 Passkey 時，會檢查是否還有其他有效登入方式。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正信用卡還款快照納入非銀行付款帳戶、還款後餘額符號、Apple 綁定漏讀已驗證的 Email、報表排程的布林值驗證，以及已刪除帳號仍有請求在處理時的帳本初始化錯誤。"
+        }
+      ]
+    },
     {
       "version": "5.2.2",
       "date": "2026-11-26",

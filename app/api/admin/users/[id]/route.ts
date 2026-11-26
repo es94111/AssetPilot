@@ -102,7 +102,7 @@ export async function PUT(request, { params }) {
   });
 
   const updated = queryOne(
-    "SELECT id, email, display_name, created_at, google_id, line_id, is_admin, admin_role FROM users WHERE id = ?",
+    "SELECT id, email, display_name, created_at, google_id, is_admin, admin_role FROM users WHERE id = ?",
     [id],
   );
   const updatedIsSuper =
@@ -114,7 +114,6 @@ export async function PUT(request, { params }) {
     displayName: updated.display_name,
     createdAt: updated.created_at,
     googleId: updated.google_id || "",
-    lineId: updated.line_id || "",
     hasPassword: false,
     isAdmin: !!updated.is_admin,
     adminRole: updated.is_admin ? (updatedIsSuper ? "super" : "readonly") : "",

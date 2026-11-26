@@ -41,11 +41,10 @@ String _scheduleSummary(ReportSchedule s) {
           : trKey('mobileDynamicMonthlyOnDay', {'day': s.dayOfMonth}),
     _ => trKey('featuresRecurringFrequencyLabelsDaily'),
   };
-  final channels = [
-    if (s.notifyEmail) 'Email',
-    if (s.notifyLine) 'LINE',
-  ].join(isChineseLocale ? '／' : ' / ');
-  return '$when $time${isChineseLocale ? '・' : ' · '}$channels';
+  final scheduleTime = '$when $time';
+  return s.notifyEmail
+      ? '$scheduleTime${isChineseLocale ? '・' : ' · '}Email'
+      : scheduleTime;
 }
 
 /// 定期報表通知排程：使用者自訂何時、以何種方式收到收支報表。
@@ -204,7 +203,6 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
   int _weekday = 1;
   int _dayOfMonth = 1;
   bool _notifyEmail = true;
-  bool _notifyLine = false;
   bool _enabled = true;
   bool _saving = false;
   String _ledgerId = '';
@@ -225,7 +223,6 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
       _weekday = e.weekday.clamp(0, 6);
       _dayOfMonth = e.dayOfMonth.clamp(0, 28);
       _notifyEmail = e.notifyEmail;
-      _notifyLine = e.notifyLine;
       _enabled = e.enabled;
     }
   }
@@ -251,7 +248,7 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
   }
 
   Future<void> _save() async {
-    if (!_notifyEmail && !_notifyLine) {
+    if (!_notifyEmail && (_enabled || !_isEdit)) {
       toast(context, trKey('mobileLegacySelectAtLeastOneNotificationMethod'));
       return;
     }
@@ -274,7 +271,6 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
         'weekday': _weekday,
         'dayOfMonth': _dayOfMonth,
         'notifyEmail': _notifyEmail,
-        'notifyLine': _notifyLine,
         'enabled': _enabled,
       };
       final api = ApiClient.instance;
@@ -435,13 +431,6 @@ class _ReportScheduleFormState extends State<_ReportScheduleForm> {
               title: Text(trKey('mobileLegacyEmailNotifications')),
               value: _notifyEmail,
               onChanged: (v) => setState(() => _notifyEmail = v),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(trKey('mobileLegacyLineNotifications')),
-              subtitle: Text(trKey('mobileLegacyRequiresALinkedLineAccount')),
-              value: _notifyLine,
-              onChanged: (v) => setState(() => _notifyLine = v),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,

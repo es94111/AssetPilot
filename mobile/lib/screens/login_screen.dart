@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../apple_auth.dart';
 import '../google_auth.dart';
-import '../line_auth.dart';
 import '../passkey_auth.dart';
 import '../platform/platform_info.dart';
 import '../theme.dart';
@@ -29,9 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _googleEnabled = false;
   String? _googleClientId;
   bool _googleLoading = false;
-  bool _lineEnabled = false;
-  String? _lineChannelId;
-  bool _lineLoading = false;
   bool _passkeyLoading = false;
   bool _appleEnabled = false;
   String? _appleClientId;
@@ -60,10 +56,6 @@ class _LoginScreenState extends State<LoginScreen> {
         _googleEnabled =
             cfg['googleCodeFlow'] == true && (cfg['googleClientId'] is String);
         _googleClientId = cfg['googleClientId'] as String?;
-        _lineEnabled =
-            cfg['lineCodeFlow'] == true && (cfg['lineChannelId'] is String);
-        _lineChannelId = cfg['lineChannelId'] as String?;
-        // Apple 登入僅在 iOS 且後端已設定 Service ID 時顯示。
         _appleEnabled =
             AppleAuth.isSupported &&
             cfg['appleEnabled'] == true &&
@@ -79,7 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _turnstileEnabled = false;
         _googleEnabled = false;
-        _lineEnabled = false;
         _appleEnabled = false;
       });
     } finally {
@@ -130,39 +121,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_turnstileEnabled) _resetTurnstile();
     } finally {
       if (mounted) setState(() => _googleLoading = false);
-    }
-  }
-
-  Future<void> _lineSignIn() async {
-    if (_lineChannelId == null) return;
-    if (!_requireTurnstile()) return;
-    final turnstileToken = _turnstileToken;
-    setState(() {
-      _lineLoading = true;
-      _error = null;
-    });
-    try {
-      await LineAuth.signIn(
-        channelId: _lineChannelId!,
-        baseUrl: ApiClient.instance.baseUrl,
-        turnstileToken: turnstileToken,
-      );
-      if (mounted) widget.onLoggedIn();
-    } on ApiException catch (e) {
-      if (!mounted) return; // await 期間畫面可能已被 dispose，避免 setState 崩潰
-      setState(() => _error = e.message);
-      if (_turnstileEnabled) _resetTurnstile();
-    } catch (e) {
-      if (!mounted) return;
-      setState(
-        () => _error = trKey('mobileDynamicProviderLoginFailed', {
-          'provider': 'LINE',
-          'error': e,
-        }),
-      );
-      if (_turnstileEnabled) _resetTurnstile();
-    } finally {
-      if (mounted) setState(() => _lineLoading = false);
     }
   }
 
@@ -385,28 +343,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : const Icon(Icons.account_circle_outlined),
                         label: Text(trKey('authGoogleButton')),
-                      ),
-                    ],
-                    if (_lineEnabled) ...[
-                      const SizedBox(height: ApSpace.md),
-                      OutlinedButton.icon(
-                        onPressed: _lineLoading ? null : _lineSignIn,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          backgroundColor: theme.colorScheme.surface.withValues(
-                            alpha: 0.85,
-                          ),
-                        ),
-                        icon: _lineLoading
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.chat_bubble_outline_rounded),
-                        label: Text(trKey('authLineButton')),
                       ),
                     ],
                     if (_configLoading)

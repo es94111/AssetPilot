@@ -424,8 +424,7 @@ class ApiClient {
 
   static bool _isSingleUseGetPath(String path) =>
       path.startsWith('/api/app/integrity/nonce') ||
-      path.startsWith('/api/auth/google/state') ||
-      path.startsWith('/api/auth/line/state');
+      path.startsWith('/api/auth/google/state');
 
   String _errorMessage(http.Response res) {
     try {
@@ -637,56 +636,6 @@ class ApiClient {
         throw ApiException(
           200,
           trKey('mobileLegacyTheGoogleSignInResponseDidNotInclude'),
-        );
-      }
-      await _persistLogin();
-      return;
-    }
-    throw ApiException(res.statusCode, _errorMessage(res));
-  }
-
-  /// bindingToken 需在 [lineLogin] 原樣送回，理由同 [googleState]。
-  Future<Map<String, String>> lineState({String? turnstileToken}) async {
-    final query = turnstileToken == null || turnstileToken.isEmpty
-        ? 'flow=login'
-        : 'flow=login&turnstileToken=${Uri.encodeComponent(turnstileToken)}';
-    final m = await _getMap('/api/auth/line/state?$query');
-    return {
-      'state': '${m['state'] ?? ''}',
-      'nonce': '${m['nonce'] ?? ''}',
-      'bindingToken': '${m['bindingToken'] ?? ''}',
-    };
-  }
-
-  Future<void> lineLogin({
-    required String code,
-    required String redirectUri,
-    required String state,
-    required String bindingToken,
-  }) async {
-    late http.Response res;
-    try {
-      res = await http
-          .post(
-            _uri('/api/auth/line'),
-            headers: _headers(json: true),
-            body: jsonEncode({
-              'code': code,
-              'redirect_uri': redirectUri,
-              'state': state,
-              'bindingToken': bindingToken,
-            }),
-          )
-          .timeout(_timeout);
-    } catch (e) {
-      throw ApiException(0, '無法連線到後端（$_baseUrl）：$e');
-    }
-    if (res.statusCode == 200) {
-      _captureCookie(res);
-      if (_cookie == null) {
-        throw ApiException(
-          200,
-          trKey('mobileLegacyTheLineSignInResponseDidNotInclude'),
         );
       }
       await _persistLogin();
@@ -1168,8 +1117,6 @@ class ApiClient {
   Future<void> unlinkGoogle() =>
       _send('DELETE', '/api/account/settings/google');
 
-  Future<void> unlinkLine() => _send('DELETE', '/api/account/settings/line');
-
   // ── 共享帳本（issue #281）────────────────────────────────────
   /// 列出目前仍是成員的帳本（含角色），同時更新目前帳本的唯讀狀態。
   Future<List<dynamic>> ledgers() async {
@@ -1245,7 +1192,7 @@ class ApiClient {
       _send('DELETE', '/api/user/report-schedules/$id');
 
   // ── 管理員：系統設定 ────────────────────────────────────────
-  /// 取得系統設定（僅管理員）。回傳 `{ publicRegistration, lineLoginEnabled,
+  /// 取得系統設定（僅管理員）。回傳 `{ publicRegistration,
   /// allowedRegistrationEmails, adminIpAllowlist, routeAuditMode,
   /// transactionPhotoStorage, transactionPhotoMaxBytes, stockAutoUpdateEnabled,
   /// stockAutoUpdateIntervalMin, stockAutoUpdateLastRun, stockAutoUpdateLastSummary }`。

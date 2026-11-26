@@ -1,6 +1,6 @@
 // tests/lib/xlsxExportRoute.test.ts — 匯出端點 CSV／XLSX 雙格式（issue #261）
 //
-// 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；未設定時略過，
+// 需要真實 PostgreSQL（DATABASE_URL）；未設定時略過，
 // 保持 `npm test` 在無 DB 環境下仍可通過（比照 tests/lib/stockHelpers.test.ts）。
 //
 // 驗收條件對應：
@@ -13,10 +13,10 @@ import test from 'node:test';
 import JSZip from 'jszip';
 import { createXlsxExportResponse, mapXlsxRows } from '../../lib/xlsxExport.ts';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('xlsxExportRoute（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('xlsxExportRoute（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   test('xlsx 匯出端點：CSV／XLSX 雙格式與稽核', async (t) => {
   const { initDB, getDB, queryAll, queryAllInKeysetPages } = await import('../../lib/db.ts');

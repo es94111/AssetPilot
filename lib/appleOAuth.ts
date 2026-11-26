@@ -32,6 +32,7 @@ export type AppleIdentityClaims = {
   /** Apple 提供的穩定使用者識別碼（sub）。 */
   sub: string;
   email?: string;
+  email_verified?: boolean | string;
   emailVerified?: boolean | string;
   /** 隱藏電子郵件時為 true。 */
   isPrivateEmail?: boolean;
@@ -187,9 +188,8 @@ export async function verifyAppleIdentityToken(
 export function appleEmail(claims: AppleIdentityClaims): string {
   const email = String(claims.email || '').trim().toLowerCase();
   if (!email) return '';
-  // emailVerified 為字串 "true" / "false" 或 boolean；未驗證的電子郵件不應作為
-  // 帳號合併依據。
-  const verified = claims.emailVerified;
+  // 優先使用 Apple ID Token 的欄位，並相容既有的駝峰欄位。
+  const verified = claims.email_verified ?? claims.emailVerified;
   const isVerified =
     verified === true || String(verified).toLowerCase() === 'true';
   return isVerified ? email : '';

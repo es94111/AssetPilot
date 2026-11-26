@@ -9,8 +9,6 @@ import {
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
-const LINE_CHANNEL_ID = process.env.LINE_CHANNEL_ID || "";
-const LINE_CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET || "";
 const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID || "";
 
 export async function GET() {
@@ -26,20 +24,9 @@ export async function GET() {
     return NextResponse.json({
       googleClientId: GOOGLE_CLIENT_ID || null,
       googleCodeFlow: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET),
-      lineChannelId:
-        settings.lineLoginEnabled && LINE_CHANNEL_ID && LINE_CHANNEL_SECRET
-          ? LINE_CHANNEL_ID
-          : null,
-      lineCodeFlow: !!(
-        settings.lineLoginEnabled &&
-        LINE_CHANNEL_ID &&
-        LINE_CHANNEL_SECRET
-      ),
       turnstileSiteKey: getTurnstileSiteKey() || null,
       turnstileEnabled: !!getTurnstileSiteKey(),
       turnstileVerificationEnabled: isTurnstileConfigured(),
-      // Sign in with Apple：只有設定 Service ID 時才啟用按鈕。
-      // App 端另需在原生層使用 ASAuthorizationAppleIDProvider 取得令牌。
       appleClientId: APPLE_CLIENT_ID || null,
       appleEnabled: !!APPLE_CLIENT_ID,
       registrationEnabled: false,

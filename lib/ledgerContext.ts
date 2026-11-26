@@ -62,16 +62,20 @@ export function ensurePersonalLedger(userId: string): string {
   getDB().run(
     `INSERT INTO financial_ledgers
      (id, name, owner_user_id, data_owner_id, is_shared, created_at, updated_at)
-     VALUES (?, 'Personal ledger', ?, ?, 0, ?, ?)
+     SELECT ?, 'Personal ledger', id, id, 0, ?, ?
+       FROM users WHERE id = ? FOR KEY SHARE
      ON CONFLICT (id) DO NOTHING`,
-    [ledgerId, userId, userId, now, now],
+    [ledgerId, now, now, userId],
   );
   getDB().run(
-    `INSERT INTO ledger_members (ledger_id, user_id, role, joined_at)
-     SELECT id, owner_user_id, 'owner', ? FROM financial_ledgers
-     WHERE id = ? AND owner_user_id = ? AND is_shared = 0
+    `WITH active_user AS MATERIALIZED (SELECT id FROM users WHERE id = ? FOR KEY SHARE)
+     INSERT INTO ledger_members (ledger_id, user_id, role, joined_at)
+     SELECT ledger.id, active_user.id, 'owner', ?
+       FROM active_user
+       JOIN financial_ledgers ledger ON ledger.owner_user_id = active_user.id
+       WHERE ledger.id = ? AND ledger.is_shared = 0 FOR KEY SHARE OF ledger
      ON CONFLICT (ledger_id, user_id) DO NOTHING`,
-    [now, ledgerId, userId],
+    [userId, now, ledgerId],
   );
   return ledgerId;
 }

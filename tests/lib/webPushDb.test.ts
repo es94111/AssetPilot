@@ -1,6 +1,6 @@
 // tests/lib/webPushDb.test.ts — Web Push 冪等去重與失效訂閱清理（issue #257）
 //
-// 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；未設定時略過，維持 `npm test`
+// 需要真實 PostgreSQL（DATABASE_URL）；未設定時略過，維持 `npm test`
 // 在無 DB 環境可通過的既有慣例（見 tests/lib/db.test.ts）。
 //
 // 覆蓋驗收條件：
@@ -12,10 +12,10 @@ import test, { before, after } from 'node:test';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('Web Push 訂閱去重與失效清理（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('Web Push 訂閱去重與失效清理（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

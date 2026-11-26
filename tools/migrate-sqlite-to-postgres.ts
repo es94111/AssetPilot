@@ -50,8 +50,8 @@ function isEncryptedDB(buffer: Buffer): boolean {
 async function main(): Promise<void> {
   loadEnvFile();
   const dbPath = process.env.DB_PATH || path.join(process.cwd(), 'database.db');
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-    throw new Error('請先設定 DATABASE_URL 或 POSTGRES_URL');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('請先設定 DATABASE_URL');
   }
   if (!fs.existsSync(dbPath)) {
     throw new Error(`找不到 SQLite .db 檔案：${dbPath}`);

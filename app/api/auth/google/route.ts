@@ -30,6 +30,7 @@ import {
   getTurnstileSiteKey,
   verifyTurnstileToken,
 } from "../../../../lib/turnstile";
+import { getConfiguredAppOrigin } from "../../../../lib/appOrigin";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
@@ -39,24 +40,20 @@ const GOOGLE_OAUTH_REDIRECT_URIS = (
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const APP_HOST = process.env.APP_HOST || "localhost";
-const PORT = process.env.PORT || 3000;
 
 function buildGoogleRedirectAllowlist() {
-  const fallback = [
-    `https://${APP_HOST}/`,
-    `https://${APP_HOST}`,
-    `http://localhost:${PORT}/`,
-    `http://localhost:${PORT}`,
-    // mobile App Link callback (fixed path used by the Android app)
-    `https://${APP_HOST}/app/google-callback`,
-  ];
+  const appOrigin = getConfiguredAppOrigin();
+  const fallback = appOrigin ? [appOrigin, `${appOrigin}/`, `${appOrigin}/app/google-callback`] : [];
+  if (process.env.NODE_ENV !== "production") {
+    const localOrigin = `http://localhost:${process.env.PORT || 3000}`;
+    fallback.push(localOrigin, `${localOrigin}/`);
+  }
   return new Set([...fallback, ...GOOGLE_OAUTH_REDIRECT_URIS]);
 }
-const googleRedirectUriAllowlist = buildGoogleRedirectAllowlist();
 
 function isAllowedGoogleRedirectUri(uri: string) {
   if (!uri) return false;
+  const googleRedirectUriAllowlist = buildGoogleRedirectAllowlist();
   if (googleRedirectUriAllowlist.has(uri)) return true;
   const stripped = String(uri).replace(/\/$/, "");
   return (

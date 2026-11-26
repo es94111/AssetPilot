@@ -188,16 +188,16 @@ test('VAPID 金鑰格式檢查會擋掉截斷或非 base64url 的值', () => {
 });
 
 test('VAPID subject 必須為 https URL 或 mailto', () => {
-  assert.equal(resolveVapidSubject('https://asset.example.com', '', ''), 'https://asset.example.com');
-  assert.equal(resolveVapidSubject('asset.example.com', '', ''), 'https://asset.example.com');
+  assert.equal(resolveVapidSubject('https://asset.example.com', ''), 'https://asset.example.com');
+  assert.equal(resolveVapidSubject('asset.example.com', ''), 'https://asset.example.com');
   assert.equal(
-    resolveVapidSubject('https://asset.example.com/dashboard', '', ''),
+    resolveVapidSubject('https://asset.example.com/dashboard', ''),
     'https://asset.example.com',
   );
   // 非 https（本機 http）不可作為 subject，退回 mailto
-  assert.equal(resolveVapidSubject('http://localhost:3000', '', 'me@example.com'), 'mailto:me@example.com');
-  assert.equal(resolveVapidSubject('', '', 'me@example.com'), 'mailto:me@example.com');
-  assert.match(String(resolveVapidSubject('', '', '')), /^mailto:/);
+  assert.equal(resolveVapidSubject('http://localhost:3000', 'me@example.com'), 'mailto:me@example.com');
+  assert.equal(resolveVapidSubject('', 'me@example.com'), 'mailto:me@example.com');
+  assert.match(String(resolveVapidSubject('', '')), /^mailto:/);
 });
 
 // ── 事件鍵（去重鍵） ──

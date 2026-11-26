@@ -72,7 +72,6 @@ function translateApiDescription(name: string, fallback: string, t: T) {
   if (name === 'IPinfo') return t('public.apiCreditsPage.descriptions.ipinfo');
   if (name.startsWith('TWSE')) return t('public.apiCreditsPage.descriptions.twse');
   if (name === 'Google Identity Services') return t('public.apiCreditsPage.descriptions.google');
-  if (name === 'LINE Login') return t('public.apiCreditsPage.descriptions.line');
   if (name.startsWith('SMTP')) return t('public.apiCreditsPage.descriptions.smtp');
   if (name.startsWith('Zeabur')) return t('public.apiCreditsPage.descriptions.zeabur');
   if (name === 'Resend') return t('public.apiCreditsPage.descriptions.resend');

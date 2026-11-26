@@ -322,31 +322,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authGoogleVerifying => 'Google 驗證中…';
 
   @override
-  String get authLineButton => '使用 LINE 登入';
-
-  @override
-  String get authLineVerifying => 'LINE 驗證中…';
-
-  @override
   String get authRegisterSubmit => '立即註冊';
 
   @override
   String get authRegistering => '註冊中…';
-
-  @override
-  String get authLineCallbackCompleting => '正在完成 LINE 驗證...';
-
-  @override
-  String get authLineCallbackMissingCode => 'LINE 未回傳授權碼，請重新操作';
-
-  @override
-  String get authLineCallbackLinkFailed => 'LINE 綁定失敗';
-
-  @override
-  String get authLineCallbackLoginFailed => 'LINE 登入失敗';
-
-  @override
-  String get authLineCallbackVerifyFailed => 'LINE 驗證失敗';
 
   @override
   String get authErrorsTurnstileRequired => '請先完成真人驗證';
@@ -385,19 +364,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authErrorsPasskeyFailed => 'Passkey 登入失敗';
 
   @override
-  String get authErrorsLineNotConfigured => 'LINE 登入尚未設定完成';
-
-  @override
-  String get authErrorsLineFailed => 'LINE 登入失敗';
-
-  @override
   String get settingsTitle => '設定';
 
   @override
   String get settingsLanguageTitle => '語言';
 
   @override
-  String get settingsLanguageDescription => '選擇介面與通知（Email／LINE）使用的語言。';
+  String get settingsLanguageDescription => '選擇介面與通知（Email）使用的語言。';
 
   @override
   String get settingsLanguageSaved => '語言偏好已更新';
@@ -488,9 +461,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAccountGoogleTitle => 'Google 綁定';
 
   @override
-  String get settingsAccountLineTitle => 'LINE 綁定';
-
-  @override
   String get settingsAccountStatusPrefix => '目前狀態：';
 
   @override
@@ -504,18 +474,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAccountUnlink => '解除綁定';
-
-  @override
-  String get settingsAccountLinkedLine => '已綁定 LINE 帳號';
-
-  @override
-  String get settingsAccountNotLinkedLine => '尚未綁定 LINE 帳號';
-
-  @override
-  String get settingsAccountLinkLine => '綁定 LINE 帳號';
-
-  @override
-  String get settingsAccountLineVerifying => 'LINE 驗證中…';
 
   @override
   String get settingsAccountSessionsTitle => '目前登入裝置';
@@ -678,18 +636,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAccountMessagesGoogleUnlinkFailed => 'Google 解除綁定失敗';
-
-  @override
-  String get settingsAccountMessagesLineNotConfigured => 'LINE 登入尚未設定完成';
-
-  @override
-  String get settingsAccountMessagesLineLinkFailed => 'LINE 綁定失敗';
-
-  @override
-  String get settingsAccountMessagesLineUnlinked => 'LINE 帳號已解除綁定';
-
-  @override
-  String get settingsAccountMessagesLineUnlinkFailed => 'LINE 解除綁定失敗';
 
   @override
   String get settingsAccountMessagesDeletePasswordRequired => '請輸入密碼以確認刪除';
@@ -1107,7 +1053,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageUsageNotesLoginText =>
-      'Google、LINE 登入僅在主動登入或綁定時啟用。';
+      '僅在您主動登入或綁定帳號時使用 Google 登入。';
 
   @override
   String get publicApiCreditsPageUsageNotesBackupTitle => '雲端備份';
@@ -1154,9 +1100,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageDescriptionsGoogle => 'Google SSO 登入';
-
-  @override
-  String get publicApiCreditsPageDescriptionsLine => 'LINE 登入與帳號綁定';
 
   @override
   String get publicApiCreditsPageDescriptionsSmtp =>
@@ -3048,9 +2991,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationsCtaViewFullReport => '查看完整報表';
 
   @override
-  String get notificationsCtaViewLineRecord => '查看 LINE 紀錄';
-
-  @override
   String get notificationsReminderAltText => '記錄支出提醒';
 
   @override
@@ -3508,18 +3448,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mobileLegacySeeYourCompleteCashFlow => '掌握收支全貌';
 
   @override
-  String get mobileLegacyUnableToCreateLineSignInState => '無法建立 LINE 登入狀態';
-
-  @override
   String get mobileLegacyUnableToOpenBrowser => '無法開啟瀏覽器';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign =>
       '無法開啟瀏覽器進行 Google 登入';
-
-  @override
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign =>
-      '無法開啟瀏覽器進行 LINE 登入';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForPasskeySign =>
@@ -3635,9 +3568,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mobileLegacyBankBalance => '銀行餘額';
-
-  @override
-  String get mobileLegacyRequiresALinkedLineAccount => '需已綁定 LINE';
 
   @override
   String get mobileLegacyACreditCardAndANonCreditCard =>
@@ -3819,19 +3749,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled =>
       'Google 登入逾時或已取消';
-
-  @override
-  String get mobileLegacyLineNotifications => 'LINE 通知';
-
-  @override
-  String get mobileLegacyTheLineSignInResponseDidNotInclude =>
-      'LINE 登入回應未包含認證 Cookie';
-
-  @override
-  String get mobileLegacyLineSignInStateMismatchTryAgain => 'LINE 登入狀態不符，請重試';
-
-  @override
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled => 'LINE 登入逾時或已取消';
 
   @override
   String get mobileLegacyPasskeySignInTimedOutOrWasCancelled =>
@@ -4588,9 +4505,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminPublicRegistration => '開放註冊';
-
-  @override
-  String get adminLineLoginEnabled => 'LINE 登入';
 
   @override
   String get adminAllowedRegistrationEmails => '允許註冊的 Email（每行一個）';
@@ -5932,7 +5846,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsNotificationsDescription =>
-      '開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。';
+      '開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email 報表通知。';
 
   @override
   String get settingsNotificationsUnsupported =>
@@ -6939,31 +6853,10 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get authGoogleVerifying => '正在验证 Google…';
 
   @override
-  String get authLineButton => '使用 LINE 登录';
-
-  @override
-  String get authLineVerifying => '正在验证 LINE…';
-
-  @override
   String get authRegisterSubmit => '立即注册';
 
   @override
   String get authRegistering => '注册中…';
-
-  @override
-  String get authLineCallbackCompleting => '正在完成 LINE 验证...';
-
-  @override
-  String get authLineCallbackMissingCode => 'LINE 未返回授权码，请重新操作。';
-
-  @override
-  String get authLineCallbackLinkFailed => 'LINE 账号绑定失败';
-
-  @override
-  String get authLineCallbackLoginFailed => 'LINE 登录失败';
-
-  @override
-  String get authLineCallbackVerifyFailed => 'LINE 验证失败';
 
   @override
   String get authErrorsTurnstileRequired => '请先完成真人验证';
@@ -7002,19 +6895,13 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get authErrorsPasskeyFailed => 'Passkey 登录失败';
 
   @override
-  String get authErrorsLineNotConfigured => 'LINE 登录尚未配置';
-
-  @override
-  String get authErrorsLineFailed => 'LINE 登录失败';
-
-  @override
   String get settingsTitle => '设置';
 
   @override
   String get settingsLanguageTitle => '语言';
 
   @override
-  String get settingsLanguageDescription => '选择界面与通知（Email / LINE）使用的语言。';
+  String get settingsLanguageDescription => '选择界面与通知（Email）使用的语言。';
 
   @override
   String get settingsLanguageSaved => '语言偏好已更新';
@@ -7105,9 +6992,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get settingsAccountGoogleTitle => 'Google 绑定';
 
   @override
-  String get settingsAccountLineTitle => 'LINE 绑定';
-
-  @override
   String get settingsAccountStatusPrefix => '当前状态：';
 
   @override
@@ -7121,18 +7005,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsAccountUnlink => '解除绑定';
-
-  @override
-  String get settingsAccountLinkedLine => '已绑定 LINE 账号';
-
-  @override
-  String get settingsAccountNotLinkedLine => '尚未绑定 LINE 账号';
-
-  @override
-  String get settingsAccountLinkLine => '绑定 LINE 账号';
-
-  @override
-  String get settingsAccountLineVerifying => '正在验证 LINE...';
 
   @override
   String get settingsAccountSessionsTitle => '已登录设备';
@@ -7296,18 +7168,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsAccountMessagesGoogleUnlinkFailed => 'Google 解除绑定失败';
-
-  @override
-  String get settingsAccountMessagesLineNotConfigured => 'LINE 登录尚未配置';
-
-  @override
-  String get settingsAccountMessagesLineLinkFailed => 'LINE 绑定失败';
-
-  @override
-  String get settingsAccountMessagesLineUnlinked => 'LINE 账号已解除绑定';
-
-  @override
-  String get settingsAccountMessagesLineUnlinkFailed => 'LINE 解除绑定失败';
 
   @override
   String get settingsAccountMessagesDeletePasswordRequired => '请输入密码以确认删除';
@@ -7725,7 +7585,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get publicApiCreditsPageUsageNotesLoginText =>
-      'Google、LINE 登录只会在你主动登录或绑定时启用。';
+      '仅在您主动登录或绑定账号时使用 Google 登录。';
 
   @override
   String get publicApiCreditsPageUsageNotesBackupTitle => '云端备份';
@@ -7773,9 +7633,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get publicApiCreditsPageDescriptionsGoogle => 'Google SSO 登录';
-
-  @override
-  String get publicApiCreditsPageDescriptionsLine => 'LINE 登录与账号绑定';
 
   @override
   String get publicApiCreditsPageDescriptionsSmtp =>
@@ -9658,9 +9515,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get notificationsCtaViewFullReport => '查看完整报表';
 
   @override
-  String get notificationsCtaViewLineRecord => '查看 LINE 记录';
-
-  @override
   String get notificationsReminderAltText => '记账提醒';
 
   @override
@@ -10118,19 +9972,11 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get mobileLegacySeeYourCompleteCashFlow => '掌握收支全貌';
 
   @override
-  String get mobileLegacyUnableToCreateLineSignInState =>
-      'Unable to create LINE sign-in state';
-
-  @override
   String get mobileLegacyUnableToOpenBrowser => '无法打开浏览器';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign =>
       'Unable to open the browser for Google sign-in';
-
-  @override
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign =>
-      'Unable to open the browser for LINE sign-in';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForPasskeySign =>
@@ -10246,9 +10092,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get mobileLegacyBankBalance => '银行余额';
-
-  @override
-  String get mobileLegacyRequiresALinkedLineAccount => '需要已绑定 LINE';
 
   @override
   String get mobileLegacyACreditCardAndANonCreditCard =>
@@ -10430,21 +10273,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   @override
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled =>
       'Google sign-in timed out or was cancelled';
-
-  @override
-  String get mobileLegacyLineNotifications => 'LINE 通知';
-
-  @override
-  String get mobileLegacyTheLineSignInResponseDidNotInclude =>
-      'LINE 登录响应未包含认证 Cookie';
-
-  @override
-  String get mobileLegacyLineSignInStateMismatchTryAgain =>
-      'LINE sign-in state mismatch. Try again.';
-
-  @override
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled =>
-      'LINE sign-in timed out or was cancelled';
 
   @override
   String get mobileLegacyPasskeySignInTimedOutOrWasCancelled =>
@@ -11201,9 +11029,6 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get adminPublicRegistration => '开放注册';
-
-  @override
-  String get adminLineLoginEnabled => 'LINE 登录';
 
   @override
   String get adminAllowedRegistrationEmails => '允许注册的 Email（每行一个）';
@@ -12552,7 +12377,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsNotificationsDescription =>
-      '开启后，符合条件的事件会实时推送到已订阅的设备。此设置不影响 Email／LINE 报表通知。';
+      '开启后，符合条件的事件会实时推送到已订阅的设备。此设置不影响 Email 报表通知。';
 
   @override
   String get settingsNotificationsUnsupported =>
@@ -13464,31 +13289,10 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get authGoogleVerifying => 'Google 驗證中…';
 
   @override
-  String get authLineButton => '使用 LINE 登入';
-
-  @override
-  String get authLineVerifying => 'LINE 驗證中…';
-
-  @override
   String get authRegisterSubmit => '立即註冊';
 
   @override
   String get authRegistering => '註冊中…';
-
-  @override
-  String get authLineCallbackCompleting => '正在完成 LINE 驗證...';
-
-  @override
-  String get authLineCallbackMissingCode => 'LINE 未回傳授權碼，請重新操作';
-
-  @override
-  String get authLineCallbackLinkFailed => 'LINE 綁定失敗';
-
-  @override
-  String get authLineCallbackLoginFailed => 'LINE 登入失敗';
-
-  @override
-  String get authLineCallbackVerifyFailed => 'LINE 驗證失敗';
 
   @override
   String get authErrorsTurnstileRequired => '請先完成真人驗證';
@@ -13527,19 +13331,13 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get authErrorsPasskeyFailed => 'Passkey 登入失敗';
 
   @override
-  String get authErrorsLineNotConfigured => 'LINE 登入尚未設定完成';
-
-  @override
-  String get authErrorsLineFailed => 'LINE 登入失敗';
-
-  @override
   String get settingsTitle => '設定';
 
   @override
   String get settingsLanguageTitle => '語言';
 
   @override
-  String get settingsLanguageDescription => '選擇介面與通知（Email／LINE）使用的語言。';
+  String get settingsLanguageDescription => '選擇介面與通知（Email）使用的語言。';
 
   @override
   String get settingsLanguageSaved => '語言偏好已更新';
@@ -13630,9 +13428,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get settingsAccountGoogleTitle => 'Google 綁定';
 
   @override
-  String get settingsAccountLineTitle => 'LINE 綁定';
-
-  @override
   String get settingsAccountStatusPrefix => '目前狀態：';
 
   @override
@@ -13646,18 +13441,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsAccountUnlink => '解除綁定';
-
-  @override
-  String get settingsAccountLinkedLine => '已綁定 LINE 帳號';
-
-  @override
-  String get settingsAccountNotLinkedLine => '尚未綁定 LINE 帳號';
-
-  @override
-  String get settingsAccountLinkLine => '綁定 LINE 帳號';
-
-  @override
-  String get settingsAccountLineVerifying => 'LINE 驗證中…';
 
   @override
   String get settingsAccountSessionsTitle => '目前登入裝置';
@@ -13820,18 +13603,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsAccountMessagesGoogleUnlinkFailed => 'Google 解除綁定失敗';
-
-  @override
-  String get settingsAccountMessagesLineNotConfigured => 'LINE 登入尚未設定完成';
-
-  @override
-  String get settingsAccountMessagesLineLinkFailed => 'LINE 綁定失敗';
-
-  @override
-  String get settingsAccountMessagesLineUnlinked => 'LINE 帳號已解除綁定';
-
-  @override
-  String get settingsAccountMessagesLineUnlinkFailed => 'LINE 解除綁定失敗';
 
   @override
   String get settingsAccountMessagesDeletePasswordRequired => '請輸入密碼以確認刪除';
@@ -14249,7 +14020,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get publicApiCreditsPageUsageNotesLoginText =>
-      'Google、LINE 登入僅在主動登入或綁定時啟用。';
+      '僅在您主動登入或綁定帳號時使用 Google 登入。';
 
   @override
   String get publicApiCreditsPageUsageNotesBackupTitle => '雲端備份';
@@ -14296,9 +14067,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get publicApiCreditsPageDescriptionsGoogle => 'Google SSO 登入';
-
-  @override
-  String get publicApiCreditsPageDescriptionsLine => 'LINE 登入與帳號綁定';
 
   @override
   String get publicApiCreditsPageDescriptionsSmtp =>
@@ -16190,9 +15958,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get notificationsCtaViewFullReport => '查看完整報表';
 
   @override
-  String get notificationsCtaViewLineRecord => '查看 LINE 紀錄';
-
-  @override
   String get notificationsReminderAltText => '記錄支出提醒';
 
   @override
@@ -16650,18 +16415,11 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get mobileLegacySeeYourCompleteCashFlow => '掌握收支全貌';
 
   @override
-  String get mobileLegacyUnableToCreateLineSignInState => '無法建立 LINE 登入狀態';
-
-  @override
   String get mobileLegacyUnableToOpenBrowser => '無法開啟瀏覽器';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign =>
       '無法開啟瀏覽器進行 Google 登入';
-
-  @override
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign =>
-      '無法開啟瀏覽器進行 LINE 登入';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForPasskeySign =>
@@ -16777,9 +16535,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get mobileLegacyBankBalance => '銀行餘額';
-
-  @override
-  String get mobileLegacyRequiresALinkedLineAccount => '需已綁定 LINE';
 
   @override
   String get mobileLegacyACreditCardAndANonCreditCard =>
@@ -16961,19 +16716,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled =>
       'Google 登入逾時或已取消';
-
-  @override
-  String get mobileLegacyLineNotifications => 'LINE 通知';
-
-  @override
-  String get mobileLegacyTheLineSignInResponseDidNotInclude =>
-      'LINE 登入回應未包含認證 Cookie';
-
-  @override
-  String get mobileLegacyLineSignInStateMismatchTryAgain => 'LINE 登入狀態不符，請重試';
-
-  @override
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled => 'LINE 登入逾時或已取消';
 
   @override
   String get mobileLegacyPasskeySignInTimedOutOrWasCancelled =>
@@ -17730,9 +17472,6 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get adminPublicRegistration => '開放註冊';
-
-  @override
-  String get adminLineLoginEnabled => 'LINE 登入';
 
   @override
   String get adminAllowedRegistrationEmails => '允許註冊的 Email（每行一個）';
@@ -19074,7 +18813,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsNotificationsDescription =>
-      '開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。';
+      '開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email 報表通知。';
 
   @override
   String get settingsNotificationsUnsupported =>

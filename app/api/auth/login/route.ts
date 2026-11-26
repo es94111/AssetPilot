@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PASSWORD_AUTH_DISABLED_ERROR } from "../../../../lib/authPolicy";
 
 /**
- * Legacy email/password authentication has been retired. Use Google, LINE, or
+ * Legacy email/password authentication has been retired. Use Google, Apple, or
  * Passkey authentication through the provider-specific endpoints instead.
  */
 export function POST() {

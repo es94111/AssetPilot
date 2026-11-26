@@ -200,8 +200,9 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
         ),
         validator: (v) {
           final n = num.tryParse(v?.trim() ?? '');
-          if (n == null || n < 0)
+          if (n == null || n < 0) {
             return trKey('mobileLegacyEnterANumberGreaterThanOrEqualTo');
+          }
           return null;
         },
       ),

@@ -1,3 +1,4 @@
+import { getConfiguredAppOrigin } from "./appOrigin";
 // lib/webPushConfig.ts — VAPID 金鑰的環境變數來源（issue #257）
 //
 // 硬性要求：金鑰只能來自環境變數，不得硬寫在程式或提交進版控。
@@ -101,14 +102,13 @@ export function isWebPushConfigured(): boolean {
 }
 
 /**
- * VAPID subject：優先 APP_URL，其次 APP_HOST，皆未設定則退回系統管理員信箱的 mailto。
+ * VAPID subject：使用 APP_URL，未設定則退回系統管理員信箱的 mailto。
  * push service 會以此驗證發送者身分（無效的值會被 Apple／FCM 拒絕）。
  */
 export function getVapidSubject(): string {
   const adminEmail = String(process.env.ADMIN_EMAIL || process.env.EMAIL_FROM || '').trim();
   return resolveVapidSubject(
-    process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL,
-    process.env.APP_HOST,
+    getConfiguredAppOrigin(),
     adminEmail || `admin@${randomHostFallback()}`,
   );
 }

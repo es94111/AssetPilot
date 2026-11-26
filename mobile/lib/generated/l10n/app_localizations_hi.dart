@@ -326,32 +326,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get authGoogleVerifying => 'Google सत्यापित हो रहा है…';
 
   @override
-  String get authLineButton => 'LINE से साइन इन करें';
-
-  @override
-  String get authLineVerifying => 'LINE सत्यापित हो रहा है…';
-
-  @override
   String get authRegisterSubmit => 'खाता बनाएँ';
 
   @override
   String get authRegistering => 'खाता बन रहा है…';
-
-  @override
-  String get authLineCallbackCompleting => 'LINE सत्यापन पूरा हो रहा है...';
-
-  @override
-  String get authLineCallbackMissingCode =>
-      'LINE ने authorization code वापस नहीं किया। कृपया फिर कोशिश करें।';
-
-  @override
-  String get authLineCallbackLinkFailed => 'LINE खाता लिंक नहीं हो पाया';
-
-  @override
-  String get authLineCallbackLoginFailed => 'LINE साइन इन विफल';
-
-  @override
-  String get authLineCallbackVerifyFailed => 'LINE सत्यापन विफल';
 
   @override
   String get authErrorsTurnstileRequired => 'पहले मानव सत्यापन पूरा करें';
@@ -394,12 +372,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get authErrorsPasskeyFailed => 'Passkey साइन इन विफल';
 
   @override
-  String get authErrorsLineNotConfigured => 'LINE साइन इन कॉन्फ़िगर नहीं है';
-
-  @override
-  String get authErrorsLineFailed => 'LINE साइन इन विफल';
-
-  @override
   String get settingsTitle => 'सेटिंग्स';
 
   @override
@@ -407,7 +379,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsLanguageDescription =>
-      'इंटरफ़ेस और सूचनाओं (Email / LINE) की भाषा चुनें।';
+      'इंटरफ़ेस और सूचनाओं (Email) की भाषा चुनें।';
 
   @override
   String get settingsLanguageSaved => 'भाषा पसंद अपडेट हो गई';
@@ -500,9 +472,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsAccountGoogleTitle => 'Google लिंक';
 
   @override
-  String get settingsAccountLineTitle => 'LINE लिंक';
-
-  @override
   String get settingsAccountStatusPrefix => 'मौजूदा स्थिति: ';
 
   @override
@@ -516,18 +485,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsAccountUnlink => 'लिंक हटाएँ';
-
-  @override
-  String get settingsAccountLinkedLine => 'LINE खाता लिंक है';
-
-  @override
-  String get settingsAccountNotLinkedLine => 'LINE खाता लिंक नहीं है';
-
-  @override
-  String get settingsAccountLinkLine => 'LINE खाता लिंक करें';
-
-  @override
-  String get settingsAccountLineVerifying => 'LINE सत्यापित हो रहा है…';
 
   @override
   String get settingsAccountSessionsTitle => 'साइन इन डिवाइस';
@@ -711,21 +668,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get settingsAccountMessagesGoogleUnlinkFailed =>
       'Google खाता अनलिंक नहीं हो पाया';
-
-  @override
-  String get settingsAccountMessagesLineNotConfigured =>
-      'LINE साइन इन सेट नहीं है';
-
-  @override
-  String get settingsAccountMessagesLineLinkFailed =>
-      'LINE खाता लिंक नहीं हो पाया';
-
-  @override
-  String get settingsAccountMessagesLineUnlinked => 'LINE खाता अनलिंक हो गया';
-
-  @override
-  String get settingsAccountMessagesLineUnlinkFailed =>
-      'LINE खाता अनलिंक नहीं हो पाया';
 
   @override
   String get settingsAccountMessagesDeletePasswordRequired =>
@@ -1170,7 +1112,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageUsageNotesLoginText =>
-      'Google और LINE केवल तब चालू होते हैं जब आप खुद साइन इन या लिंक करते हैं।';
+      'Google से साइन इन का उपयोग तब होता है जब आप साइन इन करते हैं या कोई खाता जोड़ते हैं।';
 
   @override
   String get publicApiCreditsPageUsageNotesBackupTitle => 'क्लाउड बैकअप';
@@ -1220,10 +1162,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get publicApiCreditsPageDescriptionsGoogle => 'Google SSO साइन इन';
-
-  @override
-  String get publicApiCreditsPageDescriptionsLine =>
-      'LINE साइन इन और खाता लिंकिंग';
 
   @override
   String get publicApiCreditsPageDescriptionsSmtp =>
@@ -3190,9 +3128,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get notificationsCtaViewFullReport => 'पूरी रिपोर्ट देखें';
 
   @override
-  String get notificationsCtaViewLineRecord => 'LINE रिकॉर्ड देखें';
-
-  @override
   String get notificationsReminderAltText => 'खर्च याद दिलाने वाला संदेश';
 
   @override
@@ -3669,19 +3604,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get mobileLegacySeeYourCompleteCashFlow => 'पूरा कैश फ़्लो समझें';
 
   @override
-  String get mobileLegacyUnableToCreateLineSignInState =>
-      'Unable to create LINE sign-in state';
-
-  @override
   String get mobileLegacyUnableToOpenBrowser => 'ब्राउज़र नहीं खुल पाया';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign =>
       'Unable to open the browser for Google sign-in';
-
-  @override
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign =>
-      'Unable to open the browser for LINE sign-in';
 
   @override
   String get mobileLegacyUnableToOpenTheBrowserForPasskeySign =>
@@ -3803,10 +3730,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get mobileLegacyBankBalance => 'बैंक बैलेंस';
-
-  @override
-  String get mobileLegacyRequiresALinkedLineAccount =>
-      'LINE account लिंक होना चाहिए';
 
   @override
   String get mobileLegacyACreditCardAndANonCreditCard =>
@@ -4006,21 +3929,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled =>
       'Google sign-in timed out or was cancelled';
-
-  @override
-  String get mobileLegacyLineNotifications => 'LINE notifications';
-
-  @override
-  String get mobileLegacyTheLineSignInResponseDidNotInclude =>
-      'LINE साइन इन प्रतिक्रिया में authentication cookie नहीं है';
-
-  @override
-  String get mobileLegacyLineSignInStateMismatchTryAgain =>
-      'LINE sign-in state mismatch. Try again.';
-
-  @override
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled =>
-      'LINE sign-in timed out or was cancelled';
 
   @override
   String get mobileLegacyPasskeySignInTimedOutOrWasCancelled =>
@@ -4804,9 +4712,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get adminPublicRegistration => 'सार्वजनिक पंजीकरण';
-
-  @override
-  String get adminLineLoginEnabled => 'LINE लॉगिन';
 
   @override
   String get adminAllowedRegistrationEmails =>
@@ -6208,7 +6113,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsNotificationsDescription =>
-      'सक्षम होने पर, मेल खाती घटनाएँ आपके सब्सक्राइब किए गए उपकरणों पर तुरंत भेजी जाती हैं। यह Email/LINE रिपोर्ट सूचनाओं को प्रभावित नहीं करता।';
+      'सक्षम होने पर, मेल खाती घटनाएँ आपके सब्सक्राइब किए गए उपकरणों पर तुरंत भेजी जाती हैं। यह Email रिपोर्ट सूचनाओं को प्रभावित नहीं करता।';
 
   @override
   String get settingsNotificationsUnsupported =>

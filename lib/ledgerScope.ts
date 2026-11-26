@@ -1,4 +1,4 @@
-// lib/ledgerScope.ts — 非 Web 用戶端（MCP／API Token／LINE／排程）的帳本範圍解析
+// lib/ledgerScope.ts — 非 Web 用戶端（MCP／API Token／排程）的帳本範圍解析
 //
 // Web 端以 `x-ledger-id` 標頭走 lib/ledgerContext.ts 的 applyLedgerContext()；
 // 這些用戶端沒有 Cookie 與標頭，改以「明確傳入的帳本 ID」解析出：
@@ -6,7 +6,7 @@
 //   - role：呼叫者在該帳本當下的成員角色（每次呼叫都重新查詢，不信任先前結果）
 //
 // 未指定帳本時一律回退到呼叫者自己的個人帳本，維持既有個人整合行為不變。
-// 憑證本身（MCP PAT／API Token／LINE 綁定／登入 session）永遠屬於個人，不隨帳本轉移。
+// 憑證本身（MCP PAT／API Token／登入 session）永遠屬於個人，不隨帳本轉移。
 import { queryAll, queryOne } from "./db";
 import { canWriteLedger, isLedgerRole, type LedgerRole } from "./ledgerPolicy";
 import { ensurePersonalLedger } from "./ledgerContext";
@@ -83,7 +83,7 @@ export function resolveLedgerScope(input: {
 
 /**
  * 解析「呼叫者仍是成員」的帳本清單；離開／被移除的帳本不會出現。
- * 供 MCP 工具與 LINE 選單顯示可選帳本，選取後仍會逐次重新解析授權。
+ * 供 MCP 工具顯示可選帳本，選取後仍會逐次重新解析授權。
  */
 export function listAuthorizedLedgers(userId: string): LedgerSummary[] {
   const actorId = String(userId || "").trim();

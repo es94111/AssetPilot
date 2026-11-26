@@ -203,7 +203,6 @@ function mobileSourceFiles() {
     path.join(ROOT, 'mobile', 'lib', 'api_client.dart'),
     path.join(ROOT, 'mobile', 'lib', 'app.dart'),
     path.join(ROOT, 'mobile', 'lib', 'google_auth.dart'),
-    path.join(ROOT, 'mobile', 'lib', 'line_auth.dart'),
     path.join(ROOT, 'mobile', 'lib', 'models.dart'),
     path.join(ROOT, 'mobile', 'lib', 'passkey_auth.dart'),
     path.join(ROOT, 'mobile', 'lib', 'widgets.dart'),

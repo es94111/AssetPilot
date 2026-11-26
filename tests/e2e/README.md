@@ -18,7 +18,7 @@
 
 ## 不依賴正式環境憑證
 
-正式登入僅支援 Google／LINE／Passkey（密碼登入已停用，見
+正式登入僅支援 Google／Apple／Passkey（密碼登入已停用，見
 `app/api/auth/login/route.ts`），無法在自動化測試中以真實第三方憑證重現。
 `tests/e2e/support/testUser.ts` 改為直接對 PostgreSQL 寫入測試使用者，並用
 `lib/sessionHelpers.createLoginSession()` 產生合法的 `authToken` JWT，再由
@@ -27,7 +27,7 @@ Playwright 以 `context.addCookies()` 注入瀏覽器，等效於「已登入」
 - 每個測試建立一個 `e2e_` 前綴、唯一亂碼 id 的全新使用者，測試之間互不影響，
   可並行執行；測試結束後自動清除該使用者的所有資料。
 - 持股測試直接在 DB 建立股票代號，不呼叫 TWSE／Yahoo Finance 等外部報價 API。
-- 不需要、也不會使用任何 `GOOGLE_CLIENT_SECRET`、`LINE_CHANNEL_SECRET` 等正式環境密鑰。
+- 不需要、也不會使用任何 `GOOGLE_CLIENT_SECRET` 等正式環境登入憑證。
 
 ## 本機執行
 

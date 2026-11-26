@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/version-5.0.1-blue" alt="version">
   <img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="node">
   <img src="https://img.shields.io/badge/next.js-16.x-000000" alt="next.js">
-  <img src="https://img.shields.io/badge/认证-Google%2FLINE%2FPasskey-green" alt="auth">
+  <img src="https://img.shields.io/badge/认证-Google%2FApple%2FPasskey-green" alt="auth">
   <img src="https://img.shields.io/badge/openapi-3.2.0-6BA539" alt="openapi">
   <img src="https://img.shields.io/badge/docker-ready-2496ED" alt="docker">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="license">
@@ -49,7 +49,7 @@
 | 🐳 **一鍵 Docker 部部署** | 單行指令啟動；`JWT_SECRET` 等敏感金鑰**首次啟動自動產生**並寫入持久化 Volume，重啟自動讀取，不用手動設定密鑰。 |
 | 📊 **台股深度整合** | 串接 TWSE OpenAPI：即時股價、除權息自動同步、FIFO **全精度逐筆損益**（decimal.js）、定期定額自動順延休市日、下市凍結處理。 |
 | 💱 **多幣別支援** | 串接 exchangerate-api.com 即時匯率，ISO 4217 白名單驗證，台股／美股／外幣一體管理。 |
-| 🔐 **無密碼多重認證** | Google SSO / LINE Login / Passkey（WebAuthn）三種方式，**不提供本機密碼**——不需要記密碼，也不用怕密碼被盜。 |
+| 🔐 **無密碼多重認證** | Google SSO / Apple（支援的 App）/ Passkey（WebAuthn），**不提供本機密碼**——不需要記密碼，也不用怕密碼被盜。 |
 | 🛡️ **安全可審計** | CSP、SRI、CORS 白名單、記憶體內速率限制、路徑遊走偵測、Formula Injection 防護；匯出匯入、備份還原、登入嘗試全部留下稽核軌跡。 |
 | 🤖 **AI 助理整合** | 支援 **MCP OAuth 2.1**，可將 ChatGPT、Claude 等 AI 工具直接連到你的帳本，讓 AI 幫你記帳；PAT 相容模式與逐憑證寫入權限控制。 |
 | 🧭 **URL-first SPA** | 任何頁面可直連、可書籤、可分享；F5 重整不掉頁；上一頁／下一頁完整還原。 |
@@ -188,7 +188,6 @@ services:
       - DATABASE_URL=${DATABASE_URL:-postgres://assetpilot:assetpilot@postgres:5432/assetpilot}
       - ENV_PATH=/app/data/.env
       - GOOGLE_CLIENT_ID=          # 選配，設定後啟用 Google 登入
-      # - LINE_CHANNEL_ID=         # 選配，LINE 登入
 
 volumes:
   assetpilot-data:
@@ -204,7 +203,7 @@ docker compose up -d
 docker compose logs -f assetpilot   # 看到 "Ready" 即完成
 ```
 
-> 帳號採用「外部服務登入」模式：**第一位完成 Google／LINE 登入的使用者自動成為管理員**，不需要後台手動建帳號。
+> 帳號採用「外部服務登入」模式：**第一位完成 Google／Apple 登入的使用者自動成為管理員**，不需要後台手動建帳號。
 
 ---
 
@@ -240,7 +239,7 @@ npm run start
 
 ### 6. 反向代理（上 HTTPS，正式必備）
 
-AssetPilot 本身不需掛在 HTTPS 後即可運作，但要對外上線（尤其用 Google / LINE 登入）強烈建議用反向代理。三種常見選項任選一：
+AssetPilot 本身不需掛在 HTTPS 後即可運作，但要對外上線（尤其用 Google 登入）強烈建議用反向代理。三種常見選項任選一：
 
 <details>
 <summary><b>Nginx</b></summary>
@@ -311,7 +310,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | 變數 | 類別 | 說明 | 預設值 |
 | ---- | ---- | ---- | ------ |
 | `PORT` | 基本 | 伺服器埠號 | `3000` |
-| `DATABASE_URL` / `POSTGRES_URL` | 基本 | PostgreSQL 連線字串 | — |
+| `DATABASE_URL` | 基本 | PostgreSQL 連線字串 | — |
 | `JWT_EXPIRES` | 基本 | 瀏覽器登入 JWT 有效期限 | `7d` |
 | `APP_JWT_EXPIRES` | 基本 | App 登入 JWT 有效期限（Token 存於裝置端加密儲存） | `90d` |
 | `JWT_SECRET` | 🔑 自動／舊碼相容 | keyring 未啟用時的 JWT 簽章金鑰；啟用後新 JWT 使用 `jwt` 用途金鑰，首次啟動仍會自動產生 legacy fallback | — |
@@ -328,23 +327,26 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 | `ENV_PATH` | 🔑 自動 | 自動產生金鑰的存放路徑 | `/app/data/.env` |
 | `GOOGLE_CLIENT_ID` | SSO | Google OAuth Client ID（留空停用 Google 登入） | — |
 | `GOOGLE_CLIENT_SECRET` | SSO | Google OAuth Client Secret | — |
-| `LINE_CHANNEL_ID` | SSO | LINE Login Channel ID（留空停用） | — |
-| `LINE_CHANNEL_SECRET` | SSO | LINE Login Channel Secret | — |
 | `ALLOWED_ORIGINS` | 安全 | CORS 白名單，逗號分隔（正式環境建議設定） | — |
 | `ADMIN_IP_ALLOWLIST` | 安全 | 管理員 IP 白名單，逗號分隔 | — |
 | `SETUP_BOOTSTRAP_TOKEN` / `SETUP_BOOTSTRAP_TTL_MINUTES` | 安全 | 首次部署 Passkey 初始化憑證（至少 32 字元；留空則啟動時自動產生並於日誌顯示一次）與有效分鐘數 | `1440` |
 | `EXCHANGE_RATE_API_KEY` | 選配 | exchangerate-api.com Key | `free` |
 | `IPINFO_TOKEN` | 選配 | ipinfo.io Token，提升 IP 查詢配額 | — |
-| `STOCK_AUTO_UPDATE_ENABLED` | 選配 | 股價自動更新總開關 | — |
-| `STOCK_AUTO_UPDATE_INTERVAL_MIN` | 選配 | 股價自動更新間隔（分鐘） | `10` |
 | `MEGA_S4_*` | 選配 | MEGA S4 雲端備份的 S3 相容 bucket 設定 | — |
 | `TRANSACTION_PHOTO_*` | 選配 | 交易照片本機或 S3 儲存設定 | — |
 | `RECEIPT_OCR_PROVIDER` / `RECEIPT_OCR_ENDPOINT` / `RECEIPT_OCR_API_KEY` | 選配 | 收據 OCR 自動帶入的供應商設定：`http`（自訂 OCR 端點；設定 API Key 時必須使用 HTTPS）或 `ocrspace`（[OCR.space](https://ocr.space/ocrapi)，只需 API Key，可用 `RECEIPT_OCR_LANGUAGE` 指定語言，預設 `cht`）。未設定供應商時維持手動輸入 | — |
 | `EMAIL_PROVIDER_PRIMARY` / `EMAIL_PROVIDER_FALLBACK` | 寄信 | 主要／備用寄信通道：`smtp` / `zeabur` / `resend` | — |
 | `SMTP_*` / `ZEABUR_*` / `RESEND_*` | 寄信 | 各寄信通道的連線設定 | — |
-| `APP_URL` | MCP OAuth / 寄信 | 正式環境的對外 HTTPS origin | — |
+| `APP_URL` | 公開網址 | 正式環境的對外 HTTPS origin | — |
 
 > 💡 **寄信通道**（v4.30.0 起）一律由環境變數設定。`EMAIL_PROVIDER_PRIMARY` 留空則寄信停用；`EMAIL_PROVIDER_FALLBACK` 僅在 primary 執行期失敗時觸發。對應通道的設定變數需配合補齊。
+
+### 升級時的設定遷移
+
+- 將 `APP_HOST` 或 `NEXT_PUBLIC_APP_URL` 換成 `APP_URL=https://your-domain.com`，並確認 Google 已授權網站首頁與 App 回呼。若已使用 `APP_URL`，沿用同一個公開網址。
+- 將 `POSTGRES_URL` 換成 `DATABASE_URL`。將 `TURNSTILE_SITE_KEY` 和 `TURNSTILE_SECRET_KEY` 分別換成 `CLOUDFLARE_TURNSTILE_SITE_KEY` 和 `CLOUDFLARE_TURNSTILE_SECRET_KEY`。請在切換版本前完成，並保留原本有效的連線或憑證值。
+- 在舊版的「管理員 → 系統設定」儲存原本生效的股價自動更新狀態、更新間隔、照片儲存位置與大小上限。新版移除 `STOCK_AUTO_UPDATE_ENABLED`、`STOCK_AUTO_UPDATE_INTERVAL_MIN`、`TRANSACTION_PHOTO_DEFAULT_STORAGE`、`TRANSACTION_PHOTO_MAX_BYTES` 和 `FAKE_NOW`。預設為開啟更新、每 10 分鐘、本機儲存與 10 MiB。照片上限可填小數 MiB，或用既有管理員設定 API 以位元組設定。
+- LINE 登入、記帳、提醒和 LINE 報表已停止提供。報表排程只保留 Email 寄送，僅選 LINE 的排程會停用。需要延續寄送時，在排程設定中改用 Email 並重新啟用。歷史交易與稽核紀錄保留。
 
 ### 用途金鑰環啟用與輪換
 
@@ -415,11 +417,11 @@ Keyring 啟用後，可在「管理員設定 → 系統設定 → 金鑰自動�
 
 ## 認證機制
 
-支援三種登入方式，皆可同時啟用。**AssetPilot 不提供本機 Email／密碼登入**——使用者只能透過 Google、LINE、Passkey 等外部或無密碼方式建立帳號；第一位完成外部登入的使用者自動成為管理員。
+支援三種登入方式，皆可同時啟用。**AssetPilot 不提供本機 Email／密碼登入**——使用者只能透過 Google、Apple、Passkey 等外部或無密碼方式建立帳號；第一位完成外部登入的使用者自動成為管理員。
 
 ### Passkey-first 首次部署初始化（Setup Wizard）
 
-全新實例（使用者數為 0 且尚未初始化）不需設定 Google／LINE OAuth 即可完成首次部署：
+全新實例（使用者數為 0 且尚未初始化）不需設定 Google／Apple OAuth 即可完成首次部署：
 
 1. 啟動服務後，於啟動日誌取得一次性初始化憑證（或以 `SETUP_BOOTSTRAP_TOKEN` 指定，至少 32 字元；僅儲存雜湊與到期時間，預設 24 小時有效）。
 2. 開啟 `/setup`（未登入時 `/login` 會自動導向），輸入憑證、管理員 Email 與顯示名稱後註冊 Passkey（需使用者驗證）。
@@ -438,20 +440,9 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 
 > ⚠️ 若登入後停在 `/?code=...`，請確認重新導向 URI 與網域完全一致（含 `https://` 與尾端 `/`）。
 
-### LINE Login
-
-1. 至 [LINE Developers Console](https://developers.line.biz/console/) 建立 Provider 與 LINE Login channel，啟用 email 權限
-2. **Callback URL**：本機 `http://localhost:3000/auth/line/callback`、`http://localhost:3000/app/line-callback`；正式 `https://your-domain.com/auth/line/callback`、`https://your-domain.com/app/line-callback`
-3. 設定 `LINE_CHANNEL_ID`、`LINE_CHANNEL_SECRET`、`LINE_OAUTH_REDIRECT_URIS`
-4. 到「管理員設定 → 系統設定」勾選「啟用 LINE 登入」
-
 ### Passkey（WebAuthn）
 
 登入後可至「個人設定 → 安全」綁定。支援 Touch ID / Face ID / Windows Hello / 硬體金鑰。
-
-### LINE 官方帳號記帳
-
-設定 `LINE_MESSAGING_CHANNEL_SECRET`、`LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` 與 `APP_URL`，在 Messaging API 的 Webhook URL 填入 `https://your-domain.com/api/line/webhook`。使用者綁定 LINE 帳號後，即可在官方帳號輸入 `選單`、`支出 120 午餐`、`收入 5000 薪資` 等文字記帳。
 
 ---
 
@@ -475,7 +466,7 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 - 左側帳本選單切換帳戶、分類、交易（含附件／轉帳／還款）、預算、固定收支、CSV 匯入匯出及記帳報表的資料範圍。API 使用 `X-Ledger-Id`；直接開啟附件連結可使用 `ledgerId` query，兩者皆須通過即時成員授權。未指定時仍使用個人帳本。
 - 所有記帳寫入會記錄帳本、操作者 ID／Email／角色及成功、失敗或拒絕結果；擁有者可查閱近期活動。共享帳本的自動固定收支採建立時的帳本時區，viewer 的唯讀請求不會觸發共享帳本自動記帳。
 - **資料始終屬於帳本**：成員離開、被移除或刪除自己的帳號後，既有共享資料與稽核紀錄保留；該成員的新請求立即失去存取權。擁有者離開或刪除帳號前，必須移交給另一位有效成員。
-- 投資資料、登入憑證、使用者偏好、MCP／API Token／LINE 整合、個人資料 bundle 與通知排程仍維持個人範圍；Flutter 本次維持個人帳本。後續範圍見 [投資共享 #280](https://github.com/es94111/AssetPilot/issues/280) 與 [用戶端／整合 #281](https://github.com/es94111/AssetPilot/issues/281)。離線記帳固定送回**建立佇列項目時的帳本**，不會因切換帳本而改變歸屬。
+- 投資資料、登入憑證、使用者偏好、MCP／API Token 整合、個人資料 bundle 與通知排程仍維持個人範圍；Flutter 本次維持個人帳本。後續範圍見 [投資共享 #280](https://github.com/es94111/AssetPilot/issues/280) 與 [用戶端／整合 #281](https://github.com/es94111/AssetPilot/issues/281)。離線記帳固定送回**建立佇列項目時的帳本**，不會因切換帳本而改變歸屬。
 - 驗證：`npm test` 納入純授權測試；`DATABASE_URL=... npm run test:shared-ledger` 使用 PostgreSQL 與本機 SMTP fixture 驗證真實認證路由、邀請、角色、跨帳本參照及離開／移交／刪除。未設定 DB 時此整合測試明確略過。
 
 ### PWA 與離線記帳
@@ -558,7 +549,7 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 
 ### 首次使用
 
-1. 開啟 `http://localhost:3000` → 選擇 **Google** 或 **LINE** 登入
+1. 開啟 `http://localhost:3000` → 選擇 **Google** 或 **Passkey** 登入
 2. **第一位完成外部登入的使用者自動成為管理員**
 3. 系統自動建立預設分類（食、衣、住、行…）與預設帳戶（現金、銀行帳戶）
 
@@ -599,13 +590,13 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 | 機制 | 說明 |
 | ---- | ---- |
 | 資料庫加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導 |
-| 身份驗證 | 僅接受 Google、LINE、Passkey 等外部／無密碼方式；不建立本機密碼 |
+| 身份驗證 | 僅接受 Google、Apple、Passkey 等外部／無密碼方式；不建立本機密碼 |
 | XSS 防護 | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM |
 | 安全標頭 | HSTS、X-Content-Type-Options、Referrer-Policy |
 | CSP | 限制 inline script 與外部資源來源；`worker-src 'self'`／`manifest-src 'self'` 供 PWA 使用 |
 | Service Worker | 僅快取公開靜態資源；不快取 API 回應與已登入頁面 |
 | 速率限制 | 登入／Passkey 端點每 IP 每 15 分鐘最多 20 次；公開頁面每分鐘最多 120 次 |
-| OAuth 防 CSRF | Google／LINE 使用一次性 state；LINE 額外 nonce 驗證 ID Token |
+| OAuth 防 CSRF | Google／Apple 使用一次性 state 與交易綁定 |
 | MCP OAuth 2.1 | PKCE S256、精確 redirect URI、short-lived token、refresh rotation、token 僅存 SHA-256 |
 | API Token | 明文僅回傳一次、僅存 SHA-256 雜湊、逐 Token scope、停用帳號立即失效 |
 | Webhook | 僅接受公開 HTTPS 目標（防 SSRF）、HMAC-SHA256 簽章附時間戳、密鑰 AES-256-GCM 加密儲存、指數退避重試 |
@@ -624,7 +615,6 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 | TWSE OpenAPI | 台股即時股價、收盤、除權息 |
 | exchangerate-api.com | 全球即時匯率（基礎 TWD） |
 | Google Identity Services | Google SSO 登入 |
-| LINE Login API | LINE 登入與帳號綁定 |
 | IPinfo Lite | IP 國家查詢（合規授權字樣固定顯示於 API 使用頁） |
 | SMTP（Nodemailer） | 排程信件／系統通知 |
 | Zeabur Email（ZSend） | 排程信件／系統通知 |

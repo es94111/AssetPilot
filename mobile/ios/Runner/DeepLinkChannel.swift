@@ -35,7 +35,7 @@ import UIKit
 /// 本 App 有兩類互不相干的連結消費者：
 ///
 /// - 記帳入口（`transaction`／`ledger`）：Widget 與 Siri 捷徑。
-/// - 登入回呼（`google-callback`／`line-callback`／`auth-ticket`）。
+/// - 登入回呼（`google-callback`／`auth-ticket`）。
 ///
 /// 若待處理連結只有一格，任一方先取走就會讓另一方永遠收不到冷啟動連結。
 /// 因此 `takePendingLink` 支援以 host 過濾：記帳入口只取 `transaction`／
@@ -46,7 +46,6 @@ import UIKit
 /// - `assetpilot://transaction/new?…` — 開啟記帳表單（Widget 與 Siri 共用）。
 /// - `assetpilot://ledger/invite?token=…` — 共享帳本邀請。
 /// - `assetpilot://google-callback?…` — Google 登入回呼。
-/// - `assetpilot://line-callback?…` — LINE 登入回呼。
 /// - `assetpilot://auth-ticket?ticket=…` — Passkey 登入回呼。
 ///
 /// 連結只帶參數，不含任何憑證；憑證一律留在後端與瀏覽器端。

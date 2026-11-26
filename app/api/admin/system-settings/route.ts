@@ -21,7 +21,6 @@ export async function PUT(request) {
   try { body = await request.json(); } catch { body = {}; }
 
   const publicRegistration = !!body?.publicRegistration;
-  const lineLoginEnabled = !!body?.lineLoginEnabled;
   const allowedRegistrationEmails = parseAllowedRegistrationEmails(body?.allowedRegistrationEmails);
   const adminIpAllowlist = parseIpAllowlist(body?.adminIpAllowlist);
 
@@ -47,7 +46,7 @@ export async function PUT(request) {
   if (Object.prototype.hasOwnProperty.call(body || {}, 'transactionPhotoMaxBytes')) {
     const candidate = Number(body.transactionPhotoMaxBytes);
     if (!Number.isFinite(candidate) || candidate < 0) {
-      return NextResponse.json({ error: 'transactionPhotoMaxBytes 必須為非負整數（0 表示使用環境變數預設值）' }, { status: 400 });
+      return NextResponse.json({ error: 'transactionPhotoMaxBytes 必須為非負整數（0 表示使用預設 10 MiB）' }, { status: 400 });
     }
     transactionPhotoMaxBytes = Math.floor(candidate);
   }
@@ -71,11 +70,11 @@ export async function PUT(request) {
 
   const db = getDB();
   const fields = [
-    'public_registration = ?', 'line_login_enabled = ?', 'allowed_registration_emails = ?',
+    'public_registration = ?', 'allowed_registration_emails = ?',
     'admin_ip_allowlist = ?',
   ];
   const values: (string | number | null)[] = [
-    publicRegistration ? 1 : 0, lineLoginEnabled ? 1 : 0,
+    publicRegistration ? 1 : 0,
     allowedRegistrationEmails.join('\n'), adminIpAllowlist.join('\n'),
   ];
   if (routeAuditMode !== null) { fields.push('route_audit_mode = ?'); values.push(routeAuditMode); }
@@ -94,7 +93,6 @@ export async function PUT(request) {
   // 敏感操作：變更系統設定。詳記實際被改動的欄位（不含敏感值內容，僅欄位名稱）。
   const changed: string[] = [];
   if (before.publicRegistration !== publicRegistration) changed.push('publicRegistration');
-  if (before.lineLoginEnabled !== lineLoginEnabled) changed.push('lineLoginEnabled');
   if (before.allowedRegistrationEmails.join('\n') !== allowedRegistrationEmails.join('\n')) changed.push('allowedRegistrationEmails');
   if (before.adminIpAllowlist.join('\n') !== adminIpAllowlist.join('\n')) changed.push('adminIpAllowlist');
   if (routeAuditMode !== null && before.routeAuditMode !== routeAuditMode) changed.push('routeAuditMode');
@@ -111,7 +109,6 @@ export async function PUT(request) {
   return NextResponse.json({
     success: true,
     publicRegistration,
-    lineLoginEnabled,
     allowedRegistrationEmails,
     adminIpAllowlist,
     routeAuditMode: routeAuditMode ?? currentSettings.routeAuditMode,

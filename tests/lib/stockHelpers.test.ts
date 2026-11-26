@@ -1,4 +1,4 @@
-// tests/lib/stockHelpers.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/stockHelpers.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 // 驗證 getStockRealizedPl()（T007 從 app/api/stock-realized-pl/route.ts 抽取）：
 // 不帶篩選參數時的 FIFO 損益計算與抽取前完全一致，回應 analyze-01.md 的 X1。
@@ -6,10 +6,10 @@
 import assert from 'node:assert/strict';
 import test, { after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('stockHelpers（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('stockHelpers（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

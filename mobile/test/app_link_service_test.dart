@@ -123,12 +123,11 @@ void main() {
   });
 
   group('登入回呼的 host 過濾', () {
-    test('Google／LINE／Passkey 各自只取自己的回呼 host', () {
-      // 三個登入流程都會「取回冷啟動連結」來完成 OAuth 收尾。
+    test('Google／Passkey 各自只取自己的回呼 host', () {
+      // Google 與 Passkey 都會「取回冷啟動連結」來完成 OAuth 收尾。
       // 若不過濾，記帳入口的連結會被登入流程取走（或反之）。
       final cases = {
         'lib/google_auth.dart': 'google-callback',
-        'lib/line_auth.dart': 'line-callback',
         'lib/passkey_auth.dart': 'auth-ticket',
       };
 

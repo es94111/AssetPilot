@@ -106,11 +106,7 @@ function maxPhotoBytes() {
     "SELECT transaction_photo_max_bytes FROM system_settings WHERE id = 1",
   );
   const dbVal = Number(dbRow?.transaction_photo_max_bytes);
-  if (Number.isFinite(dbVal) && dbVal > 0) return dbVal;
-  const configured = Number(process.env.TRANSACTION_PHOTO_MAX_BYTES);
-  return Number.isFinite(configured) && configured > 0
-    ? configured
-    : DEFAULT_MAX_BYTES;
+  return Number.isFinite(dbVal) && dbVal > 0 ? dbVal : DEFAULT_MAX_BYTES;
 }
 
 function photoS3Defaults() {
@@ -157,13 +153,7 @@ export function getDefaultTransactionPhotoStorage(): AttachmentStorage {
     "SELECT transaction_photo_storage FROM system_settings WHERE id = 1",
   );
   const dbStorage = String(dbRow?.transaction_photo_storage || "").trim();
-  const source =
-    dbStorage === "local" || dbStorage === "s3"
-      ? dbStorage
-      : String(process.env.TRANSACTION_PHOTO_DEFAULT_STORAGE || "local")
-          .trim()
-          .toLowerCase();
-  if (source === "s3") {
+  if (dbStorage === "s3") {
     return getTransactionPhotoStorageStatus().s3.configured ? "s3" : "local";
   }
   return "local";

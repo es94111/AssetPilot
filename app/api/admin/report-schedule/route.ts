@@ -88,8 +88,9 @@ export async function PUT(request) {
   if (freq !== 'off') {
     const nowMs = Date.now();
     for (const uid_ of validIds) {
-      const existing = queryOne('SELECT id FROM report_schedules WHERE user_id = ? AND freq = ? LIMIT 1', [uid_, freq]);
+      const existing = queryOne('SELECT id, notify_email FROM report_schedules WHERE user_id = ? AND freq = ? ORDER BY notify_email DESC, id LIMIT 1', [uid_, freq]);
       if (existing) {
+        if (existing.notify_email === 0) continue;
         db.run(
           'UPDATE report_schedules SET hour = ?, weekday = ?, day_of_month = ?, enabled = 1, updated_at = ? WHERE id = ?',
           [hour, weekday, dayOfMonth, nowMs, existing.id]

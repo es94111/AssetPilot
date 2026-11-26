@@ -35,8 +35,8 @@ function parseOptions(argv: string[]): { input: string; keyFile?: string } {
 async function main(): Promise<void> {
   loadEnvFile();
   const options = parseOptions(process.argv.slice(2));
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-    throw new Error('請先設定 DATABASE_URL 或 POSTGRES_URL');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('請先設定 DATABASE_URL');
   }
   const { parseMigrationKey } = await import('../lib/migrationArchive.ts');
   const rawKey = options.keyFile

@@ -102,7 +102,6 @@ class _SystemSettingsForm extends StatefulWidget {
 
 class _SystemSettingsFormState extends State<_SystemSettingsForm> {
   late bool _publicRegistration = _b(widget.initial['publicRegistration']);
-  late bool _lineLoginEnabled = _b(widget.initial['lineLoginEnabled']);
   late final _allowedEmails = _ctrl(
     (widget.initial['allowedRegistrationEmails'] as List? ?? [])
         .map((e) => '$e')
@@ -120,7 +119,6 @@ class _SystemSettingsFormState extends State<_SystemSettingsForm> {
   late final _photoMaxMb = _ctrl(
     _num(widget.initial['transactionPhotoMaxBytes']) > 0
         ? (_num(widget.initial['transactionPhotoMaxBytes']) / 1024 / 1024)
-            .round()
             .toString()
         : '',
   );
@@ -143,7 +141,6 @@ class _SystemSettingsFormState extends State<_SystemSettingsForm> {
     // 儲存後 onSaved 觸發重新載入，initial 更新時同步刷新欄位值。
     if (oldWidget.initial != widget.initial) {
       _publicRegistration = _b(widget.initial['publicRegistration']);
-      _lineLoginEnabled = _b(widget.initial['lineLoginEnabled']);
       _allowedEmails.text = (widget.initial['allowedRegistrationEmails'] as List? ?? [])
           .map((e) => '$e')
           .join('\n');
@@ -154,7 +151,6 @@ class _SystemSettingsFormState extends State<_SystemSettingsForm> {
       _photoStorage = '${widget.initial['transactionPhotoStorage'] ?? ''}';
       _photoMaxMb.text = _num(widget.initial['transactionPhotoMaxBytes']) > 0
           ? (_num(widget.initial['transactionPhotoMaxBytes']) / 1024 / 1024)
-              .round()
               .toString()
           : '';
       _stockAutoUpdate = _b(widget.initial['stockAutoUpdateEnabled']);
@@ -177,7 +173,6 @@ class _SystemSettingsFormState extends State<_SystemSettingsForm> {
     try {
       final body = <String, dynamic>{
         'publicRegistration': _publicRegistration,
-        'lineLoginEnabled': _lineLoginEnabled,
         'allowedRegistrationEmails': _lines(_allowedEmails.text),
         'adminIpAllowlist': _lines(_ipAllowlist.text),
         'routeAuditMode': _routeAuditMode,
@@ -313,11 +308,6 @@ class _SystemSettingsFormState extends State<_SystemSettingsForm> {
           title: Text(trKey('adminPublicRegistration')),
           value: _publicRegistration,
           onChanged: (v) => setState(() => _publicRegistration = v),
-        ),
-        SwitchListTile(
-          title: Text(trKey('adminLineLoginEnabled')),
-          value: _lineLoginEnabled,
-          onChanged: (v) => setState(() => _lineLoginEnabled = v),
         ),
         TextFormField(
           controller: _allowedEmails,

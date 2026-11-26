@@ -1,14 +1,14 @@
 // tests/lib/apiTokenWebhook.test.ts — API Token／Webhook 資料層測試（issue #258）
-// 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；未設定時略過，
+// 需要真實 PostgreSQL（DATABASE_URL）；未設定時略過，
 // 讓 `npm test` 在無資料庫的環境仍可通過（與 mcpAuth.test.ts 相同策略）。
 // 執行方式：node --experimental-transform-types --import tests/setup/register.mjs tests/lib/apiTokenWebhook.test.ts
 import assert from 'node:assert/strict';
 import test, { after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('apiTokenWebhook（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('apiTokenWebhook（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   process.env.API_TOKEN_ENCRYPTION_KEY =
     process.env.API_TOKEN_ENCRYPTION_KEY || 'test-encryption-key-for-webhook-test';

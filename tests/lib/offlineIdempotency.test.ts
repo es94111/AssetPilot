@@ -1,5 +1,5 @@
 // tests/lib/offlineIdempotency.test.ts — client_ref 幂等寫入的 DB 回歸測試（007-pwa-offline-entry）
-// 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；未設定時略過，保持 `npm test` 在無 DB
+// 需要真實 PostgreSQL（DATABASE_URL）；未設定時略過，保持 `npm test` 在無 DB
 // 環境下仍可通過（比照 tests/lib/db.test.ts 的略過守衛）。
 //
 // 目的：釘住 Issue 驗收條件「離線新增的交易存入本機佇列，恢復連線後自動送出」與
@@ -11,10 +11,10 @@
 import assert from 'node:assert/strict';
 import test, { after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('offline idempotency（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('offline idempotency（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne, queryAll } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

@@ -2,7 +2,7 @@
 //
 // 設計原則：
 // - 測試資料全部由 tests/e2e/support 下的 fixtures 以真實 PostgreSQL 直接建立
-//   （測試使用者、分類、帳戶、股票），不依賴 Google/LINE 等正式環境 OAuth 憑證
+//   （測試使用者、分類、帳戶、股票），不依賴 Google 等正式環境 OAuth 憑證
 //   （密碼登入已停用，見 app/api/auth/login/route.ts）。
 // - webServer 使用 `next build && next start`（而非 `next dev`）：
 //   `next dev --webpack` 在本機驗證時，/instrumentation 的 edge-runtime 編譯會因

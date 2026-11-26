@@ -211,7 +211,7 @@ test('Apple 身分令牌：簽章被竄改時拒絕', async () => {
 
 test('appleEmail()：只有驗證過的 email 才回傳', () => {
   assert.equal(
-    appleEmail({ sub: 'a', email: 'u@example.com', emailVerified: true }),
+    appleEmail({ sub: 'a', email: 'u@example.com', email_verified: true }),
     'u@example.com',
   );
   assert.equal(
@@ -223,7 +223,7 @@ test('appleEmail()：只有驗證過的 email 才回傳', () => {
     '',
   );
   assert.equal(
-    appleEmail({ sub: 'a', email: 'u@example.com', emailVerified: 'false' }),
+    appleEmail({ sub: 'a', email: 'u@example.com', email_verified: 'false', emailVerified: true }),
     '',
   );
   assert.equal(appleEmail({ sub: 'a' }), '');

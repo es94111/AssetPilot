@@ -717,18 +717,6 @@ abstract class AppLocalizations {
   /// **'Google 驗證中…'**
   String get authGoogleVerifying;
 
-  /// Web path: auth.lineButton
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'使用 LINE 登入'**
-  String get authLineButton;
-
-  /// Web path: auth.lineVerifying
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 驗證中…'**
-  String get authLineVerifying;
-
   /// Web path: auth.registerSubmit
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -740,36 +728,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'註冊中…'**
   String get authRegistering;
-
-  /// Web path: auth.lineCallback.completing
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'正在完成 LINE 驗證...'**
-  String get authLineCallbackCompleting;
-
-  /// Web path: auth.lineCallback.missingCode
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 未回傳授權碼，請重新操作'**
-  String get authLineCallbackMissingCode;
-
-  /// Web path: auth.lineCallback.linkFailed
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 綁定失敗'**
-  String get authLineCallbackLinkFailed;
-
-  /// Web path: auth.lineCallback.loginFailed
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入失敗'**
-  String get authLineCallbackLoginFailed;
-
-  /// Web path: auth.lineCallback.verifyFailed
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 驗證失敗'**
-  String get authLineCallbackVerifyFailed;
 
   /// Web path: auth.errors.turnstileRequired
   ///
@@ -843,18 +801,6 @@ abstract class AppLocalizations {
   /// **'Passkey 登入失敗'**
   String get authErrorsPasskeyFailed;
 
-  /// Web path: auth.errors.lineNotConfigured
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入尚未設定完成'**
-  String get authErrorsLineNotConfigured;
-
-  /// Web path: auth.errors.lineFailed
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入失敗'**
-  String get authErrorsLineFailed;
-
   /// Web path: settings.title
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -870,7 +816,7 @@ abstract class AppLocalizations {
   /// Web path: settings.language.description
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'選擇介面與通知（Email／LINE）使用的語言。'**
+  /// **'選擇介面與通知（Email）使用的語言。'**
   String get settingsLanguageDescription;
 
   /// Web path: settings.language.saved
@@ -1047,12 +993,6 @@ abstract class AppLocalizations {
   /// **'Google 綁定'**
   String get settingsAccountGoogleTitle;
 
-  /// Web path: settings.account.lineTitle
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 綁定'**
-  String get settingsAccountLineTitle;
-
   /// Web path: settings.account.statusPrefix
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -1082,30 +1022,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'解除綁定'**
   String get settingsAccountUnlink;
-
-  /// Web path: settings.account.linkedLine
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'已綁定 LINE 帳號'**
-  String get settingsAccountLinkedLine;
-
-  /// Web path: settings.account.notLinkedLine
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'尚未綁定 LINE 帳號'**
-  String get settingsAccountNotLinkedLine;
-
-  /// Web path: settings.account.linkLine
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'綁定 LINE 帳號'**
-  String get settingsAccountLinkLine;
-
-  /// Web path: settings.account.lineVerifying
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 驗證中…'**
-  String get settingsAccountLineVerifying;
 
   /// Web path: settings.account.sessionsTitle
   ///
@@ -1418,30 +1334,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'Google 解除綁定失敗'**
   String get settingsAccountMessagesGoogleUnlinkFailed;
-
-  /// Web path: settings.account.messages.lineNotConfigured
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入尚未設定完成'**
-  String get settingsAccountMessagesLineNotConfigured;
-
-  /// Web path: settings.account.messages.lineLinkFailed
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 綁定失敗'**
-  String get settingsAccountMessagesLineLinkFailed;
-
-  /// Web path: settings.account.messages.lineUnlinked
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 帳號已解除綁定'**
-  String get settingsAccountMessagesLineUnlinked;
-
-  /// Web path: settings.account.messages.lineUnlinkFailed
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 解除綁定失敗'**
-  String get settingsAccountMessagesLineUnlinkFailed;
 
   /// Web path: settings.account.messages.deletePasswordRequired
   ///
@@ -2244,7 +2136,7 @@ abstract class AppLocalizations {
   /// Web path: public.apiCreditsPage.usageNotes.login.text
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'Google、LINE 登入僅在主動登入或綁定時啟用。'**
+  /// **'僅在您主動登入或綁定帳號時使用 Google 登入。'**
   String get publicApiCreditsPageUsageNotesLoginText;
 
   /// Web path: public.apiCreditsPage.usageNotes.backup.title
@@ -2328,12 +2220,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'Google SSO 登入'**
   String get publicApiCreditsPageDescriptionsGoogle;
-
-  /// Web path: public.apiCreditsPage.descriptions.line
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入與帳號綁定'**
-  String get publicApiCreditsPageDescriptionsLine;
 
   /// Web path: public.apiCreditsPage.descriptions.smtp
   ///
@@ -5724,12 +5610,6 @@ abstract class AppLocalizations {
   /// **'查看完整報表'**
   String get notificationsCtaViewFullReport;
 
-  /// Web path: notifications.cta.viewLineRecord
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'查看 LINE 紀錄'**
-  String get notificationsCtaViewLineRecord;
-
   /// Web path: notifications.reminder.altText
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -6602,12 +6482,6 @@ abstract class AppLocalizations {
   /// **'掌握收支全貌'**
   String get mobileLegacySeeYourCompleteCashFlow;
 
-  /// Mobile compatibility string: 無法建立 LINE 登入狀態
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'無法建立 LINE 登入狀態'**
-  String get mobileLegacyUnableToCreateLineSignInState;
-
   /// Mobile compatibility string: 無法開啟瀏覽器
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -6619,12 +6493,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'無法開啟瀏覽器進行 Google 登入'**
   String get mobileLegacyUnableToOpenTheBrowserForGoogleSign;
-
-  /// Mobile compatibility string: 無法開啟瀏覽器進行 LINE 登入
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'無法開啟瀏覽器進行 LINE 登入'**
-  String get mobileLegacyUnableToOpenTheBrowserForLineSign;
 
   /// Mobile compatibility string: 無法開啟瀏覽器進行 Passkey 登入
   ///
@@ -6847,12 +6715,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'銀行餘額'**
   String get mobileLegacyBankBalance;
-
-  /// Mobile compatibility string: 需已綁定 LINE
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'需已綁定 LINE'**
-  String get mobileLegacyRequiresALinkedLineAccount;
 
   /// Mobile compatibility string: 需至少一張信用卡與一個非信用卡帳戶才能還款
   ///
@@ -7195,30 +7057,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'Google 登入逾時或已取消'**
   String get mobileLegacyGoogleSignInTimedOutOrWasCancelled;
-
-  /// Mobile compatibility string: LINE 通知
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 通知'**
-  String get mobileLegacyLineNotifications;
-
-  /// Mobile compatibility string: LINE 登入回應未包含認證 Cookie
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入回應未包含認證 Cookie'**
-  String get mobileLegacyTheLineSignInResponseDidNotInclude;
-
-  /// Mobile compatibility string: LINE 登入狀態不符，請重試
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入狀態不符，請重試'**
-  String get mobileLegacyLineSignInStateMismatchTryAgain;
-
-  /// Mobile compatibility string: LINE 登入逾時或已取消
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入逾時或已取消'**
-  String get mobileLegacyLineSignInTimedOutOrWasCancelled;
 
   /// Mobile compatibility string: Passkey 登入逾時或已取消
   ///
@@ -8400,12 +8238,6 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'開放註冊'**
   String get adminPublicRegistration;
-
-  /// Web path: admin.adminLineLoginEnabled
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'LINE 登入'**
-  String get adminLineLoginEnabled;
 
   /// Web path: admin.adminAllowedRegistrationEmails
   ///
@@ -10862,7 +10694,7 @@ abstract class AppLocalizations {
   /// Web path: settings.notifications.description
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。'**
+  /// **'開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email 報表通知。'**
   String get settingsNotificationsDescription;
 
   /// Web path: settings.notifications.unsupported

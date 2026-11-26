@@ -501,16 +501,6 @@
     "description": "Web path: auth.googleVerifying",
     "x-webPath": "auth.googleVerifying"
   },
-  "authLineButton": "使用 LINE 登入",
-  "@authLineButton": {
-    "description": "Web path: auth.lineButton",
-    "x-webPath": "auth.lineButton"
-  },
-  "authLineVerifying": "LINE 驗證中…",
-  "@authLineVerifying": {
-    "description": "Web path: auth.lineVerifying",
-    "x-webPath": "auth.lineVerifying"
-  },
   "authRegisterSubmit": "立即註冊",
   "@authRegisterSubmit": {
     "description": "Web path: auth.registerSubmit",
@@ -520,31 +510,6 @@
   "@authRegistering": {
     "description": "Web path: auth.registering",
     "x-webPath": "auth.registering"
-  },
-  "authLineCallbackCompleting": "正在完成 LINE 驗證...",
-  "@authLineCallbackCompleting": {
-    "description": "Web path: auth.lineCallback.completing",
-    "x-webPath": "auth.lineCallback.completing"
-  },
-  "authLineCallbackMissingCode": "LINE 未回傳授權碼，請重新操作",
-  "@authLineCallbackMissingCode": {
-    "description": "Web path: auth.lineCallback.missingCode",
-    "x-webPath": "auth.lineCallback.missingCode"
-  },
-  "authLineCallbackLinkFailed": "LINE 綁定失敗",
-  "@authLineCallbackLinkFailed": {
-    "description": "Web path: auth.lineCallback.linkFailed",
-    "x-webPath": "auth.lineCallback.linkFailed"
-  },
-  "authLineCallbackLoginFailed": "LINE 登入失敗",
-  "@authLineCallbackLoginFailed": {
-    "description": "Web path: auth.lineCallback.loginFailed",
-    "x-webPath": "auth.lineCallback.loginFailed"
-  },
-  "authLineCallbackVerifyFailed": "LINE 驗證失敗",
-  "@authLineCallbackVerifyFailed": {
-    "description": "Web path: auth.lineCallback.verifyFailed",
-    "x-webPath": "auth.lineCallback.verifyFailed"
   },
   "authErrorsTurnstileRequired": "請先完成真人驗證",
   "@authErrorsTurnstileRequired": {
@@ -606,16 +571,6 @@
     "description": "Web path: auth.errors.passkeyFailed",
     "x-webPath": "auth.errors.passkeyFailed"
   },
-  "authErrorsLineNotConfigured": "LINE 登入尚未設定完成",
-  "@authErrorsLineNotConfigured": {
-    "description": "Web path: auth.errors.lineNotConfigured",
-    "x-webPath": "auth.errors.lineNotConfigured"
-  },
-  "authErrorsLineFailed": "LINE 登入失敗",
-  "@authErrorsLineFailed": {
-    "description": "Web path: auth.errors.lineFailed",
-    "x-webPath": "auth.errors.lineFailed"
-  },
   "settingsTitle": "設定",
   "@settingsTitle": {
     "description": "Web path: settings.title",
@@ -626,7 +581,7 @@
     "description": "Web path: settings.language.title",
     "x-webPath": "settings.language.title"
   },
-  "settingsLanguageDescription": "選擇介面與通知（Email／LINE）使用的語言。",
+  "settingsLanguageDescription": "選擇介面與通知（Email）使用的語言。",
   "@settingsLanguageDescription": {
     "description": "Web path: settings.language.description",
     "x-webPath": "settings.language.description"
@@ -776,11 +731,6 @@
     "description": "Web path: settings.account.googleTitle",
     "x-webPath": "settings.account.googleTitle"
   },
-  "settingsAccountLineTitle": "LINE 綁定",
-  "@settingsAccountLineTitle": {
-    "description": "Web path: settings.account.lineTitle",
-    "x-webPath": "settings.account.lineTitle"
-  },
   "settingsAccountStatusPrefix": "目前狀態：",
   "@settingsAccountStatusPrefix": {
     "description": "Web path: settings.account.statusPrefix",
@@ -805,26 +755,6 @@
   "@settingsAccountUnlink": {
     "description": "Web path: settings.account.unlink",
     "x-webPath": "settings.account.unlink"
-  },
-  "settingsAccountLinkedLine": "已綁定 LINE 帳號",
-  "@settingsAccountLinkedLine": {
-    "description": "Web path: settings.account.linkedLine",
-    "x-webPath": "settings.account.linkedLine"
-  },
-  "settingsAccountNotLinkedLine": "尚未綁定 LINE 帳號",
-  "@settingsAccountNotLinkedLine": {
-    "description": "Web path: settings.account.notLinkedLine",
-    "x-webPath": "settings.account.notLinkedLine"
-  },
-  "settingsAccountLinkLine": "綁定 LINE 帳號",
-  "@settingsAccountLinkLine": {
-    "description": "Web path: settings.account.linkLine",
-    "x-webPath": "settings.account.linkLine"
-  },
-  "settingsAccountLineVerifying": "LINE 驗證中…",
-  "@settingsAccountLineVerifying": {
-    "description": "Web path: settings.account.lineVerifying",
-    "x-webPath": "settings.account.lineVerifying"
   },
   "settingsAccountSessionsTitle": "目前登入裝置",
   "@settingsAccountSessionsTitle": {
@@ -1088,26 +1018,6 @@
   "@settingsAccountMessagesGoogleUnlinkFailed": {
     "description": "Web path: settings.account.messages.googleUnlinkFailed",
     "x-webPath": "settings.account.messages.googleUnlinkFailed"
-  },
-  "settingsAccountMessagesLineNotConfigured": "LINE 登入尚未設定完成",
-  "@settingsAccountMessagesLineNotConfigured": {
-    "description": "Web path: settings.account.messages.lineNotConfigured",
-    "x-webPath": "settings.account.messages.lineNotConfigured"
-  },
-  "settingsAccountMessagesLineLinkFailed": "LINE 綁定失敗",
-  "@settingsAccountMessagesLineLinkFailed": {
-    "description": "Web path: settings.account.messages.lineLinkFailed",
-    "x-webPath": "settings.account.messages.lineLinkFailed"
-  },
-  "settingsAccountMessagesLineUnlinked": "LINE 帳號已解除綁定",
-  "@settingsAccountMessagesLineUnlinked": {
-    "description": "Web path: settings.account.messages.lineUnlinked",
-    "x-webPath": "settings.account.messages.lineUnlinked"
-  },
-  "settingsAccountMessagesLineUnlinkFailed": "LINE 解除綁定失敗",
-  "@settingsAccountMessagesLineUnlinkFailed": {
-    "description": "Web path: settings.account.messages.lineUnlinkFailed",
-    "x-webPath": "settings.account.messages.lineUnlinkFailed"
   },
   "settingsAccountMessagesDeletePasswordRequired": "請輸入密碼以確認刪除",
   "@settingsAccountMessagesDeletePasswordRequired": {
@@ -1783,7 +1693,7 @@
     "description": "Web path: public.apiCreditsPage.usageNotes.login.title",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.title"
   },
-  "publicApiCreditsPageUsageNotesLoginText": "Google、LINE 登入僅在主動登入或綁定時啟用。",
+  "publicApiCreditsPageUsageNotesLoginText": "僅在您主動登入或綁定帳號時使用 Google 登入。",
   "@publicApiCreditsPageUsageNotesLoginText": {
     "description": "Web path: public.apiCreditsPage.usageNotes.login.text",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.text"
@@ -1857,11 +1767,6 @@
   "@publicApiCreditsPageDescriptionsGoogle": {
     "description": "Web path: public.apiCreditsPage.descriptions.google",
     "x-webPath": "public.apiCreditsPage.descriptions.google"
-  },
-  "publicApiCreditsPageDescriptionsLine": "LINE 登入與帳號綁定",
-  "@publicApiCreditsPageDescriptionsLine": {
-    "description": "Web path: public.apiCreditsPage.descriptions.line",
-    "x-webPath": "public.apiCreditsPage.descriptions.line"
   },
   "publicApiCreditsPageDescriptionsSmtp": "Email 寄送通道（管理員資產統計報表，搭配 Gmail / Outlook 等 SMTP server）",
   "@publicApiCreditsPageDescriptionsSmtp": {
@@ -4934,11 +4839,6 @@
     "description": "Web path: notifications.cta.viewFullReport",
     "x-webPath": "notifications.cta.viewFullReport"
   },
-  "notificationsCtaViewLineRecord": "查看 LINE 紀錄",
-  "@notificationsCtaViewLineRecord": {
-    "description": "Web path: notifications.cta.viewLineRecord",
-    "x-webPath": "notifications.cta.viewLineRecord"
-  },
   "notificationsReminderAltText": "記錄支出提醒",
   "@notificationsReminderAltText": {
     "description": "Web path: notifications.reminder.altText",
@@ -5667,11 +5567,6 @@
     "description": "Mobile compatibility string: 掌握收支全貌",
     "x-webPath": "mobileLegacy.seeYourCompleteCashFlow"
   },
-  "mobileLegacyUnableToCreateLineSignInState": "無法建立 LINE 登入狀態",
-  "@mobileLegacyUnableToCreateLineSignInState": {
-    "description": "Mobile compatibility string: 無法建立 LINE 登入狀態",
-    "x-webPath": "mobileLegacy.unableToCreateLineSignInState"
-  },
   "mobileLegacyUnableToOpenBrowser": "無法開啟瀏覽器",
   "@mobileLegacyUnableToOpenBrowser": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器",
@@ -5681,11 +5576,6 @@
   "@mobileLegacyUnableToOpenTheBrowserForGoogleSign": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器進行 Google 登入",
     "x-webPath": "mobileLegacy.unableToOpenTheBrowserForGoogleSign"
-  },
-  "mobileLegacyUnableToOpenTheBrowserForLineSign": "無法開啟瀏覽器進行 LINE 登入",
-  "@mobileLegacyUnableToOpenTheBrowserForLineSign": {
-    "description": "Mobile compatibility string: 無法開啟瀏覽器進行 LINE 登入",
-    "x-webPath": "mobileLegacy.unableToOpenTheBrowserForLineSign"
   },
   "mobileLegacyUnableToOpenTheBrowserForPasskeySign": "無法開啟瀏覽器進行 Passkey 登入",
   "@mobileLegacyUnableToOpenTheBrowserForPasskeySign": {
@@ -5871,11 +5761,6 @@
   "@mobileLegacyBankBalance": {
     "description": "Mobile compatibility string: 銀行餘額",
     "x-webPath": "mobileLegacy.bankBalance"
-  },
-  "mobileLegacyRequiresALinkedLineAccount": "需已綁定 LINE",
-  "@mobileLegacyRequiresALinkedLineAccount": {
-    "description": "Mobile compatibility string: 需已綁定 LINE",
-    "x-webPath": "mobileLegacy.requiresALinkedLineAccount"
   },
   "mobileLegacyACreditCardAndANonCreditCard": "需至少一張信用卡與一個非信用卡帳戶才能還款",
   "@mobileLegacyACreditCardAndANonCreditCard": {
@@ -6161,26 +6046,6 @@
   "@mobileLegacyGoogleSignInTimedOutOrWasCancelled": {
     "description": "Mobile compatibility string: Google 登入逾時或已取消",
     "x-webPath": "mobileLegacy.googleSignInTimedOutOrWasCancelled"
-  },
-  "mobileLegacyLineNotifications": "LINE 通知",
-  "@mobileLegacyLineNotifications": {
-    "description": "Mobile compatibility string: LINE 通知",
-    "x-webPath": "mobileLegacy.lineNotifications"
-  },
-  "mobileLegacyTheLineSignInResponseDidNotInclude": "LINE 登入回應未包含認證 Cookie",
-  "@mobileLegacyTheLineSignInResponseDidNotInclude": {
-    "description": "Mobile compatibility string: LINE 登入回應未包含認證 Cookie",
-    "x-webPath": "mobileLegacy.theLineSignInResponseDidNotInclude"
-  },
-  "mobileLegacyLineSignInStateMismatchTryAgain": "LINE 登入狀態不符，請重試",
-  "@mobileLegacyLineSignInStateMismatchTryAgain": {
-    "description": "Mobile compatibility string: LINE 登入狀態不符，請重試",
-    "x-webPath": "mobileLegacy.lineSignInStateMismatchTryAgain"
-  },
-  "mobileLegacyLineSignInTimedOutOrWasCancelled": "LINE 登入逾時或已取消",
-  "@mobileLegacyLineSignInTimedOutOrWasCancelled": {
-    "description": "Mobile compatibility string: LINE 登入逾時或已取消",
-    "x-webPath": "mobileLegacy.lineSignInTimedOutOrWasCancelled"
   },
   "mobileLegacyPasskeySignInTimedOutOrWasCancelled": "Passkey 登入逾時或已取消",
   "@mobileLegacyPasskeySignInTimedOutOrWasCancelled": {
@@ -7383,11 +7248,6 @@
   "@adminPublicRegistration": {
     "description": "Web path: admin.adminPublicRegistration",
     "x-webPath": "admin.adminPublicRegistration"
-  },
-  "adminLineLoginEnabled": "LINE 登入",
-  "@adminLineLoginEnabled": {
-    "description": "Web path: admin.adminLineLoginEnabled",
-    "x-webPath": "admin.adminLineLoginEnabled"
   },
   "adminAllowedRegistrationEmails": "允許註冊的 Email（每行一個）",
   "@adminAllowedRegistrationEmails": {
@@ -9557,7 +9417,7 @@
     "description": "Web path: settings.notifications.title",
     "x-webPath": "settings.notifications.title"
   },
-  "settingsNotificationsDescription": "開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email／LINE 報表通知。",
+  "settingsNotificationsDescription": "開啟後，符合條件的事件會即時推播到已訂閱的裝置。此設定不影響 Email 報表通知。",
   "@settingsNotificationsDescription": {
     "description": "Web path: settings.notifications.description",
     "x-webPath": "settings.notifications.description"

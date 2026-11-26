@@ -119,7 +119,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   saveDB();
 
   try {
-    const configuredUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+    const configuredUrl = process.env.APP_URL;
     if (!configuredUrl && process.env.NODE_ENV === 'production') throw new Error('APP_URL is required');
     const baseUrl = new URL(configuredUrl || request.nextUrl.origin);
     if (!['http:', 'https:'].includes(baseUrl.protocol) || baseUrl.username || baseUrl.password) throw new Error('Invalid APP_URL');

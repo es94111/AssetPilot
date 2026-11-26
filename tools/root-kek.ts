@@ -35,8 +35,8 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-    throw new Error('請先設定 DATABASE_URL 或 POSTGRES_URL');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('請先設定 DATABASE_URL');
   }
 
   const dbModule = await import('../lib/db.ts');

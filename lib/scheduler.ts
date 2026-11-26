@@ -5,7 +5,6 @@
 import crypto from 'crypto';
 import { getDB, queryAll, queryOne, saveDB } from './db';
 import { getActiveEmailProviders, sendStatsEmail } from './emailService';
-import { LINE_MESSAGING_CHANNEL_ACCESS_TOKEN, buildExpenseReminderFlex, buildStatsReportFlex, pushLineMessage } from './lineMessaging';
 import { buildUserStatsReport, renderStatsEmailHtml } from './statsEmailReport';
 import { resolveLedgerScope } from './ledgerScope';
 import { getUserLanguage } from './i18n/userLanguage';
@@ -13,7 +12,6 @@ import * as userTime from './userTime';
 
 // ── per-schedule lock set（防重複執行）──
 const runningSchedules = new Set();
-const runningExpenseReminders = new Set();
 
 // ── 某年某月（1-based）的天數，即該月最後一天 ──
 function daysInMonth(year, month) {
@@ -34,7 +32,7 @@ function localDayStartMs(tz, ymd) {
 
 // ── 判斷某排程是否需要在「nowTs」這個時間點觸發 ──
 function shouldRunSchedule(scheduleRow, userTimezone, nowTs = Date.now()) {
-  if (!scheduleRow || scheduleRow.enabled === 0) return false;
+  if (!scheduleRow || scheduleRow.enabled === 0 || scheduleRow.notify_email === 0) return false;
   // 向後相容：舊呼叫 shouldRunSchedule(scheduleRow, nowTs)（第二參數是數字 ms）
   if (typeof userTimezone === 'number' && nowTs === Date.now()) {
     nowTs = userTimezone;
@@ -74,14 +72,6 @@ function isValidEmail(email) {
 
 function formatLocalSummaryTime(ms) {
   return new Date(ms).toISOString();
-}
-
-function scheduleWantsEmail(schedule) {
-  return schedule.notify_email !== 0;
-}
-
-function scheduleWantsLine(schedule) {
-  return schedule.notify_line === 1;
 }
 
 // ── 排程通知的帳本授權（issue #281）──
@@ -124,9 +114,9 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
     const db = getDB();
     const schedule = queryOne('SELECT * FROM report_schedules WHERE id = ?', [scheduleId]);
     if (!schedule) return { status: 'not_found', sent: 0, failed: 0, skipped: 0, reason: '排程不存在' };
-    if (schedule.enabled === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '排程已停用' };
+    if (schedule.enabled === 0 || schedule.notify_email === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '排程已停用' };
 
-    const u = queryOne('SELECT id, email, display_name, is_active, timezone, line_id FROM users WHERE id = ?', [schedule.user_id]);
+    const u = queryOne('SELECT id, email, display_name, is_active, timezone FROM users WHERE id = ?', [schedule.user_id]);
     if (!u) {
       db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?',
         [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者不存在`, startedAt, scheduleId]);
@@ -155,21 +145,7 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: delivery.reason };
     }
 
-    const wantsEmail = scheduleWantsEmail(schedule);
-    const wantsLine = scheduleWantsLine(schedule);
-    if (!wantsEmail && !wantsLine) {
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：未選擇通知方式`;
-      db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
-      saveDB();
-      return { status: 'no_channel', sent: 0, failed: 1, skipped: 0, reason: '未選擇通知方式' };
-    }
-
-    const invalidEmail = wantsEmail && !isValidEmail(u.email);
-    const noEmailService = wantsEmail && !getActiveEmailProviders().hasAny;
-    const noLineService = wantsLine && !LINE_MESSAGING_CHANNEL_ACCESS_TOKEN;
-    const lineNotLinked = wantsLine && !u.line_id;
-
-    if (invalidEmail && !wantsLine) {
+    if (!isValidEmail(u.email)) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：Email 格式錯誤或未設定`;
       db.run('UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
         [startedAt, summary, startedAt, scheduleId]);
@@ -177,26 +153,11 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       return { status: 'invalid_email', sent: 0, failed: 1, skipped: 0, reason: 'Email 格式錯誤或未設定' };
     }
 
-    if (noEmailService && !wantsLine) {
+    if (!getActiveEmailProviders().hasAny) {
       const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：寄信服務未設定（請設定 EMAIL_PROVIDER_PRIMARY 環境變數）`;
       db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
       saveDB();
       return { status: 'no_email_service', sent: 0, failed: 1, skipped: 0, reason: '寄信服務未設定' };
-    }
-
-    if (noLineService && !wantsEmail) {
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE Messaging API 未設定`;
-      db.run('UPDATE report_schedules SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, scheduleId]);
-      saveDB();
-      return { status: 'no_line_service', sent: 0, failed: 1, skipped: 0, reason: 'LINE Messaging API 未設定' };
-    }
-
-    if (lineNotLinked && !wantsEmail) {
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者尚未綁定 LINE`;
-      db.run('UPDATE report_schedules SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
-        [startedAt, summary, startedAt, scheduleId]);
-      saveDB();
-      return { status: 'line_not_linked', sent: 0, failed: 1, skipped: 0, reason: '使用者尚未綁定 LINE' };
     }
 
     let dedupRowId = null;
@@ -234,72 +195,33 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       locale,
     );
 
-    if (wantsEmail) {
-      if (invalidEmail) {
+    try {
+      // 最後一次角色檢查緊貼著外部寄送呼叫；成員離開／被撤銷後即使排程已啟動，
+      // 也不得再收到共享帳本的統計資料。
+      const sendScope = resolveScheduleDelivery({ schedule, recipientId: u.id, action: '寄送' });
+      if (!sendScope.allowed) {
         failed += 1;
-        channelResults.push('Email 失敗：Email 格式錯誤或未設定');
-      } else if (noEmailService) {
-        failed += 1;
-        channelResults.push('Email 失敗：寄信服務未設定');
+        channelResults.push(`Email 略過：${sendScope.reason}`);
+        errMsg = sendScope.reason;
       } else {
-      try {
-        // 最後一次角色檢查緊貼著外部寄送呼叫；成員離開／被撤銷後即使排程已啟動，
-        // 也不得再收到共享帳本的統計資料。
-        const sendScope = resolveScheduleDelivery({ schedule, recipientId: u.id, action: '寄送' });
-        if (!sendScope.allowed) {
-          failed += 1;
-          channelResults.push(`Email 略過：${sendScope.reason}`);
-          errMsg = sendScope.reason;
-        } else {
-          const html = renderStatsEmailHtml(u.display_name, u.email, stats, locale);
-          const subject = stats.subject || `${stats.month} 個人資產統計報表`;
-          const result = await sendStatsEmail({ to: u.email, subject, html });
-          if (result) {
-            sent += 1;
-            provider = result.provider;
-            channelResults.push(`Email 成功(${provider || ''})`);
-          } else {
-            failed += 1;
-            channelResults.push('Email 失敗');
-            errMsg = '寄信服務未設定';
-          }
-        }
-      } catch (e) {
-        failed += 1;
-        const msg = e?.message || '未知錯誤';
-        channelResults.push(`Email 失敗：${msg}`);
-        errMsg = [errMsg, msg].filter(Boolean).join('；');
-      }
-      }
-    }
-
-    if (wantsLine) {
-      if (noLineService) {
-        failed += 1;
-        channelResults.push('LINE 失敗：LINE Messaging API 未設定');
-      } else if (lineNotLinked) {
-        failed += 1;
-        channelResults.push('LINE 失敗：使用者尚未綁定 LINE');
-      } else {
-      try {
-        const sendScope = resolveScheduleDelivery({ schedule, recipientId: u.id, action: '寄送' });
-        if (!sendScope.allowed) {
-          failed += 1;
-          channelResults.push(`LINE 略過：${sendScope.reason}`);
-          errMsg = [errMsg, sendScope.reason].filter(Boolean).join('；');
-        } else {
-          const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.APP_HOST || 'localhost'}`;
-          await pushLineMessage(u.line_id, [buildStatsReportFlex(u.display_name, stats, appUrl, locale)]);
+        const html = renderStatsEmailHtml(u.display_name, u.email, stats, locale);
+        const subject = stats.subject || `${stats.month} 個人資產統計報表`;
+        const result = await sendStatsEmail({ to: u.email, subject, html });
+        if (result) {
           sent += 1;
-          channelResults.push('LINE 成功');
+          provider = result.provider;
+          channelResults.push(`Email 成功(${provider || ''})`);
+        } else {
+          failed += 1;
+          channelResults.push('Email 失敗');
+          errMsg = '寄信服務未設定';
         }
-      } catch (e) {
-        failed += 1;
-        const msg = e?.message || '未知錯誤';
-        channelResults.push(`LINE 失敗：${msg}`);
-        errMsg = [errMsg, msg].filter(Boolean).join('；');
       }
-      }
+    } catch (e) {
+      failed += 1;
+      const msg = e?.message || '未知錯誤';
+      channelResults.push(`Email 失敗：${msg}`);
+      errMsg = [errMsg, msg].filter(Boolean).join('；');
     }
 
     if (dedupRowId && failed) {
@@ -315,92 +237,9 @@ async function runScheduledReportNow(scheduleId, triggeredBy = '排程') {
       [startedAt, summary, startedAt, scheduleId]);
     saveDB();
 
-    return { status: sent ? (failed ? 'partial' : 'completed') : 'failed', sent, failed, skipped: 0, provider, channels: channelResults, reason: errMsg };
+    return { status: sent ? 'completed' : 'failed', sent, failed, skipped: 0, provider, channels: channelResults, reason: errMsg };
   } finally {
     runningSchedules.delete(scheduleId);
-  }
-}
-
-async function runLineExpenseReminderNow(reminderId, triggeredBy = '排程') {
-  if (!reminderId) return { status: 'invalid', sent: 0, failed: 0, skipped: 0, reason: '未指定提醒' };
-  if (runningExpenseReminders.has(reminderId)) return { status: 'already_running', sent: 0, failed: 0, skipped: 0, reason: '此提醒已有任務進行中' };
-
-  runningExpenseReminders.add(reminderId);
-  const startedAt = Date.now();
-  try {
-    const db = getDB();
-    const reminder = queryOne('SELECT * FROM line_expense_reminders WHERE id = ?', [reminderId]);
-    if (!reminder) return { status: 'not_found', sent: 0, failed: 0, skipped: 0, reason: '提醒不存在' };
-    if (reminder.enabled === 0) return { status: 'disabled', sent: 0, failed: 0, skipped: 0, reason: '提醒已停用' };
-
-    const u = queryOne('SELECT id, display_name, is_active, line_id FROM users WHERE id = ?', [reminder.user_id]);
-    if (!u) {
-      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?',
-        [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者不存在`, startedAt, reminderId]);
-      saveDB();
-      return { status: 'user_not_found', sent: 0, failed: 0, skipped: 1, reason: '使用者不存在' };
-    }
-    if (u.is_active === 0) {
-      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?',
-        [`${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者帳號已停用，略過提醒`, startedAt, reminderId]);
-      saveDB();
-      return { status: 'skipped', sent: 0, failed: 0, skipped: 1, reason: '使用者帳號已停用' };
-    }
-
-    // issue #281：提醒寄送前重新授權。必須先於任何通道設定檢查，否則「已離開帳本」
-    // 的排程會因為服務未設定而回報成非授權問題，掩蓋真正的失權狀態。
-    const delivery = resolveScheduleDelivery({
-      schedule: reminder,
-      recipientId: u.id,
-      action: '提醒',
-    });
-    if (!delivery.allowed) {
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${delivery.reason}`;
-      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
-      saveDB();
-      return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: delivery.reason };
-    }
-
-    if (!LINE_MESSAGING_CHANNEL_ACCESS_TOKEN) {
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE Messaging API 未設定`;
-      db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
-      saveDB();
-      return { status: 'no_line_service', sent: 0, failed: 1, skipped: 0, reason: 'LINE Messaging API 未設定' };
-    }
-    if (!u.line_id) {
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：使用者尚未綁定 LINE`;
-      db.run('UPDATE line_expense_reminders SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
-        [startedAt, summary, startedAt, reminderId]);
-      saveDB();
-      return { status: 'line_not_linked', sent: 0, failed: 1, skipped: 0, reason: '使用者尚未綁定 LINE' };
-    }
-
-    try {
-      // 再緊貼實際 LINE push 呼叫重新查成員角色，避免排程查詢後到寄送前的撤銷競態。
-      const sendScope = resolveScheduleDelivery({ schedule: reminder, recipientId: u.id, action: '提醒' });
-      if (!sendScope.allowed) {
-        const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：${sendScope.reason}`;
-        db.run('UPDATE line_expense_reminders SET last_summary = ?, updated_at = ? WHERE id = ?', [summary, startedAt, reminderId]);
-        saveDB();
-        return { status: 'unauthorized', sent: 0, failed: 0, skipped: 1, reason: sendScope.reason };
-      }
-      await pushLineMessage(u.line_id, [buildExpenseReminderFlex(u.display_name, getUserLanguage(u.id))]);
-      const finishedAt = Date.now();
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE 提醒成功（完成於 ${formatLocalSummaryTime(finishedAt)}）`;
-      db.run('UPDATE line_expense_reminders SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
-        [startedAt, summary, startedAt, reminderId]);
-      saveDB();
-      return { status: 'completed', sent: 1, failed: 0, skipped: 0 };
-    } catch (e) {
-      const msg = e?.message || '未知錯誤';
-      const summary = `${formatLocalSummaryTime(startedAt)} ${triggeredBy}：LINE 提醒失敗 | 錯誤：${msg}`;
-      db.run('UPDATE line_expense_reminders SET last_run = ?, last_summary = ?, updated_at = ? WHERE id = ?',
-        [startedAt, summary, startedAt, reminderId]);
-      saveDB();
-      return { status: 'failed', sent: 0, failed: 1, skipped: 0, reason: msg };
-    }
-  } finally {
-    runningExpenseReminders.delete(reminderId);
   }
 }
 
@@ -419,7 +258,7 @@ function runDueSchedulesForUser(userId, userTimezone = 'Asia/Taipei', now = Date
 
   try {
     const rows = queryAll(
-      'SELECT * FROM report_schedules WHERE enabled = 1 AND user_id = ?',
+      'SELECT * FROM report_schedules WHERE enabled = 1 AND notify_email <> 0 AND user_id = ?',
       [userId],
     );
     for (const row of rows) {
@@ -427,20 +266,10 @@ function runDueSchedulesForUser(userId, userTimezone = 'Asia/Taipei', now = Date
       if (!shouldRunSchedule(row, userTimezone, now)) continue;
       runScheduledReportNow(row.id, '使用者操作').catch(err => console.error('[scheduled-report]', err));
     }
-
-    const reminders = queryAll(
-      'SELECT * FROM line_expense_reminders WHERE enabled = 1 AND user_id = ?',
-      [userId],
-    );
-    for (const row of reminders) {
-      if (runningExpenseReminders.has(row.id)) continue;
-      if (!shouldRunSchedule(row, userTimezone, now)) continue;
-      runLineExpenseReminderNow(row.id, '使用者操作').catch(err => console.error('[line-expense-reminder]', err));
-    }
   } catch (e) {
     lastUserScheduleCheckAt.delete(key);
     console.error('[scheduled-report] user-triggered check error', e);
   }
 }
 
-export { runDueSchedulesForUser, shouldRunSchedule, runScheduledReportNow, runLineExpenseReminderNow };
+export { runDueSchedulesForUser, shouldRunSchedule, runScheduledReportNow };

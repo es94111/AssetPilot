@@ -370,7 +370,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               leading: Icon(Icons.link),
               title: Text(trKey('mobileLegacyLinkedAccounts')),
-              subtitle: Text('Google / LINE'),
+              subtitle: Text('Google / Apple'),
               onTap: () => _push(AccountBindingsScreen()),
             ),
             ListTile(

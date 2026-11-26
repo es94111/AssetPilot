@@ -1,55 +1,5 @@
-'use client';
+import { notFound } from "next/navigation";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useT } from '@/components/i18n/I18nProvider';
-import { safeOAuthReturnTo } from '@/lib/loginReturn';
-import { AppCallbackStatus } from '@/components/public/AppCallbackStatus';
-
-export default function LineCallbackPage() {
-  const router = useRouter();
-  const { t } = useT();
-  const [message, setMessage] = useState(t('auth.lineCallback.completing'));
-
-  useEffect(() => {
-    async function completeLineFlow() {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-      const state = params.get('state');
-      const flow = state?.startsWith('link.') ? 'link' : 'login';
-
-      // Scrub the one-time code/state out of the visible URL/browser history
-      // immediately: they are bearer-like material for the (short) window
-      // before the server consumes them (AUTH-VULN-07).
-      window.history.replaceState({}, '', window.location.pathname);
-
-      if (!code || !state) {
-        throw new Error(t('auth.lineCallback.missingCode'));
-      }
-
-      const redirectUri = `${window.location.origin}/auth/line/callback`;
-      const endpoint = flow === 'link' ? '/api/account/link-line' : '/api/auth/line';
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || (flow === 'link' ? t('auth.lineCallback.linkFailed') : t('auth.lineCallback.loginFailed')));
-
-      const returnTo = safeOAuthReturnTo(data.returnTo);
-      router.replace(flow === 'link' ? '/settings/account' : (returnTo || '/dashboard'));
-      router.refresh();
-    }
-
-    completeLineFlow().catch((e) => {
-      setMessage(e.message || t('auth.lineCallback.verifyFailed'));
-      setTimeout(() => router.replace('/login'), 1800);
-    });
-  }, [router, t]);
-
-  return (
-    <AppCallbackStatus title={t('auth.lineCallback.completing')} message={message} />
-  );
+export default function RetiredCallback() {
+  notFound();
 }

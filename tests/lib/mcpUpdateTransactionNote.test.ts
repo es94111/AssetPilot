@@ -1,4 +1,4 @@
-// tests/lib/mcpUpdateTransactionNote.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/mcpUpdateTransactionNote.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 // 驗證 update_transaction_note MCP 工具（004-mcp-update-notes-only）：成功更新備註、
 // 其餘欄位逐欄比對不變（SC-002）、回應形狀與 list_transactions 單筆項目一致（FR-015）、
@@ -10,10 +10,10 @@
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('mcpUpdateTransactionNote（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('mcpUpdateTransactionNote（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne, queryAll } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

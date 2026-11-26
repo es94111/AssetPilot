@@ -10,10 +10,6 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useT } from "@/components/i18n/I18nProvider";
 import { localeTag } from "@/lib/i18n/localeTag";
 
-function shouldDisableLineAutoLogin() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
 function isMessageError(message: string) {
   return /\u5931\u6557|\u932f\u8aa4|\u683c\u5f0f|\u4e0d\u53ef|\u8acb|failed|invalid|required|cannot|please/i.test(
     message,
@@ -62,8 +58,6 @@ export default function AccountSettingsClient({
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionsMsg, setSessionsMsg] = useState("");
   const [googleMsg, setGoogleMsg] = useState("");
-  const [lineMsg, setLineMsg] = useState("");
-  const [lineLoading, setLineLoading] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
@@ -363,37 +357,6 @@ export default function AccountSettingsClient({
     }
   }
 
-  async function handleLinkLine() {
-    setLineMsg("");
-    setLineLoading(true);
-    try {
-      const cfgRes = await fetch("/api/config", { cache: "no-store" });
-      const cfg = await cfgRes.json().catch(() => ({}));
-      if (!cfg?.lineChannelId || !cfg?.lineCodeFlow)
-        throw new Error(ta("messages.lineNotConfigured"));
-      const params = new URLSearchParams({
-        flow: "link",
-        origin: window.location.origin,
-      });
-      if (shouldDisableLineAutoLogin()) params.set("disableAutoLogin", "1");
-      window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
-    } catch (e: any) {
-      setLineMsg(e.message || ta("messages.lineLinkFailed"));
-      setLineLoading(false);
-    }
-  }
-
-  async function handleUnlinkLine() {
-    setLineMsg("");
-    try {
-      await apiDelete("/api/account/settings/line");
-      setLineMsg(ta("messages.lineUnlinked"));
-      await load();
-    } catch (e: any) {
-      setLineMsg(e.message || ta("messages.lineUnlinkFailed"));
-    }
-  }
-
   function openDeleteModal() {
     setDeleteMsg("");
     setDeleteConfirmEmail("");
@@ -667,27 +630,6 @@ export default function AccountSettingsClient({
         {googleMsg && (
           <p className="text-sm text-slate-600 mt-3">{googleMsg}</p>
         )}
-      </div>
-
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">{ta("lineTitle")}</h3>
-        <p className="text-sm text-slate-500 mb-4">
-          {ta("statusPrefix")}
-          {profile?.lineLinked ? ta("linkedLine") : ta("notLinkedLine")}
-        </p>
-        <div className="flex gap-3 flex-wrap">
-          {!profile?.lineLinked && (
-            <Button onClick={handleLinkLine} disabled={lineLoading}>
-              {lineLoading ? ta("lineVerifying") : ta("linkLine")}
-            </Button>
-          )}
-          {profile?.lineLinked && (
-            <Button variant="outline" onClick={handleUnlinkLine}>
-              {ta("unlink")}
-            </Button>
-          )}
-        </div>
-        {lineMsg && <p className="text-sm text-slate-600 mt-3">{lineMsg}</p>}
       </div>
 
       <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">

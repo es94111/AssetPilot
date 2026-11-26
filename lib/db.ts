@@ -57,7 +57,7 @@ export function saveDBSync(): void {
 export const flushOnExit = (): void => {};
 
 function hasDatabaseConfig(): boolean {
-  return Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+  return Boolean(process.env.DATABASE_URL);
 }
 
 function errorMessage(error: unknown): string {
@@ -99,7 +99,7 @@ function requestInitialization(): void {
 async function initializeDB(): Promise<void> {
   if (!hasDatabaseConfig()) {
     throw new Error(
-      "未設定 DATABASE_URL 或 POSTGRES_URL，AssetPilot 現在僅支援 PostgreSQL",
+      "未設定 DATABASE_URL，AssetPilot 現在僅支援 PostgreSQL",
     );
   }
 
@@ -243,6 +243,10 @@ export async function* queryAllInKeysetPages<T extends Record<string, string | n
 }
 
 // ── Migrations ──
+export function disableReportsWithoutEmail(db: DatabaseLike = getDB()): void {
+  db.run("UPDATE report_schedules SET enabled = 0 WHERE enabled <> 0 AND notify_email = 0");
+}
+
 async function _runMigrations(db: DatabaseLike): Promise<void> {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -595,6 +599,8 @@ async function _runMigrations(db: DatabaseLike): Promise<void> {
   alterIgnore(
     "ALTER TABLE report_schedules ADD COLUMN notify_line INTEGER NOT NULL DEFAULT 0",
   );
+  // Preserve schedules and their history while preventing unsolicited email after LINE retirement.
+  disableReportsWithoutEmail(db);
   // 分鐘級排程（day_of_month = 0 代表「每月最後一天」）
   alterIgnore(
     "ALTER TABLE report_schedules ADD COLUMN minute INTEGER NOT NULL DEFAULT 0",

@@ -501,16 +501,6 @@
     "description": "Web path: auth.googleVerifying",
     "x-webPath": "auth.googleVerifying"
   },
-  "authLineButton": "تسجيل الدخول باستخدام LINE",
-  "@authLineButton": {
-    "description": "Web path: auth.lineButton",
-    "x-webPath": "auth.lineButton"
-  },
-  "authLineVerifying": "جارٍ التحقق من LINE…",
-  "@authLineVerifying": {
-    "description": "Web path: auth.lineVerifying",
-    "x-webPath": "auth.lineVerifying"
-  },
   "authRegisterSubmit": "إنشاء الحساب",
   "@authRegisterSubmit": {
     "description": "Web path: auth.registerSubmit",
@@ -520,31 +510,6 @@
   "@authRegistering": {
     "description": "Web path: auth.registering",
     "x-webPath": "auth.registering"
-  },
-  "authLineCallbackCompleting": "جارٍ إكمال تحقق LINE...",
-  "@authLineCallbackCompleting": {
-    "description": "Web path: auth.lineCallback.completing",
-    "x-webPath": "auth.lineCallback.completing"
-  },
-  "authLineCallbackMissingCode": "لم يُرجع LINE رمز تفويض. حاول مرة أخرى.",
-  "@authLineCallbackMissingCode": {
-    "description": "Web path: auth.lineCallback.missingCode",
-    "x-webPath": "auth.lineCallback.missingCode"
-  },
-  "authLineCallbackLinkFailed": "تعذر ربط حساب LINE",
-  "@authLineCallbackLinkFailed": {
-    "description": "Web path: auth.lineCallback.linkFailed",
-    "x-webPath": "auth.lineCallback.linkFailed"
-  },
-  "authLineCallbackLoginFailed": "فشل تسجيل الدخول عبر LINE",
-  "@authLineCallbackLoginFailed": {
-    "description": "Web path: auth.lineCallback.loginFailed",
-    "x-webPath": "auth.lineCallback.loginFailed"
-  },
-  "authLineCallbackVerifyFailed": "فشل تحقق LINE",
-  "@authLineCallbackVerifyFailed": {
-    "description": "Web path: auth.lineCallback.verifyFailed",
-    "x-webPath": "auth.lineCallback.verifyFailed"
   },
   "authErrorsTurnstileRequired": "يرجى إكمال التحقق البشري أولًا",
   "@authErrorsTurnstileRequired": {
@@ -606,16 +571,6 @@
     "description": "Web path: auth.errors.passkeyFailed",
     "x-webPath": "auth.errors.passkeyFailed"
   },
-  "authErrorsLineNotConfigured": "تسجيل الدخول عبر LINE غير مهيأ",
-  "@authErrorsLineNotConfigured": {
-    "description": "Web path: auth.errors.lineNotConfigured",
-    "x-webPath": "auth.errors.lineNotConfigured"
-  },
-  "authErrorsLineFailed": "فشل تسجيل الدخول عبر LINE",
-  "@authErrorsLineFailed": {
-    "description": "Web path: auth.errors.lineFailed",
-    "x-webPath": "auth.errors.lineFailed"
-  },
   "settingsTitle": "الإعدادات",
   "@settingsTitle": {
     "description": "Web path: settings.title",
@@ -626,7 +581,7 @@
     "description": "Web path: settings.language.title",
     "x-webPath": "settings.language.title"
   },
-  "settingsLanguageDescription": "اختر لغة الواجهة والإشعارات (البريد الإلكتروني / LINE).",
+  "settingsLanguageDescription": "اختر لغة الواجهة والإشعارات (البريد الإلكتروني).",
   "@settingsLanguageDescription": {
     "description": "Web path: settings.language.description",
     "x-webPath": "settings.language.description"
@@ -776,11 +731,6 @@
     "description": "Web path: settings.account.googleTitle",
     "x-webPath": "settings.account.googleTitle"
   },
-  "settingsAccountLineTitle": "ربط LINE",
-  "@settingsAccountLineTitle": {
-    "description": "Web path: settings.account.lineTitle",
-    "x-webPath": "settings.account.lineTitle"
-  },
   "settingsAccountStatusPrefix": "الحالة الحالية: ",
   "@settingsAccountStatusPrefix": {
     "description": "Web path: settings.account.statusPrefix",
@@ -805,26 +755,6 @@
   "@settingsAccountUnlink": {
     "description": "Web path: settings.account.unlink",
     "x-webPath": "settings.account.unlink"
-  },
-  "settingsAccountLinkedLine": "حساب LINE مربوط",
-  "@settingsAccountLinkedLine": {
-    "description": "Web path: settings.account.linkedLine",
-    "x-webPath": "settings.account.linkedLine"
-  },
-  "settingsAccountNotLinkedLine": "حساب LINE غير مربوط",
-  "@settingsAccountNotLinkedLine": {
-    "description": "Web path: settings.account.notLinkedLine",
-    "x-webPath": "settings.account.notLinkedLine"
-  },
-  "settingsAccountLinkLine": "ربط حساب LINE",
-  "@settingsAccountLinkLine": {
-    "description": "Web path: settings.account.linkLine",
-    "x-webPath": "settings.account.linkLine"
-  },
-  "settingsAccountLineVerifying": "جارٍ التحقق من LINE…",
-  "@settingsAccountLineVerifying": {
-    "description": "Web path: settings.account.lineVerifying",
-    "x-webPath": "settings.account.lineVerifying"
   },
   "settingsAccountSessionsTitle": "الأجهزة المسجّلة",
   "@settingsAccountSessionsTitle": {
@@ -1088,26 +1018,6 @@
   "@settingsAccountMessagesGoogleUnlinkFailed": {
     "description": "Web path: settings.account.messages.googleUnlinkFailed",
     "x-webPath": "settings.account.messages.googleUnlinkFailed"
-  },
-  "settingsAccountMessagesLineNotConfigured": "تسجيل الدخول عبر LINE غير مهيأ",
-  "@settingsAccountMessagesLineNotConfigured": {
-    "description": "Web path: settings.account.messages.lineNotConfigured",
-    "x-webPath": "settings.account.messages.lineNotConfigured"
-  },
-  "settingsAccountMessagesLineLinkFailed": "تعذر ربط حساب LINE",
-  "@settingsAccountMessagesLineLinkFailed": {
-    "description": "Web path: settings.account.messages.lineLinkFailed",
-    "x-webPath": "settings.account.messages.lineLinkFailed"
-  },
-  "settingsAccountMessagesLineUnlinked": "تم إلغاء ربط حساب LINE",
-  "@settingsAccountMessagesLineUnlinked": {
-    "description": "Web path: settings.account.messages.lineUnlinked",
-    "x-webPath": "settings.account.messages.lineUnlinked"
-  },
-  "settingsAccountMessagesLineUnlinkFailed": "تعذر إلغاء ربط حساب LINE",
-  "@settingsAccountMessagesLineUnlinkFailed": {
-    "description": "Web path: settings.account.messages.lineUnlinkFailed",
-    "x-webPath": "settings.account.messages.lineUnlinkFailed"
   },
   "settingsAccountMessagesDeletePasswordRequired": "أدخل كلمة المرور لتأكيد الحذف",
   "@settingsAccountMessagesDeletePasswordRequired": {
@@ -1783,7 +1693,7 @@
     "description": "Web path: public.apiCreditsPage.usageNotes.login.title",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.title"
   },
-  "publicApiCreditsPageUsageNotesLoginText": "يُستخدم Google وLINE فقط عندما تسجل الدخول أو تربط حسابًا بإرادتك.",
+  "publicApiCreditsPageUsageNotesLoginText": "يُستخدم تسجيل الدخول عبر Google عند تسجيل الدخول أو ربط حساب.",
   "@publicApiCreditsPageUsageNotesLoginText": {
     "description": "Web path: public.apiCreditsPage.usageNotes.login.text",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.text"
@@ -1857,11 +1767,6 @@
   "@publicApiCreditsPageDescriptionsGoogle": {
     "description": "Web path: public.apiCreditsPage.descriptions.google",
     "x-webPath": "public.apiCreditsPage.descriptions.google"
-  },
-  "publicApiCreditsPageDescriptionsLine": "تسجيل دخول LINE وربط الحساب",
-  "@publicApiCreditsPageDescriptionsLine": {
-    "description": "Web path: public.apiCreditsPage.descriptions.line",
-    "x-webPath": "public.apiCreditsPage.descriptions.line"
   },
   "publicApiCreditsPageDescriptionsSmtp": "قناة إرسال بريد لتقارير أصول المسؤول عبر Gmail أو Outlook أو خادم SMTP آخر",
   "@publicApiCreditsPageDescriptionsSmtp": {
@@ -4810,11 +4715,6 @@
     "description": "Web path: notifications.cta.viewFullReport",
     "x-webPath": "notifications.cta.viewFullReport"
   },
-  "notificationsCtaViewLineRecord": "عرض سجلات LINE",
-  "@notificationsCtaViewLineRecord": {
-    "description": "Web path: notifications.cta.viewLineRecord",
-    "x-webPath": "notifications.cta.viewLineRecord"
-  },
   "notificationsReminderAltText": "تذكير بتسجيل المصروف",
   "@notificationsReminderAltText": {
     "description": "Web path: notifications.reminder.altText",
@@ -5543,11 +5443,6 @@
     "description": "Mobile compatibility string: 掌握收支全貌",
     "x-webPath": "mobileLegacy.seeYourCompleteCashFlow"
   },
-  "mobileLegacyUnableToCreateLineSignInState": "Unable to create LINE sign-in state",
-  "@mobileLegacyUnableToCreateLineSignInState": {
-    "description": "Mobile compatibility string: 無法建立 LINE 登入狀態",
-    "x-webPath": "mobileLegacy.unableToCreateLineSignInState"
-  },
   "mobileLegacyUnableToOpenBrowser": "تعذر فتح المتصفح",
   "@mobileLegacyUnableToOpenBrowser": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器",
@@ -5557,11 +5452,6 @@
   "@mobileLegacyUnableToOpenTheBrowserForGoogleSign": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器進行 Google 登入",
     "x-webPath": "mobileLegacy.unableToOpenTheBrowserForGoogleSign"
-  },
-  "mobileLegacyUnableToOpenTheBrowserForLineSign": "Unable to open the browser for LINE sign-in",
-  "@mobileLegacyUnableToOpenTheBrowserForLineSign": {
-    "description": "Mobile compatibility string: 無法開啟瀏覽器進行 LINE 登入",
-    "x-webPath": "mobileLegacy.unableToOpenTheBrowserForLineSign"
   },
   "mobileLegacyUnableToOpenTheBrowserForPasskeySign": "Unable to open the browser for passkey sign-in",
   "@mobileLegacyUnableToOpenTheBrowserForPasskeySign": {
@@ -5747,11 +5637,6 @@
   "@mobileLegacyBankBalance": {
     "description": "Mobile compatibility string: 銀行餘額",
     "x-webPath": "mobileLegacy.bankBalance"
-  },
-  "mobileLegacyRequiresALinkedLineAccount": "يتطلب ربط حساب LINE",
-  "@mobileLegacyRequiresALinkedLineAccount": {
-    "description": "Mobile compatibility string: 需已綁定 LINE",
-    "x-webPath": "mobileLegacy.requiresALinkedLineAccount"
   },
   "mobileLegacyACreditCardAndANonCreditCard": "تحتاج إلى بطاقة ائتمان واحدة وحساب غير بطاقة ائتمان لتسجيل السداد",
   "@mobileLegacyACreditCardAndANonCreditCard": {
@@ -6037,26 +5922,6 @@
   "@mobileLegacyGoogleSignInTimedOutOrWasCancelled": {
     "description": "Mobile compatibility string: Google 登入逾時或已取消",
     "x-webPath": "mobileLegacy.googleSignInTimedOutOrWasCancelled"
-  },
-  "mobileLegacyLineNotifications": "إشعارات LINE",
-  "@mobileLegacyLineNotifications": {
-    "description": "Mobile compatibility string: LINE 通知",
-    "x-webPath": "mobileLegacy.lineNotifications"
-  },
-  "mobileLegacyTheLineSignInResponseDidNotInclude": "استجابة LINE لا تحتوي على Cookie المصادقة",
-  "@mobileLegacyTheLineSignInResponseDidNotInclude": {
-    "description": "Mobile compatibility string: LINE 登入回應未包含認證 Cookie",
-    "x-webPath": "mobileLegacy.theLineSignInResponseDidNotInclude"
-  },
-  "mobileLegacyLineSignInStateMismatchTryAgain": "LINE sign-in state mismatch. Try again.",
-  "@mobileLegacyLineSignInStateMismatchTryAgain": {
-    "description": "Mobile compatibility string: LINE 登入狀態不符，請重試",
-    "x-webPath": "mobileLegacy.lineSignInStateMismatchTryAgain"
-  },
-  "mobileLegacyLineSignInTimedOutOrWasCancelled": "LINE sign-in timed out or was cancelled",
-  "@mobileLegacyLineSignInTimedOutOrWasCancelled": {
-    "description": "Mobile compatibility string: LINE 登入逾時或已取消",
-    "x-webPath": "mobileLegacy.lineSignInTimedOutOrWasCancelled"
   },
   "mobileLegacyPasskeySignInTimedOutOrWasCancelled": "Passkey sign-in timed out or was cancelled",
   "@mobileLegacyPasskeySignInTimedOutOrWasCancelled": {
@@ -7259,11 +7124,6 @@
   "@adminPublicRegistration": {
     "description": "Web path: admin.adminPublicRegistration",
     "x-webPath": "admin.adminPublicRegistration"
-  },
-  "adminLineLoginEnabled": "تسجيل الدخول عبر LINE",
-  "@adminLineLoginEnabled": {
-    "description": "Web path: admin.adminLineLoginEnabled",
-    "x-webPath": "admin.adminLineLoginEnabled"
   },
   "adminAllowedRegistrationEmails": "رسائل البريد المسموح بالتسجيل بها (واحد لكل سطر)",
   "@adminAllowedRegistrationEmails": {
@@ -9542,7 +9402,7 @@
     "description": "Web path: settings.notifications.title",
     "x-webPath": "settings.notifications.title"
   },
-  "settingsNotificationsDescription": "عند التفعيل، تُرسل الأحداث المطابقة فورًا إلى أجهزتك المشتركة. لا يؤثر ذلك على إشعارات التقارير عبر البريد الإلكتروني/LINE.",
+  "settingsNotificationsDescription": "عند التفعيل، تُرسل الأحداث المطابقة فورًا إلى أجهزتك المشتركة. لا يؤثر ذلك على إشعارات التقارير عبر البريد الإلكتروني.",
   "@settingsNotificationsDescription": {
     "description": "Web path: settings.notifications.description",
     "x-webPath": "settings.notifications.description"

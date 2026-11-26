@@ -24,7 +24,6 @@ class AppUser {
   final bool isSuperAdmin; // 一般（唯讀）管理員為 false
   final String defaultCurrency;
   final bool googleLinked;
-  final bool lineLinked;
   final bool appleLinked;
 
   AppUser({
@@ -35,7 +34,6 @@ class AppUser {
     required this.isSuperAdmin,
     required this.defaultCurrency,
     required this.googleLinked,
-    required this.lineLinked,
     this.appleLinked = false,
   });
 
@@ -52,7 +50,6 @@ class AppUser {
           ? 'TWD'
           : _asStr(j['defaultCurrency']),
       googleLinked: _asBool(j['googleLinked']) || _asBool(j['google_linked']),
-      lineLinked: _asBool(j['lineLinked']) || _asBool(j['line_linked']),
       appleLinked: _asBool(j['appleLinked']) || _asBool(j['apple_linked']),
     );
   }
@@ -799,7 +796,6 @@ class ReportSchedule {
   final int dayOfMonth; // 0=每月最後一天，1-28
   final bool enabled;
   final bool notifyEmail;
-  final bool notifyLine;
   final num lastRun;
 
   ReportSchedule({
@@ -812,7 +808,6 @@ class ReportSchedule {
     required this.dayOfMonth,
     required this.enabled,
     required this.notifyEmail,
-    required this.notifyLine,
     required this.lastRun,
   });
 
@@ -826,7 +821,6 @@ class ReportSchedule {
     dayOfMonth: _asNum(j['dayOfMonth']).toInt(),
     enabled: _asBool(j['enabled']),
     notifyEmail: _asBool(j['notifyEmail']),
-    notifyLine: _asBool(j['notifyLine']),
     lastRun: _asNum(j['lastRun']),
   );
 }

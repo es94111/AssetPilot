@@ -8,7 +8,7 @@ AssetPilot 資產管理系統的 Android App，以 Flutter 撰寫，透過現有
 
 | 模組 | 功能 | 端點 |
 |------|------|------|
-| 登入 | 帳密、Google、LINE、Passkey 登入，httpOnly Cookie 持久化 | `auth/login`、`auth/me`、`auth/logout`、`auth/google`、`auth/line`、`auth/passkey` |
+| 登入 | Google、Apple、Passkey 登入，httpOnly Cookie 持久化 | `auth/me`、`auth/logout`、`auth/google`、`auth/apple`、`auth/passkey` |
 | 儀表板 | 月份切換、收入/支出/淨額、銀行餘額、股票市值、支出分類圓餅圖、最近交易 | `dashboard` |
 | 記帳 | 列表（全部/收入/支出）、新增/編輯/刪除、轉帳、照片附件（拍照/選圖/刪除） | `transactions`、`transactions/transfer`、`transactions/[txId]/attachments` |
 | 帳戶 | 列表 + 新增/編輯/刪除，多幣別、類型、排除總資產 | `accounts` |
@@ -19,7 +19,7 @@ AssetPilot 資產管理系統的 Android App，以 Flutter 撰寫，透過現有
 | 股票設定 | 手續費/證交稅率、股票狀態管理（下市/恢復追蹤）、定期定額（新增/編輯/啟用/刪除） | `stock-settings`、`stock-recurring`、`stocks/batch-price` |
 | 報表 | 自訂區間 + 收入/支出，分類圓餅圖與明細 | `reports` |
 | 設定 | 顯示名稱、主題（淺/深/系統）、語言、幣別、定期報表通知、帳號安全、登出 | `account/settings/*` |
-| 管理員 | 系統設定（開放註冊/LINE 登入/允許 Email/IP 白名單/稽核模式/照片儲存/股價自動更新）、使用者管理、登入稽核、股價立即更新、照片壓縮/加密、NTP 同步 | `admin/*` |
+| 管理員 | 系統設定（開放註冊/允許 Email/IP 白名單/稽核模式/照片儲存/股價自動更新）、使用者管理、登入稽核、股價立即更新、照片壓縮/加密、NTP 同步 | `admin/*` |
 
 > 尚未涵蓋：CSV 匯出入、整檔備份還原。這些屬資料移轉用途，行動端優先度較低，可後續補。
 
@@ -34,7 +34,6 @@ lib/
 ├── format.dart               # 金額/顏色格式化
 ├── widgets.dart              # AsyncView / EmptyState / toast 共用元件
 ├── google_auth.dart          # Google SSO（系統瀏覽器 + App Link 回呼）
-├── line_auth.dart            # LINE 登入（系統瀏覽器 + App Link 回呼）
 ├── passkey_auth.dart         # Passkey 登入（網頁 WebAuthn + auth-ticket 回呼）
 └── screens/                  # 各功能畫面（login / dashboard / transactions /
                               #   accounts / categories / budgets / recurring /

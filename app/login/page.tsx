@@ -31,17 +31,12 @@ declare global {
   }
 }
 
-function shouldDisableLineAutoLogin() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const { t, locale } = useT();
   const [error, setError] = useState("");
   const [config, setConfig] = useState<any>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [lineLoading, setLineLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [turnstileScriptLoaded, setTurnstileScriptLoaded] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -245,32 +240,7 @@ export default function LoginPage() {
     }
   }
 
-  async function handleLineLogin() {
-    setError("");
-    if (!requireTurnstile()) return;
-    if (!config?.lineChannelId || !config?.lineCodeFlow) {
-      setError(t("auth.errors.lineNotConfigured"));
-      return;
-    }
-    setLineLoading(true);
-    try {
-      const params = new URLSearchParams({
-        flow: "login",
-        origin: window.location.origin,
-      });
-      if (turnstileToken) params.set("turnstileToken", turnstileToken);
-      if (shouldDisableLineAutoLogin()) params.set("disableAutoLogin", "1");
-      const returnTo = loginDestination();
-      if (returnTo !== "/dashboard") params.set("returnTo", returnTo);
-      window.location.assign(`/api/auth/line/authorize?${params.toString()}`);
-    } catch (e: any) {
-      setError(e.message || t("auth.errors.lineFailed"));
-      setLineLoading(false);
-    }
-  }
-
   const googleEnabled = !!config?.googleClientId && !!config?.googleCodeFlow;
-  const lineEnabled = !!config?.lineChannelId && !!config?.lineCodeFlow;
 
   return (
     <main className="login-bg">
@@ -338,36 +308,9 @@ export default function LoginPage() {
                 : t("auth.googleButton")}
             </button>
           )}
-          {lineEnabled && (
-            <button
-              type="button"
-              className="login-btn-google"
-              onClick={handleLineLogin}
-              disabled={lineLoading}
-            >
-              <LineIcon />
-              {lineLoading ? t("auth.lineVerifying") : t("auth.lineButton")}
-            </button>
-          )}
         </div>
       </div>
     </main>
-  );
-}
-
-function LineIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-      <rect width="18" height="18" rx="4" fill="#06C755" />
-      <path
-        fill="#fff"
-        d="M14.35 8.1c0-2.34-2.35-4.24-5.24-4.24S3.86 5.76 3.86 8.1c0 2.1 1.86 3.86 4.38 4.19.17.04.4.11.46.26.05.13.03.34.02.47l-.07.45c-.02.13-.11.52.45.28.56-.24 3.03-1.79 4.13-3.06.76-.83 1.12-1.67 1.12-2.59Z"
-      />
-      <path
-        fill="#06C755"
-        d="M6.47 6.94h-.37a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h1.31c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-.84V7.04a.1.1 0 0 0-.1-.1Zm1.42 0h-.37a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h.37c.06 0 .1-.04.1-.1V7.04a.1.1 0 0 0-.1-.1Zm2.44 0h-.37a.1.1 0 0 0-.1.1v1.36L8.82 6.98a.1.1 0 0 0-.08-.04h-.36a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h.37c.06 0 .1-.04.1-.1V7.97l1.05 1.42.02.02.01.01h.01l.01.01h.39c.06 0 .1-.04.1-.1V7.04a.1.1 0 0 0-.1-.1Zm1.68.57c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-1.31a.1.1 0 0 0-.1.1v2.29c0 .06.04.1.1.1h1.31c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-.84v-.39h.84c.06 0 .1-.04.1-.1v-.37a.1.1 0 0 0-.1-.1h-.84v-.39h.84Z"
-      />
-    </svg>
   );
 }
 

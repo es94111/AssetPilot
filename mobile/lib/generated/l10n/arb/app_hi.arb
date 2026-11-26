@@ -501,16 +501,6 @@
     "description": "Web path: auth.googleVerifying",
     "x-webPath": "auth.googleVerifying"
   },
-  "authLineButton": "LINE से साइन इन करें",
-  "@authLineButton": {
-    "description": "Web path: auth.lineButton",
-    "x-webPath": "auth.lineButton"
-  },
-  "authLineVerifying": "LINE सत्यापित हो रहा है…",
-  "@authLineVerifying": {
-    "description": "Web path: auth.lineVerifying",
-    "x-webPath": "auth.lineVerifying"
-  },
   "authRegisterSubmit": "खाता बनाएँ",
   "@authRegisterSubmit": {
     "description": "Web path: auth.registerSubmit",
@@ -520,31 +510,6 @@
   "@authRegistering": {
     "description": "Web path: auth.registering",
     "x-webPath": "auth.registering"
-  },
-  "authLineCallbackCompleting": "LINE सत्यापन पूरा हो रहा है...",
-  "@authLineCallbackCompleting": {
-    "description": "Web path: auth.lineCallback.completing",
-    "x-webPath": "auth.lineCallback.completing"
-  },
-  "authLineCallbackMissingCode": "LINE ने authorization code वापस नहीं किया। कृपया फिर कोशिश करें।",
-  "@authLineCallbackMissingCode": {
-    "description": "Web path: auth.lineCallback.missingCode",
-    "x-webPath": "auth.lineCallback.missingCode"
-  },
-  "authLineCallbackLinkFailed": "LINE खाता लिंक नहीं हो पाया",
-  "@authLineCallbackLinkFailed": {
-    "description": "Web path: auth.lineCallback.linkFailed",
-    "x-webPath": "auth.lineCallback.linkFailed"
-  },
-  "authLineCallbackLoginFailed": "LINE साइन इन विफल",
-  "@authLineCallbackLoginFailed": {
-    "description": "Web path: auth.lineCallback.loginFailed",
-    "x-webPath": "auth.lineCallback.loginFailed"
-  },
-  "authLineCallbackVerifyFailed": "LINE सत्यापन विफल",
-  "@authLineCallbackVerifyFailed": {
-    "description": "Web path: auth.lineCallback.verifyFailed",
-    "x-webPath": "auth.lineCallback.verifyFailed"
   },
   "authErrorsTurnstileRequired": "पहले मानव सत्यापन पूरा करें",
   "@authErrorsTurnstileRequired": {
@@ -606,16 +571,6 @@
     "description": "Web path: auth.errors.passkeyFailed",
     "x-webPath": "auth.errors.passkeyFailed"
   },
-  "authErrorsLineNotConfigured": "LINE साइन इन कॉन्फ़िगर नहीं है",
-  "@authErrorsLineNotConfigured": {
-    "description": "Web path: auth.errors.lineNotConfigured",
-    "x-webPath": "auth.errors.lineNotConfigured"
-  },
-  "authErrorsLineFailed": "LINE साइन इन विफल",
-  "@authErrorsLineFailed": {
-    "description": "Web path: auth.errors.lineFailed",
-    "x-webPath": "auth.errors.lineFailed"
-  },
   "settingsTitle": "सेटिंग्स",
   "@settingsTitle": {
     "description": "Web path: settings.title",
@@ -626,7 +581,7 @@
     "description": "Web path: settings.language.title",
     "x-webPath": "settings.language.title"
   },
-  "settingsLanguageDescription": "इंटरफ़ेस और सूचनाओं (Email / LINE) की भाषा चुनें।",
+  "settingsLanguageDescription": "इंटरफ़ेस और सूचनाओं (Email) की भाषा चुनें।",
   "@settingsLanguageDescription": {
     "description": "Web path: settings.language.description",
     "x-webPath": "settings.language.description"
@@ -776,11 +731,6 @@
     "description": "Web path: settings.account.googleTitle",
     "x-webPath": "settings.account.googleTitle"
   },
-  "settingsAccountLineTitle": "LINE लिंक",
-  "@settingsAccountLineTitle": {
-    "description": "Web path: settings.account.lineTitle",
-    "x-webPath": "settings.account.lineTitle"
-  },
   "settingsAccountStatusPrefix": "मौजूदा स्थिति: ",
   "@settingsAccountStatusPrefix": {
     "description": "Web path: settings.account.statusPrefix",
@@ -805,26 +755,6 @@
   "@settingsAccountUnlink": {
     "description": "Web path: settings.account.unlink",
     "x-webPath": "settings.account.unlink"
-  },
-  "settingsAccountLinkedLine": "LINE खाता लिंक है",
-  "@settingsAccountLinkedLine": {
-    "description": "Web path: settings.account.linkedLine",
-    "x-webPath": "settings.account.linkedLine"
-  },
-  "settingsAccountNotLinkedLine": "LINE खाता लिंक नहीं है",
-  "@settingsAccountNotLinkedLine": {
-    "description": "Web path: settings.account.notLinkedLine",
-    "x-webPath": "settings.account.notLinkedLine"
-  },
-  "settingsAccountLinkLine": "LINE खाता लिंक करें",
-  "@settingsAccountLinkLine": {
-    "description": "Web path: settings.account.linkLine",
-    "x-webPath": "settings.account.linkLine"
-  },
-  "settingsAccountLineVerifying": "LINE सत्यापित हो रहा है…",
-  "@settingsAccountLineVerifying": {
-    "description": "Web path: settings.account.lineVerifying",
-    "x-webPath": "settings.account.lineVerifying"
   },
   "settingsAccountSessionsTitle": "साइन इन डिवाइस",
   "@settingsAccountSessionsTitle": {
@@ -1088,26 +1018,6 @@
   "@settingsAccountMessagesGoogleUnlinkFailed": {
     "description": "Web path: settings.account.messages.googleUnlinkFailed",
     "x-webPath": "settings.account.messages.googleUnlinkFailed"
-  },
-  "settingsAccountMessagesLineNotConfigured": "LINE साइन इन सेट नहीं है",
-  "@settingsAccountMessagesLineNotConfigured": {
-    "description": "Web path: settings.account.messages.lineNotConfigured",
-    "x-webPath": "settings.account.messages.lineNotConfigured"
-  },
-  "settingsAccountMessagesLineLinkFailed": "LINE खाता लिंक नहीं हो पाया",
-  "@settingsAccountMessagesLineLinkFailed": {
-    "description": "Web path: settings.account.messages.lineLinkFailed",
-    "x-webPath": "settings.account.messages.lineLinkFailed"
-  },
-  "settingsAccountMessagesLineUnlinked": "LINE खाता अनलिंक हो गया",
-  "@settingsAccountMessagesLineUnlinked": {
-    "description": "Web path: settings.account.messages.lineUnlinked",
-    "x-webPath": "settings.account.messages.lineUnlinked"
-  },
-  "settingsAccountMessagesLineUnlinkFailed": "LINE खाता अनलिंक नहीं हो पाया",
-  "@settingsAccountMessagesLineUnlinkFailed": {
-    "description": "Web path: settings.account.messages.lineUnlinkFailed",
-    "x-webPath": "settings.account.messages.lineUnlinkFailed"
   },
   "settingsAccountMessagesDeletePasswordRequired": "हटाने की पुष्टि के लिए पासवर्ड दर्ज करें",
   "@settingsAccountMessagesDeletePasswordRequired": {
@@ -1783,7 +1693,7 @@
     "description": "Web path: public.apiCreditsPage.usageNotes.login.title",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.title"
   },
-  "publicApiCreditsPageUsageNotesLoginText": "Google और LINE केवल तब चालू होते हैं जब आप खुद साइन इन या लिंक करते हैं।",
+  "publicApiCreditsPageUsageNotesLoginText": "Google से साइन इन का उपयोग तब होता है जब आप साइन इन करते हैं या कोई खाता जोड़ते हैं।",
   "@publicApiCreditsPageUsageNotesLoginText": {
     "description": "Web path: public.apiCreditsPage.usageNotes.login.text",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.text"
@@ -1857,11 +1767,6 @@
   "@publicApiCreditsPageDescriptionsGoogle": {
     "description": "Web path: public.apiCreditsPage.descriptions.google",
     "x-webPath": "public.apiCreditsPage.descriptions.google"
-  },
-  "publicApiCreditsPageDescriptionsLine": "LINE साइन इन और खाता लिंकिंग",
-  "@publicApiCreditsPageDescriptionsLine": {
-    "description": "Web path: public.apiCreditsPage.descriptions.line",
-    "x-webPath": "public.apiCreditsPage.descriptions.line"
   },
   "publicApiCreditsPageDescriptionsSmtp": "Gmail, Outlook या अन्य SMTP server के ज़रिए एडमिन संपत्ति रिपोर्ट भेजने का ईमेल चैनल",
   "@publicApiCreditsPageDescriptionsSmtp": {
@@ -4810,11 +4715,6 @@
     "description": "Web path: notifications.cta.viewFullReport",
     "x-webPath": "notifications.cta.viewFullReport"
   },
-  "notificationsCtaViewLineRecord": "LINE रिकॉर्ड देखें",
-  "@notificationsCtaViewLineRecord": {
-    "description": "Web path: notifications.cta.viewLineRecord",
-    "x-webPath": "notifications.cta.viewLineRecord"
-  },
   "notificationsReminderAltText": "खर्च याद दिलाने वाला संदेश",
   "@notificationsReminderAltText": {
     "description": "Web path: notifications.reminder.altText",
@@ -5543,11 +5443,6 @@
     "description": "Mobile compatibility string: 掌握收支全貌",
     "x-webPath": "mobileLegacy.seeYourCompleteCashFlow"
   },
-  "mobileLegacyUnableToCreateLineSignInState": "Unable to create LINE sign-in state",
-  "@mobileLegacyUnableToCreateLineSignInState": {
-    "description": "Mobile compatibility string: 無法建立 LINE 登入狀態",
-    "x-webPath": "mobileLegacy.unableToCreateLineSignInState"
-  },
   "mobileLegacyUnableToOpenBrowser": "ब्राउज़र नहीं खुल पाया",
   "@mobileLegacyUnableToOpenBrowser": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器",
@@ -5557,11 +5452,6 @@
   "@mobileLegacyUnableToOpenTheBrowserForGoogleSign": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器進行 Google 登入",
     "x-webPath": "mobileLegacy.unableToOpenTheBrowserForGoogleSign"
-  },
-  "mobileLegacyUnableToOpenTheBrowserForLineSign": "Unable to open the browser for LINE sign-in",
-  "@mobileLegacyUnableToOpenTheBrowserForLineSign": {
-    "description": "Mobile compatibility string: 無法開啟瀏覽器進行 LINE 登入",
-    "x-webPath": "mobileLegacy.unableToOpenTheBrowserForLineSign"
   },
   "mobileLegacyUnableToOpenTheBrowserForPasskeySign": "Unable to open the browser for passkey sign-in",
   "@mobileLegacyUnableToOpenTheBrowserForPasskeySign": {
@@ -5747,11 +5637,6 @@
   "@mobileLegacyBankBalance": {
     "description": "Mobile compatibility string: 銀行餘額",
     "x-webPath": "mobileLegacy.bankBalance"
-  },
-  "mobileLegacyRequiresALinkedLineAccount": "LINE account लिंक होना चाहिए",
-  "@mobileLegacyRequiresALinkedLineAccount": {
-    "description": "Mobile compatibility string: 需已綁定 LINE",
-    "x-webPath": "mobileLegacy.requiresALinkedLineAccount"
   },
   "mobileLegacyACreditCardAndANonCreditCard": "भुगतान दर्ज करने के लिए कम से कम एक क्रेडिट कार्ड और एक गैर-क्रेडिट कार्ड खाता चाहिए",
   "@mobileLegacyACreditCardAndANonCreditCard": {
@@ -6037,26 +5922,6 @@
   "@mobileLegacyGoogleSignInTimedOutOrWasCancelled": {
     "description": "Mobile compatibility string: Google 登入逾時或已取消",
     "x-webPath": "mobileLegacy.googleSignInTimedOutOrWasCancelled"
-  },
-  "mobileLegacyLineNotifications": "LINE notifications",
-  "@mobileLegacyLineNotifications": {
-    "description": "Mobile compatibility string: LINE 通知",
-    "x-webPath": "mobileLegacy.lineNotifications"
-  },
-  "mobileLegacyTheLineSignInResponseDidNotInclude": "LINE साइन इन प्रतिक्रिया में authentication cookie नहीं है",
-  "@mobileLegacyTheLineSignInResponseDidNotInclude": {
-    "description": "Mobile compatibility string: LINE 登入回應未包含認證 Cookie",
-    "x-webPath": "mobileLegacy.theLineSignInResponseDidNotInclude"
-  },
-  "mobileLegacyLineSignInStateMismatchTryAgain": "LINE sign-in state mismatch. Try again.",
-  "@mobileLegacyLineSignInStateMismatchTryAgain": {
-    "description": "Mobile compatibility string: LINE 登入狀態不符，請重試",
-    "x-webPath": "mobileLegacy.lineSignInStateMismatchTryAgain"
-  },
-  "mobileLegacyLineSignInTimedOutOrWasCancelled": "LINE sign-in timed out or was cancelled",
-  "@mobileLegacyLineSignInTimedOutOrWasCancelled": {
-    "description": "Mobile compatibility string: LINE 登入逾時或已取消",
-    "x-webPath": "mobileLegacy.lineSignInTimedOutOrWasCancelled"
   },
   "mobileLegacyPasskeySignInTimedOutOrWasCancelled": "Passkey sign-in timed out or was cancelled",
   "@mobileLegacyPasskeySignInTimedOutOrWasCancelled": {
@@ -7259,11 +7124,6 @@
   "@adminPublicRegistration": {
     "description": "Web path: admin.adminPublicRegistration",
     "x-webPath": "admin.adminPublicRegistration"
-  },
-  "adminLineLoginEnabled": "LINE लॉगिन",
-  "@adminLineLoginEnabled": {
-    "description": "Web path: admin.adminLineLoginEnabled",
-    "x-webPath": "admin.adminLineLoginEnabled"
   },
   "adminAllowedRegistrationEmails": "अनुमत पंजीकरण ईमेल (प्रति पंक्ति एक)",
   "@adminAllowedRegistrationEmails": {
@@ -9542,7 +9402,7 @@
     "description": "Web path: settings.notifications.title",
     "x-webPath": "settings.notifications.title"
   },
-  "settingsNotificationsDescription": "सक्षम होने पर, मेल खाती घटनाएँ आपके सब्सक्राइब किए गए उपकरणों पर तुरंत भेजी जाती हैं। यह Email/LINE रिपोर्ट सूचनाओं को प्रभावित नहीं करता।",
+  "settingsNotificationsDescription": "सक्षम होने पर, मेल खाती घटनाएँ आपके सब्सक्राइब किए गए उपकरणों पर तुरंत भेजी जाती हैं। यह Email रिपोर्ट सूचनाओं को प्रभावित नहीं करता।",
   "@settingsNotificationsDescription": {
     "description": "Web path: settings.notifications.description",
     "x-webPath": "settings.notifications.description"

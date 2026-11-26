@@ -501,16 +501,6 @@
     "description": "Web path: auth.googleVerifying",
     "x-webPath": "auth.googleVerifying"
   },
-  "authLineButton": "Connexion avec LINE",
-  "@authLineButton": {
-    "description": "Web path: auth.lineButton",
-    "x-webPath": "auth.lineButton"
-  },
-  "authLineVerifying": "Vérification LINE…",
-  "@authLineVerifying": {
-    "description": "Web path: auth.lineVerifying",
-    "x-webPath": "auth.lineVerifying"
-  },
   "authRegisterSubmit": "Créer le compte",
   "@authRegisterSubmit": {
     "description": "Web path: auth.registerSubmit",
@@ -520,31 +510,6 @@
   "@authRegistering": {
     "description": "Web path: auth.registering",
     "x-webPath": "auth.registering"
-  },
-  "authLineCallbackCompleting": "Finalisation de la vérification LINE...",
-  "@authLineCallbackCompleting": {
-    "description": "Web path: auth.lineCallback.completing",
-    "x-webPath": "auth.lineCallback.completing"
-  },
-  "authLineCallbackMissingCode": "LINE n’a pas renvoyé de code d’autorisation. Veuillez réessayer.",
-  "@authLineCallbackMissingCode": {
-    "description": "Web path: auth.lineCallback.missingCode",
-    "x-webPath": "auth.lineCallback.missingCode"
-  },
-  "authLineCallbackLinkFailed": "Échec de la liaison du compte LINE",
-  "@authLineCallbackLinkFailed": {
-    "description": "Web path: auth.lineCallback.linkFailed",
-    "x-webPath": "auth.lineCallback.linkFailed"
-  },
-  "authLineCallbackLoginFailed": "Échec de la connexion LINE",
-  "@authLineCallbackLoginFailed": {
-    "description": "Web path: auth.lineCallback.loginFailed",
-    "x-webPath": "auth.lineCallback.loginFailed"
-  },
-  "authLineCallbackVerifyFailed": "Échec de la vérification LINE",
-  "@authLineCallbackVerifyFailed": {
-    "description": "Web path: auth.lineCallback.verifyFailed",
-    "x-webPath": "auth.lineCallback.verifyFailed"
   },
   "authErrorsTurnstileRequired": "Veuillez d’abord terminer la vérification humaine",
   "@authErrorsTurnstileRequired": {
@@ -606,16 +571,6 @@
     "description": "Web path: auth.errors.passkeyFailed",
     "x-webPath": "auth.errors.passkeyFailed"
   },
-  "authErrorsLineNotConfigured": "La connexion LINE n’est pas configurée",
-  "@authErrorsLineNotConfigured": {
-    "description": "Web path: auth.errors.lineNotConfigured",
-    "x-webPath": "auth.errors.lineNotConfigured"
-  },
-  "authErrorsLineFailed": "Échec de la connexion LINE",
-  "@authErrorsLineFailed": {
-    "description": "Web path: auth.errors.lineFailed",
-    "x-webPath": "auth.errors.lineFailed"
-  },
   "settingsTitle": "Paramètres",
   "@settingsTitle": {
     "description": "Web path: settings.title",
@@ -626,7 +581,7 @@
     "description": "Web path: settings.language.title",
     "x-webPath": "settings.language.title"
   },
-  "settingsLanguageDescription": "Choisissez la langue de l’interface et des notifications (e-mail / LINE).",
+  "settingsLanguageDescription": "Choisissez la langue de l’interface et des notifications (e-mail).",
   "@settingsLanguageDescription": {
     "description": "Web path: settings.language.description",
     "x-webPath": "settings.language.description"
@@ -776,11 +731,6 @@
     "description": "Web path: settings.account.googleTitle",
     "x-webPath": "settings.account.googleTitle"
   },
-  "settingsAccountLineTitle": "Lien LINE",
-  "@settingsAccountLineTitle": {
-    "description": "Web path: settings.account.lineTitle",
-    "x-webPath": "settings.account.lineTitle"
-  },
   "settingsAccountStatusPrefix": "État actuel : ",
   "@settingsAccountStatusPrefix": {
     "description": "Web path: settings.account.statusPrefix",
@@ -805,26 +755,6 @@
   "@settingsAccountUnlink": {
     "description": "Web path: settings.account.unlink",
     "x-webPath": "settings.account.unlink"
-  },
-  "settingsAccountLinkedLine": "Compte LINE lié",
-  "@settingsAccountLinkedLine": {
-    "description": "Web path: settings.account.linkedLine",
-    "x-webPath": "settings.account.linkedLine"
-  },
-  "settingsAccountNotLinkedLine": "Compte LINE non lié",
-  "@settingsAccountNotLinkedLine": {
-    "description": "Web path: settings.account.notLinkedLine",
-    "x-webPath": "settings.account.notLinkedLine"
-  },
-  "settingsAccountLinkLine": "Lier un compte LINE",
-  "@settingsAccountLinkLine": {
-    "description": "Web path: settings.account.linkLine",
-    "x-webPath": "settings.account.linkLine"
-  },
-  "settingsAccountLineVerifying": "Vérification LINE…",
-  "@settingsAccountLineVerifying": {
-    "description": "Web path: settings.account.lineVerifying",
-    "x-webPath": "settings.account.lineVerifying"
   },
   "settingsAccountSessionsTitle": "Appareils connectés",
   "@settingsAccountSessionsTitle": {
@@ -1088,26 +1018,6 @@
   "@settingsAccountMessagesGoogleUnlinkFailed": {
     "description": "Web path: settings.account.messages.googleUnlinkFailed",
     "x-webPath": "settings.account.messages.googleUnlinkFailed"
-  },
-  "settingsAccountMessagesLineNotConfigured": "La connexion LINE n’est pas configurée",
-  "@settingsAccountMessagesLineNotConfigured": {
-    "description": "Web path: settings.account.messages.lineNotConfigured",
-    "x-webPath": "settings.account.messages.lineNotConfigured"
-  },
-  "settingsAccountMessagesLineLinkFailed": "Échec de la liaison du compte LINE",
-  "@settingsAccountMessagesLineLinkFailed": {
-    "description": "Web path: settings.account.messages.lineLinkFailed",
-    "x-webPath": "settings.account.messages.lineLinkFailed"
-  },
-  "settingsAccountMessagesLineUnlinked": "Compte LINE dissocié",
-  "@settingsAccountMessagesLineUnlinked": {
-    "description": "Web path: settings.account.messages.lineUnlinked",
-    "x-webPath": "settings.account.messages.lineUnlinked"
-  },
-  "settingsAccountMessagesLineUnlinkFailed": "Échec de la dissociation du compte LINE",
-  "@settingsAccountMessagesLineUnlinkFailed": {
-    "description": "Web path: settings.account.messages.lineUnlinkFailed",
-    "x-webPath": "settings.account.messages.lineUnlinkFailed"
   },
   "settingsAccountMessagesDeletePasswordRequired": "Saisissez votre mot de passe pour confirmer la suppression",
   "@settingsAccountMessagesDeletePasswordRequired": {
@@ -1783,7 +1693,7 @@
     "description": "Web path: public.apiCreditsPage.usageNotes.login.title",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.title"
   },
-  "publicApiCreditsPageUsageNotesLoginText": "Google et LINE ne sont utilisés que lorsque vous vous connectez ou liez un compte volontairement.",
+  "publicApiCreditsPageUsageNotesLoginText": "La connexion avec Google intervient lorsque vous vous connectez ou associez un compte.",
   "@publicApiCreditsPageUsageNotesLoginText": {
     "description": "Web path: public.apiCreditsPage.usageNotes.login.text",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.text"
@@ -1857,11 +1767,6 @@
   "@publicApiCreditsPageDescriptionsGoogle": {
     "description": "Web path: public.apiCreditsPage.descriptions.google",
     "x-webPath": "public.apiCreditsPage.descriptions.google"
-  },
-  "publicApiCreditsPageDescriptionsLine": "Connexion LINE et liaison de compte",
-  "@publicApiCreditsPageDescriptionsLine": {
-    "description": "Web path: public.apiCreditsPage.descriptions.line",
-    "x-webPath": "public.apiCreditsPage.descriptions.line"
   },
   "publicApiCreditsPageDescriptionsSmtp": "Canal d’envoi e-mail pour rapports d’actifs administrateur via Gmail, Outlook ou autre serveur SMTP",
   "@publicApiCreditsPageDescriptionsSmtp": {
@@ -4810,11 +4715,6 @@
     "description": "Web path: notifications.cta.viewFullReport",
     "x-webPath": "notifications.cta.viewFullReport"
   },
-  "notificationsCtaViewLineRecord": "Voir les enregistrements LINE",
-  "@notificationsCtaViewLineRecord": {
-    "description": "Web path: notifications.cta.viewLineRecord",
-    "x-webPath": "notifications.cta.viewLineRecord"
-  },
   "notificationsReminderAltText": "Rappel de dépense",
   "@notificationsReminderAltText": {
     "description": "Web path: notifications.reminder.altText",
@@ -5543,11 +5443,6 @@
     "description": "Mobile compatibility string: 掌握收支全貌",
     "x-webPath": "mobileLegacy.seeYourCompleteCashFlow"
   },
-  "mobileLegacyUnableToCreateLineSignInState": "Unable to create LINE sign-in state",
-  "@mobileLegacyUnableToCreateLineSignInState": {
-    "description": "Mobile compatibility string: 無法建立 LINE 登入狀態",
-    "x-webPath": "mobileLegacy.unableToCreateLineSignInState"
-  },
   "mobileLegacyUnableToOpenBrowser": "Impossible d’ouvrir le navigateur",
   "@mobileLegacyUnableToOpenBrowser": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器",
@@ -5557,11 +5452,6 @@
   "@mobileLegacyUnableToOpenTheBrowserForGoogleSign": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器進行 Google 登入",
     "x-webPath": "mobileLegacy.unableToOpenTheBrowserForGoogleSign"
-  },
-  "mobileLegacyUnableToOpenTheBrowserForLineSign": "Unable to open the browser for LINE sign-in",
-  "@mobileLegacyUnableToOpenTheBrowserForLineSign": {
-    "description": "Mobile compatibility string: 無法開啟瀏覽器進行 LINE 登入",
-    "x-webPath": "mobileLegacy.unableToOpenTheBrowserForLineSign"
   },
   "mobileLegacyUnableToOpenTheBrowserForPasskeySign": "Unable to open the browser for passkey sign-in",
   "@mobileLegacyUnableToOpenTheBrowserForPasskeySign": {
@@ -5747,11 +5637,6 @@
   "@mobileLegacyBankBalance": {
     "description": "Mobile compatibility string: 銀行餘額",
     "x-webPath": "mobileLegacy.bankBalance"
-  },
-  "mobileLegacyRequiresALinkedLineAccount": "Nécessite un compte LINE lié",
-  "@mobileLegacyRequiresALinkedLineAccount": {
-    "description": "Mobile compatibility string: 需已綁定 LINE",
-    "x-webPath": "mobileLegacy.requiresALinkedLineAccount"
   },
   "mobileLegacyACreditCardAndANonCreditCard": "Il faut au moins une carte de crédit et un compte hors carte pour enregistrer un remboursement",
   "@mobileLegacyACreditCardAndANonCreditCard": {
@@ -6037,26 +5922,6 @@
   "@mobileLegacyGoogleSignInTimedOutOrWasCancelled": {
     "description": "Mobile compatibility string: Google 登入逾時或已取消",
     "x-webPath": "mobileLegacy.googleSignInTimedOutOrWasCancelled"
-  },
-  "mobileLegacyLineNotifications": "Notifications LINE",
-  "@mobileLegacyLineNotifications": {
-    "description": "Mobile compatibility string: LINE 通知",
-    "x-webPath": "mobileLegacy.lineNotifications"
-  },
-  "mobileLegacyTheLineSignInResponseDidNotInclude": "La réponse LINE ne contient pas le cookie d’authentification",
-  "@mobileLegacyTheLineSignInResponseDidNotInclude": {
-    "description": "Mobile compatibility string: LINE 登入回應未包含認證 Cookie",
-    "x-webPath": "mobileLegacy.theLineSignInResponseDidNotInclude"
-  },
-  "mobileLegacyLineSignInStateMismatchTryAgain": "LINE sign-in state mismatch. Try again.",
-  "@mobileLegacyLineSignInStateMismatchTryAgain": {
-    "description": "Mobile compatibility string: LINE 登入狀態不符，請重試",
-    "x-webPath": "mobileLegacy.lineSignInStateMismatchTryAgain"
-  },
-  "mobileLegacyLineSignInTimedOutOrWasCancelled": "LINE sign-in timed out or was cancelled",
-  "@mobileLegacyLineSignInTimedOutOrWasCancelled": {
-    "description": "Mobile compatibility string: LINE 登入逾時或已取消",
-    "x-webPath": "mobileLegacy.lineSignInTimedOutOrWasCancelled"
   },
   "mobileLegacyPasskeySignInTimedOutOrWasCancelled": "Passkey sign-in timed out or was cancelled",
   "@mobileLegacyPasskeySignInTimedOutOrWasCancelled": {
@@ -7259,11 +7124,6 @@
   "@adminPublicRegistration": {
     "description": "Web path: admin.adminPublicRegistration",
     "x-webPath": "admin.adminPublicRegistration"
-  },
-  "adminLineLoginEnabled": "Connexion LINE",
-  "@adminLineLoginEnabled": {
-    "description": "Web path: admin.adminLineLoginEnabled",
-    "x-webPath": "admin.adminLineLoginEnabled"
   },
   "adminAllowedRegistrationEmails": "Emails d'inscription autorisés (un par ligne)",
   "@adminAllowedRegistrationEmails": {
@@ -9542,7 +9402,7 @@
     "description": "Web path: settings.notifications.title",
     "x-webPath": "settings.notifications.title"
   },
-  "settingsNotificationsDescription": "Lorsqu'elles sont activées, les événements correspondants sont envoyés instantanément à vos appareils abonnés. Cela n'affecte pas les notifications de rapport Email/LINE.",
+  "settingsNotificationsDescription": "Lorsqu'elles sont activées, les événements correspondants sont envoyés instantanément à vos appareils abonnés. Cela n'affecte pas les notifications de rapport Email.",
   "@settingsNotificationsDescription": {
     "description": "Web path: settings.notifications.description",
     "x-webPath": "settings.notifications.description"

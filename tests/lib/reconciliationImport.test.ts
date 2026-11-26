@@ -6,7 +6,7 @@
 //  - 對帳結果三類差異可經 API 讀回
 //  - 尊重既有帳本授權邊界（跨帳本／跨使用者一律 404）與匯入互斥鎖（409）
 //  - migration 新增的資料表／索引在升級後存在，且差異明細隨 session 級聯刪除
-// 需真實 PostgreSQL（DATABASE_URL／POSTGRES_URL）；未設定時略過，
+// 需真實 PostgreSQL（DATABASE_URL）；未設定時略過，
 // 保持 `npm test` 在無 DB 環境仍可通過。
 // 比照 tests/lib/transactionWriteCore.test.ts 的「模組層級 test() + after()」寫法：
 // after() 必須註冊在模組層級才會執行，否則 Postgres worker thread 會讓行程無限掛著。
@@ -15,10 +15,10 @@ import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { createRequire } from "node:module";
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test("reconciliationImport（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）", () => {});
+  test("reconciliationImport（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）", () => {});
 } else {
   const originalRequire = Object.getOwnPropertyDescriptor(
     globalThis,

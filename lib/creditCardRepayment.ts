@@ -43,7 +43,7 @@ function asRow<T>(row: Record<string, string | number | null> | null): T | null 
  * 取得以 fromAccount 為付款來源時本次納入的信用卡，已依標準順序排好
  * （建立時間早→晚，相同再 id 升冪；FR-003、FR-005b、FR-011）。
  *
- * 納入規則（FR-003）：account_type = '信用卡' 且 linked_bank_id = fromAccountId 且餘額為負（有欠款）。
+ * 納入規則（FR-003）：付款來源須為銀行帳戶，且信用卡關聯該帳戶並有欠款。
  * 欠款換算（FR-011）：同幣別 round_half_up(-balance)；異幣別經兩個匯率換算後 half-up；
  *   換算後 < 1 者設為 1（FR-011a：有欠款即必須納入，權重不得為 0）。
  */
@@ -54,7 +54,11 @@ export function collectPayableCards(
 ): PayableCard[] {
   const payerCcy = normalizeCurrency(fromCurrency);
   const rows = queryAll(
-    "SELECT id, name, currency, initial_balance, linked_bank_id, created_at FROM accounts WHERE user_id = ? AND account_type = '信用卡' AND linked_bank_id = ?",
+    `SELECT card.id, card.name, card.currency, card.initial_balance, card.linked_bank_id, card.created_at
+      FROM accounts card
+      JOIN accounts payer ON payer.id = card.linked_bank_id AND payer.user_id = card.user_id
+      WHERE card.user_id = ? AND card.account_type = '信用卡' AND card.linked_bank_id = ?
+        AND (payer.category = 'bank' OR payer.account_type = '銀行')`,
     [userId, fromAccountId],
   );
 
@@ -121,9 +125,7 @@ export interface AllocationDetail {
   outConverted: ConvertToTwdResult; // convertToTwd() 既有回傳形狀（twdAmount/originalAmount/fxRate/currency）
   inOriginal: number;             // 卡片幣別金額（換算後，寫入 transfer_in.original_amount）
   inConverted: ConvertToTwdResult;
-  balanceAfter: number;           // 卡片幣別；= card.debtInCardCurrency + inOriginal
-                                   // （逐字比照既有 POST /api/accounts/credit-card-repayment
-                                   //   回應公式，research.md 第 3 節）
+  balanceAfter: number;           // 卡片幣別；轉入金額減去還款前的欠款
 }
 
 /**
@@ -169,9 +171,8 @@ export function computeRepaymentAllocation(
       : convertFromTwd(outConverted.twdAmount, toCurrency, userId);
     const inConverted = convertToTwd(inOriginal, toCurrency, null, userId);
 
-    // 還款後餘額（卡片幣別）：逐字比照既有 route.ts:188 公式
-    // card.debtInCardCurrency + inOriginal（原欠款（正）＋ 轉入 → 還款後餘額）
-    const balanceAfter = card.debtInCardCurrency + inOriginal;
+    // 欠款以正值保存，還款前的帳戶餘額為負值。
+    const balanceAfter = new Decimal(inOriginal).minus(card.debtInCardCurrency).toNumber();
 
     return {
       card,

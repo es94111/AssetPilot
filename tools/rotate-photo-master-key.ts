@@ -70,12 +70,12 @@ async function main(): Promise<void> {
   loadEnvFile();
   const apply = process.argv.includes('--apply');
 
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-    throw new Error('請先設定 DATABASE_URL 或 POSTGRES_URL');
+  if (!process.env.DATABASE_URL) {
+    throw new Error('請先設定 DATABASE_URL');
   }
   const oldMaster = parseKey('PHOTO_MASTER_KEY_OLD', process.env.PHOTO_MASTER_KEY_OLD);
   const newMaster = parseKey('PHOTO_MASTER_KEY', process.env.PHOTO_MASTER_KEY);
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL });
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
   try {
     const client = await pool.connect();

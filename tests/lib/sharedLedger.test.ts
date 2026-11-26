@@ -3,7 +3,7 @@ import test from 'node:test';
 import net from 'node:net';
 import { createRequire } from 'node:module';
 
-const hasDatabase = !!(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+const hasDatabase = !!(process.env.DATABASE_URL);
 
 test('shared ledgers: real authenticated routes, invitations and ownership boundaries', { skip: !hasDatabase }, async (t) => {
   // Capture invitation emails locally; never contact a real mail provider.
@@ -45,11 +45,11 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
     smtp.close();
   });
   const port = (smtp.address() as net.AddressInfo).port;
-  const envKeys = ['EMAIL_PROVIDER_PRIMARY', 'EMAIL_PROVIDER_FALLBACK', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_FROM', 'APP_URL', 'STOCK_AUTO_UPDATE_ENABLED'];
+  const envKeys = ['EMAIL_PROVIDER_PRIMARY', 'EMAIL_PROVIDER_FALLBACK', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_FROM', 'APP_URL'];
   const originalEnv = envKeys.map((key) => [key, process.env[key]] as const);
   Object.assign(process.env, {
     EMAIL_PROVIDER_PRIMARY: 'smtp', EMAIL_PROVIDER_FALLBACK: '', SMTP_HOST: '127.0.0.1', SMTP_PORT: String(port),
-    SMTP_SECURE: 'false', SMTP_USER: '', SMTP_FROM: 'test@example.com', APP_URL: 'http://localhost', STOCK_AUTO_UPDATE_ENABLED: 'false',
+    SMTP_SECURE: 'false', SMTP_USER: '', SMTP_FROM: 'test@example.com', APP_URL: 'http://localhost',
   });
   const originalRequire = Object.getOwnPropertyDescriptor(globalThis, 'require');
   Object.defineProperty(globalThis, 'require', { value: createRequire(import.meta.url), configurable: true });
@@ -94,6 +94,8 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
   const { deleteUserCompletely, LedgerOwnershipTransferRequiredError } = await import('../../lib/userDeletion.ts');
   await initDB();
   const db = getDB();
+  const stockSetting = Number(queryOne("SELECT stock_auto_update_enabled FROM system_settings WHERE id = 1")?.stock_auto_update_enabled);
+  db.run("UPDATE system_settings SET stock_auto_update_enabled = 0 WHERE id = 1");
   const owner = uid(), editor = uid(), viewer = uid(), outsider = uid();
   const people = [owner, editor, viewer, outsider];
   const tokens = new Map<string, string>();
@@ -592,6 +594,7 @@ test('shared ledgers: real authenticated routes, invitations and ownership bound
       db.run('DELETE FROM login_sessions WHERE user_id = ?', [person]);
       db.run('DELETE FROM users WHERE id = ?', [person]);
     }
+    db.run("UPDATE system_settings SET stock_auto_update_enabled = ? WHERE id = 1", [stockSetting]);
     db.close();
     for (const socket of sockets) socket.destroy();
     await new Promise<void>((resolve) => smtp.close(() => resolve()));

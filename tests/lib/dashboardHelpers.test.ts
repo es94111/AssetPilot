@@ -1,4 +1,4 @@
-// tests/lib/dashboardHelpers.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/dashboardHelpers.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 // 驗證 getTransactionsSummary()（T008，抽取自 app/api/reports/route.ts）與
 // getStockPortfolioStatus()（T012，抽取自 app/api/dashboard/route.ts）與抽取前既有邏輯一致，
@@ -7,10 +7,10 @@
 import assert from 'node:assert/strict';
 import test, { after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('dashboardHelpers（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('dashboardHelpers（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

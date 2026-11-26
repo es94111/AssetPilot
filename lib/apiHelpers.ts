@@ -336,7 +336,6 @@ export function formatUser(user: any) {
     // private and report the provider-only policy to clients.
     hasPassword: false,
     googleLinked: !!user.google_id,
-    lineLinked: !!user.line_id,
     appleLinked: !!user.apple_id,
     avatarUrl: user.avatar_url || "",
   };

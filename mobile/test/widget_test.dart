@@ -138,7 +138,7 @@ void main() {
     expect(
       ApiClient.shouldRetryTransientGetException(
         'GET',
-        '/api/auth/line/state?flow=login',
+        '/api/auth/google/state?flow=login',
         clientException,
         0,
       ),

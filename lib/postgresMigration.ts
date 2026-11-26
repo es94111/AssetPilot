@@ -71,7 +71,7 @@ interface MigrationStats {
 const META_TABLE = "assetpilot_migration_metadata";
 
 function getPostgresUrl(): string {
-  return process.env.DATABASE_URL || process.env.POSTGRES_URL || "";
+  return process.env.DATABASE_URL || "";
 }
 
 function quoteIdent(identifier: string): string {

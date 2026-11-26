@@ -1,4 +1,4 @@
-// tests/lib/transactionsManualEdit.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/transactionsManualEdit.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 // 驗證 005-mcp-transaction-restore 的 updateHandler()（PUT /api/transactions/{id}）標記清除邏輯：
 // 手動編輯「備註值真的改變」才清除 note_ai_modified／pre_ai_note；只改其他欄位（備註同值重送）
@@ -9,10 +9,10 @@
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('transactionsManualEdit（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('transactionsManualEdit（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

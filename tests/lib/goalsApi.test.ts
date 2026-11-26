@@ -1,4 +1,4 @@
-// tests/lib/goalsApi.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/goalsApi.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 //
 // 涵蓋 issue #260 的端點行為：
@@ -11,10 +11,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('goalsApi（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('goalsApi（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

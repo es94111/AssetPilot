@@ -5,7 +5,7 @@ const GOOGLE_OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
 type GoogleOAuthStateEntry = {
   issuedAt: number;
-  // See lib/lineOAuthState.ts for the rationale: this binds the state to the
+  // This binds the state to the
   // browser/client that requested it, closing OAuth login-CSRF where an
   // attacker relays their own code+state into a victim's browser
   // (AUTHZ-VULN-06).

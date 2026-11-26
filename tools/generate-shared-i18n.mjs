@@ -12,12 +12,26 @@ const LOCALES_PATH = path.join(SHARED_DIR, 'locales.json');
 const WEB_DICT_DIR = path.join(ROOT, 'lib', 'i18n', 'dictionaries');
 const WEB_GENERATED_DIR = path.join(ROOT, 'lib', 'i18n', 'generated');
 const MOBILE_GENERATED_DIR = path.join(ROOT, 'mobile', 'lib', 'generated');
-const MOBILE_FLUTTER_ARB_DIR = path.join(MOBILE_GENERATED_DIR, 'l10n', 'arb');
+const MOBILE_FLUTTER_DIR = path.join(MOBILE_GENERATED_DIR, 'l10n');
+const MOBILE_FLUTTER_ARB_DIR = path.join(MOBILE_FLUTTER_DIR, 'arb');
 const ANDROID_LOCALE_CONFIG = path.join(ROOT, 'mobile', 'android', 'app', 'src', 'main', 'res', 'xml', 'locale_config.xml');
 
 const args = new Set(process.argv.slice(2));
 const bootstrapFromWeb = args.has('--bootstrap-from-web');
 const checkOnly = args.has('--check');
+
+if (args.has('--normalize-flutter-dart')) {
+  // Flutter SDK versions differ in the blank line between these generated imports.
+  const importGap = /(^import 'package:intl\/intl\.dart' as intl;\r?\n)(?:[ \t]*\r?\n)+(?=import 'app_localizations\.dart';)/mu;
+  for (const name of fs.readdirSync(MOBILE_FLUTTER_DIR)) {
+    if (!/^app_localizations_.+\.dart$/u.test(name)) continue;
+    const file = path.join(MOBILE_FLUTTER_DIR, name);
+    const content = fs.readFileSync(file, 'utf8');
+    const normalized = content.replace(importGap, '$1');
+    if (normalized !== content) fs.writeFileSync(file, normalized);
+  }
+  process.exit(0);
+}
 
 const registry = JSON.parse(fs.readFileSync(LOCALES_PATH, 'utf8'));
 const locales = registry.locales;
@@ -203,7 +217,6 @@ function mobileSourceFiles() {
     path.join(ROOT, 'mobile', 'lib', 'api_client.dart'),
     path.join(ROOT, 'mobile', 'lib', 'app.dart'),
     path.join(ROOT, 'mobile', 'lib', 'google_auth.dart'),
-    path.join(ROOT, 'mobile', 'lib', 'line_auth.dart'),
     path.join(ROOT, 'mobile', 'lib', 'models.dart'),
     path.join(ROOT, 'mobile', 'lib', 'passkey_auth.dart'),
     path.join(ROOT, 'mobile', 'lib', 'widgets.dart'),

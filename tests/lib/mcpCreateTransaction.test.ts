@@ -1,4 +1,4 @@
-// tests/lib/mcpCreateTransaction.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/mcpCreateTransaction.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 // 驗證 create_transaction MCP 工具（003-mcp-write-no-delete）：成功建立、冪等鍵去重（SC-006），
 // 以及刪除／修改語意的不存在工具名稱皆被安全拒絕、不影響既有資料（User Story 3、FR-002、FR-003）。
@@ -6,10 +6,10 @@
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('mcpCreateTransaction（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('mcpCreateTransaction（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');

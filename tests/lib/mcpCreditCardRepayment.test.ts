@@ -1,4 +1,4 @@
-// tests/lib/mcpCreditCardRepayment.test.ts — 需要真實 PostgreSQL（DATABASE_URL/POSTGRES_URL）；
+// tests/lib/mcpCreditCardRepayment.test.ts — 需要真實 PostgreSQL（DATABASE_URL）；
 // 未設定時略過（保持 `npm test` 在無 DB 環境下仍可通過）。
 // 驗證 007-mcp-credit-card-repayment 的三個 MCP 工具端到端行為：
 //  - create_credit_card_repayment（US1）：總金額還款寫入、V1-V5 拒絕、ai_created 標記、冪等鍵、稽核
@@ -9,10 +9,10 @@
 import assert from 'node:assert/strict';
 import test, { before, after } from 'node:test';
 
-const DB_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const DB_URL = process.env.DATABASE_URL;
 
 if (!DB_URL) {
-  test('mcpCreditCardRepayment（略過：未設定 DATABASE_URL/POSTGRES_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
+  test('mcpCreditCardRepayment（略過：未設定 DATABASE_URL，需搭配 PostgreSQL 執行完整驗證）', () => {});
 } else {
   const { initDB, getDB, queryOne, queryAll, saveDB } = await import('../../lib/db.ts');
   const { uid } = await import('../../lib/userDefaults.ts');
@@ -256,16 +256,17 @@ if (!DB_URL) {
     });
   });
 
-  test('US1 (g)：allowCreate=false 的憑證 tools/list 不含此工具，強行呼叫得到協定層錯誤（FR-003）', async () => {
+  test('US1 (g)：allowCreate=false 的憑證 tools/list 不含此工具，直接呼叫會被拒絕（FR-003）', async () => {
     await withMcpClientReadOnly(async (client) => {
       const listed = await client.listTools();
       const names = listed.tools.map((t) => t.name);
       assert.ok(!names.includes('create_credit_card_repayment'), '未開 allowCreate 不應含此工具');
-      // 強行呼叫 → MCP 協定層「找不到工具」錯誤
-      await assert.rejects(
-        () => client.callTool({ name: 'create_credit_card_repayment', arguments: { fromAccountId: 'x', totalAmount: 1 } }),
-        /create_credit_card_repayment|not found|Method not found/i
-      );
+      const result = await client.callTool({
+        name: 'create_credit_card_repayment',
+        arguments: { fromAccountId: 'x', totalAmount: 1 },
+      });
+      assert.equal(result.isError, true);
+      assert.match(firstTextContent(result), /create_credit_card_repayment|not found|Method not found/i);
     });
   });
 
@@ -274,6 +275,7 @@ if (!DB_URL) {
   test('US2 (a)：試算回應含每張卡分配與試算後餘額，且查詢前後交易筆數不變（FR-009）', async () => {
     const { bankId } = setupFixture();
     const beforeCount = Number((queryOne('SELECT COUNT(*) AS cnt FROM transactions WHERE user_id = ?', [userId]) as { cnt: number }).cnt);
+    const beforeSummaries = Number(queryOne('SELECT COUNT(*) AS cnt FROM credit_card_repayment_summaries WHERE user_id = ?', [userId])?.cnt);
     await withMcpClient(async (client) => {
       const result = await client.callTool({
         name: 'get_credit_card_repayment_preview',
@@ -293,7 +295,7 @@ if (!DB_URL) {
     const afterCount = Number((queryOne('SELECT COUNT(*) AS cnt FROM transactions WHERE user_id = ?', [userId]) as { cnt: number }).cnt);
     assert.equal(afterCount, beforeCount, '試算不應建立任何交易（FR-009）');
     const summaryCount = Number((queryOne('SELECT COUNT(*) AS cnt FROM credit_card_repayment_summaries WHERE user_id = ?', [userId]) as { cnt: number }).cnt);
-    assert.equal(summaryCount, 0, '試算不應建立任何摘要');
+    assert.equal(summaryCount, beforeSummaries, '試算不應建立任何摘要');
   });
 
   test('US2 (b)：總金額大於應繳總額時 isOverpay=true、overpayAmount 正確、形成正餘額的卡 balanceAfter>0（Acceptance Scenario 2）', async () => {

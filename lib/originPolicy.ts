@@ -5,9 +5,11 @@
 //
 // 允許清單來源（擇一）：
 //   1. ALLOWED_ORIGINS 環境變數（正式環境應設定，如 https://asset.example.com）
-//   2. APP_URL / NEXT_PUBLIC_APP_URL（單一正式網址）
+//   2. APP_URL（單一正式網址）
 //   3. 開發模式（非 production）fallback 到請求 Origin，維持本機開發體驗；
 //      production 未設定任何來源時回 null → 呼叫端應拒絕（fail-closed）。
+
+import { getConfiguredAppOrigin } from "./appOrigin";
 
 export type OriginHeadersLike = Headers | Record<string, string | undefined>;
 
@@ -26,9 +28,7 @@ function configuredAllowedOrigins(): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
   if (fromList.length > 0) return fromList;
-  const single = String(
-    process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "",
-  ).trim();
+  const single = getConfiguredAppOrigin();
   return single ? [single] : [];
 }
 

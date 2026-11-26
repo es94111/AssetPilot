@@ -12,7 +12,7 @@
  *（iOS Safari 尚未支援，且前端已有 online 事件重送機制）。
  */
 
-const VERSION = 'v5.2.2';
+const VERSION = 'v6.0.0';
 const SHELL_CACHE = `assetpilot-shell-${VERSION}`;
 const OFFLINE_URL = '/offline';
 // 每次 service worker 啟用週期至多 revalidate 一次離線頁，避免已安裝用戶在

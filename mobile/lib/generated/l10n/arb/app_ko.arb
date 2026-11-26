@@ -501,16 +501,6 @@
     "description": "Web path: auth.googleVerifying",
     "x-webPath": "auth.googleVerifying"
   },
-  "authLineButton": "LINE으로 로그인",
-  "@authLineButton": {
-    "description": "Web path: auth.lineButton",
-    "x-webPath": "auth.lineButton"
-  },
-  "authLineVerifying": "LINE 확인 중…",
-  "@authLineVerifying": {
-    "description": "Web path: auth.lineVerifying",
-    "x-webPath": "auth.lineVerifying"
-  },
   "authRegisterSubmit": "계정 만들기",
   "@authRegisterSubmit": {
     "description": "Web path: auth.registerSubmit",
@@ -520,31 +510,6 @@
   "@authRegistering": {
     "description": "Web path: auth.registering",
     "x-webPath": "auth.registering"
-  },
-  "authLineCallbackCompleting": "LINE 인증을 완료하는 중...",
-  "@authLineCallbackCompleting": {
-    "description": "Web path: auth.lineCallback.completing",
-    "x-webPath": "auth.lineCallback.completing"
-  },
-  "authLineCallbackMissingCode": "LINE에서 인증 코드를 받지 못했습니다. 다시 시도하세요.",
-  "@authLineCallbackMissingCode": {
-    "description": "Web path: auth.lineCallback.missingCode",
-    "x-webPath": "auth.lineCallback.missingCode"
-  },
-  "authLineCallbackLinkFailed": "LINE 계정 연결 실패",
-  "@authLineCallbackLinkFailed": {
-    "description": "Web path: auth.lineCallback.linkFailed",
-    "x-webPath": "auth.lineCallback.linkFailed"
-  },
-  "authLineCallbackLoginFailed": "LINE 로그인 실패",
-  "@authLineCallbackLoginFailed": {
-    "description": "Web path: auth.lineCallback.loginFailed",
-    "x-webPath": "auth.lineCallback.loginFailed"
-  },
-  "authLineCallbackVerifyFailed": "LINE 인증 실패",
-  "@authLineCallbackVerifyFailed": {
-    "description": "Web path: auth.lineCallback.verifyFailed",
-    "x-webPath": "auth.lineCallback.verifyFailed"
   },
   "authErrorsTurnstileRequired": "먼저 사람 인증을 완료하세요",
   "@authErrorsTurnstileRequired": {
@@ -606,16 +571,6 @@
     "description": "Web path: auth.errors.passkeyFailed",
     "x-webPath": "auth.errors.passkeyFailed"
   },
-  "authErrorsLineNotConfigured": "LINE 로그인이 설정되어 있지 않습니다",
-  "@authErrorsLineNotConfigured": {
-    "description": "Web path: auth.errors.lineNotConfigured",
-    "x-webPath": "auth.errors.lineNotConfigured"
-  },
-  "authErrorsLineFailed": "LINE 로그인 실패",
-  "@authErrorsLineFailed": {
-    "description": "Web path: auth.errors.lineFailed",
-    "x-webPath": "auth.errors.lineFailed"
-  },
   "settingsTitle": "설정",
   "@settingsTitle": {
     "description": "Web path: settings.title",
@@ -626,7 +581,7 @@
     "description": "Web path: settings.language.title",
     "x-webPath": "settings.language.title"
   },
-  "settingsLanguageDescription": "인터페이스와 알림(Email / LINE)에 사용할 언어를 선택하세요.",
+  "settingsLanguageDescription": "인터페이스와 알림(Email)에 사용할 언어를 선택하세요.",
   "@settingsLanguageDescription": {
     "description": "Web path: settings.language.description",
     "x-webPath": "settings.language.description"
@@ -776,11 +731,6 @@
     "description": "Web path: settings.account.googleTitle",
     "x-webPath": "settings.account.googleTitle"
   },
-  "settingsAccountLineTitle": "LINE 연결",
-  "@settingsAccountLineTitle": {
-    "description": "Web path: settings.account.lineTitle",
-    "x-webPath": "settings.account.lineTitle"
-  },
   "settingsAccountStatusPrefix": "현재 상태: ",
   "@settingsAccountStatusPrefix": {
     "description": "Web path: settings.account.statusPrefix",
@@ -805,26 +755,6 @@
   "@settingsAccountUnlink": {
     "description": "Web path: settings.account.unlink",
     "x-webPath": "settings.account.unlink"
-  },
-  "settingsAccountLinkedLine": "LINE 계정이 연결되었습니다",
-  "@settingsAccountLinkedLine": {
-    "description": "Web path: settings.account.linkedLine",
-    "x-webPath": "settings.account.linkedLine"
-  },
-  "settingsAccountNotLinkedLine": "LINE 계정이 연결되지 않았습니다",
-  "@settingsAccountNotLinkedLine": {
-    "description": "Web path: settings.account.notLinkedLine",
-    "x-webPath": "settings.account.notLinkedLine"
-  },
-  "settingsAccountLinkLine": "LINE 계정 연결",
-  "@settingsAccountLinkLine": {
-    "description": "Web path: settings.account.linkLine",
-    "x-webPath": "settings.account.linkLine"
-  },
-  "settingsAccountLineVerifying": "LINE 확인 중…",
-  "@settingsAccountLineVerifying": {
-    "description": "Web path: settings.account.lineVerifying",
-    "x-webPath": "settings.account.lineVerifying"
   },
   "settingsAccountSessionsTitle": "로그인된 기기",
   "@settingsAccountSessionsTitle": {
@@ -1088,26 +1018,6 @@
   "@settingsAccountMessagesGoogleUnlinkFailed": {
     "description": "Web path: settings.account.messages.googleUnlinkFailed",
     "x-webPath": "settings.account.messages.googleUnlinkFailed"
-  },
-  "settingsAccountMessagesLineNotConfigured": "LINE 로그인이 설정되어 있지 않습니다",
-  "@settingsAccountMessagesLineNotConfigured": {
-    "description": "Web path: settings.account.messages.lineNotConfigured",
-    "x-webPath": "settings.account.messages.lineNotConfigured"
-  },
-  "settingsAccountMessagesLineLinkFailed": "LINE 계정을 연결하지 못했습니다",
-  "@settingsAccountMessagesLineLinkFailed": {
-    "description": "Web path: settings.account.messages.lineLinkFailed",
-    "x-webPath": "settings.account.messages.lineLinkFailed"
-  },
-  "settingsAccountMessagesLineUnlinked": "LINE 계정 연결이 해제되었습니다",
-  "@settingsAccountMessagesLineUnlinked": {
-    "description": "Web path: settings.account.messages.lineUnlinked",
-    "x-webPath": "settings.account.messages.lineUnlinked"
-  },
-  "settingsAccountMessagesLineUnlinkFailed": "LINE 계정 연결을 해제하지 못했습니다",
-  "@settingsAccountMessagesLineUnlinkFailed": {
-    "description": "Web path: settings.account.messages.lineUnlinkFailed",
-    "x-webPath": "settings.account.messages.lineUnlinkFailed"
   },
   "settingsAccountMessagesDeletePasswordRequired": "삭제를 확인하려면 비밀번호를 입력하세요",
   "@settingsAccountMessagesDeletePasswordRequired": {
@@ -1783,7 +1693,7 @@
     "description": "Web path: public.apiCreditsPage.usageNotes.login.title",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.title"
   },
-  "publicApiCreditsPageUsageNotesLoginText": "Google과 LINE은 사용자가 직접 로그인하거나 계정을 연결할 때만 사용됩니다.",
+  "publicApiCreditsPageUsageNotesLoginText": "Google 로그인은 로그인하거나 계정을 연결할 때 사용됩니다.",
   "@publicApiCreditsPageUsageNotesLoginText": {
     "description": "Web path: public.apiCreditsPage.usageNotes.login.text",
     "x-webPath": "public.apiCreditsPage.usageNotes.login.text"
@@ -1857,11 +1767,6 @@
   "@publicApiCreditsPageDescriptionsGoogle": {
     "description": "Web path: public.apiCreditsPage.descriptions.google",
     "x-webPath": "public.apiCreditsPage.descriptions.google"
-  },
-  "publicApiCreditsPageDescriptionsLine": "LINE 로그인 및 계정 연결",
-  "@publicApiCreditsPageDescriptionsLine": {
-    "description": "Web path: public.apiCreditsPage.descriptions.line",
-    "x-webPath": "public.apiCreditsPage.descriptions.line"
   },
   "publicApiCreditsPageDescriptionsSmtp": "Gmail, Outlook 또는 기타 SMTP server를 통한 관리자 자산 보고서 이메일 발송 채널",
   "@publicApiCreditsPageDescriptionsSmtp": {
@@ -4810,11 +4715,6 @@
     "description": "Web path: notifications.cta.viewFullReport",
     "x-webPath": "notifications.cta.viewFullReport"
   },
-  "notificationsCtaViewLineRecord": "LINE 기록 보기",
-  "@notificationsCtaViewLineRecord": {
-    "description": "Web path: notifications.cta.viewLineRecord",
-    "x-webPath": "notifications.cta.viewLineRecord"
-  },
   "notificationsReminderAltText": "지출 기록 알림",
   "@notificationsReminderAltText": {
     "description": "Web path: notifications.reminder.altText",
@@ -5543,11 +5443,6 @@
     "description": "Mobile compatibility string: 掌握收支全貌",
     "x-webPath": "mobileLegacy.seeYourCompleteCashFlow"
   },
-  "mobileLegacyUnableToCreateLineSignInState": "Unable to create LINE sign-in state",
-  "@mobileLegacyUnableToCreateLineSignInState": {
-    "description": "Mobile compatibility string: 無法建立 LINE 登入狀態",
-    "x-webPath": "mobileLegacy.unableToCreateLineSignInState"
-  },
   "mobileLegacyUnableToOpenBrowser": "브라우저를 열 수 없습니다",
   "@mobileLegacyUnableToOpenBrowser": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器",
@@ -5557,11 +5452,6 @@
   "@mobileLegacyUnableToOpenTheBrowserForGoogleSign": {
     "description": "Mobile compatibility string: 無法開啟瀏覽器進行 Google 登入",
     "x-webPath": "mobileLegacy.unableToOpenTheBrowserForGoogleSign"
-  },
-  "mobileLegacyUnableToOpenTheBrowserForLineSign": "Unable to open the browser for LINE sign-in",
-  "@mobileLegacyUnableToOpenTheBrowserForLineSign": {
-    "description": "Mobile compatibility string: 無法開啟瀏覽器進行 LINE 登入",
-    "x-webPath": "mobileLegacy.unableToOpenTheBrowserForLineSign"
   },
   "mobileLegacyUnableToOpenTheBrowserForPasskeySign": "Unable to open the browser for passkey sign-in",
   "@mobileLegacyUnableToOpenTheBrowserForPasskeySign": {
@@ -5747,11 +5637,6 @@
   "@mobileLegacyBankBalance": {
     "description": "Mobile compatibility string: 銀行餘額",
     "x-webPath": "mobileLegacy.bankBalance"
-  },
-  "mobileLegacyRequiresALinkedLineAccount": "LINE 계정 연결 필요",
-  "@mobileLegacyRequiresALinkedLineAccount": {
-    "description": "Mobile compatibility string: 需已綁定 LINE",
-    "x-webPath": "mobileLegacy.requiresALinkedLineAccount"
   },
   "mobileLegacyACreditCardAndANonCreditCard": "상환을 기록하려면 신용카드 1개와 신용카드가 아닌 계좌 1개 이상이 필요합니다",
   "@mobileLegacyACreditCardAndANonCreditCard": {
@@ -6037,26 +5922,6 @@
   "@mobileLegacyGoogleSignInTimedOutOrWasCancelled": {
     "description": "Mobile compatibility string: Google 登入逾時或已取消",
     "x-webPath": "mobileLegacy.googleSignInTimedOutOrWasCancelled"
-  },
-  "mobileLegacyLineNotifications": "LINE 알림",
-  "@mobileLegacyLineNotifications": {
-    "description": "Mobile compatibility string: LINE 通知",
-    "x-webPath": "mobileLegacy.lineNotifications"
-  },
-  "mobileLegacyTheLineSignInResponseDidNotInclude": "LINE 로그인 응답에 인증 Cookie가 없습니다",
-  "@mobileLegacyTheLineSignInResponseDidNotInclude": {
-    "description": "Mobile compatibility string: LINE 登入回應未包含認證 Cookie",
-    "x-webPath": "mobileLegacy.theLineSignInResponseDidNotInclude"
-  },
-  "mobileLegacyLineSignInStateMismatchTryAgain": "LINE sign-in state mismatch. Try again.",
-  "@mobileLegacyLineSignInStateMismatchTryAgain": {
-    "description": "Mobile compatibility string: LINE 登入狀態不符，請重試",
-    "x-webPath": "mobileLegacy.lineSignInStateMismatchTryAgain"
-  },
-  "mobileLegacyLineSignInTimedOutOrWasCancelled": "LINE sign-in timed out or was cancelled",
-  "@mobileLegacyLineSignInTimedOutOrWasCancelled": {
-    "description": "Mobile compatibility string: LINE 登入逾時或已取消",
-    "x-webPath": "mobileLegacy.lineSignInTimedOutOrWasCancelled"
   },
   "mobileLegacyPasskeySignInTimedOutOrWasCancelled": "Passkey sign-in timed out or was cancelled",
   "@mobileLegacyPasskeySignInTimedOutOrWasCancelled": {
@@ -7259,11 +7124,6 @@
   "@adminPublicRegistration": {
     "description": "Web path: admin.adminPublicRegistration",
     "x-webPath": "admin.adminPublicRegistration"
-  },
-  "adminLineLoginEnabled": "LINE 로그인",
-  "@adminLineLoginEnabled": {
-    "description": "Web path: admin.adminLineLoginEnabled",
-    "x-webPath": "admin.adminLineLoginEnabled"
   },
   "adminAllowedRegistrationEmails": "허용된 가입 이메일 (한 줄에 하나)",
   "@adminAllowedRegistrationEmails": {
@@ -9542,7 +9402,7 @@
     "description": "Web path: settings.notifications.title",
     "x-webPath": "settings.notifications.title"
   },
-  "settingsNotificationsDescription": "활성화하면 조건에 맞는 이벤트가 구독한 기기에 즉시 전송됩니다. Email/LINE 보고서 알림에는 영향을 주지 않습니다.",
+  "settingsNotificationsDescription": "활성화하면 조건에 맞는 이벤트가 구독한 기기에 즉시 전송됩니다. Email 보고서 알림에는 영향을 주지 않습니다.",
   "@settingsNotificationsDescription": {
     "description": "Web path: settings.notifications.description",
     "x-webPath": "settings.notifications.description"

@@ -12,12 +12,6 @@ export function __setNowMs(ms: number | null): void {
 
 export function __nowMs(): number {
   if (__overrideNowMs != null) return __overrideNowMs;
-  // 環境變數 FAKE_NOW（ISO 字串）→ ms
-  const fake = process.env.FAKE_NOW;
-  if (fake) {
-    const t = Date.parse(fake);
-    if (!isNaN(t)) return t;
-  }
   return Date.now();
 }
 

@@ -225,7 +225,6 @@ export default function AdminClient(
   const [saveMsg, setSaveMsg] = useState("");
 
   const [publicRegistration, setPublicRegistration] = useState(false);
-  const [lineLoginEnabled, setLineLoginEnabled] = useState(false);
   const [allowedEmails, setAllowedEmails] = useState("");
   const [ipAllowlist, setIpAllowlist] = useState("");
   const [transactionPhotoStorage, setTransactionPhotoStorage] = useState<
@@ -266,20 +265,8 @@ export default function AdminClient(
     minute: "0",
     weekday: "1",
     dayOfMonth: "1",
-    notifyEmail: true,
-    notifyLine: false,
   });
   const [scheduleMsg, setScheduleMsg] = useState("");
-  const [expenseReminders, setExpenseReminders] = useState<any[]>([]);
-  const [expenseReminderForm, setExpenseReminderForm] = useState({
-    userId: "",
-    freq: "daily",
-    hour: "21",
-    minute: "0",
-    weekday: "0",
-    dayOfMonth: "1",
-  });
-
   const [adminSelfLogs, setAdminSelfLogs] = useState<any[]>([]);
   const [allLogs, setAllLogs] = useState<any[]>([]);
   const [selectedLogIds, setSelectedLogIds] = useState<string[]>([]);
@@ -304,7 +291,6 @@ export default function AdminClient(
         providers,
         certs,
         scheduleList,
-        expenseReminderList,
         adminLogs,
         userLogs,
         retention,
@@ -317,7 +303,6 @@ export default function AdminClient(
         apiGet("/api/admin/email-providers").catch(() => null),
         apiGet("/api/admin/certs").catch(() => null),
         apiGet("/api/admin/report-schedules").catch(() => []),
-        apiGet("/api/admin/line-expense-reminders").catch(() => []),
         apiGet("/api/admin/login-audit?scope=admin-self").catch(() => ({
           logs: [],
         })),
@@ -330,7 +315,6 @@ export default function AdminClient(
       ]);
 
       setPublicRegistration(!!settings.publicRegistration);
-      setLineLoginEnabled(!!settings.lineLoginEnabled);
       setAllowedEmails(
         Array.isArray(settings.allowedRegistrationEmails)
           ? settings.allowedRegistrationEmails.join("\n")
@@ -346,7 +330,7 @@ export default function AdminClient(
       );
       setTransactionPhotoMaxMb(
         settings.transactionPhotoMaxBytes
-          ? String(Math.round(settings.transactionPhotoMaxBytes / 1024 / 1024))
+          ? String(settings.transactionPhotoMaxBytes / 1024 / 1024)
           : "",
       );
       setPhotoEncryptionEnabled(!!photoStorage?.encryptionEnabled);
@@ -363,17 +347,12 @@ export default function AdminClient(
       setEmailProviders(providers);
       setCertInfo(certs);
       setSchedules(scheduleList || []);
-      setExpenseReminders(expenseReminderList || []);
       setAdminSelfLogs(adminLogs.logs || []);
       setAllLogs(userLogs.logs || []);
       setAuditRetention(String(retention.retention_days || "90"));
       setAuditLogs(auditResp.data || []);
       setAuditTotal(auditResp.total || 0);
       setScheduleForm((prev) => ({
-        ...prev,
-        userId: userList?.[0]?.id || prev.userId || "",
-      }));
-      setExpenseReminderForm((prev) => ({
         ...prev,
         userId: userList?.[0]?.id || prev.userId || "",
       }));
@@ -426,7 +405,6 @@ export default function AdminClient(
       const maxMbNum = parseFloat(transactionPhotoMaxMb);
       await apiPut("/api/admin/system-settings", {
         publicRegistration,
-        lineLoginEnabled,
         allowedRegistrationEmails: allowedEmails
           .split("\n")
           .map((s) => s.trim())
@@ -580,8 +558,6 @@ export default function AdminClient(
         minute: Number(scheduleForm.minute),
         weekday: Number(scheduleForm.weekday),
         dayOfMonth: Number(scheduleForm.dayOfMonth),
-        notifyEmail: scheduleForm.notifyEmail,
-        notifyLine: scheduleForm.notifyLine,
       });
       setScheduleMsg("排程已新增");
       await load();
@@ -640,66 +616,12 @@ export default function AdminClient(
     }
   }
 
-  async function handleToggleScheduleChannel(
-    id: string,
-    field: "notifyEmail" | "notifyLine",
-    value: boolean,
-  ) {
+  async function handleEnableScheduleEmail(id: string) {
     try {
-      await apiPut(`/api/admin/report-schedules/${id}`, { [field]: !value });
+      await apiPut(`/api/admin/report-schedules/${id}`, { notifyEmail: true });
       await load();
     } catch (e: any) {
       setScheduleMsg(e.message || "更新通知方式失敗");
-    }
-  }
-
-  async function handleCreateExpenseReminder(e: React.FormEvent) {
-    e.preventDefault();
-    setScheduleMsg("");
-    try {
-      await apiPost("/api/admin/line-expense-reminders", {
-        userId: expenseReminderForm.userId,
-        freq: expenseReminderForm.freq,
-        hour: Number(expenseReminderForm.hour),
-        minute: Number(expenseReminderForm.minute),
-        weekday: Number(expenseReminderForm.weekday),
-        dayOfMonth: Number(expenseReminderForm.dayOfMonth),
-      });
-      setScheduleMsg("LINE 支出提醒已新增");
-      await load();
-    } catch (e: any) {
-      setScheduleMsg(e.message || "新增 LINE 支出提醒失敗");
-    }
-  }
-
-  async function handleToggleExpenseReminder(id: string, enabled: boolean) {
-    try {
-      await apiPut(`/api/admin/line-expense-reminders/${id}`, {
-        enabled: !enabled,
-      });
-      await load();
-    } catch (e: any) {
-      setScheduleMsg(e.message || "更新 LINE 支出提醒失敗");
-    }
-  }
-
-  async function handleDeleteExpenseReminder(id: string) {
-    if (!confirm("確定要刪除此 LINE 支出提醒嗎？")) return;
-    try {
-      await apiDelete(`/api/admin/line-expense-reminders/${id}`);
-      await load();
-    } catch (e: any) {
-      setScheduleMsg(e.message || "刪除 LINE 支出提醒失敗");
-    }
-  }
-
-  async function handleRunExpenseReminderNow(id: string) {
-    try {
-      await apiPost(`/api/admin/line-expense-reminders/${id}/run-now`);
-      setScheduleMsg("LINE 支出提醒已送出");
-      await load();
-    } catch (e: any) {
-      setScheduleMsg(e.message || "立即提醒失敗");
     }
   }
 
@@ -922,18 +844,7 @@ export default function AdminClient(
                   }
                   className="w-4 h-4"
                 />
-                開放第三方服務註冊（Google／LINE）
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={lineLoginEnabled}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setLineLoginEnabled(e.target.checked)
-                  }
-                  className="w-4 h-4"
-                />
-                啟用 LINE 登入
+                開放第三方服務註冊（Google／Apple）
               </label>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -976,31 +887,31 @@ export default function AdminClient(
                     )
                   }
                 >
-                  <option value="">依環境設定（預設）</option>
+                  <option value="">本機儲存（預設）</option>
                   <option value="local">強制使用本機儲存</option>
                   <option value="s3">強制使用 S3 雲端儲存</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">
-                  設定後會覆蓋環境變數，套用至所有使用者的新上傳
+                  套用至所有使用者的新上傳
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  交易憑證照片大小上限（MB）
+                  交易憑證照片大小上限（MiB）
                 </label>
                 <input
                   type="number"
-                  min={1}
-                  step={1}
+                  min={0}
+                  step="any"
                   className="w-full p-2 border rounded-md"
                   value={transactionPhotoMaxMb}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setTransactionPhotoMaxMb(e.target.value)
                   }
-                  placeholder={`留空使用環境變數預設值（${Math.round(10485760 / 1024 / 1024)} MB）`}
+                  placeholder={`留空使用預設 10 MiB`}
                 />
                 <p className="text-xs text-slate-500 mt-1">
-                  覆蓋 TRANSACTION_PHOTO_MAX_BYTES，留空則沿用環境變數設定
+                  變更會套用到新的照片上傳
                 </p>
               </div>
               <div>
@@ -1119,8 +1030,7 @@ export default function AdminClient(
                   placeholder="10"
                 />
                 <p className="text-xs text-slate-500 mt-1">
-                  1 ~ 1440 分鐘；可用環境變數 STOCK_AUTO_UPDATE_ENABLED /
-                  STOCK_AUTO_UPDATE_INTERVAL_MIN 覆寫
+                  1 ~ 1440 分鐘
                 </p>
               </div>
               {saveMsg && (
@@ -1241,7 +1151,6 @@ export default function AdminClient(
                     <TableCell>
                       {[
                         user.googleId ? "Google" : null,
-                        user.lineId ? "LINE" : null,
                       ]
                         .filter(Boolean)
                         .join(" + ") || "—"}
@@ -1400,34 +1309,6 @@ export default function AdminClient(
                   </select>
                 </div>
               )}
-              <div className="md:col-span-4 flex flex-wrap gap-4 text-sm text-slate-700">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={scheduleForm.notifyEmail}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setScheduleForm((prev) => ({
-                        ...prev,
-                        notifyEmail: e.target.checked,
-                      }))
-                    }
-                  />
-                  Email 通知
-                </label>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={scheduleForm.notifyLine}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setScheduleForm((prev) => ({
-                        ...prev,
-                        notifyLine: e.target.checked,
-                      }))
-                    }
-                  />
-                  LINE 通知
-                </label>
-              </div>
             </form>
             {scheduleMsg && (
               <p className="text-sm text-slate-600 mt-3">{scheduleMsg}</p>
@@ -1459,36 +1340,12 @@ export default function AdminClient(
                     <TableCell>{schedule.freq}</TableCell>
                     <TableCell>{fmtScheduleTime(schedule)}</TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={!canWrite}
-                          className={`rounded border px-2 py-1 text-xs disabled:opacity-50 ${schedule.notifyEmail ? "border-blue-500 text-blue-700" : "border-slate-200 text-slate-400"}`}
-                          onClick={() =>
-                            handleToggleScheduleChannel(
-                              schedule.id,
-                              "notifyEmail",
-                              schedule.notifyEmail,
-                            )
-                          }
-                        >
-                          Email
-                        </button>
-                        <button
-                          type="button"
-                          disabled={!canWrite}
-                          className={`rounded border px-2 py-1 text-xs disabled:opacity-50 ${schedule.notifyLine ? "border-green-500 text-green-700" : "border-slate-200 text-slate-400"}`}
-                          onClick={() =>
-                            handleToggleScheduleChannel(
-                              schedule.id,
-                              "notifyLine",
-                              schedule.notifyLine,
-                            )
-                          }
-                        >
-                          LINE
-                        </button>
-                      </div>
+                      {schedule.notifyEmail ? "Email" : (
+                        <Button size="sm" variant="outline" disabled={!canWrite}
+                          onClick={() => handleEnableScheduleEmail(schedule.id)}>
+                          改用 Email
+                        </Button>
+                      )}
                     </TableCell>
                     <TableCell>{fmtTs(schedule.lastRun)}</TableCell>
                     <TableCell>
@@ -1532,190 +1389,6 @@ export default function AdminClient(
                             variant="destructive"
                             size="sm"
                             onClick={() => handleDeleteSchedule(schedule.id)}
-                          >
-                            刪除
-                          </Button>
-                        </>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">LINE 支出提醒</h3>
-            <form
-              onSubmit={handleCreateExpenseReminder}
-              className="grid md:grid-cols-4 gap-4 mb-5"
-            >
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  使用者
-                </label>
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={expenseReminderForm.userId}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setExpenseReminderForm((prev) => ({
-                      ...prev,
-                      userId: e.target.value,
-                    }))
-                  }
-                >
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  頻率
-                </label>
-                <select
-                  className="w-full p-2 border rounded-md"
-                  value={expenseReminderForm.freq}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setExpenseReminderForm((prev) => ({
-                      ...prev,
-                      freq: e.target.value,
-                    }))
-                  }
-                >
-                  {SCHEDULE_FREQ_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <Input
-                label="小時"
-                type="number"
-                min={0}
-                max={23}
-                value={expenseReminderForm.hour}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setExpenseReminderForm((prev) => ({
-                    ...prev,
-                    hour: e.target.value,
-                  }))
-                }
-              />
-              <Input
-                label="分鐘"
-                type="number"
-                min={0}
-                max={59}
-                value={expenseReminderForm.minute}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setExpenseReminderForm((prev) => ({
-                    ...prev,
-                    minute: e.target.value,
-                  }))
-                }
-              />
-              <Button type="submit" className="self-end" disabled={!canWrite}>
-                新增 LINE 提醒
-              </Button>
-              {expenseReminderForm.freq === "weekly" && (
-                <Input
-                  label="每週星期 (0-6)"
-                  type="number"
-                  min={0}
-                  max={6}
-                  value={expenseReminderForm.weekday}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setExpenseReminderForm((prev) => ({
-                      ...prev,
-                      weekday: e.target.value,
-                    }))
-                  }
-                />
-              )}
-              {expenseReminderForm.freq === "monthly" && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    每月日期
-                  </label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={expenseReminderForm.dayOfMonth}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setExpenseReminderForm((prev) => ({
-                        ...prev,
-                        dayOfMonth: e.target.value,
-                      }))
-                    }
-                  >
-                    {DAY_OF_MONTH_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </form>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>使用者</TableHead>
-                  <TableHead>頻率</TableHead>
-                  <TableHead>時間</TableHead>
-                  <TableHead>上次提醒</TableHead>
-                  <TableHead>狀態</TableHead>
-                  <TableHead>操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenseReminders.map((reminder) => (
-                  <TableRow key={reminder.id}>
-                    <TableCell>
-                      {users.find((user) => user.id === reminder.userId)
-                        ?.email || reminder.userId}
-                    </TableCell>
-                    <TableCell>{reminder.freq}</TableCell>
-                    <TableCell>{fmtScheduleTime(reminder)}</TableCell>
-                    <TableCell>{fmtTs(reminder.lastRun)}</TableCell>
-                    <TableCell>
-                      {reminder.enabled ? "啟用中" : "停用"}
-                    </TableCell>
-                    <TableCell className="flex gap-2 flex-wrap">
-                      {canWrite ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleToggleExpenseReminder(
-                                reminder.id,
-                                reminder.enabled,
-                              )
-                            }
-                          >
-                            {reminder.enabled ? "停用" : "啟用"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleRunExpenseReminderNow(reminder.id)
-                            }
-                          >
-                            立即提醒
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              handleDeleteExpenseReminder(reminder.id)
-                            }
                           >
                             刪除
                           </Button>

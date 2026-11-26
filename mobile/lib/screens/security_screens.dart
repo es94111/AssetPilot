@@ -323,7 +323,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
   }
 }
 
-// ── 帳號綁定（Google / LINE） ─────────────────────────────────
+// ── 帳號綁定（Google / Apple） ─────────────────────────────────
 
 class AccountBindingsScreen extends StatefulWidget {
   const AccountBindingsScreen({super.key});
@@ -372,10 +372,8 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
     try {
       if (provider == 'Google') {
         await ApiClient.instance.unlinkGoogle();
-      } else if (provider == 'Apple') {
-        await ApiClient.instance.appleUnlink();
       } else {
-        await ApiClient.instance.unlinkLine();
+        await ApiClient.instance.appleUnlink();
       }
       if (mounted) toast(context, trKey('mobileLegacyUnlinked'));
       _reload();
@@ -412,13 +410,7 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
   }
 
   Widget _tile(String provider, bool linked) => ListTile(
-    leading: Icon(
-      provider == 'Google'
-          ? Icons.account_circle
-          : provider == 'Apple'
-              ? Icons.apple
-              : Icons.chat_bubble_outline,
-    ),
+    leading: Icon(provider == 'Google' ? Icons.account_circle : Icons.apple),
     title: Text(trKey('mobileDynamicProviderBinding', {'provider': provider})),
     subtitle: Text(
       linked ? trKey('mobileLegacyLinked') : trKey('mobileLegacyNotLinked'),
@@ -450,8 +442,6 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
         builder: (context, user) => ListView(
           children: [
             _tile('Google', user.googleLinked),
-            Divider(height: 1),
-            _tile('LINE', user.lineLinked),
             if (AppleAuth.isSupported) ...[
               Divider(height: 1),
               _tile('Apple', user.appleLinked),

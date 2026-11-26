@@ -92,7 +92,7 @@ function test(name: string, fn: () => void | Promise<void>): Promise<void> {
 
   // ─── User Story 1 Acceptance Scenario 3 (Asia/Taipei regression-free) ───
   console.log('Scenario 3: Asia/Taipei 使用者完全不變（regression-free）');
-  // 設定 FAKE_NOW 為某 Taipei 工作日 13:00 = UTC 5:00
+  // 注入測試時間為某 Taipei 工作日 13:00 = UTC 5:00
   ut.__setNowMs(new Date('2026-05-15T05:00:00Z').getTime());
   const todayTw = ut.todayInUserTz('Asia/Taipei');
   await test('Taipei 「今天」 = 2026-05-15', () => assert.equal(todayTw, '2026-05-15'));

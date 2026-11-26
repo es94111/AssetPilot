@@ -37,7 +37,7 @@ test('反例 UTC+8', () => assert.equal(ut.isValidIanaTimezone('UTC+8'), false))
 test('反例 空字串', () => assert.equal(ut.isValidIanaTimezone(''), false));
 test('反例 null', () => assert.equal(ut.isValidIanaTimezone(null as unknown as string), false));
 
-// ─── todayInUserTz / partsInTz：用 FAKE_NOW 鎖定瞬時 ───
+// ─── todayInUserTz / partsInTz：用測試時間 鎖定瞬時 ───
 console.log('todayInUserTz / partsInTz：');
 // UTC 5-1 06:30Z  =  PDT 4-30 23:30  /  Taipei 5-1 14:30
 ut.__setNowMs(new Date('2026-05-01T06:30:00Z').getTime());

@@ -34,7 +34,7 @@ import 'platform_info.dart';
 /// ## 待處理連結要依 host 分取
 ///
 /// 本 App 有兩類互不相干的連結消費者：記帳入口（`transaction`／`ledger`）
-/// 與登入回呼（`google-callback`／`line-callback`／`auth-ticket`）。
+/// 與登入回呼（`google-callback`／`auth-ticket`）。
 /// 若只有一格待處理連結，任一方先取走就會讓另一方收不到冷啟動連結。
 /// 因此 [takeInitialLink] 與 [peekInitialLink] 都支援以 host 過濾。
 class AppLinkService {

@@ -1,7 +1,7 @@
 // tests/e2e/login.test.ts — 登入流程（issue #264）
 //
 // 密碼登入已停用（app/api/auth/login/route.ts），正式登入只能透過 Google／
-// LINE／Passkey，無法在 CI 中以真實第三方憑證重現。這裡改驗證兩段可重現、
+// Apple／Passkey，無法在 CI 中以真實第三方憑證重現。這裡改驗證兩段可重現、
 // 不依賴正式環境憑證的行為：
 //   1. 未登入造訪受保護頁面會被導向 /login（requireServerAuth 的守門邏輯）。
 //   2. /login 頁面本身渲染正確（標題、說明文字、可用的登入方式）。
@@ -22,7 +22,7 @@ test.describe('login', () => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: 'AssetPilot' })).toBeVisible();
     await expect(page.getByText('歡迎回來，請登入您的帳號')).toBeVisible();
-    // Passkey 登入在未設定 Google/LINE 的測試環境下必定渲染。
+    // Passkey 登入在未設定 Google 的測試環境下必定渲染。
     await expect(page.getByRole('button', { name: '使用 Passkey 登入' })).toBeVisible();
   });
 });

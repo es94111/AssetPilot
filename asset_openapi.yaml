@@ -2,14 +2,14 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "5.2.2"
+  version: "6.0.0"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
     認證方式：JWT 儲存於 httpOnly Cookie（token），除 /api/auth/* 與 /api/config 外均需認證。
     記帳 API 可用 X-Ledger-Id header 或 ledgerId query 選擇帳本，未指定則使用個人帳本。
     每次請求皆驗證登入者的帳本成員資格；viewer 僅可 GET/HEAD/OPTIONS。
-    個人偏好、投資、登入憑證及 MCP/API Token/LINE 整合不採用共享帳本選擇。
+    個人偏好、投資、登入憑證及 MCP/API Token 整合不採用共享帳本選擇。
     公開 API（/api/v1/*）供第三方自動化整合：以 Authorization: Bearer <API Token>（ap_api_…）
     認證並依逐 Token 權限範圍（scope）授權，另有應用層速率限制與嚴格請求體驗證。
 

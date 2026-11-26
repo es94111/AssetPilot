@@ -108,7 +108,7 @@ export async function POST(request: Request) {
     let user = queryOne("SELECT * FROM users WHERE apple_id = ?", [appleId]);
 
     if (!user && email) {
-      // 既有帳號（僅 Google／LINE 登入）第一次使用 Apple 登入：不自動合併，
+      // 既有帳號（使用其他方式登入）第一次使用 Apple 登入：不自動合併，
       // 改為回覆明確錯誤，讓使用者改用原登入方式或在 App 內執行綁定流程。
       const existing = queryOne("SELECT * FROM users WHERE email = ?", [email]);
       if (existing) {

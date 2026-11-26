@@ -31,7 +31,7 @@ class DeepLinkService {
 
   /// 記帳入口與共享帳本邀請所使用的 host。
   ///
-  /// 登入回呼（`google-callback`／`line-callback`／`auth-ticket`）屬於
+  /// 登入回呼（`google-callback`／`auth-ticket`）屬於
   /// 另一條流程，不在這裡處理，因此取回冷啟動連結時會以這組 host 過濾，
   /// 避免把登入回呼誤當成記帳入口。
   static const List<String> entryHosts = ['transaction', 'ledger'];

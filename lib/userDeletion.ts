@@ -147,6 +147,8 @@ export async function deleteUserCompletely(userId: string): Promise<void> {
   // 不可吞掉錯誤後讓呼叫端誤以為帳號已完整刪除。
   db.run("BEGIN");
   try {
+    // Personal-ledger initialization also locks the user before its ledger.
+    queryOne("SELECT id FROM users WHERE id = ? FOR UPDATE", [userId]);
     for (const statement of USER_OWNED_DELETE_STATEMENTS) {
       db.run(statement, [userId]);
     }

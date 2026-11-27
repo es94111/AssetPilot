@@ -47,36 +47,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut =>
-      'शॉर्टकट जोड़ें या अपडेट करें';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'शॉर्टकट टेम्पलेट v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'शॉर्टकट्स में शॉर्टकट सेट अप करें, अपना बैंक या भुगतान ऐप चुनें और शॉर्टकट जोड़ें। शॉर्टकट संपादित करते समय, और ऐप जोड़ने के लिए सूचना ट्रिगर के पास + पर टैप करें। ट्रिगर को विस्तृत करें और ऑटोमेशन चालू करें।';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'अपडेट के बाद स्रोत ऐप और चलाने के विकल्प जाँचें। अगर दो प्रतियाँ दिखें, तो नया ऑटोमेशन चालू करने से पहले पुराना बंद करें।';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'iPhone लॉक होने पर चलाने के लिए, शॉर्टकट की गोपनीयता सेटिंग में लॉक होने पर चलाने की अनुमति दें।';
-
-  @override
-  String get notificationCaptureManualSetup => 'मैन्युअल रूप से सेट करें';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'शॉर्टकट टेम्पलेट नहीं खुल सका। नीचे दिए गए मैन्युअल चरण अपनाएँ।';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. शॉर्टकट्स में कोई शॉर्टकट संपादित करें या नया बनाएँ। सूचना ट्रिगर जोड़ें और अपना बैंक या भुगतान ऐप चुनें। और ऐप जोड़ने के लिए + पर टैप करें।';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +60,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. सूचना ट्रिगर को विस्तृत करें और ऑटोमेशन चालू करें। पहला भुगतान अलर्ट मिलने के बाद, अंतिम सूचना देखने के लिए यहाँ लौटें।';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

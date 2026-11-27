@@ -63,47 +63,7 @@
     "description": "Web path: notificationCapture.setup",
     "x-webPath": "notificationCapture.setup"
   },
-  "notificationCaptureImportShortcut": "加入／更新捷徑",
-  "@notificationCaptureImportShortcut": {
-    "description": "Web path: notificationCapture.importShortcut",
-    "x-webPath": "notificationCapture.importShortcut"
-  },
-  "notificationCaptureTemplateVersion": "捷徑範本 v{version}",
-  "@notificationCaptureTemplateVersion": {
-    "description": "Web path: notificationCapture.templateVersion",
-    "x-webPath": "notificationCapture.templateVersion",
-    "placeholders": {
-      "version": {
-        "type": "int"
-      }
-    }
-  },
-  "notificationCaptureTemplateChooseSource": "在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。",
-  "@notificationCaptureTemplateChooseSource": {
-    "description": "Web path: notificationCapture.templateChooseSource",
-    "x-webPath": "notificationCapture.templateChooseSource"
-  },
-  "notificationCaptureTemplateReplace": "更新後請核對通知來源與執行選項。若保留兩份捷徑，先停用舊版自動化，再啟用新版。",
-  "@notificationCaptureTemplateReplace": {
-    "description": "Web path: notificationCapture.templateReplace",
-    "x-webPath": "notificationCapture.templateReplace"
-  },
-  "notificationCaptureTemplateLocked": "需要鎖定時執行時，可在捷徑的隱私權設定開啟「允許在鎖定時執行」。",
-  "@notificationCaptureTemplateLocked": {
-    "description": "Web path: notificationCapture.templateLocked",
-    "x-webPath": "notificationCapture.templateLocked"
-  },
-  "notificationCaptureManualSetup": "手動設定",
-  "@notificationCaptureManualSetup": {
-    "description": "Web path: notificationCapture.manualSetup",
-    "x-webPath": "notificationCapture.manualSetup"
-  },
-  "notificationCaptureTemplateUnavailable": "無法開啟捷徑範本。請使用下方的手動設定。",
-  "@notificationCaptureTemplateUnavailable": {
-    "description": "Web path: notificationCapture.templateUnavailable",
-    "x-webPath": "notificationCapture.templateUnavailable"
-  },
-  "notificationCaptureStepTrigger": "1. 在「捷徑」編輯或新增一份捷徑，加入「通知」觸發器並選擇銀行或支付 App。點「＋」加入其他來源。",
+  "notificationCaptureStepTrigger": "1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +78,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. 展開通知觸發器旁的箭頭，開啟「自動化操作」。收到第一則消費通知後，回來查看「最近一次接收」。",
+  "notificationCaptureStepRun": "4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

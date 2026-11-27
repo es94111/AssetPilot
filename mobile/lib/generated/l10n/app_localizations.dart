@@ -189,52 +189,10 @@ abstract class AppLocalizations {
   /// **'設定 iPhone 捷徑'**
   String get notificationCaptureSetup;
 
-  /// Web path: notificationCapture.importShortcut
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'加入／更新捷徑'**
-  String get notificationCaptureImportShortcut;
-
-  /// Web path: notificationCapture.templateVersion
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'捷徑範本 v{version}'**
-  String notificationCaptureTemplateVersion(int version);
-
-  /// Web path: notificationCapture.templateChooseSource
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。'**
-  String get notificationCaptureTemplateChooseSource;
-
-  /// Web path: notificationCapture.templateReplace
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'更新後請核對通知來源與執行選項。若保留兩份捷徑，先停用舊版自動化，再啟用新版。'**
-  String get notificationCaptureTemplateReplace;
-
-  /// Web path: notificationCapture.templateLocked
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'需要鎖定時執行時，可在捷徑的隱私權設定開啟「允許在鎖定時執行」。'**
-  String get notificationCaptureTemplateLocked;
-
-  /// Web path: notificationCapture.manualSetup
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'手動設定'**
-  String get notificationCaptureManualSetup;
-
-  /// Web path: notificationCapture.templateUnavailable
-  ///
-  /// In zh_Hant_TW, this message translates to:
-  /// **'無法開啟捷徑範本。請使用下方的手動設定。'**
-  String get notificationCaptureTemplateUnavailable;
-
   /// Web path: notificationCapture.stepTrigger
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'1. 在「捷徑」編輯或新增一份捷徑，加入「通知」觸發器並選擇銀行或支付 App。點「＋」加入其他來源。'**
+  /// **'1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。'**
   String get notificationCaptureStepTrigger;
 
   /// Web path: notificationCapture.stepAction
@@ -252,7 +210,7 @@ abstract class AppLocalizations {
   /// Web path: notificationCapture.stepRun
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'4. 展開通知觸發器旁的箭頭，開啟「自動化操作」。收到第一則消費通知後，回來查看「最近一次接收」。'**
+  /// **'4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。'**
   String get notificationCaptureStepRun;
 
   /// Web path: notificationCapture.openShortcuts

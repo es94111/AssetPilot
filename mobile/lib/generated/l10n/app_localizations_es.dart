@@ -47,35 +47,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut => 'Añadir o actualizar atajo';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'Plantilla de atajo v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'En Atajos, configura el atajo, elige la app de tu banco o de pagos y añade el atajo. Al editarlo, pulsa + junto al activador de notificaciones para añadir más apps. Despliega el activador y activa la automatización.';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'Tras actualizar, revisa la app de origen y las opciones de ejecución. Si aparecen dos copias, desactiva la automatización anterior antes de activar la nueva.';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'Para ejecutar el atajo con el iPhone bloqueado, permite su ejecución con el dispositivo bloqueado en los ajustes de privacidad del atajo.';
-
-  @override
-  String get notificationCaptureManualSetup => 'Configurar manualmente';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'No se pudo abrir la plantilla del atajo. Usa los pasos de configuración manual que aparecen a continuación.';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. En Atajos, edita o crea un atajo. Añade el activador de notificaciones y elige la app de tu banco o de pagos. Pulsa + para añadir más apps.';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -87,7 +60,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Despliega el activador de notificaciones y activa la automatización. Cuando recibas el primer aviso de pago, vuelve aquí para consultar la última notificación recibida.';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

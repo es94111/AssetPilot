@@ -47,36 +47,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut =>
-      'Ajouter ou mettre à jour le raccourci';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'Modèle de raccourci v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Dans l’éditeur, touchez + à côté du déclencheur de notification pour ajouter d’autres apps. Développez le déclencheur et activez l’automatisation.';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'Après la mise à jour, vérifiez l’app source et les options d’exécution. Si deux copies apparaissent, désactivez l’ancienne automatisation avant d’activer la nouvelle.';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'Pour que le raccourci s’exécute quand l’iPhone est verrouillé, autorisez l’exécution en mode verrouillé dans les réglages de confidentialité du raccourci.';
-
-  @override
-  String get notificationCaptureManualSetup => 'Configurer manuellement';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'Impossible d’ouvrir le modèle de raccourci. Suivez les étapes de configuration manuelle ci-dessous.';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. Dans Raccourcis, modifiez ou créez un raccourci. Ajoutez le déclencheur de notification et choisissez votre app bancaire ou de paiement. Touchez + pour ajouter d’autres apps.';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +60,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Développez le déclencheur de notification et activez l’automatisation. Après la première notification de paiement, revenez ici pour voir la dernière notification reçue.';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

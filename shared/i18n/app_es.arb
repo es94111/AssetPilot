@@ -63,47 +63,7 @@
     "description": "Web path: notificationCapture.setup",
     "x-webPath": "notificationCapture.setup"
   },
-  "notificationCaptureImportShortcut": "Añadir o actualizar atajo",
-  "@notificationCaptureImportShortcut": {
-    "description": "Web path: notificationCapture.importShortcut",
-    "x-webPath": "notificationCapture.importShortcut"
-  },
-  "notificationCaptureTemplateVersion": "Plantilla de atajo v{version}",
-  "@notificationCaptureTemplateVersion": {
-    "description": "Web path: notificationCapture.templateVersion",
-    "x-webPath": "notificationCapture.templateVersion",
-    "placeholders": {
-      "version": {
-        "type": "int"
-      }
-    }
-  },
-  "notificationCaptureTemplateChooseSource": "En Atajos, configura el atajo, elige la app de tu banco o de pagos y añade el atajo. Al editarlo, pulsa + junto al activador de notificaciones para añadir más apps. Despliega el activador y activa la automatización.",
-  "@notificationCaptureTemplateChooseSource": {
-    "description": "Web path: notificationCapture.templateChooseSource",
-    "x-webPath": "notificationCapture.templateChooseSource"
-  },
-  "notificationCaptureTemplateReplace": "Tras actualizar, revisa la app de origen y las opciones de ejecución. Si aparecen dos copias, desactiva la automatización anterior antes de activar la nueva.",
-  "@notificationCaptureTemplateReplace": {
-    "description": "Web path: notificationCapture.templateReplace",
-    "x-webPath": "notificationCapture.templateReplace"
-  },
-  "notificationCaptureTemplateLocked": "Para ejecutar el atajo con el iPhone bloqueado, permite su ejecución con el dispositivo bloqueado en los ajustes de privacidad del atajo.",
-  "@notificationCaptureTemplateLocked": {
-    "description": "Web path: notificationCapture.templateLocked",
-    "x-webPath": "notificationCapture.templateLocked"
-  },
-  "notificationCaptureManualSetup": "Configurar manualmente",
-  "@notificationCaptureManualSetup": {
-    "description": "Web path: notificationCapture.manualSetup",
-    "x-webPath": "notificationCapture.manualSetup"
-  },
-  "notificationCaptureTemplateUnavailable": "No se pudo abrir la plantilla del atajo. Usa los pasos de configuración manual que aparecen a continuación.",
-  "@notificationCaptureTemplateUnavailable": {
-    "description": "Web path: notificationCapture.templateUnavailable",
-    "x-webPath": "notificationCapture.templateUnavailable"
-  },
-  "notificationCaptureStepTrigger": "1. En Atajos, edita o crea un atajo. Añade el activador de notificaciones y elige la app de tu banco o de pagos. Pulsa + para añadir más apps.",
+  "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +78,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. Despliega el activador de notificaciones y activa la automatización. Cuando recibas el primer aviso de pago, vuelve aquí para consultar la última notificación recibida.",
+  "notificationCaptureStepRun": "4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

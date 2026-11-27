@@ -45,34 +45,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationCaptureSetup => '設定 iPhone 捷徑';
 
   @override
-  String get notificationCaptureImportShortcut => '加入／更新捷徑';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return '捷徑範本 v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      '更新後請核對通知來源與執行選項。若保留兩份捷徑，先停用舊版自動化，再啟用新版。';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      '需要鎖定時執行時，可在捷徑的隱私權設定開啟「允許在鎖定時執行」。';
-
-  @override
-  String get notificationCaptureManualSetup => '手動設定';
-
-  @override
-  String get notificationCaptureTemplateUnavailable => '無法開啟捷徑範本。請使用下方的手動設定。';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. 在「捷徑」編輯或新增一份捷徑，加入「通知」觸發器並選擇銀行或支付 App。點「＋」加入其他來源。';
+      '1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。';
 
   @override
   String get notificationCaptureStepAction =>
@@ -84,7 +58,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. 展開通知觸發器旁的箭頭，開啟「自動化操作」。收到第一則消費通知後，回來查看「最近一次接收」。';
+      '4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。';
 
   @override
   String get notificationCaptureOpenShortcuts => '開啟捷徑';
@@ -6823,34 +6797,8 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get notificationCaptureSetup => '设置 iPhone 快捷指令';
 
   @override
-  String get notificationCaptureImportShortcut => '添加或更新快捷指令';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return '快捷指令模板 v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      '在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。编辑已导入的快捷指令时，可点按通知触发器旁的「＋」添加其他 App。展开箭头并打开自动化。';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      '更新后请核对通知来源和运行选项。如果保留了两份快捷指令，请先停用旧版自动化，再启用新版。';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      '如需在锁定时运行，可在快捷指令的隐私设置中开启「允许在锁定时运行」。';
-
-  @override
-  String get notificationCaptureManualSetup => '手动设置';
-
-  @override
-  String get notificationCaptureTemplateUnavailable => '无法打开快捷指令模板。请使用下方的手动设置。';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. 在快捷指令中编辑或新建一条快捷指令，添加「通知」触发器并选择银行或支付 App。点按「＋」添加其他来源。';
+      '1. 在快捷指令新增“收到通知”自动化，选取要接收的银行或支付 App。需要多组自动化时，可复制快捷指令再更换来源。';
 
   @override
   String get notificationCaptureStepAction =>
@@ -6862,7 +6810,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. 展开通知触发器旁的箭头，打开自动化。收到第一条消费通知后，回来查看「最近一次接收」。';
+      '4. 开启自动运行与“允许在锁定时运行”。收到第一条真实消费通知后，回来查看最近一次接收状态。';
 
   @override
   String get notificationCaptureOpenShortcuts => '打开快捷指令';
@@ -13505,34 +13453,8 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get notificationCaptureSetup => '設定 iPhone 捷徑';
 
   @override
-  String get notificationCaptureImportShortcut => '加入／更新捷徑';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return '捷徑範本 v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      '更新後請核對通知來源與執行選項。若保留兩份捷徑，先停用舊版自動化，再啟用新版。';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      '需要鎖定時執行時，可在捷徑的隱私權設定開啟「允許在鎖定時執行」。';
-
-  @override
-  String get notificationCaptureManualSetup => '手動設定';
-
-  @override
-  String get notificationCaptureTemplateUnavailable => '無法開啟捷徑範本。請使用下方的手動設定。';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. 在「捷徑」編輯或新增一份捷徑，加入「通知」觸發器並選擇銀行或支付 App。點「＋」加入其他來源。';
+      '1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。';
 
   @override
   String get notificationCaptureStepAction =>
@@ -13544,7 +13466,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. 展開通知觸發器旁的箭頭，開啟「自動化操作」。收到第一則消費通知後，回來查看「最近一次接收」。';
+      '4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。';
 
   @override
   String get notificationCaptureOpenShortcuts => '開啟捷徑';

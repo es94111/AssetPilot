@@ -47,35 +47,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut => 'Add or update shortcut';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'Shortcut template v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'In Shortcuts, tap Set Up Shortcut, choose your bank or payment app, then add the shortcut. When editing the imported shortcut, tap + beside the notification trigger to add more apps. Expand the trigger and turn on Automation.';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'After updating, check the source app and run options. If both copies appear, turn off the old automation before enabling the new one.';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'To run while your iPhone is locked, turn on Allow Running When Locked in the shortcut’s privacy settings.';
-
-  @override
-  String get notificationCaptureManualSetup => 'Set up manually';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'Couldn’t open the shortcut template. Use the manual steps below.';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, edit or create a shortcut. Add the Notification trigger and choose your bank or payment app. Tap + to add more apps.';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -87,7 +60,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Expand the notification trigger and turn on Automation. After the first payment alert, return here to check the last notification received.';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

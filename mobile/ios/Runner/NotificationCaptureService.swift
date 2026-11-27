@@ -67,16 +67,6 @@ private struct NotificationInbox: Codable {
     let previousSeen = seen.count
     seen = seen.filter { now.timeIntervalSince($0.value) < ttl }
     var changed = seen.count != previousSeen
-    // Older versions saved a timestamp even when the invocation had no event ID.
-    if lastEventId == nil, lastReceivedAt != nil {
-      let latestDraft = drafts.values.max { $0.queuedAt < $1.queuedAt }
-      lastEventId = latestDraft?.id
-      lastReceivedAt = latestDraft?.queuedAt
-      if lastStatus != "consent", lastStatus != "session" {
-        lastStatus = latestDraft?.status.rawValue
-      }
-      changed = true
-    }
     for id in drafts.keys where drafts[id]?.status == .queued {
       guard let entry = drafts[id], now.timeIntervalSince(entry.queuedAt) >= ttl
         || now.timeIntervalSince(entry.receivedAt) >= ttl else { continue }
@@ -284,17 +274,14 @@ actor NotificationCaptureService {
     } else {
       status = "ignored"
     }
-    if let id {
-      inbox.lastReceivedAt = now
-      inbox.lastEventId = id
-      inbox.lastStatus = status
-    }
+    inbox.lastReceivedAt = now
+    inbox.lastEventId = id
+    inbox.lastStatus = status
     state.inboxes[owner] = inbox
     // Commit the queue before awaiting the network or returning to Shortcuts.
     try write(state)
     try await process(ownerId: owner, limit: 2)
-    guard let id, let updated = try read().inboxes[owner], updated.lastEventId == id else { return status }
-    return updated.lastStatus ?? status
+    return try read().inboxes[owner]?.lastStatus ?? status
   }
 
   func process(ownerId: String, limit: Int = 8) async throws {

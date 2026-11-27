@@ -47,36 +47,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut =>
-      'Adicionar ou atualizar atalho';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'Modelo de atalho v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'No app Atalhos, configure o atalho, escolha seu app bancário ou de pagamentos e adicione o atalho. Ao editar o atalho importado, toque em + ao lado do acionador de notificações para incluir mais apps. Expanda o acionador e ative a automação.';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'Após atualizar, confira o app de origem e as opções de execução. Se aparecerem duas cópias, desative a automação antiga antes de ativar a nova.';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'Para executar com o iPhone bloqueado, permita a execução com o aparelho bloqueado nos ajustes de privacidade do atalho.';
-
-  @override
-  String get notificationCaptureManualSetup => 'Configurar manualmente';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'Não foi possível abrir o modelo de atalho. Siga as etapas de configuração manual abaixo.';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. No app Atalhos, edite ou crie um atalho. Adicione o acionador de notificações e escolha seu app bancário ou de pagamentos. Toque em + para incluir mais apps.';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +60,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Expanda o acionador de notificações e ative a automação. Após o primeiro aviso de pagamento, volte aqui para conferir a última notificação recebida.';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';
@@ -7245,36 +7217,8 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut =>
-      'Adicionar ou atualizar atalho';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'Modelo de atalho v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'No app Atalhos, configure o atalho, escolha seu app bancário ou de pagamentos e adicione o atalho. Ao editar o atalho importado, toque em + ao lado do acionador de notificações para incluir mais apps. Expanda o acionador e ative a automação.';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'Após atualizar, confira o app de origem e as opções de execução. Se aparecerem duas cópias, desative a automação antiga antes de ativar a nova.';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'Para executar com o iPhone bloqueado, permita a execução com o aparelho bloqueado nos ajustes de privacidade do atalho.';
-
-  @override
-  String get notificationCaptureManualSetup => 'Configurar manualmente';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'Não foi possível abrir o modelo de atalho. Siga as etapas de configuração manual abaixo.';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. No app Atalhos, edite ou crie um atalho. Adicione o acionador de notificações e escolha seu app bancário ou de pagamentos. Toque em + para incluir mais apps.';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -7286,7 +7230,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Expanda o acionador de notificações e ative a automação. Após o primeiro aviso de pagamento, volte aqui para conferir a última notificação recebida.';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

@@ -63,47 +63,7 @@
     "description": "Web path: notificationCapture.setup",
     "x-webPath": "notificationCapture.setup"
   },
-  "notificationCaptureImportShortcut": "Добавить или обновить команду",
-  "@notificationCaptureImportShortcut": {
-    "description": "Web path: notificationCapture.importShortcut",
-    "x-webPath": "notificationCapture.importShortcut"
-  },
-  "notificationCaptureTemplateVersion": "Шаблон команды v{version}",
-  "@notificationCaptureTemplateVersion": {
-    "description": "Web path: notificationCapture.templateVersion",
-    "x-webPath": "notificationCapture.templateVersion",
-    "placeholders": {
-      "version": {
-        "type": "int"
-      }
-    }
-  },
-  "notificationCaptureTemplateChooseSource": "В приложении «Команды» настройте команду, выберите банковское или платёжное приложение и добавьте команду. При редактировании команды нажмите + рядом с триггером уведомлений, чтобы добавить другие приложения. Разверните триггер и включите автоматизацию.",
-  "@notificationCaptureTemplateChooseSource": {
-    "description": "Web path: notificationCapture.templateChooseSource",
-    "x-webPath": "notificationCapture.templateChooseSource"
-  },
-  "notificationCaptureTemplateReplace": "После обновления проверьте исходное приложение и параметры запуска. Если появились две копии, отключите старую автоматизацию перед включением новой.",
-  "@notificationCaptureTemplateReplace": {
-    "description": "Web path: notificationCapture.templateReplace",
-    "x-webPath": "notificationCapture.templateReplace"
-  },
-  "notificationCaptureTemplateLocked": "Для запуска на заблокированном iPhone разрешите запуск при блокировке в настройках конфиденциальности команды.",
-  "@notificationCaptureTemplateLocked": {
-    "description": "Web path: notificationCapture.templateLocked",
-    "x-webPath": "notificationCapture.templateLocked"
-  },
-  "notificationCaptureManualSetup": "Настроить вручную",
-  "@notificationCaptureManualSetup": {
-    "description": "Web path: notificationCapture.manualSetup",
-    "x-webPath": "notificationCapture.manualSetup"
-  },
-  "notificationCaptureTemplateUnavailable": "Не удалось открыть шаблон команды. Воспользуйтесь инструкцией по ручной настройке ниже.",
-  "@notificationCaptureTemplateUnavailable": {
-    "description": "Web path: notificationCapture.templateUnavailable",
-    "x-webPath": "notificationCapture.templateUnavailable"
-  },
-  "notificationCaptureStepTrigger": "1. В приложении «Команды» откройте редактор команды или создайте новую. Добавьте триггер уведомлений и выберите банковское или платёжное приложение. Нажмите +, чтобы добавить другие приложения.",
+  "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +78,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. Разверните триггер уведомлений и включите автоматизацию. Когда придёт первое уведомление об оплате, вернитесь сюда, чтобы проверить последнее полученное уведомление.",
+  "notificationCaptureStepRun": "4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

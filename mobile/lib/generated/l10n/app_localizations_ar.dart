@@ -47,35 +47,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut => 'إضافة الاختصار أو تحديثه';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'قالب الاختصار v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'افتح إعداد الاختصار واختر تطبيق البنك أو الدفع، ثم أضف الاختصار. عند تعديل الاختصار المضاف، اضغط على + بجوار مشغّل الإشعارات لإضافة تطبيقات أخرى. وسّع المشغّل وفعّل الأتمتة.';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'بعد التحديث، راجع التطبيق المصدر وخيارات التشغيل. إذا ظهرت نسختان، أوقف الأتمتة القديمة قبل تفعيل الجديدة.';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'للتشغيل أثناء قفل iPhone، فعّل خيار السماح بالتشغيل عند القفل في إعدادات خصوصية الاختصار.';
-
-  @override
-  String get notificationCaptureManualSetup => 'الإعداد اليدوي';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'تعذّر فتح قالب الاختصار. استخدم خطوات الإعداد اليدوي أدناه.';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '١. عدّل اختصارًا أو أنشئ اختصارًا في تطبيق «الاختصارات». أضف مشغّل الإشعارات واختر تطبيق البنك أو الدفع. اضغط على + لإضافة تطبيقات أخرى.';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -87,7 +60,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '٤. وسّع مشغّل الإشعارات وفعّل الأتمتة. بعد أول إشعار دفع، ارجع إلى هنا للتحقق من آخر إشعار ورد.';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

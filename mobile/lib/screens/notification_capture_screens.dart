@@ -1,23 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../api_client.dart';
 import '../l10n.dart';
 import '../platform/notification_capture.dart';
-import '../platform/notification_capture_shortcut.dart';
 import '../widgets.dart';
 import 'ledger_screen.dart';
 import 'transaction_form_screen.dart';
 
 class NotificationCaptureSettingsScreen extends StatefulWidget {
   final String ownerId;
-  final NotificationCaptureShortcutTemplate? shortcutTemplate;
-
-  const NotificationCaptureSettingsScreen({
-    super.key,
-    required this.ownerId,
-    this.shortcutTemplate = releasedNotificationCaptureShortcut,
-  });
+  const NotificationCaptureSettingsScreen({super.key, required this.ownerId});
 
   @override
   State<NotificationCaptureSettingsScreen> createState() =>
@@ -133,6 +125,12 @@ class _NotificationCaptureSettingsScreenState
     }
   }
 
+  Future<void> _openShortcuts() async {
+    if (!await NotificationCapturePlatform.openShortcuts() && mounted) {
+      toast(context, trKey('notificationCaptureShortcutsError'), isError: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(trKey('notificationCaptureTitle'))),
@@ -208,9 +206,30 @@ class _NotificationCaptureSettingsScreenState
                 ),
               ),
               const Divider(),
-              _NotificationShortcutSetup(
-                key: const ValueKey('notificationShortcutSetup'),
-                template: widget.shortcutTemplate,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  trKey('notificationCaptureSetup'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              for (final step in [
+                'notificationCaptureStepTrigger',
+                'notificationCaptureStepAction',
+                'notificationCaptureStepInput',
+                'notificationCaptureStepRun',
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(trKey(step)),
+                ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton.icon(
+                  onPressed: _openShortcuts,
+                  icon: const Icon(Icons.open_in_new),
+                  label: Text(trKey('notificationCaptureOpenShortcuts')),
+                ),
               ),
               const SizedBox(height: 16),
               for (final group in ['payment', 'bank'])
@@ -250,129 +269,6 @@ class _NotificationCaptureSettingsScreenState
       ),
     ),
   );
-}
-
-class _NotificationShortcutSetup extends StatefulWidget {
-  final NotificationCaptureShortcutTemplate? template;
-
-  const _NotificationShortcutSetup({super.key, required this.template});
-
-  @override
-  State<_NotificationShortcutSetup> createState() =>
-      _NotificationShortcutSetupState();
-}
-
-class _NotificationShortcutSetupState
-    extends State<_NotificationShortcutSetup> {
-  bool _openingTemplate = false;
-  bool _showManualSetup = false;
-
-  Future<void> _openTemplate(Uri uri) async {
-    if (_openingTemplate) return;
-    setState(() => _openingTemplate = true);
-
-    bool opened;
-    try {
-      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } on Exception {
-      opened = false;
-    }
-    if (!mounted) return;
-
-    setState(() {
-      _openingTemplate = false;
-      if (!opened) _showManualSetup = true;
-    });
-    if (!opened) {
-      toast(
-        context,
-        trKey('notificationCaptureTemplateUnavailable'),
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _openShortcuts() async {
-    bool opened;
-    try {
-      opened = await NotificationCapturePlatform.openShortcuts();
-    } on Exception {
-      opened = false;
-    }
-    if (!opened && mounted) {
-      toast(context, trKey('notificationCaptureShortcutsError'), isError: true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final template = widget.template;
-    final uri = template?.shareUri;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(
-            trKey('notificationCaptureSetup'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        if (template != null && uri != null) ...[
-          FilledButton.icon(
-            onPressed: _openingTemplate ? null : () => _openTemplate(uri),
-            icon: _openingTemplate
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.open_in_new),
-            label: Text(trKey('notificationCaptureImportShortcut')),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            trKey('notificationCaptureTemplateVersion', {
-              'version': template.version,
-            }),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 8),
-          Text(trKey('notificationCaptureTemplateChooseSource')),
-          const SizedBox(height: 8),
-          Text(trKey('notificationCaptureTemplateReplace')),
-          if (template.verifiedLockedExecution) ...[
-            const SizedBox(height: 8),
-            Text(trKey('notificationCaptureTemplateLocked')),
-          ],
-          if (!_showManualSetup)
-            TextButton(
-              onPressed: () => setState(() => _showManualSetup = true),
-              child: Text(trKey('notificationCaptureManualSetup')),
-            )
-          else
-            const SizedBox(height: 12),
-        ],
-        if (uri == null || _showManualSetup) ...[
-          for (final step in [
-            'notificationCaptureStepTrigger',
-            'notificationCaptureStepAction',
-            'notificationCaptureStepInput',
-            'notificationCaptureStepRun',
-          ])
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(trKey(step)),
-            ),
-          OutlinedButton.icon(
-            onPressed: _openShortcuts,
-            icon: const Icon(Icons.open_in_new),
-            label: Text(trKey('notificationCaptureOpenShortcuts')),
-          ),
-        ],
-      ],
-    );
-  }
 }
 
 class NotificationDraftsScreen extends StatefulWidget {

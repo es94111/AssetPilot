@@ -63,47 +63,7 @@
     "description": "Web path: notificationCapture.setup",
     "x-webPath": "notificationCapture.setup"
   },
-  "notificationCaptureImportShortcut": "Ajouter ou mettre à jour le raccourci",
-  "@notificationCaptureImportShortcut": {
-    "description": "Web path: notificationCapture.importShortcut",
-    "x-webPath": "notificationCapture.importShortcut"
-  },
-  "notificationCaptureTemplateVersion": "Modèle de raccourci v{version}",
-  "@notificationCaptureTemplateVersion": {
-    "description": "Web path: notificationCapture.templateVersion",
-    "x-webPath": "notificationCapture.templateVersion",
-    "placeholders": {
-      "version": {
-        "type": "int"
-      }
-    }
-  },
-  "notificationCaptureTemplateChooseSource": "Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Dans l’éditeur, touchez + à côté du déclencheur de notification pour ajouter d’autres apps. Développez le déclencheur et activez l’automatisation.",
-  "@notificationCaptureTemplateChooseSource": {
-    "description": "Web path: notificationCapture.templateChooseSource",
-    "x-webPath": "notificationCapture.templateChooseSource"
-  },
-  "notificationCaptureTemplateReplace": "Après la mise à jour, vérifiez l’app source et les options d’exécution. Si deux copies apparaissent, désactivez l’ancienne automatisation avant d’activer la nouvelle.",
-  "@notificationCaptureTemplateReplace": {
-    "description": "Web path: notificationCapture.templateReplace",
-    "x-webPath": "notificationCapture.templateReplace"
-  },
-  "notificationCaptureTemplateLocked": "Pour que le raccourci s’exécute quand l’iPhone est verrouillé, autorisez l’exécution en mode verrouillé dans les réglages de confidentialité du raccourci.",
-  "@notificationCaptureTemplateLocked": {
-    "description": "Web path: notificationCapture.templateLocked",
-    "x-webPath": "notificationCapture.templateLocked"
-  },
-  "notificationCaptureManualSetup": "Configurer manuellement",
-  "@notificationCaptureManualSetup": {
-    "description": "Web path: notificationCapture.manualSetup",
-    "x-webPath": "notificationCapture.manualSetup"
-  },
-  "notificationCaptureTemplateUnavailable": "Impossible d’ouvrir le modèle de raccourci. Suivez les étapes de configuration manuelle ci-dessous.",
-  "@notificationCaptureTemplateUnavailable": {
-    "description": "Web path: notificationCapture.templateUnavailable",
-    "x-webPath": "notificationCapture.templateUnavailable"
-  },
-  "notificationCaptureStepTrigger": "1. Dans Raccourcis, modifiez ou créez un raccourci. Ajoutez le déclencheur de notification et choisissez votre app bancaire ou de paiement. Touchez + pour ajouter d’autres apps.",
+  "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +78,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. Développez le déclencheur de notification et activez l’automatisation. Après la première notification de paiement, revenez ici pour voir la dernière notification reçue.",
+  "notificationCaptureStepRun": "4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

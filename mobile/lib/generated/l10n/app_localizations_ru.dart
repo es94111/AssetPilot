@@ -47,36 +47,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
-  String get notificationCaptureImportShortcut =>
-      'Добавить или обновить команду';
-
-  @override
-  String notificationCaptureTemplateVersion(int version) {
-    return 'Шаблон команды v$version';
-  }
-
-  @override
-  String get notificationCaptureTemplateChooseSource =>
-      'В приложении «Команды» настройте команду, выберите банковское или платёжное приложение и добавьте команду. При редактировании команды нажмите + рядом с триггером уведомлений, чтобы добавить другие приложения. Разверните триггер и включите автоматизацию.';
-
-  @override
-  String get notificationCaptureTemplateReplace =>
-      'После обновления проверьте исходное приложение и параметры запуска. Если появились две копии, отключите старую автоматизацию перед включением новой.';
-
-  @override
-  String get notificationCaptureTemplateLocked =>
-      'Для запуска на заблокированном iPhone разрешите запуск при блокировке в настройках конфиденциальности команды.';
-
-  @override
-  String get notificationCaptureManualSetup => 'Настроить вручную';
-
-  @override
-  String get notificationCaptureTemplateUnavailable =>
-      'Не удалось открыть шаблон команды. Воспользуйтесь инструкцией по ручной настройке ниже.';
-
-  @override
   String get notificationCaptureStepTrigger =>
-      '1. В приложении «Команды» откройте редактор команды или создайте новую. Добавьте триггер уведомлений и выберите банковское или платёжное приложение. Нажмите +, чтобы добавить другие приложения.';
+      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +60,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Разверните триггер уведомлений и включите автоматизацию. Когда придёт первое уведомление об оплате, вернитесь сюда, чтобы проверить последнее полученное уведомление.';
+      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

@@ -57,7 +57,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Подтвердите импорт в приложении «Команды» и выберите банковское или платежное приложение. Следуйте подсказкам, чтобы включить автоматизацию.';
+      'В приложении «Команды» настройте команду, выберите банковское или платежное приложение и добавьте команду. Откройте её, разверните триггер уведомлений и включите автоматизацию.';
 
   @override
   String get notificationCaptureTemplateReplace =>

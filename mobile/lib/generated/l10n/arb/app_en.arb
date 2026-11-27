@@ -78,7 +78,7 @@
       }
     }
   },
-  "notificationCaptureTemplateChooseSource": "Confirm the import in Shortcuts, then choose your bank or payment app. Follow the prompts to enable the automation.",
+  "notificationCaptureTemplateChooseSource": "In Shortcuts, tap Set Up Shortcut, choose your bank or payment app, then add the shortcut. Open the imported shortcut, expand the notification trigger, and turn on Automation.",
   "@notificationCaptureTemplateChooseSource": {
     "description": "Web path: notificationCapture.templateChooseSource",
     "x-webPath": "notificationCapture.templateChooseSource"

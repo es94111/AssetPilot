@@ -78,7 +78,7 @@
       }
     }
   },
-  "notificationCaptureTemplateChooseSource": "أكّد الإضافة في تطبيق «الاختصارات»، ثم اختر تطبيق البنك أو الدفع. اتبع تعليمات «الاختصارات» لتفعيل الأتمتة.",
+  "notificationCaptureTemplateChooseSource": "افتح إعداد الاختصار واختر تطبيق البنك أو الدفع، ثم أضف الاختصار. افتح الاختصار المضاف ووسّع مشغّل الإشعارات لتفعيل الأتمتة.",
   "@notificationCaptureTemplateChooseSource": {
     "description": "Web path: notificationCapture.templateChooseSource",
     "x-webPath": "notificationCapture.templateChooseSource"

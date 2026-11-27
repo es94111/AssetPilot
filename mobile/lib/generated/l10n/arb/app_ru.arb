@@ -78,7 +78,7 @@
       }
     }
   },
-  "notificationCaptureTemplateChooseSource": "Подтвердите импорт в приложении «Команды» и выберите банковское или платежное приложение. Следуйте подсказкам, чтобы включить автоматизацию.",
+  "notificationCaptureTemplateChooseSource": "В приложении «Команды» настройте команду, выберите банковское или платежное приложение и добавьте команду. Откройте её, разверните триггер уведомлений и включите автоматизацию.",
   "@notificationCaptureTemplateChooseSource": {
     "description": "Web path: notificationCapture.templateChooseSource",
     "x-webPath": "notificationCapture.templateChooseSource"

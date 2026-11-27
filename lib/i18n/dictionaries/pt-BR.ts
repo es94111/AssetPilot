@@ -16,7 +16,7 @@ export const ptBR = {
     setup: "Set up iPhone Shortcuts",
     importShortcut: "Adicionar ou atualizar atalho",
     templateVersion: "Modelo de atalho v{version}",
-    templateChooseSource: "Confirme a importação no app Atalhos e escolha seu app bancário ou de pagamentos. Siga as instruções para ativar a automação.",
+    templateChooseSource: "No app Atalhos, configure o atalho, escolha seu app bancário ou de pagamentos e adicione o atalho. Abra-o, expanda o acionador de notificações e ative a automação.",
     templateReplace: "Após atualizar, confira o app de origem e as opções de execução. Se aparecerem duas cópias, desative a automação antiga antes de ativar a nova.",
     templateLocked: "Para executar com o iPhone bloqueado, permita a execução com o aparelho bloqueado nos ajustes de privacidade do atalho.",
     manualSetup: "Configurar manualmente",

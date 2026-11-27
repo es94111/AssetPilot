@@ -56,7 +56,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Confirm the import in Shortcuts, then choose your bank or payment app. Follow the prompts to enable the automation.';
+      'In Shortcuts, tap Set Up Shortcut, choose your bank or payment app, then add the shortcut. Open the imported shortcut, expand the notification trigger, and turn on Automation.';
 
   @override
   String get notificationCaptureTemplateReplace =>

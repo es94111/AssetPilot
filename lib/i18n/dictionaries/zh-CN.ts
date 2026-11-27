@@ -16,7 +16,7 @@ export const zhCN = {
     setup: "设置 iPhone 快捷指令",
     importShortcut: "添加或更新快捷指令",
     templateVersion: "快捷指令模板 v{version}",
-    templateChooseSource: "在快捷指令中确认添加，然后选择要接收通知的银行或支付 App。依照快捷指令提示启用自动化。",
+    templateChooseSource: "在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。打开已导入的快捷指令，展开通知触发器旁的箭头，打开自动化。",
     templateReplace: "更新后请核对通知来源和运行选项。如果保留了两份快捷指令，请先停用旧版自动化，再启用新版。",
     templateLocked: "如需在锁定时运行，可在快捷指令的隐私设置中开启「允许在锁定时运行」。",
     manualSetup: "手动设置",

@@ -57,7 +57,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Confirme a importação no app Atalhos e escolha seu app bancário ou de pagamentos. Siga as instruções para ativar a automação.';
+      'No app Atalhos, configure o atalho, escolha seu app bancário ou de pagamentos e adicione o atalho. Abra-o, expanda o acionador de notificações e ative a automação.';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -7255,7 +7255,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Confirme a importação no app Atalhos e escolha seu app bancário ou de pagamentos. Siga as instruções para ativar a automação.';
+      'No app Atalhos, configure o atalho, escolha seu app bancário ou de pagamentos e adicione o atalho. Abra-o, expanda o acionador de notificações e ative a automação.';
 
   @override
   String get notificationCaptureTemplateReplace =>

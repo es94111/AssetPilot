@@ -16,7 +16,7 @@ export const en = {
     setup: "Set up iPhone Shortcuts",
     importShortcut: "Add or update shortcut",
     templateVersion: "Shortcut template v{version}",
-    templateChooseSource: "Confirm the import in Shortcuts, then choose your bank or payment app. Follow the prompts to enable the automation.",
+    templateChooseSource: "In Shortcuts, tap Set Up Shortcut, choose your bank or payment app, then add the shortcut. Open the imported shortcut, expand the notification trigger, and turn on Automation.",
     templateReplace: "After updating, check the source app and run options. If both copies appear, turn off the old automation before enabling the new one.",
     templateLocked: "To run while your iPhone is locked, turn on Allow Running When Locked in the shortcut’s privacy settings.",
     manualSetup: "Set up manually",

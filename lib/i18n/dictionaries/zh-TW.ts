@@ -14,7 +14,7 @@ export const zhTW = {
     setup: "設定 iPhone 捷徑",
     importShortcut: "加入／更新捷徑",
     templateVersion: "捷徑範本 v{version}",
-    templateChooseSource: "在捷徑確認加入，然後選取要接收通知的銀行或支付 App。依照捷徑提示啟用自動化。",
+    templateChooseSource: "在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。開啟匯入的捷徑，展開通知觸發器旁的箭頭，打開「自動化操作」。",
     templateReplace: "更新後請核對通知來源與執行選項。若保留兩份捷徑，先停用舊版自動化，再啟用新版。",
     templateLocked: "需要鎖定時執行時，可在捷徑的隱私權設定開啟「允許在鎖定時執行」。",
     manualSetup: "手動設定",

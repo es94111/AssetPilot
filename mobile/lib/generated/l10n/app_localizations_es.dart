@@ -56,7 +56,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Confirma la importación en Atajos y elige la app de tu banco o de pagos. Sigue las indicaciones para activar la automatización.';
+      'En Atajos, configura el atajo, elige la app de tu banco o de pagos y añade el atajo. Ábrelo, despliega el activador de notificaciones y activa la automatización.';
 
   @override
   String get notificationCaptureTemplateReplace =>

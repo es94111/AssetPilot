@@ -16,7 +16,7 @@ export const ko = {
     setup: "Set up iPhone Shortcuts",
     importShortcut: "단축어 추가 또는 업데이트",
     templateVersion: "단축어 템플릿 v{version}",
-    templateChooseSource: "단축어 앱에서 가져오기를 확인한 뒤 은행 또는 결제 앱을 선택하세요. 화면 안내에 따라 자동화를 활성화하세요.",
+    templateChooseSource: "단축어 앱에서 단축어를 설정하고 은행 또는 결제 앱을 선택한 다음 추가하세요. 가져온 단축어를 열고 알림 트리거를 펼쳐 자동화를 켜세요.",
     templateReplace: "업데이트한 뒤 알림을 보낸 앱과 실행 옵션을 확인하세요. 복사본이 두 개 보이면 새 자동화를 켜기 전에 이전 자동화를 끄세요.",
     templateLocked: "iPhone이 잠겨 있을 때 실행하려면 단축어의 개인정보 보호 설정에서 잠겨 있을 때 실행을 허용하세요.",
     manualSetup: "수동으로 설정",

@@ -78,7 +78,7 @@
       }
     }
   },
-  "notificationCaptureTemplateChooseSource": "Confirmez l’importation dans Raccourcis, puis choisissez votre app bancaire ou de paiement. Suivez les instructions pour activer l’automatisation.",
+  "notificationCaptureTemplateChooseSource": "Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Ouvrez-le et développez le déclencheur de notification pour activer l’automatisation.",
   "@notificationCaptureTemplateChooseSource": {
     "description": "Web path: notificationCapture.templateChooseSource",
     "x-webPath": "notificationCapture.templateChooseSource"

@@ -103,7 +103,7 @@
     "description": "Web path: notificationCapture.templateUnavailable",
     "x-webPath": "notificationCapture.templateUnavailable"
   },
-  "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
+  "notificationCaptureStepTrigger": "1. In Shortcuts, edit or create a shortcut. Add the Notification trigger and choose your bank or payment app. Tap + to add more apps.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +118,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. Choose how the automation runs in Shortcuts. After the first real payment alert, return here to check the last notification received.",
+  "notificationCaptureStepRun": "4. Expand the notification trigger and turn on Automation. After the first payment alert, return here to check the last notification received.",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

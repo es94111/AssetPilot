@@ -67,6 +67,16 @@ private struct NotificationInbox: Codable {
     let previousSeen = seen.count
     seen = seen.filter { now.timeIntervalSince($0.value) < ttl }
     var changed = seen.count != previousSeen
+    // Older versions saved a timestamp even when the invocation had no event ID.
+    if lastEventId == nil, lastReceivedAt != nil {
+      let latestDraft = drafts.values.max { $0.queuedAt < $1.queuedAt }
+      lastEventId = latestDraft?.id
+      lastReceivedAt = latestDraft?.queuedAt
+      if lastStatus != "consent", lastStatus != "session" {
+        lastStatus = latestDraft?.status.rawValue
+      }
+      changed = true
+    }
     for id in drafts.keys where drafts[id]?.status == .queued {
       guard let entry = drafts[id], now.timeIntervalSince(entry.queuedAt) >= ttl
         || now.timeIntervalSince(entry.receivedAt) >= ttl else { continue }
@@ -222,13 +232,9 @@ actor NotificationCaptureService {
         entry.status == .queued && entry.notice != nil && !self.inFlight.contains("\(owner ?? "")/\(entry.id)")
       }.map { $0.retryAt ?? $0.queuedAt }.min()
     }
-    let hasReceipt = inbox.lastEventId != nil
-    let needsActivation = inbox.lastStatus == "consent" || inbox.lastStatus == "session"
     return NotificationCaptureSnapshot(ownerId: owner, revision: revision,
       drafts: inbox.drafts.values.sorted { $0.receivedAt > $1.receivedAt },
-      lastStatus: hasReceipt || needsActivation ? inbox.lastStatus : nil,
-      lastReceivedAt: hasReceipt ? inbox.lastReceivedAt : nil,
-      nextRetryAt: nextRetryAt)
+      lastStatus: inbox.lastStatus, lastReceivedAt: inbox.lastReceivedAt, nextRetryAt: nextRetryAt)
   }
 
   func discard(ownerId: String, draftId: String) throws {
@@ -287,8 +293,8 @@ actor NotificationCaptureService {
     // Commit the queue before awaiting the network or returning to Shortcuts.
     try write(state)
     try await process(ownerId: owner, limit: 2)
-    guard id != nil else { return status }
-    return try read().inboxes[owner]?.lastStatus ?? status
+    guard let id, let updated = try read().inboxes[owner], updated.lastEventId == id else { return status }
+    return updated.lastStatus ?? status
   }
 
   func process(ownerId: String, limit: Int = 8) async throws {

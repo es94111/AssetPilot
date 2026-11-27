@@ -76,7 +76,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. No app Atalhos, edite ou crie um atalho. Adicione o acionador de notificações e escolha seu app bancário ou de pagamentos. Toque em + para incluir mais apps.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +88,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Escolha como a automação será executada no app Atalhos. Após o primeiro aviso real de pagamento, volte aqui para conferir a última notificação recebida.';
+      '4. Expanda o acionador de notificações e ative a automação. Após o primeiro aviso de pagamento, volte aqui para conferir a última notificação recebida.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';
@@ -7274,7 +7274,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. No app Atalhos, edite ou crie um atalho. Adicione o acionador de notificações e escolha seu app bancário ou de pagamentos. Toque em + para incluir mais apps.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -7286,7 +7286,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Escolha como a automação será executada no app Atalhos. Após o primeiro aviso real de pagamento, volte aqui para conferir a última notificação recebida.';
+      '4. Expanda o acionador de notificações e ative a automação. Após o primeiro aviso de pagamento, volte aqui para conferir a última notificação recebida.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

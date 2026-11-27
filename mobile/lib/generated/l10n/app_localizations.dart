@@ -234,7 +234,7 @@ abstract class AppLocalizations {
   /// Web path: notificationCapture.stepTrigger
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。'**
+  /// **'1. 在「捷徑」編輯或新增一份捷徑，加入「通知」觸發器並選擇銀行或支付 App。點「＋」加入其他來源。'**
   String get notificationCaptureStepTrigger;
 
   /// Web path: notificationCapture.stepAction
@@ -252,7 +252,7 @@ abstract class AppLocalizations {
   /// Web path: notificationCapture.stepRun
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'4. 依捷徑提供的選項設定執行方式。收到第一則實際消費通知後，回來查看「最近一次接收」。'**
+  /// **'4. 展開通知觸發器旁的箭頭，開啟「自動化操作」。收到第一則消費通知後，回來查看「最近一次接收」。'**
   String get notificationCaptureStepRun;
 
   /// Web path: notificationCapture.openShortcuts

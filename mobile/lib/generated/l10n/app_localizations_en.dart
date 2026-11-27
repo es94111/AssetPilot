@@ -75,7 +75,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. In Shortcuts, edit or create a shortcut. Add the Notification trigger and choose your bank or payment app. Tap + to add more apps.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -87,7 +87,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Choose how the automation runs in Shortcuts. After the first real payment alert, return here to check the last notification received.';
+      '4. Expand the notification trigger and turn on Automation. After the first payment alert, return here to check the last notification received.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

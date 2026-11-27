@@ -128,6 +128,33 @@ final class NotificationCaptureTests: XCTestCase {
     XCTAssertNil(receipt.lastStatus)
   }
 
+  func testRestoresRecentReceiptFromDraftAfterLegacyEmptyInvocation() async throws {
+    let (service, folder, _) = try fixture(recognizer: Recognizer(), clock: Clock(time))
+    try await enable(service)
+    _ = try await service.capture(appName: "LINE Pay", title: "付款通知", subtitle: nil, body: sample, receivedAt: time)
+
+    let url = folder.appendingPathComponent("inbox.v1")
+    let key = try FixtureKey().key()
+    let bytes = try OfflineFileCrypto.decrypt(Data(contentsOf: url), key: key)
+    var archive = try XCTUnwrap(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
+    var inboxes = try XCTUnwrap(archive["inboxes"] as? [String: [String: Any]])
+    var inbox = try XCTUnwrap(inboxes["alice"])
+    inbox.removeValue(forKey: "lastEventId")
+    inbox["lastStatus"] = "empty"
+    inbox["lastReceivedAt"] = time.addingTimeInterval(60).timeIntervalSinceReferenceDate
+    inboxes["alice"] = inbox
+    archive["inboxes"] = inboxes
+    let legacy = try JSONSerialization.data(withJSONObject: archive)
+    try OfflineFileCrypto.encrypt(legacy, key: key).write(to: url, options: .atomic)
+
+    let receipt = try await service.snapshot()
+    XCTAssertEqual(receipt.lastReceivedAt, time)
+    XCTAssertEqual(receipt.lastStatus, "ready")
+    try await service.discard(ownerId: "alice", draftId: XCTUnwrap(receipt.drafts.first?.id))
+    let afterDiscard = try await service.snapshot()
+    XCTAssertEqual(afterDiscard.lastReceivedAt, time)
+  }
+
   func testIdentifierUsesUnmaskedIdentityOnlyInMemory() async throws {
     let recognizer = Recognizer()
     let (service, _, _) = try fixture(recognizer: recognizer, clock: Clock(time))

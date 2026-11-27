@@ -103,7 +103,7 @@
     "description": "Web path: notificationCapture.templateUnavailable",
     "x-webPath": "notificationCapture.templateUnavailable"
   },
-  "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
+  "notificationCaptureStepTrigger": "١. عدّل اختصارًا أو أنشئ اختصارًا في تطبيق «الاختصارات». أضف مشغّل الإشعارات واختر تطبيق البنك أو الدفع. اضغط على + لإضافة تطبيقات أخرى.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +118,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "٤. اختر طريقة تشغيل الأتمتة في تطبيق «الاختصارات». بعد أول إشعار دفع فعلي، ارجع إلى هنا للتحقق من آخر إشعار ورد.",
+  "notificationCaptureStepRun": "٤. وسّع مشغّل الإشعارات وفعّل الأتمتة. بعد أول إشعار دفع، ارجع إلى هنا للتحقق من آخر إشعار ورد.",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

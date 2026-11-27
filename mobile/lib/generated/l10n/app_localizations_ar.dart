@@ -75,7 +75,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '١. عدّل اختصارًا أو أنشئ اختصارًا في تطبيق «الاختصارات». أضف مشغّل الإشعارات واختر تطبيق البنك أو الدفع. اضغط على + لإضافة تطبيقات أخرى.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -87,7 +87,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '٤. اختر طريقة تشغيل الأتمتة في تطبيق «الاختصارات». بعد أول إشعار دفع فعلي، ارجع إلى هنا للتحقق من آخر إشعار ورد.';
+      '٤. وسّع مشغّل الإشعارات وفعّل الأتمتة. بعد أول إشعار دفع، ارجع إلى هنا للتحقق من آخر إشعار ورد.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

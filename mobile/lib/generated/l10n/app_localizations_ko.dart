@@ -75,7 +75,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. 단축어 앱에서 단축어를 편집하거나 새로 만드세요. 알림 트리거를 추가하고 은행 또는 결제 앱을 선택하세요. +를 눌러 앱을 더 추가하세요.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -87,7 +87,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. 단축어에서 자동화 실행 방식을 선택하세요. 첫 실제 결제 알림을 받은 뒤 여기로 돌아와 최근에 받은 알림을 확인하세요.';
+      '4. 알림 트리거를 펼치고 자동화를 켜세요. 첫 결제 알림을 받은 뒤 여기로 돌아와 최근에 받은 알림을 확인하세요.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

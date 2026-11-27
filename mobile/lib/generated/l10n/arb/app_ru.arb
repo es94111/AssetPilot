@@ -103,7 +103,7 @@
     "description": "Web path: notificationCapture.templateUnavailable",
     "x-webPath": "notificationCapture.templateUnavailable"
   },
-  "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
+  "notificationCaptureStepTrigger": "1. В приложении «Команды» откройте редактор команды или создайте новую. Добавьте триггер уведомлений и выберите банковское или платёжное приложение. Нажмите +, чтобы добавить другие приложения.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +118,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. Выберите способ запуска автоматизации в приложении «Команды». После первого реального уведомления об оплате вернитесь сюда и проверьте последнее полученное уведомление.",
+  "notificationCaptureStepRun": "4. Разверните триггер уведомлений и включите автоматизацию. Когда придёт первое уведомление об оплате, вернитесь сюда, чтобы проверить последнее полученное уведомление.",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

@@ -76,7 +76,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. शॉर्टकट्स में कोई शॉर्टकट संपादित करें या नया बनाएँ। सूचना ट्रिगर जोड़ें और अपना बैंक या भुगतान ऐप चुनें। और ऐप जोड़ने के लिए + पर टैप करें।';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +88,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. शॉर्टकट्स में चुनें कि ऑटोमेशन कैसे चलेगा। पहला वास्तविक भुगतान अलर्ट मिलने के बाद, अंतिम सूचना देखने के लिए यहाँ लौटें।';
+      '4. सूचना ट्रिगर को विस्तृत करें और ऑटोमेशन चालू करें। पहला भुगतान अलर्ट मिलने के बाद, अंतिम सूचना देखने के लिए यहाँ लौटें।';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

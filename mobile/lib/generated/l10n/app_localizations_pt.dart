@@ -1989,6 +1989,14 @@ class AppLocalizationsPt extends AppLocalizations {
       'O banco atual excede o limite de tamanho ou de instruções SQL do backup.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'O banco retornou mais dados do que cabem no buffer de leitura. Confira POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'O backup excede o limite de 500.000 instruções SQL.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'Não foi possível criar a cópia de recuperação criptografada. Verifique as permissões da pasta e o espaço disponível.';
 
@@ -9149,6 +9157,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresDataTransferDatabaseDatabaseTooLarge =>
       'O banco atual excede o limite de tamanho ou de instruções SQL do backup.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'O banco retornou mais dados do que cabem no buffer de leitura. Confira POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'O backup excede o limite de 500.000 instruções SQL.';
 
   @override
   String get featuresDataTransferDatabaseSnapshotFailed =>

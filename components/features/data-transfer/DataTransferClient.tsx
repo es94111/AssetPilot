@@ -389,6 +389,10 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
         return t('features.dataTransfer.database.snapshotFailed');
       case 'database_too_large':
         return t('features.dataTransfer.database.databaseTooLarge');
+      case 'database_result_too_large':
+        return t('features.dataTransfer.database.databaseResultTooLarge');
+      case 'too_many_statements':
+        return t('features.dataTransfer.database.tooManyStatements');
       case 'RESTORE_FAILED_ROLLED_BACK':
         return t('features.dataTransfer.database.rolledBack');
       case 'RESTORE_FAILED_DB_UNKNOWN':

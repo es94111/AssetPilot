@@ -16,6 +16,7 @@ if (!fixtureUrl) {
     process.env.APP_URL = 'https://backup-tests.example';
     process.env.JWT_SECRET = 'fixture-only-backup-tests-session-signing-secret';
     process.env.PHOTO_MASTER_KEY = Buffer.alloc(32, 42).toString('base64');
+    process.env.POSTGRES_SYNC_RESULT_BUFFER_BYTES = String(256 * 1024);
     const dataDirectory = mkdtempSync(path.join(tmpdir(), 'assetpilot-backup-route-test-'));
     const envPath = path.join(dataDirectory, '.env');
     const snapshotDirectory = path.join(dataDirectory, 'backups');
@@ -171,6 +172,13 @@ if (!fixtureUrl) {
         'invalid_sql',
       );
 
+      const tooManyStatements = Buffer.from('-- AssetPilot PostgreSQL backup\nBEGIN;' + ';'.repeat(500_000) + 'COMMIT;');
+      await statusCode(
+        await restore.POST(restorePost(tooManyStatements, 'too-many-statements.sql')),
+        422,
+        'too_many_statements',
+      );
+
       const original = restorePost(downloaded, 'backup.apb');
       const multipart = Buffer.from(await original.arrayBuffer());
       const clipped = post('/api/database/import', multipart.subarray(0, -100), admin, {
@@ -291,6 +299,28 @@ COMMIT;`);
       const audit = JSON.stringify(auditRows);
       assert.equal(audit.includes(passphrase), false);
       assert.equal(audit.includes(legacyPassphrase), false);
+    });
+
+    await t.test('exports split oversized worker batches and report individual rows exceeding capacity', async () => {
+      db.run('CREATE TABLE "backup_page_fixture" ("id" INTEGER PRIMARY KEY, "note" TEXT)');
+      try {
+        db.run("INSERT INTO backup_page_fixture SELECT id, repeat('x', 4096) FROM generate_series(1, 95) AS id");
+        const exportPost = () => download.POST(jsonPost('/api/database/export', { passphrase }));
+        const response = await exportPost();
+        assert.equal(response.status, 200);
+        const sql = await decryptBackupArchive(Buffer.from(await response.arrayBuffer()), passphrase);
+        const ids = Array.from(
+          sql.matchAll(/INSERT INTO "backup_page_fixture" \("id", "note"\) VALUES \((\d+), /g),
+          (match) => Number(match[1]),
+        ).sort((a, b) => a - b);
+        assert.deepEqual(ids, Array.from({ length: 95 }, (_, index) => index + 1));
+
+        db.run("INSERT INTO backup_page_fixture VALUES (96, repeat('x', 300000))");
+        await statusCode(await exportPost(), 422, 'database_result_too_large');
+        assert.equal(queryOne('SELECT COUNT(*) AS count FROM backup_page_fixture')?.count, 96);
+      } finally {
+        db.run('DROP TABLE backup_page_fixture');
+      }
     });
 
     await t.test('oversized current database returns a database limit error before applying the restore', async (subtest) => {

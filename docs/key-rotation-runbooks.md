@@ -46,7 +46,7 @@
 3. 還原前會在 `ENV_PATH` 同層的 `backups/` 寫入加密回復副本，Docker 預設在 `/app/data/backups/`。還原加密檔時，回復副本沿用本次輸入的密語。還原失敗時先由 PostgreSQL 回滾交易。交易結果無法確認時，系統會嘗試從加密副本回復。完成後登入並核對資料。
 4. 換機復原時，同時準備原環境使用的應用金鑰，例如原 Root KEK 或 OpenBao Transit key、仍使用的舊照片／Webhook 金鑰，以及已設定的通知辨識金鑰。交易照片的檔案本體需另外復原。需要更換原有應用金鑰時，請走下方的 `.apm` 搬遷流程。
 
-SQL 內容上限是 200 MiB。實際上傳也受 Next.js Proxy 和前置代理限制。Next.js 預設只緩衝 10 MiB，Nginx 預設允許 1 MiB。在需要還原較大備份的環境，請依記憶體容量設定 `experimental.proxyClientMaxBodySize`，並針對 `/api/database/import` 調整前置代理請求上限，兩處都要預留 48 bytes 檔案封裝和最多 64 KiB multipart 開銷。設為 201 MiB 可涵蓋完整的 SQL 上限。若代理會把請求內文暫存到磁碟，可針對此路徑關閉請求緩衝並停用內文記錄。PostgreSQL 的陳述式日誌也可能包含解密後的 SQL，請核對資料庫角色的日誌設定與存取權限。
+SQL 內容上限是 200 MiB 或 50 萬條陳述式。產生備份時會分批讀取資料表。若單筆資料超過 PostgreSQL worker 的讀取緩衝區，請核對 `POSTGRES_SYNC_RESULT_BUFFER_BYTES`（預設 64 MiB）。實際上傳也受 Next.js Proxy 和前置代理限制。Next.js 預設只緩衝 10 MiB，Nginx 預設允許 1 MiB。在需要還原較大備份的環境，請依記憶體容量設定 `experimental.proxyClientMaxBodySize`，並針對 `/api/database/import` 調整前置代理請求上限，兩處都要預留 48 bytes 檔案封裝和最多 64 KiB multipart 開銷。設為 201 MiB 可涵蓋完整的 SQL 上限。若代理會把請求內文暫存到磁碟，可針對此路徑關閉請求緩衝並停用內文記錄。PostgreSQL 的陳述式日誌也可能包含解密後的 SQL，請核對資料庫角色的日誌設定與存取權限。
 
 自動化呼叫使用 `POST /api/database/export` 或 `POST /api/database/mega-s4`，JSON 欄位為 `passphrase`。還原使用 `POST /api/database/import`，以 multipart 欄位 `file` 及 `passphrase` 傳送。
 

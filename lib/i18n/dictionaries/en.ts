@@ -1093,6 +1093,8 @@ export const en = {
         restoreInProgress: "Another database restore is in progress. Try again shortly.",
         uploadTooLarge: "The backup exceeds the size limit. SQL is limited to 200 MiB, and your deployment may have a lower upload limit.",
         databaseTooLarge: "The current database exceeds the backup limit for SQL size or statement count.",
+        databaseResultTooLarge: "The database returned more data than fits in the read buffer. Check POSTGRES_SYNC_RESULT_BUFFER_BYTES.",
+        tooManyStatements: "The backup exceeds the limit of 500,000 SQL statements.",
         snapshotFailed: "The encrypted recovery copy could not be created. Check the backup directory permissions and available space.",
         rolledBack: "The restore failed. The database returned to its previous state.",
         rollbackFailed: "Automatic rollback failed. Use the encrypted recovery copy to recover your data.",

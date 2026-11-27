@@ -1093,6 +1093,8 @@ export const ko = {
         restoreInProgress: "다른 데이터베이스 복원이 진행 중입니다. 잠시 후 다시 시도하세요.",
         uploadTooLarge: "백업이 크기 한도를 초과했습니다. SQL은 최대 200 MiB이며 배포 환경의 업로드 한도는 더 낮을 수 있습니다.",
         databaseTooLarge: "현재 데이터베이스가 백업의 SQL 크기 또는 문장 수 한도를 초과했습니다.",
+        databaseResultTooLarge: "데이터베이스에서 반환한 데이터가 읽기 버퍼를 초과했습니다. POSTGRES_SYNC_RESULT_BUFFER_BYTES를 확인하세요.",
+        tooManyStatements: "백업이 SQL 문 500,000개 한도를 초과했습니다.",
         snapshotFailed: "암호화된 복구 사본을 만들 수 없습니다. 백업 폴더의 권한과 남은 공간을 확인하세요.",
         rolledBack: "복원에 실패했습니다. 데이터베이스가 이전 상태로 돌아갔습니다.",
         rollbackFailed: "자동 복구에 실패했습니다. 암호화된 복구 사본을 사용하세요.",

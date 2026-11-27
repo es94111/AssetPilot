@@ -6,6 +6,7 @@ database.db
 database.db*
 *.db
 *.db.bak
+**/*.apb
 *.bak
 *.backup_*
 data/

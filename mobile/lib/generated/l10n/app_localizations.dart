@@ -3601,6 +3601,18 @@ abstract class AppLocalizations {
   /// **'目前資料庫超過可備份的 SQL 大小或陳述式數量上限。'**
   String get featuresDataTransferDatabaseDatabaseTooLarge;
 
+  /// Web path: features.dataTransfer.database.databaseResultTooLarge
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資料庫回傳的資料超過讀取緩衝區。請核對 POSTGRES_SYNC_RESULT_BUFFER_BYTES。'**
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge;
+
+  /// Web path: features.dataTransfer.database.tooManyStatements
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'備份超過 50 萬條 SQL 陳述式的上限。'**
+  String get featuresDataTransferDatabaseTooManyStatements;
+
   /// Web path: features.dataTransfer.database.snapshotFailed
   ///
   /// In zh_Hant_TW, this message translates to:

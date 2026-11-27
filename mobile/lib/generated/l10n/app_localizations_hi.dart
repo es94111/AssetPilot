@@ -1972,6 +1972,14 @@ class AppLocalizationsHi extends AppLocalizations {
       'मौजूदा डेटाबेस बैकअप के लिए तय SQL आकार या स्टेटमेंट की सीमा से बड़ा है।';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'डेटाबेस से लौटा डेटा रीड बफ़र की क्षमता से अधिक है। POSTGRES_SYNC_RESULT_BUFFER_BYTES जाँचें।';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'बैकअप 5,00,000 SQL स्टेटमेंट की सीमा से बड़ा है।';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'एन्क्रिप्टेड रिकवरी कॉपी नहीं बन सकी। बैकअप फ़ोल्डर की अनुमतियाँ और खाली जगह जाँचें।';
 

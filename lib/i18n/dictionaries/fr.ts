@@ -1093,6 +1093,8 @@ export const fr = {
         restoreInProgress: "Une autre restauration est en cours. Réessayez dans quelques instants.",
         uploadTooLarge: "La sauvegarde dépasse la taille autorisée. Le SQL est limité à 200 Mio, et votre installation peut imposer une limite d’envoi inférieure.",
         databaseTooLarge: "La base actuelle dépasse la limite de taille ou de nombre d’instructions SQL de la sauvegarde.",
+        databaseResultTooLarge: "La réponse de la base dépasse la capacité du tampon de lecture. Vérifiez POSTGRES_SYNC_RESULT_BUFFER_BYTES.",
+        tooManyStatements: "La sauvegarde dépasse la limite de 500 000 instructions SQL.",
         snapshotFailed: "Impossible de créer la copie de secours chiffrée. Vérifiez les droits du dossier et l’espace disponible.",
         rolledBack: "La restauration a échoué. La base de données est revenue à son état précédent.",
         rollbackFailed: "Le retour automatique a échoué. Utilisez la copie de secours chiffrée.",

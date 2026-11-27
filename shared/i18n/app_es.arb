@@ -2991,6 +2991,16 @@
     "description": "Web path: features.dataTransfer.database.databaseTooLarge",
     "x-webPath": "features.dataTransfer.database.databaseTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "La base de datos devolvió más datos de los que caben en el búfer de lectura. Revisa POSTGRES_SYNC_RESULT_BUFFER_BYTES.",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "La copia supera el límite de 500 000 sentencias SQL.",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "No se pudo crear la copia de recuperación cifrada. Comprueba los permisos de la carpeta y el espacio disponible.",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

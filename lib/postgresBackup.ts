@@ -1,5 +1,6 @@
 import { disableReportsWithoutEmail, ensureSharedLedgerOwnerProtection, getDB, queryOne, queryAll } from "./db";
 import { clearKeyringCache } from "./keyring";
+import { isPostgresResultTooLarge } from "./postgresRuntime";
 
 export type AnyRow = Record<string, unknown>;
 
@@ -138,7 +139,11 @@ const RESTORE_STATEMENT_PATTERNS: RegExp[] = [
 
 export class RestoreValidationError extends Error {}
 
-export class RestoreLimitError extends RestoreValidationError {}
+export class RestoreLimitError extends RestoreValidationError {
+  constructor(readonly limit: "bytes" | "statements", message: string) {
+    super(message);
+  }
+}
 
 export class RestoreTransactionError extends Error {
   constructor(readonly rolledBack: boolean, cause: unknown) {
@@ -203,6 +208,7 @@ function* readTopLevelStatements(sql: string) {
 function readRestorableTransaction(sql: string) {
   if (Buffer.byteLength(sql, "utf8") > MAX_RESTORE_SQL_BYTES) {
     throw new RestoreLimitError(
+      "bytes",
       `備份檔過大（上限 ${Math.round(MAX_RESTORE_SQL_BYTES / 1024 / 1024)}MB）`,
     );
   }
@@ -215,6 +221,7 @@ function readRestorableTransaction(sql: string) {
     count += 1;
     if (count > MAX_RESTORE_STATEMENTS) {
       throw new RestoreLimitError(
+        "statements",
         `備份檔陳述式數量過多（上限 ${MAX_RESTORE_STATEMENTS}）`,
       );
     }
@@ -273,10 +280,9 @@ export function assertRestorableBackupSql(sql: string): void {
 export interface PostgresBackupOptions {
   // Return null to omit the row from the dump.
   transformRow?: (table: string, row: AnyRow) => AnyRow | null;
-  tables?: string[];
 }
 
-export function listPostgresBackupTables(): string[] {
+function listPostgresBackupTables(): string[] {
   return queryAll(`
     SELECT table_name
     FROM information_schema.tables
@@ -288,9 +294,50 @@ export function listPostgresBackupTables(): string[] {
   `).map((row) => String(row.table_name));
 }
 
-export function createPostgresBackupSql(options: PostgresBackupOptions = {}): string {
-  const tables = options.tables ?? listPostgresBackupTables();
+function* readBackupRows(selectSql: string) {
+  const db = getDB();
+  const cursor = "assetpilot_backup_rows";
+  db.runPostgresSql(`DECLARE "${cursor}" SCROLL CURSOR FOR ${selectSql}`);
+  let batchSize = 128;
+  let position = 0;
+  for (;;) {
+    let rows: AnyRow[];
+    try {
+      rows = queryAll(`FETCH FORWARD ${batchSize} FROM "${cursor}"`);
+    } catch (error) {
+      if (!isPostgresResultTooLarge(error) || batchSize === 1) throw error;
+      // PostgreSQL fetched the oversized batch successfully, so rewind to the last emitted row.
+      db.runPostgresSql(`MOVE ABSOLUTE ${position} FROM "${cursor}"`);
+      batchSize = Math.floor(batchSize / 2);
+      continue;
+    }
+    yield* rows;
+    position += rows.length;
+    if (rows.length < batchSize) break;
+  }
+  db.runPostgresSql(`CLOSE "${cursor}"`);
+}
 
+export function createPostgresBackupSnapshot(options: PostgresBackupOptions = {}) {
+  const db = getDB();
+  db.run("BEGIN");
+  try {
+    db.runPostgresSql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY");
+    const tables = listPostgresBackupTables();
+    const sql = buildPostgresBackupSql(tables, options);
+    db.run("COMMIT");
+    return { sql, tables };
+  } catch (error) {
+    try { db.run("ROLLBACK"); } catch { /* connection may already be closed */ }
+    throw error;
+  }
+}
+
+export function createPostgresBackupSql(options: PostgresBackupOptions = {}): string {
+  return createPostgresBackupSnapshot(options).sql;
+}
+
+function buildPostgresBackupSql(tables: string[], options: PostgresBackupOptions): string {
   const lines: string[] = [
     BACKUP_HEADER,
     `-- created_at: ${new Date().toISOString()}`,
@@ -386,9 +433,9 @@ export function createPostgresBackupSql(options: PostgresBackupOptions = {}): st
     });
     // SAFETY: every projection/table identifier is read from information_schema
     // and quoted; no user-provided SQL reaches this statement.
-    const rows = queryAll(
+    const rows = readBackupRows(
       `SELECT ${selectColumns.join(", ")} FROM ${quoteIdent(table)}`,
-    ) as AnyRow[];
+    );
     for (const original of rows) {
       const row = options.transformRow ? options.transformRow(table, original) : original;
       if (!row) continue;

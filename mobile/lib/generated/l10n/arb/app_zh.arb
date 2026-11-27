@@ -2991,6 +2991,16 @@
     "description": "Web path: features.dataTransfer.database.databaseTooLarge",
     "x-webPath": "features.dataTransfer.database.databaseTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "資料庫回傳的資料超過讀取緩衝區。請核對 POSTGRES_SYNC_RESULT_BUFFER_BYTES。",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "備份超過 50 萬條 SQL 陳述式的上限。",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

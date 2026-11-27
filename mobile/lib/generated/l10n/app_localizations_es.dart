@@ -1997,6 +1997,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'La base de datos actual supera el límite de tamaño o de sentencias SQL de la copia.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'La base de datos devolvió más datos de los que caben en el búfer de lectura. Revisa POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'La copia supera el límite de 500 000 sentencias SQL.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'No se pudo crear la copia de recuperación cifrada. Comprueba los permisos de la carpeta y el espacio disponible.';
 

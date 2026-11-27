@@ -3,33 +3,23 @@ import path from 'node:path';
 import { Client } from 'pg';
 import { makeBackupArchiveFilename, withNewBackupArchive } from './backupArchive';
 import { BackupInputError } from './backupRequests';
-import { getDB } from './db';
-import { assertRestorableBackupSql, createPostgresBackupSql, listPostgresBackupTables, RestoreLimitError } from './postgresBackup';
+import { assertRestorableBackupSql, createPostgresBackupSnapshot, RestoreLimitError } from './postgresBackup';
+import { isPostgresResultTooLarge } from './postgresRuntime';
 
 const BEFORE_RESTORE_BACKUP_RE = /^before-restore-\d{14}(?:\.sql|-[a-f\d-]{36}\.apb)$/;
 const BACKUP_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 export const DATABASE_RESTORE_LOCK = 'assetpilot:database-restore';
 
 export function createRestorableDatabaseBackup() {
-  const db = getDB();
-  let backup: { sql: string; tables: string[] };
-  db.run('BEGIN');
   try {
-    db.runPostgresSql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');
-    const tables = listPostgresBackupTables();
-    backup = { sql: createPostgresBackupSql({ tables }), tables };
-    db.run('COMMIT');
-  } catch (error) {
-    try { db.run('ROLLBACK'); } catch { /* connection may already be closed */ }
-    throw error;
-  }
-  try {
+    const backup = createPostgresBackupSnapshot();
     assertRestorableBackupSql(backup.sql);
+    return backup;
   } catch (error) {
+    if (isPostgresResultTooLarge(error)) throw new BackupInputError('database_result_too_large');
     if (error instanceof RestoreLimitError) throw new BackupInputError('database_too_large');
     throw error;
   }
-  return backup;
 }
 
 export function createEncryptedDatabaseBackup(passphrase: string) {

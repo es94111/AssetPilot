@@ -1093,6 +1093,8 @@ export const zhCN = {
         restoreInProgress: "数据库正在还原，请稍后重试。",
         uploadTooLarge: "备份文件过大。SQL 上限为 200 MiB，部署的上传限制可能更低。",
         databaseTooLarge: "当前数据库超过可备份的 SQL 大小或语句数量上限。",
+        databaseResultTooLarge: "数据库返回的数据超过读取缓冲区。请检查 POSTGRES_SYNC_RESULT_BUFFER_BYTES。",
+        tooManyStatements: "备份超过 50 万条 SQL 语句的上限。",
         snapshotFailed: "无法创建还原前的加密副本。请检查备份目录权限和可用空间。",
         rolledBack: "还原失败，数据库已恢复至还原前的状态。",
         rollbackFailed: "无法自动恢复。请使用还原前的加密副本恢复。",

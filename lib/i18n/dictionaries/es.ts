@@ -1093,6 +1093,8 @@ export const es = {
         restoreInProgress: "Ya hay una restauración en curso. Inténtalo de nuevo en unos instantes.",
         uploadTooLarge: "La copia supera el límite de tamaño. El SQL admite hasta 200 MiB y tu instalación puede aplicar un límite de carga menor.",
         databaseTooLarge: "La base de datos actual supera el límite de tamaño o de sentencias SQL de la copia.",
+        databaseResultTooLarge: "La base de datos devolvió más datos de los que caben en el búfer de lectura. Revisa POSTGRES_SYNC_RESULT_BUFFER_BYTES.",
+        tooManyStatements: "La copia supera el límite de 500 000 sentencias SQL.",
         snapshotFailed: "No se pudo crear la copia de recuperación cifrada. Comprueba los permisos de la carpeta y el espacio disponible.",
         rolledBack: "La restauración falló. La base de datos volvió a su estado anterior.",
         rollbackFailed: "Falló la recuperación automática. Usa la copia de recuperación cifrada.",

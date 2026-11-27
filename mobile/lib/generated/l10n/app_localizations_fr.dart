@@ -1993,6 +1993,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'La base actuelle dépasse la limite de taille ou de nombre d’instructions SQL de la sauvegarde.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'La réponse de la base dépasse la capacité du tampon de lecture. Vérifiez POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'La sauvegarde dépasse la limite de 500 000 instructions SQL.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'Impossible de créer la copie de secours chiffrée. Vérifiez les droits du dossier et l’espace disponible.';
 

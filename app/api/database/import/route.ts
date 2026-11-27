@@ -5,7 +5,7 @@ import { auditSensitiveAction } from '../../../../lib/auditHelpers';
 import { BackupArchiveError, decryptBackupArchive, isBackupArchive, withNewBackupArchive } from '../../../../lib/backupArchive';
 import { BACKUP_NO_STORE, BackupInputError, noStoreBackupResponse, readBackupRestore } from '../../../../lib/backupRequests';
 import { createRestorableDatabaseBackup, pruneRestoreSnapshots, withDatabaseRestoreLock, writeRestoreSnapshot } from '../../../../lib/databaseBackups';
-import { isAssetPilotPostgresBackup, MAX_RESTORE_SQL_BYTES, restorePostgresBackupSql, RestoreTransactionError, RestoreValidationError } from '../../../../lib/postgresBackup';
+import { isAssetPilotPostgresBackup, MAX_RESTORE_SQL_BYTES, restorePostgresBackupSql, RestoreLimitError, RestoreTransactionError, RestoreValidationError } from '../../../../lib/postgresBackup';
 
 export const runtime = 'nodejs';
 
@@ -47,6 +47,9 @@ export async function POST(request: Request) {
       } catch (error) {
         if (!snapshot) {
           if (!savingSnapshot && error instanceof RestoreValidationError) {
+            if (error instanceof RestoreLimitError) {
+              throw new BackupInputError(error.limit === 'bytes' ? 'too_large' : 'too_many_statements');
+            }
             throw new BackupInputError('invalid_sql');
           }
           const snapshotError = error instanceof BackupInputError ? error : undefined;

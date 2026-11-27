@@ -1958,6 +1958,14 @@ class AppLocalizationsAr extends AppLocalizations {
       'تتجاوز قاعدة البيانات الحالية الحد الأقصى لحجم SQL أو عدد العبارات في النسخة الاحتياطية.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'أعادت قاعدة البيانات بيانات تتجاوز سعة مخزن القراءة المؤقت. تحقّق من POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'تتجاوز النسخة الحد الأقصى البالغ 500,000 عبارة SQL.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'تعذّر إنشاء نسخة الاسترداد المشفّرة. تحقّق من أذونات مجلد النسخ الاحتياطي والمساحة المتاحة.';
 

@@ -1965,6 +1965,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'The current database exceeds the backup limit for SQL size or statement count.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'The database returned more data than fits in the read buffer. Check POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'The backup exceeds the limit of 500,000 SQL statements.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'The encrypted recovery copy could not be created. Check the backup directory permissions and available space.';
 

@@ -2991,6 +2991,16 @@
     "description": "Web path: features.dataTransfer.database.databaseTooLarge",
     "x-webPath": "features.dataTransfer.database.databaseTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "डेटाबेस से लौटा डेटा रीड बफ़र की क्षमता से अधिक है। POSTGRES_SYNC_RESULT_BUFFER_BYTES जाँचें।",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "बैकअप 5,00,000 SQL स्टेटमेंट की सीमा से बड़ा है।",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "एन्क्रिप्टेड रिकवरी कॉपी नहीं बन सकी। बैकअप फ़ोल्डर की अनुमतियाँ और खाली जगह जाँचें।",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

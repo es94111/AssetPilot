@@ -2991,6 +2991,16 @@
     "description": "Web path: features.dataTransfer.database.databaseTooLarge",
     "x-webPath": "features.dataTransfer.database.databaseTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "데이터베이스에서 반환한 데이터가 읽기 버퍼를 초과했습니다. POSTGRES_SYNC_RESULT_BUFFER_BYTES를 확인하세요.",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "백업이 SQL 문 500,000개 한도를 초과했습니다.",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "암호화된 복구 사본을 만들 수 없습니다. 백업 폴더의 권한과 남은 공간을 확인하세요.",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

@@ -1905,6 +1905,14 @@ class AppLocalizationsKo extends AppLocalizations {
       '현재 데이터베이스가 백업의 SQL 크기 또는 문장 수 한도를 초과했습니다.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      '데이터베이스에서 반환한 데이터가 읽기 버퍼를 초과했습니다. POSTGRES_SYNC_RESULT_BUFFER_BYTES를 확인하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      '백업이 SQL 문 500,000개 한도를 초과했습니다.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       '암호화된 복구 사본을 만들 수 없습니다. 백업 폴더의 권한과 남은 공간을 확인하세요.';
 

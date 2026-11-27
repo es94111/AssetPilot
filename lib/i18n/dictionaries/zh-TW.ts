@@ -1091,6 +1091,8 @@ export const zhTW = {
         restoreInProgress: "已有資料庫還原正在執行，請稍後再試。",
         uploadTooLarge: "備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。",
         databaseTooLarge: "目前資料庫超過可備份的 SQL 大小或陳述式數量上限。",
+        databaseResultTooLarge: "資料庫回傳的資料超過讀取緩衝區。請核對 POSTGRES_SYNC_RESULT_BUFFER_BYTES。",
+        tooManyStatements: "備份超過 50 萬條 SQL 陳述式的上限。",
         snapshotFailed: "無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。",
         rolledBack: "還原失敗，資料庫已回復至還原前的狀態。",
         rollbackFailed: "無法自動回復。請用還原前的加密副本復原。",

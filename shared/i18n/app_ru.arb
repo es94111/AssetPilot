@@ -2991,6 +2991,16 @@
     "description": "Web path: features.dataTransfer.database.databaseTooLarge",
     "x-webPath": "features.dataTransfer.database.databaseTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "Ответ базы данных превышает размер буфера чтения. Проверьте POSTGRES_SYNC_RESULT_BUFFER_BYTES.",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "В резервной копии больше 500 000 SQL-команд.",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "Не удалось создать зашифрованную копию для восстановления. Проверьте права доступа к каталогу и свободное место.",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

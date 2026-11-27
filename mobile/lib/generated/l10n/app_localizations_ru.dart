@@ -1987,6 +1987,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Текущая база данных превышает предел размера или числа SQL-команд для резервной копии.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'Ответ базы данных превышает размер буфера чтения. Проверьте POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'В резервной копии больше 500 000 SQL-команд.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'Не удалось создать зашифрованную копию для восстановления. Проверьте права доступа к каталогу и свободное место.';
 

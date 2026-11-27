@@ -16,11 +16,15 @@ const ERROR_MESSAGES = {
   incomplete_upload: '上傳的備份未完整送達。請確認檔案及部署的上傳大小限制。',
   too_large: '備份超過 200 MiB 的 SQL 大小上限。',
   database_too_large: '目前資料庫超過備份的 SQL 大小或陳述式數量上限。',
+  database_result_too_large: '目前資料庫回傳的資料超過讀取緩衝區，請檢查 POSTGRES_SYNC_RESULT_BUFFER_BYTES。',
+  too_many_statements: '備份超過 50 萬條 SQL 陳述式的上限。',
 };
 const ERROR_STATUS: Partial<Record<keyof typeof ERROR_MESSAGES, number>> = {
   restore_in_progress: 409,
   too_large: 413,
   database_too_large: 422,
+  database_result_too_large: 422,
+  too_many_statements: 422,
 };
 
 export class BackupInputError extends Error {

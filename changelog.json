@@ -1,6 +1,18 @@
 {
-  "currentVersion": "6.2.1",
+  "currentVersion": "6.2.4",
   "releases": [
+    {
+      "version": "6.2.4",
+      "date": "2026-11-27",
+      "title": "撤銷 iPhone 通知記帳捷徑相關變更",
+      "type": "removed",
+      "changes": [
+        {
+          "tag": "removed",
+          "text": "撤銷 v6.2.2、v6.2.3 引入的 iPhone 通知記帳捷徑設定與消費通知接收狀態變更，內容回復至 v6.2.1 狀態。"
+        }
+      ]
+    },
     {
       "version": "6.2.1",
       "date": "2026-11-27",

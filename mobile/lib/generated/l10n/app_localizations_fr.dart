@@ -1854,7 +1854,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresDataTransferMessagesDbRestoreDone =>
-      'Base de données restaurée';
+      'Base de données restaurée. Reconnectez-vous.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1924,15 +1924,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'Sauvegarde / restauration complète de base';
+      'Sauvegarde chiffrée et restauration de la base de données';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'Réservé aux administrateurs. En mode SQLite, télécharge une sauvegarde `.db` ; en mode PostgreSQL, une sauvegarde `.sql`. Téléversez le format correspondant pour restaurer.';
+      'Les sauvegardes complètes sont enregistrées dans des fichiers .apb chiffrés. Vous pouvez restaurer les fichiers .apb et les anciens fichiers .sql d’AssetPilot.';
 
   @override
   String get featuresDataTransferDatabaseDownload =>
-      'Télécharger la sauvegarde de base';
+      'Télécharger la sauvegarde chiffrée';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'Téléchargement...';
@@ -1945,11 +1945,72 @@ class AppLocalizationsFr extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => 'Restauration...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel =>
+      'Phrase secrète de la sauvegarde';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'Confirmer la phrase secrète';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'Utilisez au moins 16 caractères, dans la limite de 1 Kio. Conservez la phrase séparément. Elle sera nécessaire pour restaurer le fichier.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'Les phrases secrètes ne correspondent pas.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'La restauration remplace la base de données actuelle.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'Définissez une nouvelle phrase secrète pour protéger la copie de secours créée avant la restauration.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'Choisissez une sauvegarde .apb ou .sql d’AssetPilot intacte et compatible.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'Impossible de déchiffrer la sauvegarde. Vérifiez la phrase secrète et l’intégrité du fichier.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'L’envoi est incomplet. Vérifiez le fichier et la limite de taille de votre installation.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'Une autre restauration est en cours. Réessayez dans quelques instants.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'La sauvegarde dépasse la taille autorisée. Le SQL est limité à 200 Mio, et votre installation peut imposer une limite d’envoi inférieure.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'Impossible de créer la copie de secours chiffrée. Vérifiez les droits du dossier et l’espace disponible.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'La restauration a échoué. La base de données est revenue à son état précédent.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'Le retour automatique a échoué. Utilisez la copie de secours chiffrée.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'Copie de secours chiffrée enregistrée dans $path.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'Sauvegarde cloud MEGA S4';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'Téléverse la sauvegarde SQLite complète actuelle comme objet dans un bucket MEGA S4. Les informations de connexion viennent des variables d’environnement du serveur ; les clés ne sont pas saisies ni affichées dans le navigateur.';
+      'Envoyez une sauvegarde chiffrée de PostgreSQL vers le bucket MEGA S4 configuré.';
 
   @override
   String get featuresDataTransferMegaState => 'État : ';
@@ -1970,7 +2031,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'Téléverser vers MEGA S4';
+  String get featuresDataTransferMegaUpload =>
+      'Envoyer une sauvegarde chiffrée vers MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => 'Téléversement...';

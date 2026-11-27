@@ -1,4 +1,4 @@
-import { disableReportsWithoutEmail, getDB, queryOne, queryAll } from "./db";
+import { disableReportsWithoutEmail, ensureSharedLedgerOwnerProtection, getDB, queryOne, queryAll } from "./db";
 
 export type AnyRow = Record<string, unknown>;
 
@@ -86,7 +86,7 @@ export function isAssetPilotPostgresBackup(sql: string): boolean {
 // second statement type, a function/procedure body, a role/extension change,
 // dollar-quoting, block comments — is rejected outright. This is defense in
 // depth for an already super-admin-gated route, not a general SQL sandbox.
-const MAX_RESTORE_SQL_BYTES = 200 * 1024 * 1024; // 200MB
+export const MAX_RESTORE_SQL_BYTES = 200 * 1024 * 1024;
 const MAX_RESTORE_STATEMENTS = 500_000;
 
 // Function/keyword substrings that have no place in a generated backup and
@@ -128,8 +128,6 @@ const DANGEROUS_SQL_SUBSTRINGS = [
 ];
 
 const RESTORE_STATEMENT_PATTERNS: RegExp[] = [
-  /^BEGIN$/i,
-  /^COMMIT$/i,
   /^DROP TABLE IF EXISTS "(?:[^"]|"")+" CASCADE$/i,
   /^CREATE TABLE "(?:[^"]|"")+" \([\s\S]*\)$/i,
   /^ALTER TABLE "(?:[^"]|"")+" ADD CONSTRAINT "(?:[^"]|"")+" [\s\S]+$/i,
@@ -137,14 +135,20 @@ const RESTORE_STATEMENT_PATTERNS: RegExp[] = [
   /^INSERT INTO "(?:[^"]|"")+" \([\s\S]*?\) VALUES \([\s\S]*\)$/i,
 ];
 
-class RestoreValidationError extends Error {}
+export class RestoreValidationError extends Error {}
 
-// Splits `sql` into top-level (`;`-terminated) statements while respecting
+export class RestoreTransactionError extends Error {
+  constructor(readonly rolledBack: boolean, cause: unknown) {
+    super("PostgreSQL restore transaction failed", { cause });
+  }
+}
+
+// Reads top-level (`;`-terminated) statements while respecting
 // single-quoted string literals and double-quoted identifiers, and dropping
 // line comments. Dollar-quoting and block comments are not part of the
 // generated grammar, so encountering either is treated as invalid input.
-function splitTopLevelStatements(sql: string): string[] {
-  const statements: string[] = [];
+function* readTopLevelStatements(sql: string) {
+  let start = 0;
   let current = "";
   let i = 0;
   const n = sql.length;
@@ -181,49 +185,62 @@ function splitTopLevelStatements(sql: string): string[] {
       throw new RestoreValidationError("備份檔包含不支援的字元序列（$）");
     }
     if (ch === ";") {
-      statements.push(current);
+      yield { text: current, start, end: i + 1 };
       current = "";
+      start = i + 1;
       i += 1;
       continue;
     }
     current += ch;
     i += 1;
   }
-  if (current.trim()) statements.push(current);
-  return statements;
+  if (current.trim()) throw new RestoreValidationError("備份檔包含未結束的 SQL 陳述式");
 }
 
-export function assertRestorableBackupSql(sql: string): void {
+function readRestorableTransaction(sql: string) {
   if (Buffer.byteLength(sql, "utf8") > MAX_RESTORE_SQL_BYTES) {
-    throw new Error(
+    throw new RestoreValidationError(
       `備份檔過大（上限 ${Math.round(MAX_RESTORE_SQL_BYTES / 1024 / 1024)}MB）`,
     );
   }
 
-  let statements: string[];
-  try {
-    statements = splitTopLevelStatements(sql);
-  } catch (e) {
-    if (e instanceof RestoreValidationError) throw new Error(e.message);
-    throw e;
-  }
-
-  if (statements.length > MAX_RESTORE_STATEMENTS) {
-    throw new Error(
-      `備份檔陳述式數量過多（上限 ${MAX_RESTORE_STATEMENTS}）`,
-    );
-  }
-
-  for (const raw of statements) {
-    const stmt = raw.trim();
+  let bodyStart: number | undefined;
+  let bodyEnd: number | undefined;
+  let count = 0;
+  const createdTables = new Set<string>();
+  for (const statement of readTopLevelStatements(sql)) {
+    count += 1;
+    if (count > MAX_RESTORE_STATEMENTS) {
+      throw new RestoreValidationError(
+        `備份檔陳述式數量過多（上限 ${MAX_RESTORE_STATEMENTS}）`,
+      );
+    }
+    const stmt = statement.text.trim();
     if (!stmt) continue;
+
+    if (bodyEnd !== undefined) {
+      throw new RestoreValidationError("備份檔必須使用單一 SQL 交易");
+    }
+    if (bodyStart === undefined) {
+      if (!/^BEGIN$/i.test(stmt)) {
+        throw new RestoreValidationError("備份檔缺少完整的 SQL 交易");
+      }
+      bodyStart = statement.end;
+      continue;
+    }
+    if (/^COMMIT$/i.test(stmt)) {
+      bodyEnd = statement.start;
+      continue;
+    }
 
     const matched = RESTORE_STATEMENT_PATTERNS.some((pattern) =>
       pattern.test(stmt),
     );
     if (!matched) {
-      throw new Error("備份檔包含不符合預期格式的 SQL 陳述式，已拒絕還原");
+      throw new RestoreValidationError("備份檔包含不符合預期格式的 SQL 陳述式，已拒絕還原");
     }
+    const created = /^CREATE TABLE "((?:[^"]|"")+)" \(/i.exec(stmt);
+    if (created) createdTables.add(created[1].replace(/""/g, '"'));
 
     // INSERT statements carry only literal row data (never itself executed as
     // SQL), so the keyword blocklist below is scoped to DDL statements, where
@@ -235,20 +252,29 @@ export function assertRestorableBackupSql(sql: string): void {
       const lower = stmt.toLowerCase();
       for (const needle of DANGEROUS_SQL_SUBSTRINGS) {
         if (lower.includes(needle)) {
-          throw new Error("備份檔包含不允許的 SQL 內容");
+          throw new RestoreValidationError("備份檔包含不允許的 SQL 內容");
         }
       }
     }
   }
+  if (bodyStart === undefined || bodyEnd === undefined) {
+    throw new RestoreValidationError("備份檔缺少完整的 SQL 交易");
+  }
+  return { body: sql.slice(bodyStart, bodyEnd), createdTables: [...createdTables] };
+}
+
+export function assertRestorableBackupSql(sql: string): void {
+  readRestorableTransaction(sql);
 }
 
 export interface PostgresBackupOptions {
   // Return null to omit the row from the dump.
   transformRow?: (table: string, row: AnyRow) => AnyRow | null;
+  tables?: string[];
 }
 
-export function createPostgresBackupSql(options: PostgresBackupOptions = {}): string {
-  const tables = queryAll(`
+export function listPostgresBackupTables(): string[] {
+  return queryAll(`
     SELECT table_name
     FROM information_schema.tables
     WHERE table_schema = 'public'
@@ -257,6 +283,10 @@ export function createPostgresBackupSql(options: PostgresBackupOptions = {}): st
       AND table_name NOT LIKE 'assetpilot_migration_%'
     ORDER BY table_name
   `).map((row) => String(row.table_name));
+}
+
+export function createPostgresBackupSql(options: PostgresBackupOptions = {}): string {
+  const tables = options.tables ?? listPostgresBackupTables();
 
   const lines: string[] = [
     BACKUP_HEADER,
@@ -379,14 +409,47 @@ export function createPostgresBackupSql(options: PostgresBackupOptions = {}): st
   return lines.join("\n");
 }
 
-export function restorePostgresBackupSql(sql: string): void {
+export function restorePostgresBackupSql(sql: string, options: {
+  beforeApply?: (createdTables: string[]) => void;
+  dropIntroducedTables?: string[];
+} = {}): void {
   if (!isAssetPilotPostgresBackup(sql)) {
-    throw new Error("檔案不是 AssetPilot PostgreSQL SQL 備份");
+    throw new RestoreValidationError("檔案不是 AssetPilot PostgreSQL SQL 備份");
   }
-  assertRestorableBackupSql(sql);
-  getDB().run(sql);
-  const emailColumn = queryOne(
-    "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'report_schedules' AND column_name = 'notify_email'",
-  );
-  if (emailColumn) disableReportsWithoutEmail();
+  const { body, createdTables } = readRestorableTransaction(sql);
+  options.beforeApply?.(createdTables);
+  const db = getDB();
+  let started = false;
+  let committing = false;
+  try {
+    db.run("BEGIN");
+    started = true;
+    for (const table of options.dropIntroducedTables ?? []) {
+      db.runPostgresSql(`DROP TABLE IF EXISTS "public".${quoteIdent(table)} CASCADE`);
+    }
+    if (body.trim()) db.runPostgresSql(body);
+    const emailColumn = queryOne(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'report_schedules' AND column_name = 'notify_email'",
+    );
+    if (emailColumn) disableReportsWithoutEmail(db);
+    const ledgerProtectionMissing = queryOne(`
+      SELECT 1
+      WHERE to_regclass('users') IS NOT NULL AND to_regclass('financial_ledgers') IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_trigger WHERE tgrelid = to_regclass('users') AND tgname = 'protect_shared_ledger_owner'
+        )
+    `);
+    if (ledgerProtectionMissing) ensureSharedLedgerOwnerProtection(db);
+    committing = true;
+    db.run("COMMIT");
+  } catch (error) {
+    let rolledBack = !started;
+    if (started) {
+      try {
+        db.run("ROLLBACK");
+        rolledBack = !committing;
+      } catch { /* the transaction result may be unknown */ }
+    }
+    throw new RestoreTransactionError(rolledBack, error);
+  }
 }

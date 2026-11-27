@@ -2807,7 +2807,7 @@
     "description": "Web path: features.dataTransfer.messages.dbExportFailed",
     "x-webPath": "features.dataTransfer.messages.dbExportFailed"
   },
-  "featuresDataTransferMessagesDbRestoreDone": "تمت استعادة قاعدة البيانات",
+  "featuresDataTransferMessagesDbRestoreDone": "تمت استعادة قاعدة البيانات. سجّل الدخول مجددًا.",
   "@featuresDataTransferMessagesDbRestoreDone": {
     "description": "Web path: features.dataTransfer.messages.dbRestoreDone",
     "x-webPath": "features.dataTransfer.messages.dbRestoreDone"
@@ -2901,17 +2901,17 @@
     "description": "Web path: features.dataTransfer.bundle.restoring",
     "x-webPath": "features.dataTransfer.bundle.restoring"
   },
-  "featuresDataTransferDatabaseTitle": "نسخ/استعادة قاعدة البيانات كاملة",
+  "featuresDataTransferDatabaseTitle": "النسخ الاحتياطي المشفّر لقاعدة البيانات واستعادتها",
   "@featuresDataTransferDatabaseTitle": {
     "description": "Web path: features.dataTransfer.database.title",
     "x-webPath": "features.dataTransfer.database.title"
   },
-  "featuresDataTransferDatabaseDescription": "للمدراء فقط. في وضع SQLite يتم تنزيل نسخة `.db`؛ وفي PostgreSQL يتم تنزيل `.sql`. للاستعادة، ارفع ملفًا من النوع الموافق.",
+  "featuresDataTransferDatabaseDescription": "تُحفَظ النسخ الكاملة في ملفات .apb مشفّرة. يمكن استعادة ملفات .apb وملفات .sql القديمة من AssetPilot.",
   "@featuresDataTransferDatabaseDescription": {
     "description": "Web path: features.dataTransfer.database.description",
     "x-webPath": "features.dataTransfer.database.description"
   },
-  "featuresDataTransferDatabaseDownload": "تنزيل نسخة قاعدة البيانات",
+  "featuresDataTransferDatabaseDownload": "تنزيل نسخة مشفّرة",
   "@featuresDataTransferDatabaseDownload": {
     "description": "Web path: features.dataTransfer.database.download",
     "x-webPath": "features.dataTransfer.database.download"
@@ -2931,12 +2931,90 @@
     "description": "Web path: features.dataTransfer.database.restoring",
     "x-webPath": "features.dataTransfer.database.restoring"
   },
+  "featuresDataTransferDatabasePassphraseLabel": "عبارة مرور النسخة الاحتياطية",
+  "@featuresDataTransferDatabasePassphraseLabel": {
+    "description": "Web path: features.dataTransfer.database.passphraseLabel",
+    "x-webPath": "features.dataTransfer.database.passphraseLabel"
+  },
+  "featuresDataTransferDatabasePassphraseConfirmation": "تأكيد عبارة المرور",
+  "@featuresDataTransferDatabasePassphraseConfirmation": {
+    "description": "Web path: features.dataTransfer.database.passphraseConfirmation",
+    "x-webPath": "features.dataTransfer.database.passphraseConfirmation"
+  },
+  "featuresDataTransferDatabasePassphraseHelp": "استخدم 16 حرفًا على الأقل وبحد أقصى 1 KiB. احفظ عبارة المرور منفصلة عن النسخة. ستحتاج إليها عند الاستعادة.",
+  "@featuresDataTransferDatabasePassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.passphraseHelp",
+    "x-webPath": "features.dataTransfer.database.passphraseHelp"
+  },
+  "featuresDataTransferDatabasePassphraseMismatch": "عبارتا المرور غير متطابقتين.",
+  "@featuresDataTransferDatabasePassphraseMismatch": {
+    "description": "Web path: features.dataTransfer.database.passphraseMismatch",
+    "x-webPath": "features.dataTransfer.database.passphraseMismatch"
+  },
+  "featuresDataTransferDatabaseRestoreHelp": "ستحل هذه النسخة محل قاعدة البيانات الحالية.",
+  "@featuresDataTransferDatabaseRestoreHelp": {
+    "description": "Web path: features.dataTransfer.database.restoreHelp",
+    "x-webPath": "features.dataTransfer.database.restoreHelp"
+  },
+  "featuresDataTransferDatabaseLegacyPassphraseHelp": "عيّن عبارة مرور جديدة لحماية نسخة الاسترداد التي ستُنشأ قبل الاستعادة.",
+  "@featuresDataTransferDatabaseLegacyPassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.legacyPassphraseHelp",
+    "x-webPath": "features.dataTransfer.database.legacyPassphraseHelp"
+  },
+  "featuresDataTransferDatabaseInvalidBackup": "اختر نسخة AssetPilot سليمة ومدعومة بصيغة .apb أو .sql.",
+  "@featuresDataTransferDatabaseInvalidBackup": {
+    "description": "Web path: features.dataTransfer.database.invalidBackup",
+    "x-webPath": "features.dataTransfer.database.invalidBackup"
+  },
+  "featuresDataTransferDatabaseDecryptFailed": "تعذّر فك تشفير النسخة. تحقّق من عبارة المرور ومن سلامة الملف.",
+  "@featuresDataTransferDatabaseDecryptFailed": {
+    "description": "Web path: features.dataTransfer.database.decryptFailed",
+    "x-webPath": "features.dataTransfer.database.decryptFailed"
+  },
+  "featuresDataTransferDatabaseUploadIncomplete": "لم يكتمل الرفع. تحقّق من الملف ومن الحدّ الأقصى للرفع في إعدادات النشر.",
+  "@featuresDataTransferDatabaseUploadIncomplete": {
+    "description": "Web path: features.dataTransfer.database.uploadIncomplete",
+    "x-webPath": "features.dataTransfer.database.uploadIncomplete"
+  },
+  "featuresDataTransferDatabaseRestoreInProgress": "هناك عملية استعادة أخرى قيد التنفيذ. حاول مرة أخرى بعد قليل.",
+  "@featuresDataTransferDatabaseRestoreInProgress": {
+    "description": "Web path: features.dataTransfer.database.restoreInProgress",
+    "x-webPath": "features.dataTransfer.database.restoreInProgress"
+  },
+  "featuresDataTransferDatabaseUploadTooLarge": "حجم النسخة أكبر من الحد المسموح. الحد الأقصى لملف SQL هو 200 MiB وقد يكون حد الرفع في إعدادات النشر أقل.",
+  "@featuresDataTransferDatabaseUploadTooLarge": {
+    "description": "Web path: features.dataTransfer.database.uploadTooLarge",
+    "x-webPath": "features.dataTransfer.database.uploadTooLarge"
+  },
+  "featuresDataTransferDatabaseSnapshotFailed": "تعذّر إنشاء نسخة الاسترداد المشفّرة. تحقّق من أذونات مجلد النسخ الاحتياطي والمساحة المتاحة.",
+  "@featuresDataTransferDatabaseSnapshotFailed": {
+    "description": "Web path: features.dataTransfer.database.snapshotFailed",
+    "x-webPath": "features.dataTransfer.database.snapshotFailed"
+  },
+  "featuresDataTransferDatabaseRolledBack": "فشلت الاستعادة. عادت قاعدة البيانات إلى حالتها السابقة.",
+  "@featuresDataTransferDatabaseRolledBack": {
+    "description": "Web path: features.dataTransfer.database.rolledBack",
+    "x-webPath": "features.dataTransfer.database.rolledBack"
+  },
+  "featuresDataTransferDatabaseRollbackFailed": "فشل الاسترداد التلقائي. استخدم نسخة الاسترداد المشفّرة.",
+  "@featuresDataTransferDatabaseRollbackFailed": {
+    "description": "Web path: features.dataTransfer.database.rollbackFailed",
+    "x-webPath": "features.dataTransfer.database.rollbackFailed"
+  },
+  "featuresDataTransferDatabaseSnapshotLocation": "حُفظت نسخة الاسترداد المشفّرة في {path}.",
+  "@featuresDataTransferDatabaseSnapshotLocation": {
+    "description": "Web path: features.dataTransfer.database.snapshotLocation",
+    "x-webPath": "features.dataTransfer.database.snapshotLocation",
+    "placeholders": {
+      "path": {}
+    }
+  },
   "featuresDataTransferMegaTitle": "نسخة احتياطية سحابية MEGA S4",
   "@featuresDataTransferMegaTitle": {
     "description": "Web path: features.dataTransfer.mega.title",
     "x-webPath": "features.dataTransfer.mega.title"
   },
-  "featuresDataTransferMegaDescription": "يرفع نسخة SQLite الكاملة الحالية ككائن داخل bucket في MEGA S4. يتم ضبط الاتصال عبر متغيرات بيئة الخادم؛ لا تُدخل المفاتيح ولا تُعرض في المتصفح.",
+  "featuresDataTransferMegaDescription": "ارفع نسخة PostgreSQL مشفّرة إلى حاوية MEGA S4 التي أعددتها.",
   "@featuresDataTransferMegaDescription": {
     "description": "Web path: features.dataTransfer.mega.description",
     "x-webPath": "features.dataTransfer.mega.description"
@@ -2969,7 +3047,7 @@
       "items": {}
     }
   },
-  "featuresDataTransferMegaUpload": "رفع نسخة احتياطية إلى MEGA S4",
+  "featuresDataTransferMegaUpload": "رفع نسخة مشفّرة إلى MEGA S4",
   "@featuresDataTransferMegaUpload": {
     "description": "Web path: features.dataTransfer.mega.upload",
     "x-webPath": "features.dataTransfer.mega.upload"

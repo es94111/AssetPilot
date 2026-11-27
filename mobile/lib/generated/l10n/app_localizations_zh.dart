@@ -1735,7 +1735,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresDataTransferMessagesDbExportFailed => '資料庫備份失敗';
 
   @override
-  String get featuresDataTransferMessagesDbRestoreDone => '資料庫還原成功';
+  String get featuresDataTransferMessagesDbRestoreDone => '資料庫還原成功，請重新登入。';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed => '資料庫還原失敗';
@@ -1792,14 +1792,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresDataTransferBundleRestoring => '還原中...';
 
   @override
-  String get featuresDataTransferDatabaseTitle => '整檔備份 / 還原';
+  String get featuresDataTransferDatabaseTitle => '資料庫加密備份／還原';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      '僅管理員可操作。SQLite 模式下載 `.db` 備份；PostgreSQL 模式下載 `.sql` 備份，還原時請上傳對應格式。';
+      '整庫備份會輸出為加密的 .apb 檔。還原支援 .apb 和舊版 AssetPilot .sql。';
 
   @override
-  String get featuresDataTransferDatabaseDownload => '下載資料庫備份';
+  String get featuresDataTransferDatabaseDownload => '下載加密備份';
 
   @override
   String get featuresDataTransferDatabaseDownloading => '下載中...';
@@ -1811,11 +1811,67 @@ class AppLocalizationsZh extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => '還原中...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel => '備份密語';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation => '再次輸入密語';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      '請使用至少 16 個字元且不超過 1 KiB 的密語。還原時需要原密語，請與備份檔分開保管。';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch => '兩次輸入的密語不一致。';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp => '還原會取代目前的資料庫。';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      '請設定一組新密語，保護還原前建立的回復副本。';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      '請選擇完整且支援的 AssetPilot .apb 或 .sql 備份檔。';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      '無法解密備份。請確認密語及檔案是否完整。';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      '備份未完整上傳。請確認檔案及部署的上傳大小限制。';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      '已有資料庫還原正在執行，請稍後再試。';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      '備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      '無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack => '還原失敗，資料庫已回復至還原前的狀態。';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      '無法自動回復。請用還原前的加密副本復原。';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return '還原前的加密副本位於 $path。';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'MEGA S4 雲端備份';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      '將目前完整 SQLite 備份以上傳物件方式存入 MEGA S4 bucket。連線資訊由伺服器環境變數設定，不會在瀏覽器輸入或顯示金鑰。';
+      '將加密的 PostgreSQL 備份上傳至已設定的 MEGA S4 bucket。';
 
   @override
   String get featuresDataTransferMegaState => '狀態：';
@@ -1835,7 +1891,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => '上傳備份到 MEGA S4';
+  String get featuresDataTransferMegaUpload => '上傳加密備份至 MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => '上傳中...';
@@ -8421,7 +8477,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresDataTransferMessagesDbExportFailed => '数据库备份失败';
 
   @override
-  String get featuresDataTransferMessagesDbRestoreDone => '数据库还原成功';
+  String get featuresDataTransferMessagesDbRestoreDone => '数据库还原成功，请重新登录。';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed => '数据库还原失败';
@@ -8478,14 +8534,14 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresDataTransferBundleRestoring => '还原中...';
 
   @override
-  String get featuresDataTransferDatabaseTitle => '整库备份 / 还原';
+  String get featuresDataTransferDatabaseTitle => '数据库加密备份与还原';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      '仅管理员可操作。SQLite 模式下载 `.db` 备份；PostgreSQL 模式下载 `.sql` 备份，还原时请上传对应格式。';
+      '完整数据库备份保存为加密的 .apb 文件。还原支持 .apb 和旧版 AssetPilot .sql。';
 
   @override
-  String get featuresDataTransferDatabaseDownload => '下载数据库备份';
+  String get featuresDataTransferDatabaseDownload => '下载加密备份';
 
   @override
   String get featuresDataTransferDatabaseDownloading => '下载中...';
@@ -8497,11 +8553,66 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   String get featuresDataTransferDatabaseRestoring => '还原中...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel => '备份口令';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation => '再次输入口令';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      '口令至少需要 16 个字符，最多 1 KiB。还原需要原口令，请与备份文件分开保管。';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch => '两次输入的口令不一致。';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp => '还原会替换当前数据库。';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      '请设置新口令，以保护还原前创建的恢复副本。';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      '请选择完整且受支持的 AssetPilot .apb 或 .sql 备份文件。';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      '无法解密备份。请检查口令和文件是否完整。';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      '备份未完整上传。请检查文件及部署的上传大小限制。';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress => '数据库正在还原，请稍后重试。';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      '备份文件过大。SQL 上限为 200 MiB，部署的上传限制可能更低。';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      '无法创建还原前的加密副本。请检查备份目录权限和可用空间。';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack => '还原失败，数据库已恢复至还原前的状态。';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      '无法自动恢复。请使用还原前的加密副本恢复。';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return '还原前的加密副本位于 $path。';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'MEGA S4 云端备份';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      '将当前完整 SQLite 备份以对象上传方式存入 MEGA S4 bucket。连接信息由服务器环境变量设置，不会在浏览器输入或显示密钥。';
+      '将加密的 PostgreSQL 备份上传至已配置的 MEGA S4 存储桶。';
 
   @override
   String get featuresDataTransferMegaState => '状态：';
@@ -8521,7 +8632,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => '上传备份到 MEGA S4';
+  String get featuresDataTransferMegaUpload => '上传加密备份至 MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => '上传中...';
@@ -15008,7 +15119,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresDataTransferMessagesDbExportFailed => '資料庫備份失敗';
 
   @override
-  String get featuresDataTransferMessagesDbRestoreDone => '資料庫還原成功';
+  String get featuresDataTransferMessagesDbRestoreDone => '資料庫還原成功，請重新登入。';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed => '資料庫還原失敗';
@@ -15065,14 +15176,14 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresDataTransferBundleRestoring => '還原中...';
 
   @override
-  String get featuresDataTransferDatabaseTitle => '整檔備份 / 還原';
+  String get featuresDataTransferDatabaseTitle => '資料庫加密備份／還原';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      '僅管理員可操作。SQLite 模式下載 `.db` 備份；PostgreSQL 模式下載 `.sql` 備份，還原時請上傳對應格式。';
+      '整庫備份會輸出為加密的 .apb 檔。還原支援 .apb 和舊版 AssetPilot .sql。';
 
   @override
-  String get featuresDataTransferDatabaseDownload => '下載資料庫備份';
+  String get featuresDataTransferDatabaseDownload => '下載加密備份';
 
   @override
   String get featuresDataTransferDatabaseDownloading => '下載中...';
@@ -15084,11 +15195,67 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   String get featuresDataTransferDatabaseRestoring => '還原中...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel => '備份密語';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation => '再次輸入密語';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      '請使用至少 16 個字元且不超過 1 KiB 的密語。還原時需要原密語，請與備份檔分開保管。';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch => '兩次輸入的密語不一致。';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp => '還原會取代目前的資料庫。';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      '請設定一組新密語，保護還原前建立的回復副本。';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      '請選擇完整且支援的 AssetPilot .apb 或 .sql 備份檔。';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      '無法解密備份。請確認密語及檔案是否完整。';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      '備份未完整上傳。請確認檔案及部署的上傳大小限制。';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      '已有資料庫還原正在執行，請稍後再試。';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      '備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      '無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack => '還原失敗，資料庫已回復至還原前的狀態。';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      '無法自動回復。請用還原前的加密副本復原。';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return '還原前的加密副本位於 $path。';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'MEGA S4 雲端備份';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      '將目前完整 SQLite 備份以上傳物件方式存入 MEGA S4 bucket。連線資訊由伺服器環境變數設定，不會在瀏覽器輸入或顯示金鑰。';
+      '將加密的 PostgreSQL 備份上傳至已設定的 MEGA S4 bucket。';
 
   @override
   String get featuresDataTransferMegaState => '狀態：';
@@ -15108,7 +15275,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => '上傳備份到 MEGA S4';
+  String get featuresDataTransferMegaUpload => '上傳加密備份至 MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => '上傳中...';

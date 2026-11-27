@@ -239,6 +239,12 @@ export class PostgresCompatDatabase {
     return new PostgresStatement(sql, () => this.transactionIdForQuery(sql));
   }
 
+  /** Run native PostgreSQL statements without changing literals in a backup. */
+  runPostgresSql(sql: string): void {
+    const result = runPg(sql, [], this.transactionIdForQuery(sql));
+    lastRowsModified = result.rowCount;
+  }
+
   run(sql: string, params: DbValue[] = []): void {
     const command = transactionCommand(sql);
     const transactionId = this.transactionIdForQuery(sql);

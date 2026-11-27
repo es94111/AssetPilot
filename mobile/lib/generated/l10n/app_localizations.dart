@@ -3388,7 +3388,7 @@ abstract class AppLocalizations {
   /// Web path: features.dataTransfer.messages.dbRestoreDone
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'資料庫還原成功'**
+  /// **'資料庫還原成功，請重新登入。'**
   String get featuresDataTransferMessagesDbRestoreDone;
 
   /// Web path: features.dataTransfer.messages.dbRestoreFailed
@@ -3496,19 +3496,19 @@ abstract class AppLocalizations {
   /// Web path: features.dataTransfer.database.title
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'整檔備份 / 還原'**
+  /// **'資料庫加密備份／還原'**
   String get featuresDataTransferDatabaseTitle;
 
   /// Web path: features.dataTransfer.database.description
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'僅管理員可操作。SQLite 模式下載 `.db` 備份；PostgreSQL 模式下載 `.sql` 備份，還原時請上傳對應格式。'**
+  /// **'整庫備份會輸出為加密的 .apb 檔。還原支援 .apb 和舊版 AssetPilot .sql。'**
   String get featuresDataTransferDatabaseDescription;
 
   /// Web path: features.dataTransfer.database.download
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'下載資料庫備份'**
+  /// **'下載加密備份'**
   String get featuresDataTransferDatabaseDownload;
 
   /// Web path: features.dataTransfer.database.downloading
@@ -3529,6 +3529,96 @@ abstract class AppLocalizations {
   /// **'還原中...'**
   String get featuresDataTransferDatabaseRestoring;
 
+  /// Web path: features.dataTransfer.database.passphraseLabel
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'備份密語'**
+  String get featuresDataTransferDatabasePassphraseLabel;
+
+  /// Web path: features.dataTransfer.database.passphraseConfirmation
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'再次輸入密語'**
+  String get featuresDataTransferDatabasePassphraseConfirmation;
+
+  /// Web path: features.dataTransfer.database.passphraseHelp
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請使用至少 16 個字元且不超過 1 KiB 的密語。還原時需要原密語，請與備份檔分開保管。'**
+  String get featuresDataTransferDatabasePassphraseHelp;
+
+  /// Web path: features.dataTransfer.database.passphraseMismatch
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'兩次輸入的密語不一致。'**
+  String get featuresDataTransferDatabasePassphraseMismatch;
+
+  /// Web path: features.dataTransfer.database.restoreHelp
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原會取代目前的資料庫。'**
+  String get featuresDataTransferDatabaseRestoreHelp;
+
+  /// Web path: features.dataTransfer.database.legacyPassphraseHelp
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請設定一組新密語，保護還原前建立的回復副本。'**
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp;
+
+  /// Web path: features.dataTransfer.database.invalidBackup
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'請選擇完整且支援的 AssetPilot .apb 或 .sql 備份檔。'**
+  String get featuresDataTransferDatabaseInvalidBackup;
+
+  /// Web path: features.dataTransfer.database.decryptFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法解密備份。請確認密語及檔案是否完整。'**
+  String get featuresDataTransferDatabaseDecryptFailed;
+
+  /// Web path: features.dataTransfer.database.uploadIncomplete
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'備份未完整上傳。請確認檔案及部署的上傳大小限制。'**
+  String get featuresDataTransferDatabaseUploadIncomplete;
+
+  /// Web path: features.dataTransfer.database.restoreInProgress
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'已有資料庫還原正在執行，請稍後再試。'**
+  String get featuresDataTransferDatabaseRestoreInProgress;
+
+  /// Web path: features.dataTransfer.database.uploadTooLarge
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。'**
+  String get featuresDataTransferDatabaseUploadTooLarge;
+
+  /// Web path: features.dataTransfer.database.snapshotFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。'**
+  String get featuresDataTransferDatabaseSnapshotFailed;
+
+  /// Web path: features.dataTransfer.database.rolledBack
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原失敗，資料庫已回復至還原前的狀態。'**
+  String get featuresDataTransferDatabaseRolledBack;
+
+  /// Web path: features.dataTransfer.database.rollbackFailed
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法自動回復。請用還原前的加密副本復原。'**
+  String get featuresDataTransferDatabaseRollbackFailed;
+
+  /// Web path: features.dataTransfer.database.snapshotLocation
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'還原前的加密副本位於 {path}。'**
+  String featuresDataTransferDatabaseSnapshotLocation(Object path);
+
   /// Web path: features.dataTransfer.mega.title
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -3538,7 +3628,7 @@ abstract class AppLocalizations {
   /// Web path: features.dataTransfer.mega.description
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'將目前完整 SQLite 備份以上傳物件方式存入 MEGA S4 bucket。連線資訊由伺服器環境變數設定，不會在瀏覽器輸入或顯示金鑰。'**
+  /// **'將加密的 PostgreSQL 備份上傳至已設定的 MEGA S4 bucket。'**
   String get featuresDataTransferMegaDescription;
 
   /// Web path: features.dataTransfer.mega.state
@@ -3574,7 +3664,7 @@ abstract class AppLocalizations {
   /// Web path: features.dataTransfer.mega.upload
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'上傳備份到 MEGA S4'**
+  /// **'上傳加密備份至 MEGA S4'**
   String get featuresDataTransferMegaUpload;
 
   /// Web path: features.dataTransfer.mega.uploading

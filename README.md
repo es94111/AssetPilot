@@ -297,7 +297,11 @@ docker run --rm -v assetpilot-data:/data -v $(pwd):/backup alpine \
   tar xzf /backup/assetpilot-backup.tar.gz -C /data
 ```
 
-> ⚠️ **PostgreSQL 資料位於資料庫 volume**；`assetpilot-data` 只保存應用設定與 SSL 憑證。強烈建議在管理員頁使用**整檔 SQL 備份／還原**功能（支援下載、還原失敗自動回滾、MEGA S4 雲端備份）。
+PostgreSQL 資料位於資料庫 volume。`assetpilot-data` 保存應用設定、SSL 憑證和管理頁還原時建立的加密回復副本。
+
+超級管理員可在「設定 → 資料匯出／匯入」下載加密的 `.apb` 整庫備份，或上傳至 MEGA S4。備份時輸入並確認至少 16 個字元的密語，並與備份檔分開保管。還原時上傳同一份檔案並輸入原密語。舊版 AssetPilot `.sql` 也能還原，這時需設定密語來保護還原前建立的回復副本。
+
+換機還原時一併準備原有應用金鑰，交易照片檔案需另行備份。從 MEGA S4 取回檔案、伺服器回復副本位置和上傳限制請見[整庫備份與還原手冊](docs/key-rotation-runbooks.md#整庫備份與還原)。
 
 **映像檔資訊**：[`es94111/assetpilot`](https://hub.docker.com/r/es94111/assetpilot) — 支援 `linux/amd64` + `linux/arm64`，基底 `node:24-alpine`，約 180 MB，內建每 30 秒 `/api/config` 健康檢查，以非 root 使用者執行。
 
@@ -353,7 +357,7 @@ Docker 多數參數已有合理預設，只需關心「自動產生」與「功�
 
 此功能預設停用。使用預設 env provider 時，Root KEK 請用 `openssl rand -base64 32` 產生並放在部署平台的 Secret Manager；所有副本使用相同值，資料庫只保存用途金鑰的包裝值。使用 OpenBao provider 時則由 OpenBao 還原同一個 Root KEK。Keyring 啟用後，Root KEK 缺失、provider 不一致或來源不可用會讓服務 fail closed；切勿遺失或直接更換 Root KEK。
 
-重新部署並更換所有金鑰時，請使用 `npm run migrate:export`／`npm run migrate:import` 的加密搬遷包（匯出時以舊金鑰解密、匯入時以新 keyring 重新加密）。新環境可選 env provider 的 `KEYRING_ROOT_KEK`，或 OpenBao provider 的 `KEYRING_ROOT_KEK_PROVIDER`、`OPENBAO_ADDR`、`OPENBAO_TOKEN`；不要使用管理員頁的原樣 SQL 備份作為跨金鑰搬遷格式。流程見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#一次性金鑰遷移重新部署匯出匯入)。
+重新部署並更換所有金鑰時，請使用 `npm run migrate:export`／`npm run migrate:import` 的加密搬遷包（匯出時以舊金鑰解密、匯入時以新 keyring 重新加密）。新環境可選 env provider 的 `KEYRING_ROOT_KEK`，或 OpenBao provider 的 `KEYRING_ROOT_KEK_PROVIDER`、`OPENBAO_ADDR`、`OPENBAO_TOKEN`。管理員頁的 `.apb` 備份用於保留原有應用金鑰的災難復原。流程見 [`docs/key-rotation-runbooks.md`](docs/key-rotation-runbooks.md#一次性金鑰遷移重新部署匯出匯入)。
 
 首次啟用前先備份資料庫與相關 Secret，將支援 keyring 的版本部署到所有副本並確認舊版副本已退出，再設定 `KEYRING_ENABLE=true`。資料庫 `keyring_control.enabled` 是啟用後的權威狀態；各副本仍必須使用一致的 Root KEK provider 與設定（OpenBao 模式須指向同一 OpenBao Transit key）。
 
@@ -631,7 +635,7 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 | SMTP（Nodemailer） | 排程信件／系統通知 |
 | Zeabur Email（ZSend） | 排程信件／系統通知 |
 | Resend | 排程信件／系統通知 |
-| MEGA S4 Object Storage | 管理員整備 PostgreSQL SQL 備份的 S3 相容目的地 |
+| MEGA S4 Object Storage | 管理員加密 PostgreSQL 備份的 S3 相容目的地 |
 
 完整列表與授權字樣可在執行中應用程式的 `/api-credits` 頁面查看。
 

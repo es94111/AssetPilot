@@ -18,6 +18,7 @@ interface DbStatement {
 export interface DatabaseLike {
   prepare(sql: string): DbStatement;
   run(sql: string, params?: DbParam[]): void;
+  runPostgresSql(sql: string): void;
   exec(
     sql: string,
   ): Array<{ columns: string[]; values: Array<Array<string | number | null>> }>;
@@ -245,6 +246,18 @@ export async function* queryAllInKeysetPages<T extends Record<string, string | n
 // ── Migrations ──
 export function disableReportsWithoutEmail(db: DatabaseLike = getDB()): void {
   db.run("UPDATE report_schedules SET enabled = 0 WHERE enabled <> 0 AND notify_email = 0");
+}
+
+export function ensureSharedLedgerOwnerProtection(db: DatabaseLike): void {
+  db.run(`CREATE OR REPLACE FUNCTION protect_shared_ledger_owner() RETURNS trigger AS $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM financial_ledgers WHERE owner_user_id = OLD.id AND is_shared = 1) THEN
+        RAISE EXCEPTION 'LEDGER_OWNERSHIP_TRANSFER_REQUIRED';
+      END IF;
+      RETURN OLD;
+    END;
+  $$ LANGUAGE plpgsql`);
+  db.run("CREATE OR REPLACE TRIGGER protect_shared_ledger_owner BEFORE DELETE ON users FOR EACH ROW EXECUTE FUNCTION protect_shared_ledger_owner()");
 }
 
 async function _runMigrations(db: DatabaseLike): Promise<void> {
@@ -1864,15 +1877,7 @@ END $$`);
     updated_at INTEGER NOT NULL DEFAULT 0
   )`);
   db.run("ALTER TABLE financial_ledgers ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'Asia/Taipei'");
-  db.run(`CREATE OR REPLACE FUNCTION protect_shared_ledger_owner() RETURNS trigger AS $$
-    BEGIN
-      IF EXISTS (SELECT 1 FROM financial_ledgers WHERE owner_user_id = OLD.id AND is_shared = 1) THEN
-        RAISE EXCEPTION 'LEDGER_OWNERSHIP_TRANSFER_REQUIRED';
-      END IF;
-      RETURN OLD;
-    END;
-  $$ LANGUAGE plpgsql`);
-  db.run("CREATE OR REPLACE TRIGGER protect_shared_ledger_owner BEFORE DELETE ON users FOR EACH ROW EXECUTE FUNCTION protect_shared_ledger_owner()");
+  ensureSharedLedgerOwnerProtection(db);
   db.run(`CREATE TABLE IF NOT EXISTS ledger_members (
     ledger_id TEXT NOT NULL REFERENCES financial_ledgers(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

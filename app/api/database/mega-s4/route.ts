@@ -1,13 +1,16 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '../../../../lib/apiHelpers';
+import { requireAdmin, requireSuperAdmin } from '../../../../lib/apiHelpers';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
-import { getMegaS4ConfigStatus, makeMegaS4BackupFilename, uploadMegaS4Backup } from '../../../../lib/megaS4';
+import { makeBackupArchiveFilename } from '../../../../lib/backupArchive';
+import { BACKUP_NO_STORE, BackupInputError, noStoreBackupResponse, readBackupPassphrase } from '../../../../lib/backupRequests';
+import { createEncryptedDatabaseBackup } from '../../../../lib/databaseBackups';
+import { getMegaS4ConfigStatus, uploadMegaS4Backup } from '../../../../lib/megaS4';
 import { assertSafeS3Endpoint } from '../../../../lib/s3Storage';
 import { writeEnvVars } from '../../../../lib/envSecrets';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
-import { createPostgresBackupSql } from '../../../../lib/postgresBackup';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -33,22 +36,22 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  const auth = await requireSuperAdmin(request);
+  if (auth instanceof NextResponse) return noStoreBackupResponse(auth);
 
   try {
+    const passphrase = await readBackupPassphrase(request);
     const status = getMegaS4ConfigStatus();
     if (!status.configured) {
-      return NextResponse.json({ error: 'MEGA S4 尚未設定', missing: status.missing }, { status: 400 });
+      return NextResponse.json(
+        { error: 'MEGA S4 尚未設定', missing: status.missing },
+        { status: 400, headers: BACKUP_NO_STORE },
+      );
     }
 
-    const plain = Buffer.from(createPostgresBackupSql(), 'utf8');
-    const filename = makeMegaS4BackupFilename().replace(/\.db$/u, '.sql');
-    const result = await uploadMegaS4Backup(
-      plain,
-      filename,
-      'application/sql; charset=utf-8',
-    );
+    const archive = await createEncryptedDatabaseBackup(passphrase);
+    const filename = makeBackupArchiveFilename('assetpilot-backup');
+    const result = await uploadMegaS4Backup(archive, filename);
 
     writeOperationAudit({
       ...auditBase(request, auth),
@@ -61,20 +64,24 @@ export async function POST(request) {
         object_key: result.key,
         endpoint: result.endpoint,
         region: result.region,
-        runtime: 'postgres',
+        format: 'apb',
       },
     });
 
-    return NextResponse.json({ ok: true, filename, ...result });
-  } catch (e) {
-    console.error('MEGA S4 備份失敗:', e);
+    return NextResponse.json({ ok: true, filename, ...result }, { headers: BACKUP_NO_STORE });
+  } catch (error) {
+    if (error instanceof BackupInputError) return error.toResponse();
+    console.error('[database-backup] mega_s4_backup_failed');
     writeOperationAudit({
       ...auditBase(request, auth),
       action: 'mega_s4_backup',
       result: 'failed',
-      metadata: { failure_reason: String(e?.message || e).slice(0, 200) },
+      metadata: { failure_reason: 'mega_s4_backup_failed' },
     });
-    return NextResponse.json({ error: e?.message || 'MEGA S4 備份失敗' }, { status: 500 });
+    return NextResponse.json(
+      { error: '無法完成 MEGA S4 加密備份。', code: 'backup_failed' },
+      { status: 500, headers: BACKUP_NO_STORE },
+    );
   }
 }
 

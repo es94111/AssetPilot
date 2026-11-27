@@ -1825,7 +1825,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresDataTransferMessagesDbRestoreDone =>
-      'تمت استعادة قاعدة البيانات';
+      'تمت استعادة قاعدة البيانات. سجّل الدخول مجددًا.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1890,15 +1890,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'نسخ/استعادة قاعدة البيانات كاملة';
+      'النسخ الاحتياطي المشفّر لقاعدة البيانات واستعادتها';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'للمدراء فقط. في وضع SQLite يتم تنزيل نسخة `.db`؛ وفي PostgreSQL يتم تنزيل `.sql`. للاستعادة، ارفع ملفًا من النوع الموافق.';
+      'تُحفَظ النسخ الكاملة في ملفات .apb مشفّرة. يمكن استعادة ملفات .apb وملفات .sql القديمة من AssetPilot.';
 
   @override
-  String get featuresDataTransferDatabaseDownload =>
-      'تنزيل نسخة قاعدة البيانات';
+  String get featuresDataTransferDatabaseDownload => 'تنزيل نسخة مشفّرة';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'جارٍ التنزيل...';
@@ -1911,11 +1910,72 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => 'جارٍ الاستعادة...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel =>
+      'عبارة مرور النسخة الاحتياطية';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'تأكيد عبارة المرور';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'استخدم 16 حرفًا على الأقل وبحد أقصى 1 KiB. احفظ عبارة المرور منفصلة عن النسخة. ستحتاج إليها عند الاستعادة.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'عبارتا المرور غير متطابقتين.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'ستحل هذه النسخة محل قاعدة البيانات الحالية.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'عيّن عبارة مرور جديدة لحماية نسخة الاسترداد التي ستُنشأ قبل الاستعادة.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'اختر نسخة AssetPilot سليمة ومدعومة بصيغة .apb أو .sql.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'تعذّر فك تشفير النسخة. تحقّق من عبارة المرور ومن سلامة الملف.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'لم يكتمل الرفع. تحقّق من الملف ومن الحدّ الأقصى للرفع في إعدادات النشر.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'هناك عملية استعادة أخرى قيد التنفيذ. حاول مرة أخرى بعد قليل.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'حجم النسخة أكبر من الحد المسموح. الحد الأقصى لملف SQL هو 200 MiB وقد يكون حد الرفع في إعدادات النشر أقل.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'تعذّر إنشاء نسخة الاسترداد المشفّرة. تحقّق من أذونات مجلد النسخ الاحتياطي والمساحة المتاحة.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'فشلت الاستعادة. عادت قاعدة البيانات إلى حالتها السابقة.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'فشل الاسترداد التلقائي. استخدم نسخة الاسترداد المشفّرة.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'حُفظت نسخة الاسترداد المشفّرة في $path.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'نسخة احتياطية سحابية MEGA S4';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'يرفع نسخة SQLite الكاملة الحالية ككائن داخل bucket في MEGA S4. يتم ضبط الاتصال عبر متغيرات بيئة الخادم؛ لا تُدخل المفاتيح ولا تُعرض في المتصفح.';
+      'ارفع نسخة PostgreSQL مشفّرة إلى حاوية MEGA S4 التي أعددتها.';
 
   @override
   String get featuresDataTransferMegaState => 'الحالة: ';
@@ -1935,7 +1995,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'رفع نسخة احتياطية إلى MEGA S4';
+  String get featuresDataTransferMegaUpload => 'رفع نسخة مشفّرة إلى MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => 'جارٍ الرفع...';

@@ -1,99 +1,139 @@
-// @ts-nocheck
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import { requireAdmin } from '../../../../lib/apiHelpers';
+import { readFileSync } from 'node:fs';
+import { requireSuperAdmin } from '../../../../lib/apiHelpers';
 import { writeOperationAudit } from '../../../../lib/auditHelpers';
+import { BackupArchiveError, decryptBackupArchive, isBackupArchive, withNewBackupArchive } from '../../../../lib/backupArchive';
+import { BACKUP_NO_STORE, BackupInputError, noStoreBackupResponse, readBackupRestore } from '../../../../lib/backupRequests';
+import { createRestorableDatabaseBackup, pruneRestoreSnapshots, withDatabaseRestoreLock, writeRestoreSnapshot } from '../../../../lib/databaseBackups';
 import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
-import { createPostgresBackupSql, restorePostgresBackupSql } from '../../../../lib/postgresBackup';
+import { isAssetPilotPostgresBackup, MAX_RESTORE_SQL_BYTES, restorePostgresBackupSql, RestoreTransactionError, RestoreValidationError } from '../../../../lib/postgresBackup';
 
-const BACKUPS_DIR = path.join(process.cwd(), 'backups');
-const BEFORE_RESTORE_BACKUP_RE = /^before-restore-\d{14}\.sql$/;
+export const runtime = 'nodejs';
 
-function makeBackupTimestamp() {
-  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-}
-
-function ensureBackupsDir() {
-  try { fs.mkdirSync(BACKUPS_DIR, { recursive: true }); } catch (_) {}
-}
-
-function getBeforeRestoreBackupPath(name) {
-  const basename = path.basename(String(name || ''));
-  if (!BEFORE_RESTORE_BACKUP_RE.test(basename)) return null;
-  return `${BACKUPS_DIR}${path.sep}${basename}`;
-}
-
-function pruneBeforeRestoreBackups() {
+function readLegacySql(file: Buffer): string {
+  if (file.length > MAX_RESTORE_SQL_BYTES) throw new BackupInputError('too_large');
+  let sql: string;
   try {
-    if (!fs.existsSync(BACKUPS_DIR)) return;
-    const files = fs.readdirSync(BACKUPS_DIR)
-      .filter(f => BEFORE_RESTORE_BACKUP_RE.test(f))
-      .map(f => {
-        const fp = getBeforeRestoreBackupPath(f);
-        if (!fp) return null;
-        try { return { name: f, path: fp, mtime: fs.statSync(fp).mtimeMs }; } catch (_) { return null; }
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.mtime - a.mtime);
-    const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000;
-    files.forEach((f, i) => {
-      if (i >= 5 || (Date.now() - f.mtime) > NINETY_DAYS) {
-        try { fs.unlinkSync(f.path); } catch (_) {}
-      }
-    });
-  } catch (_) {}
+    sql = new TextDecoder('utf-8', { fatal: true }).decode(file);
+  } catch {
+    throw new BackupInputError('invalid_file');
+  }
+  if (!isAssetPilotPostgresBackup(sql)) throw new BackupInputError('invalid_file');
+  return sql;
 }
 
-export async function POST(request) {
-  const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+export async function POST(request: Request) {
+  const auth = await requireSuperAdmin(request);
+  if (auth instanceof NextResponse) return noStoreBackupResponse(auth);
 
-  const ip = getRequestIpFromHeaders(request.headers);
-  const ua = request.headers.get('user-agent') || '';
-
-  let beforeRestorePath = '';
+  const audit = {
+    userId: auth.userId,
+    role: 'admin',
+    ipAddress: getRequestIpFromHeaders(request.headers),
+    userAgent: request.headers.get('user-agent') || '',
+    isAdminOperation: true,
+  };
   try {
-    const arrayBuffer = await request.arrayBuffer();
-    const dbBuffer = Buffer.from(arrayBuffer);
+    const { file, passphrase } = await readBackupRestore(request);
+    const encrypted = isBackupArchive(file);
+    const sql = encrypted ? await decryptBackupArchive(file, passphrase) : readLegacySql(file);
 
-    const sql = dbBuffer.toString('utf8').replace(/^\uFEFF/, '');
-    if (!sql.trimStart().startsWith('-- AssetPilot PostgreSQL backup')) {
-      return NextResponse.json({ error: '請上傳 AssetPilot PostgreSQL SQL 備份檔（.sql）' }, { status: 400 });
-    }
-
-    ensureBackupsDir();
-    const backupTs = makeBackupTimestamp();
-    beforeRestorePath = getBeforeRestoreBackupPath(`before-restore-${backupTs}.sql`) || '';
-    if (!beforeRestorePath) {
-      return NextResponse.json({ error: '建立還原前備份檔名失敗' }, { status: 500 });
-    }
-    try {
-      fs.writeFileSync(beforeRestorePath, createPostgresBackupSql(), 'utf8');
-    } catch (e) {
-      return NextResponse.json({ error: '建立還原前 PostgreSQL 備份失敗，請檢查 backups/ 目錄權限', message: String(e?.message || e) }, { status: 500 });
-    }
-
-    try {
-      restorePostgresBackupSql(sql);
-    } catch (restoreErr) {
-      console.error('PostgreSQL 還原失敗，嘗試回滾:', restoreErr);
+    return await withNewBackupArchive(passphrase, (archive) => withDatabaseRestoreLock(() => {
+      let snapshot: ReturnType<typeof writeRestoreSnapshot> | undefined;
+      let savingSnapshot = false;
+      let introducedTables: string[] = [];
       try {
-        restorePostgresBackupSql(fs.readFileSync(beforeRestorePath, 'utf8'));
-        writeOperationAudit({ userId: auth.userId, role: 'admin', action: 'restore_failed', ipAddress: ip, userAgent: ua, result: 'rolled_back', isAdminOperation: true, metadata: { runtime: 'postgres', failure_stage: 'restore_postgres_sql', failure_reason: String(restoreErr?.message || restoreErr).slice(0, 200), before_restore_path: path.relative(process.cwd(), beforeRestorePath) } });
-        return NextResponse.json({ error: 'RESTORE_FAILED_ROLLED_BACK', message: 'PostgreSQL 還原失敗，已自動回復至還原前狀態', beforeRestorePath: path.relative(process.cwd(), beforeRestorePath) }, { status: 422 });
-      } catch (rollbackErr) {
-        writeOperationAudit({ userId: auth.userId, role: 'admin', action: 'restore_failed', ipAddress: ip, userAgent: ua, result: 'failed', isAdminOperation: true, metadata: { runtime: 'postgres', failure_stage: 'rollback_postgres_sql', failure_reason: String(rollbackErr?.message || rollbackErr).slice(0, 200) } });
-        return NextResponse.json({ error: 'RESTORE_FAILED_DB_UNKNOWN', message: 'PostgreSQL 主資料庫狀態未知，請聯繫管理員', beforeRestorePath: path.relative(process.cwd(), beforeRestorePath) }, { status: 500 });
-      }
-    }
+        restorePostgresBackupSql(sql, {
+          beforeApply(createdTables) {
+            savingSnapshot = true;
+            const backup = createRestorableDatabaseBackup();
+            const existingTables = new Set(backup.tables);
+            introducedTables = createdTables.filter((table) => !existingTables.has(table));
+            snapshot = writeRestoreSnapshot(archive.encrypt(backup.sql));
+          },
+        });
+      } catch (error) {
+        if (!snapshot) {
+          if (!savingSnapshot && error instanceof RestoreValidationError) {
+            throw new BackupInputError('invalid_sql');
+          }
+          console.error('[database-backup] snapshot_failed');
+          writeOperationAudit({
+            ...audit,
+            action: 'restore_failed',
+            result: 'failed',
+            metadata: { failure_stage: 'before_restore_backup', failure_reason: 'snapshot_failed' },
+          });
+          return NextResponse.json(
+            { error: '無法建立還原前的加密副本，請檢查 backups/ 目錄與可用空間。', code: 'snapshot_failed' },
+            { status: 500, headers: BACKUP_NO_STORE },
+          );
+        }
 
-    pruneBeforeRestoreBackups();
-    writeOperationAudit({ userId: auth.userId, role: 'admin', action: 'restore_backup', ipAddress: ip, userAgent: ua, result: 'success', isAdminOperation: true, metadata: { runtime: 'postgres', byteSize: dbBuffer.length, before_restore_path: path.relative(process.cwd(), beforeRestorePath) } });
-    return NextResponse.json({ ok: true, message: 'PostgreSQL 資料庫還原成功，請重新登入', beforeRestorePath: path.relative(process.cwd(), beforeRestorePath) });
-  } catch (e) {
-    console.error('資料庫匯入失敗:', e);
-    writeOperationAudit({ userId: auth.userId, role: 'admin', action: 'restore_failed', ipAddress: ip, userAgent: ua, result: 'failed', isAdminOperation: true, metadata: { failure_stage: 'pre_validation', failure_reason: String(e?.message || e).slice(0, 200) } });
-    return NextResponse.json({ error: '資料庫匯入失敗：' + (e.message || '未知錯誤') }, { status: 500 });
+        const beforeRestorePath = snapshot.relativePath;
+        try {
+          // A confirmed native rollback preserves writes committed by other connections.
+          if (!(error instanceof RestoreTransactionError && error.rolledBack)) {
+            const recoverySql = archive.decrypt(readFileSync(snapshot.path));
+            restorePostgresBackupSql(recoverySql, { dropIntroducedTables: introducedTables });
+          }
+        } catch {
+          console.error('[database-backup] rollback_failed');
+          writeOperationAudit({
+            ...audit,
+            action: 'restore_failed',
+            result: 'failed',
+            metadata: { failure_stage: 'rollback_postgres_sql', before_restore_path: beforeRestorePath },
+          });
+          return NextResponse.json(
+            { error: 'RESTORE_FAILED_DB_UNKNOWN', message: '無法自動回復，請使用還原前的加密副本復原。', beforeRestorePath },
+            { status: 500, headers: BACKUP_NO_STORE },
+          );
+        }
+
+        pruneRestoreSnapshots(snapshot.path);
+        writeOperationAudit({
+          ...audit,
+          action: 'restore_failed',
+          result: 'rolled_back',
+          metadata: { failure_stage: 'restore_postgres_sql', before_restore_path: beforeRestorePath },
+        });
+        return NextResponse.json(
+          { error: 'RESTORE_FAILED_ROLLED_BACK', message: '資料庫還原失敗，已回復至還原前的狀態。', beforeRestorePath },
+          { status: 422, headers: BACKUP_NO_STORE },
+        );
+      }
+
+      // The restore helper only returns after calling beforeApply successfully.
+      const beforeRestorePath = snapshot!.relativePath;
+      pruneRestoreSnapshots(snapshot!.path);
+      writeOperationAudit({
+        ...audit,
+        action: 'restore_backup',
+        result: 'success',
+        metadata: { format: encrypted ? 'apb' : 'sql', byteSize: file.length, before_restore_path: beforeRestorePath },
+      });
+      return NextResponse.json(
+        { ok: true, message: 'PostgreSQL 資料庫還原成功，請重新登入。', beforeRestorePath },
+        { headers: BACKUP_NO_STORE },
+      );
+    }));
+  } catch (error) {
+    const inputError = error instanceof BackupArchiveError ? new BackupInputError(error.code) : error;
+    writeOperationAudit({
+      ...audit,
+      action: 'restore_failed',
+      result: 'failed',
+      metadata: {
+        failure_stage: 'pre_validation',
+        failure_reason: inputError instanceof BackupInputError ? inputError.code : 'restore_failed',
+      },
+    });
+    if (inputError instanceof BackupInputError) return inputError.toResponse();
+    console.error('[database-backup] restore_failed');
+    return NextResponse.json(
+      { error: '無法還原資料庫備份。', code: 'restore_failed' },
+      { status: 500, headers: BACKUP_NO_STORE },
+    );
   }
 }

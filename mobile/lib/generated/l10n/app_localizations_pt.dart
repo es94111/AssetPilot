@@ -1852,7 +1852,8 @@ class AppLocalizationsPt extends AppLocalizations {
       'Falha no backup do banco';
 
   @override
-  String get featuresDataTransferMessagesDbRestoreDone => 'Banco restaurado';
+  String get featuresDataTransferMessagesDbRestoreDone =>
+      'Banco de dados restaurado. Entre novamente.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1919,14 +1920,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'Backup / restauração completa do banco';
+      'Backup criptografado e restauração do banco de dados';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'Somente administradores. No modo SQLite baixa um backup `.db`; no PostgreSQL, um backup `.sql`. Para restaurar, envie o formato correspondente.';
+      'Os backups completos são salvos como arquivos .apb criptografados. Você pode restaurar arquivos .apb e arquivos .sql antigos do AssetPilot.';
 
   @override
-  String get featuresDataTransferDatabaseDownload => 'Baixar backup do banco';
+  String get featuresDataTransferDatabaseDownload =>
+      'Baixar backup criptografado';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'Baixando...';
@@ -1939,11 +1941,72 @@ class AppLocalizationsPt extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => 'Restaurando...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel =>
+      'Frase secreta do backup';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'Confirmar frase secreta';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'Use pelo menos 16 caracteres e no máximo 1 KiB. Guarde a frase separada do backup. Você precisará dela para restaurar o arquivo.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'As frases secretas não coincidem.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'A restauração substitui o banco de dados atual.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'Defina uma nova frase secreta para proteger a cópia de recuperação criada antes da restauração.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'Escolha um backup .apb ou .sql do AssetPilot que esteja íntegro e seja compatível.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'Não foi possível descriptografar o backup. Verifique a frase secreta e se o arquivo está íntegro.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'O envio ficou incompleto. Verifique o arquivo e o limite de upload da sua instalação.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'Já há uma restauração em andamento. Tente novamente em instantes.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'O backup excede o limite de tamanho. O SQL está limitado a 200 MiB e sua instalação pode ter um limite menor.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'Não foi possível criar a cópia de recuperação criptografada. Verifique as permissões da pasta e o espaço disponível.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'A restauração falhou. O banco de dados voltou ao estado anterior.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'A recuperação automática falhou. Use a cópia de recuperação criptografada.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'Cópia de recuperação criptografada salva em $path.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'Backup em nuvem MEGA S4';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'Envia o backup SQLite completo atual como objeto para um bucket MEGA S4. A conexão vem das variáveis de ambiente do servidor; chaves não são digitadas nem exibidas no navegador.';
+      'Envie um backup criptografado do PostgreSQL para o bucket do MEGA S4 configurado.';
 
   @override
   String get featuresDataTransferMegaState => 'Status: ';
@@ -1963,7 +2026,8 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'Enviar backup para MEGA S4';
+  String get featuresDataTransferMegaUpload =>
+      'Enviar backup criptografado ao MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => 'Enviando...';
@@ -8946,7 +9010,8 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Falha no backup do banco';
 
   @override
-  String get featuresDataTransferMessagesDbRestoreDone => 'Banco restaurado';
+  String get featuresDataTransferMessagesDbRestoreDone =>
+      'Banco de dados restaurado. Entre novamente.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -9013,14 +9078,15 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'Backup / restauração completa do banco';
+      'Backup criptografado e restauração do banco de dados';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'Somente administradores. No modo SQLite baixa um backup `.db`; no PostgreSQL, um backup `.sql`. Para restaurar, envie o formato correspondente.';
+      'Os backups completos são salvos como arquivos .apb criptografados. Você pode restaurar arquivos .apb e arquivos .sql antigos do AssetPilot.';
 
   @override
-  String get featuresDataTransferDatabaseDownload => 'Baixar backup do banco';
+  String get featuresDataTransferDatabaseDownload =>
+      'Baixar backup criptografado';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'Baixando...';
@@ -9033,11 +9099,72 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get featuresDataTransferDatabaseRestoring => 'Restaurando...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel =>
+      'Frase secreta do backup';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'Confirmar frase secreta';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'Use pelo menos 16 caracteres e no máximo 1 KiB. Guarde a frase separada do backup. Você precisará dela para restaurar o arquivo.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'As frases secretas não coincidem.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'A restauração substitui o banco de dados atual.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'Defina uma nova frase secreta para proteger a cópia de recuperação criada antes da restauração.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'Escolha um backup .apb ou .sql do AssetPilot que esteja íntegro e seja compatível.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'Não foi possível descriptografar o backup. Verifique a frase secreta e se o arquivo está íntegro.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'O envio ficou incompleto. Verifique o arquivo e o limite de upload da sua instalação.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'Já há uma restauração em andamento. Tente novamente em instantes.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'O backup excede o limite de tamanho. O SQL está limitado a 200 MiB e sua instalação pode ter um limite menor.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'Não foi possível criar a cópia de recuperação criptografada. Verifique as permissões da pasta e o espaço disponível.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'A restauração falhou. O banco de dados voltou ao estado anterior.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'A recuperação automática falhou. Use a cópia de recuperação criptografada.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'Cópia de recuperação criptografada salva em $path.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'Backup em nuvem MEGA S4';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'Envia o backup SQLite completo atual como objeto para um bucket MEGA S4. A conexão vem das variáveis de ambiente do servidor; chaves não são digitadas nem exibidas no navegador.';
+      'Envie um backup criptografado do PostgreSQL para o bucket do MEGA S4 configurado.';
 
   @override
   String get featuresDataTransferMegaState => 'Status: ';
@@ -9057,7 +9184,8 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'Enviar backup para MEGA S4';
+  String get featuresDataTransferMegaUpload =>
+      'Enviar backup criptografado ao MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => 'Enviando...';

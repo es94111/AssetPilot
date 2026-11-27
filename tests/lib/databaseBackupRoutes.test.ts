@@ -329,7 +329,7 @@ COMMIT;`);
       const snapshotsBefore = readdirSync(snapshotDirectory);
       const byteLength = Buffer.byteLength;
       subtest.mock.method(Buffer, 'byteLength', (value: Parameters<typeof Buffer.byteLength>[0], encoding?: BufferEncoding) => {
-        if (typeof value === 'string' && value.startsWith('-- AssetPilot PostgreSQL backup') && value.includes(currentState)) {
+        if (typeof value === 'string' && value.startsWith('INSERT INTO "backup_fixture" ') && value.includes(currentState)) {
           return MAX_RESTORE_SQL_BYTES + 1;
         }
         return byteLength(value, encoding);

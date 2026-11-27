@@ -140,8 +140,10 @@ const RESTORE_STATEMENT_PATTERNS: RegExp[] = [
 export class RestoreValidationError extends Error {}
 
 export class RestoreLimitError extends RestoreValidationError {
-  constructor(readonly limit: "bytes" | "statements", message: string) {
-    super(message);
+  constructor(readonly limit: "bytes" | "statements") {
+    super(limit === "bytes"
+      ? `備份檔過大（上限 ${Math.round(MAX_RESTORE_SQL_BYTES / 1024 / 1024)}MB）`
+      : `備份檔陳述式數量過多（上限 ${MAX_RESTORE_STATEMENTS}）`);
   }
 }
 
@@ -207,10 +209,7 @@ function* readTopLevelStatements(sql: string) {
 
 function readRestorableTransaction(sql: string) {
   if (Buffer.byteLength(sql, "utf8") > MAX_RESTORE_SQL_BYTES) {
-    throw new RestoreLimitError(
-      "bytes",
-      `備份檔過大（上限 ${Math.round(MAX_RESTORE_SQL_BYTES / 1024 / 1024)}MB）`,
-    );
+    throw new RestoreLimitError("bytes");
   }
 
   let bodyStart: number | undefined;
@@ -220,10 +219,7 @@ function readRestorableTransaction(sql: string) {
   for (const statement of readTopLevelStatements(sql)) {
     count += 1;
     if (count > MAX_RESTORE_STATEMENTS) {
-      throw new RestoreLimitError(
-        "statements",
-        `備份檔陳述式數量過多（上限 ${MAX_RESTORE_STATEMENTS}）`,
-      );
+      throw new RestoreLimitError("statements");
     }
     const stmt = statement.text.trim();
     if (!stmt) continue;
@@ -280,6 +276,7 @@ export function assertRestorableBackupSql(sql: string): void {
 export interface PostgresBackupOptions {
   // Return null to omit the row from the dump.
   transformRow?: (table: string, row: AnyRow) => AnyRow | null;
+  limitToRestorableSize?: boolean;
 }
 
 function listPostgresBackupTables(): string[] {
@@ -338,17 +335,32 @@ export function createPostgresBackupSql(options: PostgresBackupOptions = {}): st
 }
 
 function buildPostgresBackupSql(tables: string[], options: PostgresBackupOptions): string {
-  const lines: string[] = [
-    BACKUP_HEADER,
-    `-- created_at: ${new Date().toISOString()}`,
-    "BEGIN;",
-    "",
-  ];
+  const lines: string[] = [];
+  let bytes = 0;
+  let lineCount = 0;
+  let statements = 0;
+  function append(line: string, isStatement = false, target = lines) {
+    if (options.limitToRestorableSize) {
+      bytes += Buffer.byteLength(line, "utf8") + (lineCount > 0 ? 1 : 0);
+      if (bytes > MAX_RESTORE_SQL_BYTES) throw new RestoreLimitError("bytes");
+      lineCount += 1;
+      if (isStatement) {
+        statements += 1;
+        if (statements > MAX_RESTORE_STATEMENTS) throw new RestoreLimitError("statements");
+      }
+    }
+    target.push(line);
+  }
+
+  append(BACKUP_HEADER);
+  append(`-- created_at: ${new Date().toISOString()}`);
+  append("BEGIN;", true);
+  append("");
 
   for (const table of [...tables].reverse()) {
-    lines.push(`DROP TABLE IF EXISTS ${quoteIdent(table)} CASCADE;`);
+    append(`DROP TABLE IF EXISTS ${quoteIdent(table)} CASCADE;`, true);
   }
-  lines.push("");
+  append("");
 
   const deferredConstraints: string[] = [];
   const deferredIndexes: string[] = [];
@@ -392,13 +404,11 @@ function buildPostgresBackupSql(tables: string[], options: PostgresBackupOptions
       [`public.${table}`],
     ) as AnyRow[];
     constraints.forEach((constraint) => {
-      deferredConstraints.push(
-        createConstraintSql(
-          table,
-          String(constraint.conname),
-          String(constraint.definition),
-        ),
-      );
+      append(createConstraintSql(
+        table,
+        String(constraint.conname),
+        String(constraint.definition),
+      ), true, deferredConstraints);
     });
 
     const indexes = queryAll(
@@ -416,10 +426,10 @@ function buildPostgresBackupSql(tables: string[], options: PostgresBackupOptions
     ) as AnyRow[];
     indexes.forEach((index) => {
       const definition = String(index.index_definition).replace(/;\s*$/u, "");
-      deferredIndexes.push(`${definition};`);
+      append(`${definition};`, true, deferredIndexes);
     });
 
-    lines.push(createTableSql(table, columns, primaryKeys));
+    append(createTableSql(table, columns, primaryKeys), true);
 
     const columnNames = columns.map((column) => String(column.column_name));
     // Keep NUMERIC values as decimal text while exporting; the worker's API
@@ -440,22 +450,23 @@ function buildPostgresBackupSql(tables: string[], options: PostgresBackupOptions
       const row = options.transformRow ? options.transformRow(table, original) : original;
       if (!row) continue;
       const values = columnNames.map((column) => sqlLiteral(row[column]));
-      lines.push(
+      append(
         `INSERT INTO ${quoteIdent(table)} (${columnNames.map(quoteIdent).join(", ")}) VALUES (${values.join(", ")});`,
+        true,
       );
     }
-    lines.push("");
+    append("");
   }
 
   // Add UNIQUE/CHECK/FOREIGN KEY constraints only after every table and row
   // exists; this keeps arbitrary table ordering valid during restore.
-  lines.push("-- constraints");
-  lines.push(...deferredConstraints);
-  lines.push("-- indexes");
-  lines.push(...deferredIndexes);
-  lines.push("");
-  lines.push("COMMIT;");
-  lines.push("");
+  append("-- constraints");
+  for (const constraint of deferredConstraints) lines.push(constraint);
+  append("-- indexes");
+  for (const index of deferredIndexes) lines.push(index);
+  append("");
+  append("COMMIT;", true);
+  append("");
   return lines.join("\n");
 }
 

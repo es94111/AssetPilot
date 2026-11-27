@@ -12,7 +12,7 @@ export const DATABASE_RESTORE_LOCK = 'assetpilot:database-restore';
 
 export function createRestorableDatabaseBackup() {
   try {
-    const backup = createPostgresBackupSnapshot();
+    const backup = createPostgresBackupSnapshot({ limitToRestorableSize: true });
     assertRestorableBackupSql(backup.sql);
     return backup;
   } catch (error) {

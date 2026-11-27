@@ -2807,7 +2807,7 @@
     "description": "Web path: features.dataTransfer.messages.dbExportFailed",
     "x-webPath": "features.dataTransfer.messages.dbExportFailed"
   },
-  "featuresDataTransferMessagesDbRestoreDone": "資料庫還原成功",
+  "featuresDataTransferMessagesDbRestoreDone": "資料庫還原成功，請重新登入。",
   "@featuresDataTransferMessagesDbRestoreDone": {
     "description": "Web path: features.dataTransfer.messages.dbRestoreDone",
     "x-webPath": "features.dataTransfer.messages.dbRestoreDone"
@@ -2901,17 +2901,17 @@
     "description": "Web path: features.dataTransfer.bundle.restoring",
     "x-webPath": "features.dataTransfer.bundle.restoring"
   },
-  "featuresDataTransferDatabaseTitle": "整檔備份 / 還原",
+  "featuresDataTransferDatabaseTitle": "資料庫加密備份／還原",
   "@featuresDataTransferDatabaseTitle": {
     "description": "Web path: features.dataTransfer.database.title",
     "x-webPath": "features.dataTransfer.database.title"
   },
-  "featuresDataTransferDatabaseDescription": "僅管理員可操作。SQLite 模式下載 `.db` 備份；PostgreSQL 模式下載 `.sql` 備份，還原時請上傳對應格式。",
+  "featuresDataTransferDatabaseDescription": "整庫備份會輸出為加密的 .apb 檔。還原支援 .apb 和舊版 AssetPilot .sql。",
   "@featuresDataTransferDatabaseDescription": {
     "description": "Web path: features.dataTransfer.database.description",
     "x-webPath": "features.dataTransfer.database.description"
   },
-  "featuresDataTransferDatabaseDownload": "下載資料庫備份",
+  "featuresDataTransferDatabaseDownload": "下載加密備份",
   "@featuresDataTransferDatabaseDownload": {
     "description": "Web path: features.dataTransfer.database.download",
     "x-webPath": "features.dataTransfer.database.download"
@@ -2931,12 +2931,105 @@
     "description": "Web path: features.dataTransfer.database.restoring",
     "x-webPath": "features.dataTransfer.database.restoring"
   },
+  "featuresDataTransferDatabasePassphraseLabel": "備份密語",
+  "@featuresDataTransferDatabasePassphraseLabel": {
+    "description": "Web path: features.dataTransfer.database.passphraseLabel",
+    "x-webPath": "features.dataTransfer.database.passphraseLabel"
+  },
+  "featuresDataTransferDatabasePassphraseConfirmation": "再次輸入密語",
+  "@featuresDataTransferDatabasePassphraseConfirmation": {
+    "description": "Web path: features.dataTransfer.database.passphraseConfirmation",
+    "x-webPath": "features.dataTransfer.database.passphraseConfirmation"
+  },
+  "featuresDataTransferDatabasePassphraseHelp": "請使用至少 16 個字元且不超過 1 KiB 的密語。還原時需要原密語，請與備份檔分開保管。",
+  "@featuresDataTransferDatabasePassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.passphraseHelp",
+    "x-webPath": "features.dataTransfer.database.passphraseHelp"
+  },
+  "featuresDataTransferDatabasePassphraseMismatch": "兩次輸入的密語不一致。",
+  "@featuresDataTransferDatabasePassphraseMismatch": {
+    "description": "Web path: features.dataTransfer.database.passphraseMismatch",
+    "x-webPath": "features.dataTransfer.database.passphraseMismatch"
+  },
+  "featuresDataTransferDatabaseRestoreHelp": "還原會取代目前的資料庫。",
+  "@featuresDataTransferDatabaseRestoreHelp": {
+    "description": "Web path: features.dataTransfer.database.restoreHelp",
+    "x-webPath": "features.dataTransfer.database.restoreHelp"
+  },
+  "featuresDataTransferDatabaseLegacyPassphraseHelp": "請設定一組新密語，保護還原前建立的回復副本。",
+  "@featuresDataTransferDatabaseLegacyPassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.legacyPassphraseHelp",
+    "x-webPath": "features.dataTransfer.database.legacyPassphraseHelp"
+  },
+  "featuresDataTransferDatabaseInvalidBackup": "請選擇完整且支援的 AssetPilot .apb 或 .sql 備份檔。",
+  "@featuresDataTransferDatabaseInvalidBackup": {
+    "description": "Web path: features.dataTransfer.database.invalidBackup",
+    "x-webPath": "features.dataTransfer.database.invalidBackup"
+  },
+  "featuresDataTransferDatabaseDecryptFailed": "無法解密備份。請確認密語及檔案是否完整。",
+  "@featuresDataTransferDatabaseDecryptFailed": {
+    "description": "Web path: features.dataTransfer.database.decryptFailed",
+    "x-webPath": "features.dataTransfer.database.decryptFailed"
+  },
+  "featuresDataTransferDatabaseUploadIncomplete": "備份未完整上傳。請確認檔案及部署的上傳大小限制。",
+  "@featuresDataTransferDatabaseUploadIncomplete": {
+    "description": "Web path: features.dataTransfer.database.uploadIncomplete",
+    "x-webPath": "features.dataTransfer.database.uploadIncomplete"
+  },
+  "featuresDataTransferDatabaseRestoreInProgress": "已有資料庫還原正在執行，請稍後再試。",
+  "@featuresDataTransferDatabaseRestoreInProgress": {
+    "description": "Web path: features.dataTransfer.database.restoreInProgress",
+    "x-webPath": "features.dataTransfer.database.restoreInProgress"
+  },
+  "featuresDataTransferDatabaseUploadTooLarge": "備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。",
+  "@featuresDataTransferDatabaseUploadTooLarge": {
+    "description": "Web path: features.dataTransfer.database.uploadTooLarge",
+    "x-webPath": "features.dataTransfer.database.uploadTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "目前資料庫超過可備份的 SQL 大小或陳述式數量上限。",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "資料庫回傳的資料超過讀取緩衝區。請核對 POSTGRES_SYNC_RESULT_BUFFER_BYTES。",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "備份超過 50 萬條 SQL 陳述式的上限。",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
+  "featuresDataTransferDatabaseSnapshotFailed": "無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。",
+  "@featuresDataTransferDatabaseSnapshotFailed": {
+    "description": "Web path: features.dataTransfer.database.snapshotFailed",
+    "x-webPath": "features.dataTransfer.database.snapshotFailed"
+  },
+  "featuresDataTransferDatabaseRolledBack": "還原失敗，資料庫已回復至還原前的狀態。",
+  "@featuresDataTransferDatabaseRolledBack": {
+    "description": "Web path: features.dataTransfer.database.rolledBack",
+    "x-webPath": "features.dataTransfer.database.rolledBack"
+  },
+  "featuresDataTransferDatabaseRollbackFailed": "無法自動回復。請用還原前的加密副本復原。",
+  "@featuresDataTransferDatabaseRollbackFailed": {
+    "description": "Web path: features.dataTransfer.database.rollbackFailed",
+    "x-webPath": "features.dataTransfer.database.rollbackFailed"
+  },
+  "featuresDataTransferDatabaseSnapshotLocation": "還原前的加密副本位於 {path}。",
+  "@featuresDataTransferDatabaseSnapshotLocation": {
+    "description": "Web path: features.dataTransfer.database.snapshotLocation",
+    "x-webPath": "features.dataTransfer.database.snapshotLocation",
+    "placeholders": {
+      "path": {}
+    }
+  },
   "featuresDataTransferMegaTitle": "MEGA S4 雲端備份",
   "@featuresDataTransferMegaTitle": {
     "description": "Web path: features.dataTransfer.mega.title",
     "x-webPath": "features.dataTransfer.mega.title"
   },
-  "featuresDataTransferMegaDescription": "將目前完整 SQLite 備份以上傳物件方式存入 MEGA S4 bucket。連線資訊由伺服器環境變數設定，不會在瀏覽器輸入或顯示金鑰。",
+  "featuresDataTransferMegaDescription": "將加密的 PostgreSQL 備份上傳至已設定的 MEGA S4 bucket。",
   "@featuresDataTransferMegaDescription": {
     "description": "Web path: features.dataTransfer.mega.description",
     "x-webPath": "features.dataTransfer.mega.description"
@@ -2969,7 +3062,7 @@
       "items": {}
     }
   },
-  "featuresDataTransferMegaUpload": "上傳備份到 MEGA S4",
+  "featuresDataTransferMegaUpload": "上傳加密備份至 MEGA S4",
   "@featuresDataTransferMegaUpload": {
     "description": "Web path: features.dataTransfer.mega.upload",
     "x-webPath": "features.dataTransfer.mega.upload"

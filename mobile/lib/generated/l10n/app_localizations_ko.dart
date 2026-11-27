@@ -1778,7 +1778,8 @@ class AppLocalizationsKo extends AppLocalizations {
       '데이터베이스 백업을 만들지 못했습니다';
 
   @override
-  String get featuresDataTransferMessagesDbRestoreDone => '데이터베이스가 복원되었습니다';
+  String get featuresDataTransferMessagesDbRestoreDone =>
+      '데이터베이스가 복원되었습니다. 다시 로그인하세요.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1839,14 +1840,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresDataTransferBundleRestoring => '복원 중...';
 
   @override
-  String get featuresDataTransferDatabaseTitle => '전체 데이터베이스 백업 / 복원';
+  String get featuresDataTransferDatabaseTitle => '암호화된 데이터베이스 백업 및 복원';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      '관리자 전용입니다. SQLite 모드에서는 `.db` 백업을 다운로드하고 PostgreSQL에서는 `.sql`을 다운로드합니다. 복원하려면 해당 형식의 파일을 업로드하세요.';
+      '전체 데이터베이스 백업은 암호화된 .apb 파일로 저장됩니다. .apb 및 이전 AssetPilot .sql 파일을 복원할 수 있습니다.';
 
   @override
-  String get featuresDataTransferDatabaseDownload => '데이터베이스 백업 다운로드';
+  String get featuresDataTransferDatabaseDownload => '암호화된 백업 다운로드';
 
   @override
   String get featuresDataTransferDatabaseDownloading => '다운로드 중...';
@@ -1858,11 +1859,82 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => '복원 중...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel => '백업 암호 문구';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation => '암호 문구 확인';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      '16자 이상, 1 KiB 이하의 암호 문구를 사용하세요. 복원에 필요하므로 백업 파일과 별도로 보관하세요.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      '암호 문구가 일치하지 않습니다.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      '복원하면 현재 데이터베이스가 교체됩니다.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      '복원 전에 생성하는 복구 사본을 보호할 새 암호 문구를 설정하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      '손상되지 않은 지원 형식의 AssetPilot .apb 또는 .sql 백업을 선택하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      '백업을 복호화할 수 없습니다. 암호 문구와 파일 손상 여부를 확인하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      '업로드가 완료되지 않았습니다. 파일과 배포 환경의 업로드 한도를 확인하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      '다른 데이터베이스 복원이 진행 중입니다. 잠시 후 다시 시도하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      '백업이 크기 한도를 초과했습니다. SQL은 최대 200 MiB이며 배포 환경의 업로드 한도는 더 낮을 수 있습니다.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      '현재 데이터베이스가 백업의 SQL 크기 또는 문장 수 한도를 초과했습니다.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      '데이터베이스에서 반환한 데이터가 읽기 버퍼를 초과했습니다. POSTGRES_SYNC_RESULT_BUFFER_BYTES를 확인하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      '백업이 SQL 문 500,000개 한도를 초과했습니다.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      '암호화된 복구 사본을 만들 수 없습니다. 백업 폴더의 권한과 남은 공간을 확인하세요.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      '복원에 실패했습니다. 데이터베이스가 이전 상태로 돌아갔습니다.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      '자동 복구에 실패했습니다. 암호화된 복구 사본을 사용하세요.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return '암호화된 복구 사본이 $path에 저장되었습니다.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'MEGA S4 클라우드 백업';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      '현재 SQLite 전체 백업을 MEGA S4 bucket의 object로 업로드합니다. 연결 정보는 서버 환경 변수로 설정되며, 키는 브라우저에 입력하거나 표시하지 않습니다.';
+      '암호화된 PostgreSQL 백업을 설정된 MEGA S4 버킷에 업로드합니다.';
 
   @override
   String get featuresDataTransferMegaState => '상태: ';
@@ -1882,7 +1954,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'MEGA S4로 백업 업로드';
+  String get featuresDataTransferMegaUpload => 'MEGA S4에 암호화된 백업 업로드';
 
   @override
   String get featuresDataTransferMegaUploading => '업로드 중...';

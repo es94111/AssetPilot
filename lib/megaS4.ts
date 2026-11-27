@@ -94,13 +94,8 @@ function makeObjectKey(prefix: string, filename: string) {
   return joinS3Key(prefix, safeName);
 }
 
-export function makeMegaS4BackupFilename(date = new Date()) {
-  const ts = date.toISOString().replace(/[-:T]/g, '').slice(0, 14);
-  return `assetpilot-backup-${ts}.db`;
-}
-
-export async function uploadMegaS4Backup(body: Buffer, filename: string, contentType = 'application/sql; charset=utf-8'): Promise<MegaS4UploadResult> {
+export async function uploadMegaS4Backup(body: Buffer, filename: string): Promise<MegaS4UploadResult> {
   const config = getMegaS4Config();
   const key = makeObjectKey(config.prefix, filename);
-  return putS3Object(config, key, body, contentType);
+  return putS3Object(config, key, body, 'application/octet-stream');
 }

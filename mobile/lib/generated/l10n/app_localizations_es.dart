@@ -1862,7 +1862,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get featuresDataTransferMessagesDbRestoreDone =>
-      'Base de datos restaurada';
+      'Base de datos restaurada. Vuelve a iniciar sesión.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1929,15 +1929,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'Copia / restauración completa de base de datos';
+      'Copia cifrada y restauración de la base de datos';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'Solo administradores. En modo SQLite se descarga una copia `.db`; en PostgreSQL, una copia `.sql`. Para restaurar, sube el formato correspondiente.';
+      'Las copias completas se guardan como archivos .apb cifrados. Puedes restaurar archivos .apb y archivos .sql antiguos de AssetPilot.';
 
   @override
-  String get featuresDataTransferDatabaseDownload =>
-      'Descargar copia de base de datos';
+  String get featuresDataTransferDatabaseDownload => 'Descargar copia cifrada';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'Descargando...';
@@ -1950,11 +1949,84 @@ class AppLocalizationsEs extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => 'Restaurando...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel =>
+      'Frase de contraseña de la copia';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'Confirmar frase de contraseña';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'Usa al menos 16 caracteres y un máximo de 1 KiB. Guarda la frase por separado. La necesitarás para restaurar el archivo.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'Las frases de contraseña no coinciden.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'La restauración reemplaza la base de datos actual.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'Define una frase nueva para proteger la copia de recuperación creada antes de restaurar.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'Elige una copia .apb o .sql de AssetPilot que esté completa y sea compatible.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'No se pudo descifrar la copia. Comprueba la frase de contraseña y la integridad del archivo.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'La carga quedó incompleta. Comprueba el archivo y el límite de carga de tu instalación.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'Ya hay una restauración en curso. Inténtalo de nuevo en unos instantes.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'La copia supera el límite de tamaño. El SQL admite hasta 200 MiB y tu instalación puede aplicar un límite de carga menor.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'La base de datos actual supera el límite de tamaño o de sentencias SQL de la copia.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'La base de datos devolvió más datos de los que caben en el búfer de lectura. Revisa POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'La copia supera el límite de 500 000 sentencias SQL.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'No se pudo crear la copia de recuperación cifrada. Comprueba los permisos de la carpeta y el espacio disponible.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'La restauración falló. La base de datos volvió a su estado anterior.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'Falló la recuperación automática. Usa la copia de recuperación cifrada.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'Copia de recuperación cifrada guardada en $path.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'Copia en la nube MEGA S4';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'Sube la copia completa actual de SQLite como objeto a un bucket de MEGA S4. La conexión se define con variables de entorno del servidor; las claves no se introducen ni se muestran en el navegador.';
+      'Sube una copia cifrada de PostgreSQL al bucket de MEGA S4 configurado.';
 
   @override
   String get featuresDataTransferMegaState => 'Estado: ';
@@ -1975,7 +2047,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'Subir copia a MEGA S4';
+  String get featuresDataTransferMegaUpload => 'Subir copia cifrada a MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => 'Subiendo...';

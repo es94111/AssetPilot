@@ -1,7 +1,7 @@
 # 資產管理 系統規格說明書 (SSD)
 
-**版本：** 6.1.3
-**日期：** 2026-11-26
+**版本：** 6.2.0
+**日期：** 2026-11-27
 **狀態：** 已實作
 
 ---
@@ -523,7 +523,7 @@ XLSX 具備欄位標題列，日期寫入為 UTC 午夜對應的 Excel 日期序
 
 #### 資料庫備份（管理員專用）
 
-管理員可匯出整個未加密的 SQLite 檔案作為完整備份。匯入時系統自動驗證檔案格式與必要資料表結構，並在覆寫前自動備份現有資料庫。這是災難復原用途，一般使用者不應接觸。資料庫備份檔案排除於 `.gitignore` 與 `.dockerignore`。
+超級管理員可在資料匯出／匯入頁以密語下載 PostgreSQL 整庫加密備份（`.apb`），或上傳至 MEGA S4。還原支援 `.apb` 及舊版 AssetPilot `.sql`，系統會驗證備份並在變更資料庫前寫入加密回復副本。加密備份檔與伺服器的備份目錄排除於 Git 和 Docker 建置。
 
 #### 全球匯率自動更新
 
@@ -538,7 +538,7 @@ XLSX 具備欄位標題列，日期寫入為 UTC 午夜對應的 Excel 日期序
 - TWSE：`https://openapi.twse.com.tw/`、`https://www.twse.com.tw/`
 - Google Identity Services
 - 寄信服務：SMTP（Nodemailer）、Zeabur Email（ZSend，`https://zeabur.com/docs/en-US/email/quick-start`）、Resend
-- MEGA S4 Object Storage：`https://mega.io/zh-hant/objectstorage`（管理員手動上傳完整 SQLite 備份時使用；S3 相容端點預設 `https://s3.<region>.s4.mega.io`）
+- MEGA S4 Object Storage：`https://mega.io/zh-hant/objectstorage`（超級管理員手動上傳加密 PostgreSQL 備份時使用；S3 相容端點預設 `https://s3.<region>.s4.mega.io`）
 
 #### 交易照片附件
 
@@ -1115,8 +1115,9 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 | GET    | /api/admin/server-time                   | 取得伺服器時間與偏移量                                    |
 | PUT    | /api/admin/server-time                   | 設定伺服器時間偏移量                                      |
 | POST   | /api/admin/server-time/ntp-sync          | 從 NTP 同步時間                                           |
-| GET    | /api/admin/db/export                     | 匯出資料庫備份（未加密 SQLite）                           |
-| POST   | /api/admin/db/import                     | 匯入資料庫備份（覆寫前自動備份）                          |
+| POST   | /api/database/export                     | 以密語下載加密 PostgreSQL 備份（.apb）                  |
+| POST   | /api/database/import                     | 還原 .apb 或舊版 .sql，並先建立加密回復副本             |
+| POST   | /api/database/mega-s4                    | 以密語加密資料庫備份後上傳至 MEGA S4                    |
 
 ### 3.X 007-data-export-import 新增端點（v4.28.0）
 
@@ -1200,6 +1201,7 @@ API 路徑統一以 `/api/` 為前綴。所有需認證的路由自動套用 aut
 
 | 版本 | 日期 | 變更說明 |
 | --- | --- | --- |
+| 6.2.0 | 2026-11-27 | 新增密語加密的 PostgreSQL 整庫備份、MEGA S4 上傳及加密回復副本。 |
 | 6.1.3 | 2026-11-26 | 修正 iOS 輕點表單留白時鍵盤未收起，並補齊 App 圖示。 |
 | 6.1.2 | 2026-11-26 | Docker 發布流程使用同一個映像標籤提供 AMD64 與 ARM64。 |
 | 6.1.1 | 2026-11-26 | 以固定規則核對通知中的金額及相鄰幣別，移除由辨識結果組合的正規表示式。 |

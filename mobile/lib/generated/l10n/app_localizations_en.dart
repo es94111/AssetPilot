@@ -1832,7 +1832,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresDataTransferMessagesDbRestoreDone =>
-      'Database restore complete';
+      'Database restored. Please sign in again.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1898,14 +1898,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'Full database backup / restore';
+      'Encrypted database backup and restore';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'Admins only. SQLite mode downloads a `.db` backup; PostgreSQL mode downloads a `.sql` backup. Upload the matching format when restoring.';
+      'Full database backups are saved as encrypted .apb files. You can restore .apb files and legacy AssetPilot .sql files.';
 
   @override
-  String get featuresDataTransferDatabaseDownload => 'Download database backup';
+  String get featuresDataTransferDatabaseDownload =>
+      'Download encrypted backup';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'Downloading...';
@@ -1917,11 +1918,83 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => 'Restoring...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel => 'Backup passphrase';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'Confirm passphrase';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'Use at least 16 characters and no more than 1 KiB. Keep the passphrase separate from the backup. You’ll need it to restore the file.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'The passphrases do not match.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'Restoring this file replaces the current database.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'Set a new passphrase to protect the recovery copy created before restoring.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'Choose an intact, supported AssetPilot .apb or .sql backup.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'The backup could not be decrypted. Check the passphrase and make sure the file is intact.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'The upload was incomplete. Check the file and your deployment’s upload limit.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'Another database restore is in progress. Try again shortly.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'The backup exceeds the size limit. SQL is limited to 200 MiB, and your deployment may have a lower upload limit.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'The current database exceeds the backup limit for SQL size or statement count.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'The database returned more data than fits in the read buffer. Check POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'The backup exceeds the limit of 500,000 SQL statements.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'The encrypted recovery copy could not be created. Check the backup directory permissions and available space.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'The restore failed. The database returned to its previous state.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'Automatic rollback failed. Use the encrypted recovery copy to recover your data.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'Encrypted recovery copy saved at $path.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'MEGA S4 cloud backup';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'Upload the current full SQLite backup to a MEGA S4 bucket as an object. Connection details are configured through server environment variables and keys are never entered or shown in the browser.';
+      'Upload an encrypted PostgreSQL backup to the configured MEGA S4 bucket.';
 
   @override
   String get featuresDataTransferMegaState => 'Status: ';
@@ -1941,7 +2014,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'Upload backup to MEGA S4';
+  String get featuresDataTransferMegaUpload =>
+      'Upload encrypted backup to MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => 'Uploading...';

@@ -1,6 +1,26 @@
 {
-  "currentVersion": "6.1.3",
+  "currentVersion": "6.2.0",
   "releases": [
+    {
+      "version": "6.2.0",
+      "date": "2026-11-27",
+      "title": "新增資料庫加密備份",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "warning",
+          "text": "管理員備份 API 改用 POST 並接收密語。舊版 AssetPilot .sql 仍可從設定頁還原，還原前的回復副本會以本次設定的密語加密。"
+        },
+        {
+          "tag": "new",
+          "text": "超級管理員可下載以密語加密的 .apb 整庫備份，或將備份上傳至 MEGA S4。"
+        },
+        {
+          "tag": "improved",
+          "text": "還原前驗證備份與密語並建立加密回復副本。資料庫交易失敗可回滾，提交結果無法確認時會嘗試由副本回復。"
+        }
+      ]
+    },
     {
       "version": "6.1.3",
       "date": "2026-11-26",

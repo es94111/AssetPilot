@@ -1834,7 +1834,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresDataTransferMessagesDbRestoreDone =>
-      'डेटाबेस रिस्टोर हो गया';
+      'डेटाबेस बहाल हो गया। फिर से साइन इन करें।';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1903,15 +1903,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'पूरा डेटाबेस बैकअप / रिस्टोर';
+      'डेटाबेस का एन्क्रिप्टेड बैकअप और बहाली';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'केवल एडमिन के लिए। SQLite mode में `.db` बैकअप डाउनलोड होता है; PostgreSQL में `.sql` डाउनलोड होता है। रिस्टोर करने के लिए संबंधित फ़ॉर्मेट अपलोड करें।';
+      'पूरा डेटाबेस एन्क्रिप्टेड .apb फ़ाइल में सहेजा जाता है। .apb और पुरानी AssetPilot .sql फ़ाइलें बहाल की जा सकती हैं।';
 
   @override
   String get featuresDataTransferDatabaseDownload =>
-      'डेटाबेस बैकअप डाउनलोड करें';
+      'एन्क्रिप्टेड बैकअप डाउनलोड करें';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'डाउनलोड हो रहा है...';
@@ -1924,11 +1924,84 @@ class AppLocalizationsHi extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => 'रिस्टोर हो रहा है...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel =>
+      'बैकअप का पासफ़्रेज़';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'पासफ़्रेज़ की पुष्टि करें';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'कम से कम 16 अक्षर और अधिकतम 1 KiB इस्तेमाल करें। पासफ़्रेज़ बैकअप से अलग रखें। फ़ाइल बहाल करने के लिए इसकी ज़रूरत होगी।';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'दोनों पासफ़्रेज़ मेल नहीं खाते।';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'बहाली से मौजूदा डेटाबेस बदल जाएगा।';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'बहाली से पहले बनाई जाने वाली रिकवरी कॉपी की सुरक्षा के लिए नया पासफ़्रेज़ सेट करें।';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'AssetPilot की पूरी और समर्थित .apb या .sql बैकअप फ़ाइल चुनें।';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'बैकअप डिक्रिप्ट नहीं हो सका। पासफ़्रेज़ जाँचें और सुनिश्चित करें कि फ़ाइल पूरी है।';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'अपलोड पूरा नहीं हुआ। फ़ाइल और अपनी स्थापना की अपलोड सीमा जाँचें।';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'डेटाबेस की एक और बहाली चल रही है। थोड़ी देर बाद फिर से कोशिश करें।';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'बैकअप तय आकार से बड़ा है। SQL की सीमा 200 MiB है और आपकी स्थापना की अपलोड सीमा कम हो सकती है।';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'मौजूदा डेटाबेस बैकअप के लिए तय SQL आकार या स्टेटमेंट की सीमा से बड़ा है।';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'डेटाबेस से लौटा डेटा रीड बफ़र की क्षमता से अधिक है। POSTGRES_SYNC_RESULT_BUFFER_BYTES जाँचें।';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'बैकअप 5,00,000 SQL स्टेटमेंट की सीमा से बड़ा है।';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'एन्क्रिप्टेड रिकवरी कॉपी नहीं बन सकी। बैकअप फ़ोल्डर की अनुमतियाँ और खाली जगह जाँचें।';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'बहाली विफल रही। डेटाबेस पिछली स्थिति में लौट आया है।';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'अपने आप पिछली स्थिति में लौटना विफल रहा। एन्क्रिप्टेड रिकवरी कॉपी का इस्तेमाल करें।';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'एन्क्रिप्टेड रिकवरी कॉपी $path पर सहेजी गई।';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'MEGA S4 क्लाउड बैकअप';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'मौजूदा SQLite पूर्ण बैकअप को MEGA S4 bucket में object के रूप में अपलोड करता है। कनेक्शन सर्वर environment variables से सेट होता है; कुंजियाँ ब्राउज़र में दर्ज या दिखाई नहीं जातीं।';
+      'एन्क्रिप्टेड PostgreSQL बैकअप को कॉन्फ़िगर किए गए MEGA S4 बकेट में अपलोड करें।';
 
   @override
   String get featuresDataTransferMegaState => 'स्थिति: ';
@@ -1948,7 +2021,8 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'MEGA S4 पर बैकअप अपलोड करें';
+  String get featuresDataTransferMegaUpload =>
+      'एन्क्रिप्टेड बैकअप MEGA S4 पर अपलोड करें';
 
   @override
   String get featuresDataTransferMegaUploading => 'अपलोड हो रहा है...';

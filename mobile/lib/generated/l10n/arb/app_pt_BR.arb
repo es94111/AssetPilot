@@ -2807,7 +2807,7 @@
     "description": "Web path: features.dataTransfer.messages.dbExportFailed",
     "x-webPath": "features.dataTransfer.messages.dbExportFailed"
   },
-  "featuresDataTransferMessagesDbRestoreDone": "Banco restaurado",
+  "featuresDataTransferMessagesDbRestoreDone": "Banco de dados restaurado. Entre novamente.",
   "@featuresDataTransferMessagesDbRestoreDone": {
     "description": "Web path: features.dataTransfer.messages.dbRestoreDone",
     "x-webPath": "features.dataTransfer.messages.dbRestoreDone"
@@ -2901,17 +2901,17 @@
     "description": "Web path: features.dataTransfer.bundle.restoring",
     "x-webPath": "features.dataTransfer.bundle.restoring"
   },
-  "featuresDataTransferDatabaseTitle": "Backup / restauração completa do banco",
+  "featuresDataTransferDatabaseTitle": "Backup criptografado e restauração do banco de dados",
   "@featuresDataTransferDatabaseTitle": {
     "description": "Web path: features.dataTransfer.database.title",
     "x-webPath": "features.dataTransfer.database.title"
   },
-  "featuresDataTransferDatabaseDescription": "Somente administradores. No modo SQLite baixa um backup `.db`; no PostgreSQL, um backup `.sql`. Para restaurar, envie o formato correspondente.",
+  "featuresDataTransferDatabaseDescription": "Os backups completos são salvos como arquivos .apb criptografados. Você pode restaurar arquivos .apb e arquivos .sql antigos do AssetPilot.",
   "@featuresDataTransferDatabaseDescription": {
     "description": "Web path: features.dataTransfer.database.description",
     "x-webPath": "features.dataTransfer.database.description"
   },
-  "featuresDataTransferDatabaseDownload": "Baixar backup do banco",
+  "featuresDataTransferDatabaseDownload": "Baixar backup criptografado",
   "@featuresDataTransferDatabaseDownload": {
     "description": "Web path: features.dataTransfer.database.download",
     "x-webPath": "features.dataTransfer.database.download"
@@ -2931,12 +2931,105 @@
     "description": "Web path: features.dataTransfer.database.restoring",
     "x-webPath": "features.dataTransfer.database.restoring"
   },
+  "featuresDataTransferDatabasePassphraseLabel": "Frase secreta do backup",
+  "@featuresDataTransferDatabasePassphraseLabel": {
+    "description": "Web path: features.dataTransfer.database.passphraseLabel",
+    "x-webPath": "features.dataTransfer.database.passphraseLabel"
+  },
+  "featuresDataTransferDatabasePassphraseConfirmation": "Confirmar frase secreta",
+  "@featuresDataTransferDatabasePassphraseConfirmation": {
+    "description": "Web path: features.dataTransfer.database.passphraseConfirmation",
+    "x-webPath": "features.dataTransfer.database.passphraseConfirmation"
+  },
+  "featuresDataTransferDatabasePassphraseHelp": "Use pelo menos 16 caracteres e no máximo 1 KiB. Guarde a frase separada do backup. Você precisará dela para restaurar o arquivo.",
+  "@featuresDataTransferDatabasePassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.passphraseHelp",
+    "x-webPath": "features.dataTransfer.database.passphraseHelp"
+  },
+  "featuresDataTransferDatabasePassphraseMismatch": "As frases secretas não coincidem.",
+  "@featuresDataTransferDatabasePassphraseMismatch": {
+    "description": "Web path: features.dataTransfer.database.passphraseMismatch",
+    "x-webPath": "features.dataTransfer.database.passphraseMismatch"
+  },
+  "featuresDataTransferDatabaseRestoreHelp": "A restauração substitui o banco de dados atual.",
+  "@featuresDataTransferDatabaseRestoreHelp": {
+    "description": "Web path: features.dataTransfer.database.restoreHelp",
+    "x-webPath": "features.dataTransfer.database.restoreHelp"
+  },
+  "featuresDataTransferDatabaseLegacyPassphraseHelp": "Defina uma nova frase secreta para proteger a cópia de recuperação criada antes da restauração.",
+  "@featuresDataTransferDatabaseLegacyPassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.legacyPassphraseHelp",
+    "x-webPath": "features.dataTransfer.database.legacyPassphraseHelp"
+  },
+  "featuresDataTransferDatabaseInvalidBackup": "Escolha um backup .apb ou .sql do AssetPilot que esteja íntegro e seja compatível.",
+  "@featuresDataTransferDatabaseInvalidBackup": {
+    "description": "Web path: features.dataTransfer.database.invalidBackup",
+    "x-webPath": "features.dataTransfer.database.invalidBackup"
+  },
+  "featuresDataTransferDatabaseDecryptFailed": "Não foi possível descriptografar o backup. Verifique a frase secreta e se o arquivo está íntegro.",
+  "@featuresDataTransferDatabaseDecryptFailed": {
+    "description": "Web path: features.dataTransfer.database.decryptFailed",
+    "x-webPath": "features.dataTransfer.database.decryptFailed"
+  },
+  "featuresDataTransferDatabaseUploadIncomplete": "O envio ficou incompleto. Verifique o arquivo e o limite de upload da sua instalação.",
+  "@featuresDataTransferDatabaseUploadIncomplete": {
+    "description": "Web path: features.dataTransfer.database.uploadIncomplete",
+    "x-webPath": "features.dataTransfer.database.uploadIncomplete"
+  },
+  "featuresDataTransferDatabaseRestoreInProgress": "Já há uma restauração em andamento. Tente novamente em instantes.",
+  "@featuresDataTransferDatabaseRestoreInProgress": {
+    "description": "Web path: features.dataTransfer.database.restoreInProgress",
+    "x-webPath": "features.dataTransfer.database.restoreInProgress"
+  },
+  "featuresDataTransferDatabaseUploadTooLarge": "O backup excede o limite de tamanho. O SQL está limitado a 200 MiB e sua instalação pode ter um limite menor.",
+  "@featuresDataTransferDatabaseUploadTooLarge": {
+    "description": "Web path: features.dataTransfer.database.uploadTooLarge",
+    "x-webPath": "features.dataTransfer.database.uploadTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "O banco atual excede o limite de tamanho ou de instruções SQL do backup.",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "O banco retornou mais dados do que cabem no buffer de leitura. Confira POSTGRES_SYNC_RESULT_BUFFER_BYTES.",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "O backup excede o limite de 500.000 instruções SQL.",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
+  "featuresDataTransferDatabaseSnapshotFailed": "Não foi possível criar a cópia de recuperação criptografada. Verifique as permissões da pasta e o espaço disponível.",
+  "@featuresDataTransferDatabaseSnapshotFailed": {
+    "description": "Web path: features.dataTransfer.database.snapshotFailed",
+    "x-webPath": "features.dataTransfer.database.snapshotFailed"
+  },
+  "featuresDataTransferDatabaseRolledBack": "A restauração falhou. O banco de dados voltou ao estado anterior.",
+  "@featuresDataTransferDatabaseRolledBack": {
+    "description": "Web path: features.dataTransfer.database.rolledBack",
+    "x-webPath": "features.dataTransfer.database.rolledBack"
+  },
+  "featuresDataTransferDatabaseRollbackFailed": "A recuperação automática falhou. Use a cópia de recuperação criptografada.",
+  "@featuresDataTransferDatabaseRollbackFailed": {
+    "description": "Web path: features.dataTransfer.database.rollbackFailed",
+    "x-webPath": "features.dataTransfer.database.rollbackFailed"
+  },
+  "featuresDataTransferDatabaseSnapshotLocation": "Cópia de recuperação criptografada salva em {path}.",
+  "@featuresDataTransferDatabaseSnapshotLocation": {
+    "description": "Web path: features.dataTransfer.database.snapshotLocation",
+    "x-webPath": "features.dataTransfer.database.snapshotLocation",
+    "placeholders": {
+      "path": {}
+    }
+  },
   "featuresDataTransferMegaTitle": "Backup em nuvem MEGA S4",
   "@featuresDataTransferMegaTitle": {
     "description": "Web path: features.dataTransfer.mega.title",
     "x-webPath": "features.dataTransfer.mega.title"
   },
-  "featuresDataTransferMegaDescription": "Envia o backup SQLite completo atual como objeto para um bucket MEGA S4. A conexão vem das variáveis de ambiente do servidor; chaves não são digitadas nem exibidas no navegador.",
+  "featuresDataTransferMegaDescription": "Envie um backup criptografado do PostgreSQL para o bucket do MEGA S4 configurado.",
   "@featuresDataTransferMegaDescription": {
     "description": "Web path: features.dataTransfer.mega.description",
     "x-webPath": "features.dataTransfer.mega.description"
@@ -2969,7 +3062,7 @@
       "items": {}
     }
   },
-  "featuresDataTransferMegaUpload": "Enviar backup para MEGA S4",
+  "featuresDataTransferMegaUpload": "Enviar backup criptografado ao MEGA S4",
   "@featuresDataTransferMegaUpload": {
     "description": "Web path: features.dataTransfer.mega.upload",
     "x-webPath": "features.dataTransfer.mega.upload"

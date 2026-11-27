@@ -2807,7 +2807,7 @@
     "description": "Web path: features.dataTransfer.messages.dbExportFailed",
     "x-webPath": "features.dataTransfer.messages.dbExportFailed"
   },
-  "featuresDataTransferMessagesDbRestoreDone": "데이터베이스가 복원되었습니다",
+  "featuresDataTransferMessagesDbRestoreDone": "데이터베이스가 복원되었습니다. 다시 로그인하세요.",
   "@featuresDataTransferMessagesDbRestoreDone": {
     "description": "Web path: features.dataTransfer.messages.dbRestoreDone",
     "x-webPath": "features.dataTransfer.messages.dbRestoreDone"
@@ -2901,17 +2901,17 @@
     "description": "Web path: features.dataTransfer.bundle.restoring",
     "x-webPath": "features.dataTransfer.bundle.restoring"
   },
-  "featuresDataTransferDatabaseTitle": "전체 데이터베이스 백업 / 복원",
+  "featuresDataTransferDatabaseTitle": "암호화된 데이터베이스 백업 및 복원",
   "@featuresDataTransferDatabaseTitle": {
     "description": "Web path: features.dataTransfer.database.title",
     "x-webPath": "features.dataTransfer.database.title"
   },
-  "featuresDataTransferDatabaseDescription": "관리자 전용입니다. SQLite 모드에서는 `.db` 백업을 다운로드하고 PostgreSQL에서는 `.sql`을 다운로드합니다. 복원하려면 해당 형식의 파일을 업로드하세요.",
+  "featuresDataTransferDatabaseDescription": "전체 데이터베이스 백업은 암호화된 .apb 파일로 저장됩니다. .apb 및 이전 AssetPilot .sql 파일을 복원할 수 있습니다.",
   "@featuresDataTransferDatabaseDescription": {
     "description": "Web path: features.dataTransfer.database.description",
     "x-webPath": "features.dataTransfer.database.description"
   },
-  "featuresDataTransferDatabaseDownload": "데이터베이스 백업 다운로드",
+  "featuresDataTransferDatabaseDownload": "암호화된 백업 다운로드",
   "@featuresDataTransferDatabaseDownload": {
     "description": "Web path: features.dataTransfer.database.download",
     "x-webPath": "features.dataTransfer.database.download"
@@ -2931,12 +2931,105 @@
     "description": "Web path: features.dataTransfer.database.restoring",
     "x-webPath": "features.dataTransfer.database.restoring"
   },
+  "featuresDataTransferDatabasePassphraseLabel": "백업 암호 문구",
+  "@featuresDataTransferDatabasePassphraseLabel": {
+    "description": "Web path: features.dataTransfer.database.passphraseLabel",
+    "x-webPath": "features.dataTransfer.database.passphraseLabel"
+  },
+  "featuresDataTransferDatabasePassphraseConfirmation": "암호 문구 확인",
+  "@featuresDataTransferDatabasePassphraseConfirmation": {
+    "description": "Web path: features.dataTransfer.database.passphraseConfirmation",
+    "x-webPath": "features.dataTransfer.database.passphraseConfirmation"
+  },
+  "featuresDataTransferDatabasePassphraseHelp": "16자 이상, 1 KiB 이하의 암호 문구를 사용하세요. 복원에 필요하므로 백업 파일과 별도로 보관하세요.",
+  "@featuresDataTransferDatabasePassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.passphraseHelp",
+    "x-webPath": "features.dataTransfer.database.passphraseHelp"
+  },
+  "featuresDataTransferDatabasePassphraseMismatch": "암호 문구가 일치하지 않습니다.",
+  "@featuresDataTransferDatabasePassphraseMismatch": {
+    "description": "Web path: features.dataTransfer.database.passphraseMismatch",
+    "x-webPath": "features.dataTransfer.database.passphraseMismatch"
+  },
+  "featuresDataTransferDatabaseRestoreHelp": "복원하면 현재 데이터베이스가 교체됩니다.",
+  "@featuresDataTransferDatabaseRestoreHelp": {
+    "description": "Web path: features.dataTransfer.database.restoreHelp",
+    "x-webPath": "features.dataTransfer.database.restoreHelp"
+  },
+  "featuresDataTransferDatabaseLegacyPassphraseHelp": "복원 전에 생성하는 복구 사본을 보호할 새 암호 문구를 설정하세요.",
+  "@featuresDataTransferDatabaseLegacyPassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.legacyPassphraseHelp",
+    "x-webPath": "features.dataTransfer.database.legacyPassphraseHelp"
+  },
+  "featuresDataTransferDatabaseInvalidBackup": "손상되지 않은 지원 형식의 AssetPilot .apb 또는 .sql 백업을 선택하세요.",
+  "@featuresDataTransferDatabaseInvalidBackup": {
+    "description": "Web path: features.dataTransfer.database.invalidBackup",
+    "x-webPath": "features.dataTransfer.database.invalidBackup"
+  },
+  "featuresDataTransferDatabaseDecryptFailed": "백업을 복호화할 수 없습니다. 암호 문구와 파일 손상 여부를 확인하세요.",
+  "@featuresDataTransferDatabaseDecryptFailed": {
+    "description": "Web path: features.dataTransfer.database.decryptFailed",
+    "x-webPath": "features.dataTransfer.database.decryptFailed"
+  },
+  "featuresDataTransferDatabaseUploadIncomplete": "업로드가 완료되지 않았습니다. 파일과 배포 환경의 업로드 한도를 확인하세요.",
+  "@featuresDataTransferDatabaseUploadIncomplete": {
+    "description": "Web path: features.dataTransfer.database.uploadIncomplete",
+    "x-webPath": "features.dataTransfer.database.uploadIncomplete"
+  },
+  "featuresDataTransferDatabaseRestoreInProgress": "다른 데이터베이스 복원이 진행 중입니다. 잠시 후 다시 시도하세요.",
+  "@featuresDataTransferDatabaseRestoreInProgress": {
+    "description": "Web path: features.dataTransfer.database.restoreInProgress",
+    "x-webPath": "features.dataTransfer.database.restoreInProgress"
+  },
+  "featuresDataTransferDatabaseUploadTooLarge": "백업이 크기 한도를 초과했습니다. SQL은 최대 200 MiB이며 배포 환경의 업로드 한도는 더 낮을 수 있습니다.",
+  "@featuresDataTransferDatabaseUploadTooLarge": {
+    "description": "Web path: features.dataTransfer.database.uploadTooLarge",
+    "x-webPath": "features.dataTransfer.database.uploadTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "현재 데이터베이스가 백업의 SQL 크기 또는 문장 수 한도를 초과했습니다.",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "데이터베이스에서 반환한 데이터가 읽기 버퍼를 초과했습니다. POSTGRES_SYNC_RESULT_BUFFER_BYTES를 확인하세요.",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "백업이 SQL 문 500,000개 한도를 초과했습니다.",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
+  "featuresDataTransferDatabaseSnapshotFailed": "암호화된 복구 사본을 만들 수 없습니다. 백업 폴더의 권한과 남은 공간을 확인하세요.",
+  "@featuresDataTransferDatabaseSnapshotFailed": {
+    "description": "Web path: features.dataTransfer.database.snapshotFailed",
+    "x-webPath": "features.dataTransfer.database.snapshotFailed"
+  },
+  "featuresDataTransferDatabaseRolledBack": "복원에 실패했습니다. 데이터베이스가 이전 상태로 돌아갔습니다.",
+  "@featuresDataTransferDatabaseRolledBack": {
+    "description": "Web path: features.dataTransfer.database.rolledBack",
+    "x-webPath": "features.dataTransfer.database.rolledBack"
+  },
+  "featuresDataTransferDatabaseRollbackFailed": "자동 복구에 실패했습니다. 암호화된 복구 사본을 사용하세요.",
+  "@featuresDataTransferDatabaseRollbackFailed": {
+    "description": "Web path: features.dataTransfer.database.rollbackFailed",
+    "x-webPath": "features.dataTransfer.database.rollbackFailed"
+  },
+  "featuresDataTransferDatabaseSnapshotLocation": "암호화된 복구 사본이 {path}에 저장되었습니다.",
+  "@featuresDataTransferDatabaseSnapshotLocation": {
+    "description": "Web path: features.dataTransfer.database.snapshotLocation",
+    "x-webPath": "features.dataTransfer.database.snapshotLocation",
+    "placeholders": {
+      "path": {}
+    }
+  },
   "featuresDataTransferMegaTitle": "MEGA S4 클라우드 백업",
   "@featuresDataTransferMegaTitle": {
     "description": "Web path: features.dataTransfer.mega.title",
     "x-webPath": "features.dataTransfer.mega.title"
   },
-  "featuresDataTransferMegaDescription": "현재 SQLite 전체 백업을 MEGA S4 bucket의 object로 업로드합니다. 연결 정보는 서버 환경 변수로 설정되며, 키는 브라우저에 입력하거나 표시하지 않습니다.",
+  "featuresDataTransferMegaDescription": "암호화된 PostgreSQL 백업을 설정된 MEGA S4 버킷에 업로드합니다.",
   "@featuresDataTransferMegaDescription": {
     "description": "Web path: features.dataTransfer.mega.description",
     "x-webPath": "features.dataTransfer.mega.description"
@@ -2969,7 +3062,7 @@
       "items": {}
     }
   },
-  "featuresDataTransferMegaUpload": "MEGA S4로 백업 업로드",
+  "featuresDataTransferMegaUpload": "MEGA S4에 암호화된 백업 업로드",
   "@featuresDataTransferMegaUpload": {
     "description": "Web path: features.dataTransfer.mega.upload",
     "x-webPath": "features.dataTransfer.mega.upload"

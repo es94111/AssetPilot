@@ -2807,7 +2807,7 @@
     "description": "Web path: features.dataTransfer.messages.dbExportFailed",
     "x-webPath": "features.dataTransfer.messages.dbExportFailed"
   },
-  "featuresDataTransferMessagesDbRestoreDone": "डेटाबेस रिस्टोर हो गया",
+  "featuresDataTransferMessagesDbRestoreDone": "डेटाबेस बहाल हो गया। फिर से साइन इन करें।",
   "@featuresDataTransferMessagesDbRestoreDone": {
     "description": "Web path: features.dataTransfer.messages.dbRestoreDone",
     "x-webPath": "features.dataTransfer.messages.dbRestoreDone"
@@ -2901,17 +2901,17 @@
     "description": "Web path: features.dataTransfer.bundle.restoring",
     "x-webPath": "features.dataTransfer.bundle.restoring"
   },
-  "featuresDataTransferDatabaseTitle": "पूरा डेटाबेस बैकअप / रिस्टोर",
+  "featuresDataTransferDatabaseTitle": "डेटाबेस का एन्क्रिप्टेड बैकअप और बहाली",
   "@featuresDataTransferDatabaseTitle": {
     "description": "Web path: features.dataTransfer.database.title",
     "x-webPath": "features.dataTransfer.database.title"
   },
-  "featuresDataTransferDatabaseDescription": "केवल एडमिन के लिए। SQLite mode में `.db` बैकअप डाउनलोड होता है; PostgreSQL में `.sql` डाउनलोड होता है। रिस्टोर करने के लिए संबंधित फ़ॉर्मेट अपलोड करें।",
+  "featuresDataTransferDatabaseDescription": "पूरा डेटाबेस एन्क्रिप्टेड .apb फ़ाइल में सहेजा जाता है। .apb और पुरानी AssetPilot .sql फ़ाइलें बहाल की जा सकती हैं।",
   "@featuresDataTransferDatabaseDescription": {
     "description": "Web path: features.dataTransfer.database.description",
     "x-webPath": "features.dataTransfer.database.description"
   },
-  "featuresDataTransferDatabaseDownload": "डेटाबेस बैकअप डाउनलोड करें",
+  "featuresDataTransferDatabaseDownload": "एन्क्रिप्टेड बैकअप डाउनलोड करें",
   "@featuresDataTransferDatabaseDownload": {
     "description": "Web path: features.dataTransfer.database.download",
     "x-webPath": "features.dataTransfer.database.download"
@@ -2931,12 +2931,105 @@
     "description": "Web path: features.dataTransfer.database.restoring",
     "x-webPath": "features.dataTransfer.database.restoring"
   },
+  "featuresDataTransferDatabasePassphraseLabel": "बैकअप का पासफ़्रेज़",
+  "@featuresDataTransferDatabasePassphraseLabel": {
+    "description": "Web path: features.dataTransfer.database.passphraseLabel",
+    "x-webPath": "features.dataTransfer.database.passphraseLabel"
+  },
+  "featuresDataTransferDatabasePassphraseConfirmation": "पासफ़्रेज़ की पुष्टि करें",
+  "@featuresDataTransferDatabasePassphraseConfirmation": {
+    "description": "Web path: features.dataTransfer.database.passphraseConfirmation",
+    "x-webPath": "features.dataTransfer.database.passphraseConfirmation"
+  },
+  "featuresDataTransferDatabasePassphraseHelp": "कम से कम 16 अक्षर और अधिकतम 1 KiB इस्तेमाल करें। पासफ़्रेज़ बैकअप से अलग रखें। फ़ाइल बहाल करने के लिए इसकी ज़रूरत होगी।",
+  "@featuresDataTransferDatabasePassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.passphraseHelp",
+    "x-webPath": "features.dataTransfer.database.passphraseHelp"
+  },
+  "featuresDataTransferDatabasePassphraseMismatch": "दोनों पासफ़्रेज़ मेल नहीं खाते।",
+  "@featuresDataTransferDatabasePassphraseMismatch": {
+    "description": "Web path: features.dataTransfer.database.passphraseMismatch",
+    "x-webPath": "features.dataTransfer.database.passphraseMismatch"
+  },
+  "featuresDataTransferDatabaseRestoreHelp": "बहाली से मौजूदा डेटाबेस बदल जाएगा।",
+  "@featuresDataTransferDatabaseRestoreHelp": {
+    "description": "Web path: features.dataTransfer.database.restoreHelp",
+    "x-webPath": "features.dataTransfer.database.restoreHelp"
+  },
+  "featuresDataTransferDatabaseLegacyPassphraseHelp": "बहाली से पहले बनाई जाने वाली रिकवरी कॉपी की सुरक्षा के लिए नया पासफ़्रेज़ सेट करें।",
+  "@featuresDataTransferDatabaseLegacyPassphraseHelp": {
+    "description": "Web path: features.dataTransfer.database.legacyPassphraseHelp",
+    "x-webPath": "features.dataTransfer.database.legacyPassphraseHelp"
+  },
+  "featuresDataTransferDatabaseInvalidBackup": "AssetPilot की पूरी और समर्थित .apb या .sql बैकअप फ़ाइल चुनें।",
+  "@featuresDataTransferDatabaseInvalidBackup": {
+    "description": "Web path: features.dataTransfer.database.invalidBackup",
+    "x-webPath": "features.dataTransfer.database.invalidBackup"
+  },
+  "featuresDataTransferDatabaseDecryptFailed": "बैकअप डिक्रिप्ट नहीं हो सका। पासफ़्रेज़ जाँचें और सुनिश्चित करें कि फ़ाइल पूरी है।",
+  "@featuresDataTransferDatabaseDecryptFailed": {
+    "description": "Web path: features.dataTransfer.database.decryptFailed",
+    "x-webPath": "features.dataTransfer.database.decryptFailed"
+  },
+  "featuresDataTransferDatabaseUploadIncomplete": "अपलोड पूरा नहीं हुआ। फ़ाइल और अपनी स्थापना की अपलोड सीमा जाँचें।",
+  "@featuresDataTransferDatabaseUploadIncomplete": {
+    "description": "Web path: features.dataTransfer.database.uploadIncomplete",
+    "x-webPath": "features.dataTransfer.database.uploadIncomplete"
+  },
+  "featuresDataTransferDatabaseRestoreInProgress": "डेटाबेस की एक और बहाली चल रही है। थोड़ी देर बाद फिर से कोशिश करें।",
+  "@featuresDataTransferDatabaseRestoreInProgress": {
+    "description": "Web path: features.dataTransfer.database.restoreInProgress",
+    "x-webPath": "features.dataTransfer.database.restoreInProgress"
+  },
+  "featuresDataTransferDatabaseUploadTooLarge": "बैकअप तय आकार से बड़ा है। SQL की सीमा 200 MiB है और आपकी स्थापना की अपलोड सीमा कम हो सकती है।",
+  "@featuresDataTransferDatabaseUploadTooLarge": {
+    "description": "Web path: features.dataTransfer.database.uploadTooLarge",
+    "x-webPath": "features.dataTransfer.database.uploadTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "मौजूदा डेटाबेस बैकअप के लिए तय SQL आकार या स्टेटमेंट की सीमा से बड़ा है।",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
+  "featuresDataTransferDatabaseDatabaseResultTooLarge": "डेटाबेस से लौटा डेटा रीड बफ़र की क्षमता से अधिक है। POSTGRES_SYNC_RESULT_BUFFER_BYTES जाँचें।",
+  "@featuresDataTransferDatabaseDatabaseResultTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseResultTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseResultTooLarge"
+  },
+  "featuresDataTransferDatabaseTooManyStatements": "बैकअप 5,00,000 SQL स्टेटमेंट की सीमा से बड़ा है।",
+  "@featuresDataTransferDatabaseTooManyStatements": {
+    "description": "Web path: features.dataTransfer.database.tooManyStatements",
+    "x-webPath": "features.dataTransfer.database.tooManyStatements"
+  },
+  "featuresDataTransferDatabaseSnapshotFailed": "एन्क्रिप्टेड रिकवरी कॉपी नहीं बन सकी। बैकअप फ़ोल्डर की अनुमतियाँ और खाली जगह जाँचें।",
+  "@featuresDataTransferDatabaseSnapshotFailed": {
+    "description": "Web path: features.dataTransfer.database.snapshotFailed",
+    "x-webPath": "features.dataTransfer.database.snapshotFailed"
+  },
+  "featuresDataTransferDatabaseRolledBack": "बहाली विफल रही। डेटाबेस पिछली स्थिति में लौट आया है।",
+  "@featuresDataTransferDatabaseRolledBack": {
+    "description": "Web path: features.dataTransfer.database.rolledBack",
+    "x-webPath": "features.dataTransfer.database.rolledBack"
+  },
+  "featuresDataTransferDatabaseRollbackFailed": "अपने आप पिछली स्थिति में लौटना विफल रहा। एन्क्रिप्टेड रिकवरी कॉपी का इस्तेमाल करें।",
+  "@featuresDataTransferDatabaseRollbackFailed": {
+    "description": "Web path: features.dataTransfer.database.rollbackFailed",
+    "x-webPath": "features.dataTransfer.database.rollbackFailed"
+  },
+  "featuresDataTransferDatabaseSnapshotLocation": "एन्क्रिप्टेड रिकवरी कॉपी {path} पर सहेजी गई।",
+  "@featuresDataTransferDatabaseSnapshotLocation": {
+    "description": "Web path: features.dataTransfer.database.snapshotLocation",
+    "x-webPath": "features.dataTransfer.database.snapshotLocation",
+    "placeholders": {
+      "path": {}
+    }
+  },
   "featuresDataTransferMegaTitle": "MEGA S4 क्लाउड बैकअप",
   "@featuresDataTransferMegaTitle": {
     "description": "Web path: features.dataTransfer.mega.title",
     "x-webPath": "features.dataTransfer.mega.title"
   },
-  "featuresDataTransferMegaDescription": "मौजूदा SQLite पूर्ण बैकअप को MEGA S4 bucket में object के रूप में अपलोड करता है। कनेक्शन सर्वर environment variables से सेट होता है; कुंजियाँ ब्राउज़र में दर्ज या दिखाई नहीं जातीं।",
+  "featuresDataTransferMegaDescription": "एन्क्रिप्टेड PostgreSQL बैकअप को कॉन्फ़िगर किए गए MEGA S4 बकेट में अपलोड करें।",
   "@featuresDataTransferMegaDescription": {
     "description": "Web path: features.dataTransfer.mega.description",
     "x-webPath": "features.dataTransfer.mega.description"
@@ -2969,7 +3062,7 @@
       "items": {}
     }
   },
-  "featuresDataTransferMegaUpload": "MEGA S4 पर बैकअप अपलोड करें",
+  "featuresDataTransferMegaUpload": "एन्क्रिप्टेड बैकअप MEGA S4 पर अपलोड करें",
   "@featuresDataTransferMegaUpload": {
     "description": "Web path: features.dataTransfer.mega.upload",
     "x-webPath": "features.dataTransfer.mega.upload"

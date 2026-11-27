@@ -1,48 +1,42 @@
-// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireSuperAdmin } from '../../../../lib/apiHelpers';
-import { writeOperationAudit } from '../../../../lib/auditHelpers';
-import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
-import { createPostgresBackupSql } from '../../../../lib/postgresBackup';
+import { auditSensitiveAction } from '../../../../lib/auditHelpers';
+import { makeBackupArchiveFilename } from '../../../../lib/backupArchive';
+import { BACKUP_NO_STORE, BackupInputError, noStoreBackupResponse, readBackupPassphrase } from '../../../../lib/backupRequests';
+import { createEncryptedDatabaseBackup } from '../../../../lib/databaseBackups';
 
-function makeBackupTimestamp() {
-  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-}
+export const runtime = 'nodejs';
 
-export async function GET(request) {
+export async function POST(request: Request) {
   const auth = await requireSuperAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof NextResponse) return noStoreBackupResponse(auth);
 
   try {
-    const sql = createPostgresBackupSql();
-    const body = Buffer.from(sql, 'utf8');
-    const ts = makeBackupTimestamp();
-    const filename = `assetpilot-postgres-backup-${ts}.sql`;
+    const passphrase = await readBackupPassphrase(request);
+    const body = await createEncryptedDatabaseBackup(passphrase);
+    const filename = makeBackupArchiveFilename('assetpilot-postgres-backup');
 
-    writeOperationAudit({
-      userId: auth.userId,
-      role: 'admin',
+    auditSensitiveAction(request, auth, {
       action: 'download_backup',
-      ipAddress: getRequestIpFromHeaders(request.headers),
-      userAgent: request.headers.get('user-agent') || '',
       result: 'success',
-      isAdminOperation: true,
-      metadata: { byteSize: body.length, filename, runtime: 'postgres' },
+      metadata: { byteSize: body.length, filename, format: 'apb' },
     });
 
     return new NextResponse(body, {
       status: 200,
       headers: {
-        'Content-Type': 'application/sql; charset=utf-8',
+        ...BACKUP_NO_STORE,
+        'Content-Type': 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${filename}"`,
         'Content-Length': String(body.length),
       },
     });
-  } catch (e) {
-    console.error('資料庫匯出失敗:', e);
-    return NextResponse.json({
-      error: '資料庫匯出失敗',
-      message: e?.message || String(e),
-    }, { status: 500 });
+  } catch (error) {
+    if (error instanceof BackupInputError) return error.toResponse();
+    console.error('[database-backup] download_failed');
+    return NextResponse.json(
+      { error: '無法建立加密資料庫備份。', code: 'backup_failed' },
+      { status: 500, headers: BACKUP_NO_STORE },
+    );
   }
 }

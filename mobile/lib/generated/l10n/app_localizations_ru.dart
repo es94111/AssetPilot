@@ -1850,7 +1850,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresDataTransferMessagesDbRestoreDone =>
-      'База данных восстановлена';
+      'База данных восстановлена. Войдите снова.';
 
   @override
   String get featuresDataTransferMessagesDbRestoreFailed =>
@@ -1918,15 +1918,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get featuresDataTransferDatabaseTitle =>
-      'Полная копия / восстановление базы';
+      'Шифрованное резервное копирование и восстановление базы данных';
 
   @override
   String get featuresDataTransferDatabaseDescription =>
-      'Только для администраторов. В режиме SQLite скачивается копия `.db`; в PostgreSQL - `.sql`. Для восстановления загрузите соответствующий формат.';
+      'Полные резервные копии сохраняются в зашифрованных файлах .apb. Для восстановления подходят файлы .apb и старые файлы .sql из AssetPilot.';
 
   @override
   String get featuresDataTransferDatabaseDownload =>
-      'Скачать копию базы данных';
+      'Скачать зашифрованную копию';
 
   @override
   String get featuresDataTransferDatabaseDownloading => 'Загрузка...';
@@ -1939,11 +1939,84 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featuresDataTransferDatabaseRestoring => 'Восстановление...';
 
   @override
+  String get featuresDataTransferDatabasePassphraseLabel =>
+      'Парольная фраза резервной копии';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseConfirmation =>
+      'Подтвердите парольную фразу';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseHelp =>
+      'Используйте не менее 16 символов и не более 1 КиБ. Храните фразу отдельно от копии. Она понадобится для восстановления.';
+
+  @override
+  String get featuresDataTransferDatabasePassphraseMismatch =>
+      'Парольные фразы не совпадают.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreHelp =>
+      'Восстановление заменит текущую базу данных.';
+
+  @override
+  String get featuresDataTransferDatabaseLegacyPassphraseHelp =>
+      'Задайте новую парольную фразу для защиты копии, которая создаётся перед восстановлением.';
+
+  @override
+  String get featuresDataTransferDatabaseInvalidBackup =>
+      'Выберите целый резервный файл AssetPilot в поддерживаемом формате .apb или .sql.';
+
+  @override
+  String get featuresDataTransferDatabaseDecryptFailed =>
+      'Не удалось расшифровать копию. Проверьте парольную фразу и целостность файла.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadIncomplete =>
+      'Загрузка не завершена. Проверьте файл и ограничение загрузки в вашей установке.';
+
+  @override
+  String get featuresDataTransferDatabaseRestoreInProgress =>
+      'Уже выполняется другое восстановление. Повторите попытку чуть позже.';
+
+  @override
+  String get featuresDataTransferDatabaseUploadTooLarge =>
+      'Копия превышает допустимый размер. Для SQL действует предел в 200 МиБ, а ограничение загрузки может быть ниже.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'Текущая база данных превышает предел размера или числа SQL-команд для резервной копии.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseResultTooLarge =>
+      'Ответ базы данных превышает размер буфера чтения. Проверьте POSTGRES_SYNC_RESULT_BUFFER_BYTES.';
+
+  @override
+  String get featuresDataTransferDatabaseTooManyStatements =>
+      'В резервной копии больше 500 000 SQL-команд.';
+
+  @override
+  String get featuresDataTransferDatabaseSnapshotFailed =>
+      'Не удалось создать зашифрованную копию для восстановления. Проверьте права доступа к каталогу и свободное место.';
+
+  @override
+  String get featuresDataTransferDatabaseRolledBack =>
+      'Восстановление не удалось. База данных вернулась в прежнее состояние.';
+
+  @override
+  String get featuresDataTransferDatabaseRollbackFailed =>
+      'Автоматическое восстановление не удалось. Используйте зашифрованную копию для восстановления.';
+
+  @override
+  String featuresDataTransferDatabaseSnapshotLocation(Object path) {
+    return 'Зашифрованная копия для восстановления сохранена в $path.';
+  }
+
+  @override
   String get featuresDataTransferMegaTitle => 'Облачная копия MEGA S4';
 
   @override
   String get featuresDataTransferMegaDescription =>
-      'Загружает текущую полную копию SQLite как объект в bucket MEGA S4. Подключение задается переменными окружения сервера; ключи не вводятся и не показываются в браузере.';
+      'Загрузите зашифрованную копию PostgreSQL в настроенный бакет MEGA S4.';
 
   @override
   String get featuresDataTransferMegaState => 'Статус: ';
@@ -1963,7 +2036,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get featuresDataTransferMegaUpload => 'Загрузить копию в MEGA S4';
+  String get featuresDataTransferMegaUpload =>
+      'Загрузить зашифрованную копию в MEGA S4';
 
   @override
   String get featuresDataTransferMegaUploading => 'Загрузка...';

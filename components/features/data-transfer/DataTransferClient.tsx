@@ -2,13 +2,28 @@
 
 import { getActiveLedgerHeaders } from '@/lib/clientApi';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { useT } from '@/components/i18n/I18nProvider';
+import { BACKUP_ARCHIVE_PREFIX, isValidBackupPassphrase } from '@/lib/backupPassphrase';
 
-type UserLike = { isAdmin?: boolean };
+type UserLike = { isAdmin?: boolean; isSuperAdmin?: boolean };
+
+type BackupAction =
+  | { kind: 'download' }
+  | { kind: 'cloud' }
+  | { kind: 'restore'; file: File; encrypted: boolean };
+
+type BackupResult = {
+  error?: string;
+  code?: string;
+  bucket?: string;
+  key?: string;
+  beforeRestorePath?: string;
+};
 
 type CsvImportResult = {
   imported?: number;
@@ -142,7 +157,12 @@ type SaveFilePickerWindow = Window & {
   }>;
 };
 
-async function downloadFromUrl(url: string, options: { streamToFile?: boolean; suggestedName?: string } = {}) {
+async function downloadFromUrl(url: string, options: {
+  streamToFile?: boolean;
+  suggestedName?: string;
+  request?: RequestInit;
+  errorMessage?: (status: number, data: BackupResult) => string;
+} = {}) {
   let writable: WritableStream<Uint8Array> | undefined;
   if (options.streamToFile) {
     const picker = (window as SaveFilePickerWindow).showSaveFilePicker;
@@ -163,11 +183,13 @@ async function downloadFromUrl(url: string, options: { streamToFile?: boolean; s
     }
   }
 
-  const res = await fetch(url, { credentials: 'include', headers: getActiveLedgerHeaders() });
+  const headers = new Headers(getActiveLedgerHeaders());
+  new Headers(options.request?.headers).forEach((value, key) => headers.set(key, value));
+  const res = await fetch(url, { credentials: 'include', ...options.request, headers });
   if (!res.ok) {
     await writable?.abort().catch(() => undefined);
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `HTTP ${res.status}`);
+    throw new Error(options.errorMessage?.(res.status, data) || data.error || `HTTP ${res.status}`);
   }
   if (writable && res.body) {
     await res.body.pipeTo(writable);
@@ -197,6 +219,12 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
   const [importResults, setImportResults] = useState<Record<string, CsvImportResult | null>>({});
   const [status, setStatus] = useState('');
   const [dbStatus, setDbStatus] = useState('');
+  const backupFileInput = useRef<HTMLInputElement>(null);
+  const [backupAction, setBackupAction] = useState<BackupAction | null>(null);
+  const [backupPassphrase, setBackupPassphrase] = useState('');
+  const [backupConfirmation, setBackupConfirmation] = useState('');
+  const [backupError, setBackupError] = useState('');
+  const [backupSubmitting, setBackupSubmitting] = useState(false);
   const [bundleStatus, setBundleStatus] = useState('');
   const [bundleError, setBundleError] = useState(false);
   const [megaS4Status, setMegaS4Status] = useState<MegaS4Status | null>(null);
@@ -315,54 +343,153 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
     setBusyKey('');
   }
 
-  async function handleDbExport() {
-    setBusyKey('db-export');
-    setDbStatus('');
-    try {
-      await downloadFromUrl('/api/database/export');
-      setDbStatus(t('features.dataTransfer.messages.dbExportDone'));
-    } catch (e: any) {
-      setDbStatus(e.message || t('features.dataTransfer.messages.dbExportFailed'));
-    }
-    setBusyKey('');
+  function openBackupDialog(action: BackupAction) {
+    setBackupPassphrase('');
+    setBackupConfirmation('');
+    setBackupError('');
+    if (action.kind === 'cloud') setMegaS4Message('');
+    else setDbStatus('');
+    setBackupAction(action);
   }
 
-  async function handleDbImport(file: File | null) {
-    if (!file) return;
-    setBusyKey('db-import');
-    setDbStatus('');
-    try {
-      const buffer = await file.arrayBuffer();
-      const res = await fetch('/api/database/import', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/octet-stream' },
-        body: buffer,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
-      setDbStatus(data.message || t('features.dataTransfer.messages.dbRestoreDone'));
-    } catch (e: any) {
-      setDbStatus(e.message || t('features.dataTransfer.messages.dbRestoreFailed'));
-    }
-    setBusyKey('');
+  function closeBackupDialog() {
+    if (backupSubmitting) return;
+    setBackupPassphrase('');
+    setBackupConfirmation('');
+    setBackupError('');
+    setBackupAction(null);
   }
 
-  async function handleMegaS4Backup() {
-    setBusyKey('mega-s4-backup');
-    setMegaS4Message('');
+  async function selectRestoreFile(file: File) {
     try {
-      const res = await fetch('/api/database/mega-s4', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setMegaS4Message(t('features.dataTransfer.messages.uploadedTo', { bucket: data.bucket, key: data.key }));
-    } catch (e: any) {
-      setMegaS4Message(e.message || t('features.dataTransfer.messages.megaBackupFailed'));
+      const prefix = await file.slice(0, BACKUP_ARCHIVE_PREFIX.length).text();
+      openBackupDialog({ kind: 'restore', file, encrypted: prefix === BACKUP_ARCHIVE_PREFIX });
+    } catch {
+      setDbStatus(t('features.dataTransfer.database.invalidBackup'));
     }
-    setBusyKey('');
+  }
+
+  function backupErrorMessage(status: number, data: BackupResult, fallback: string): string {
+    if (status === 413) return t('features.dataTransfer.database.uploadTooLarge');
+    switch (data.code || data.error) {
+      case 'invalid_passphrase':
+        return t('features.dataTransfer.database.passphraseHelp');
+      case 'invalid_request':
+      case 'invalid_file':
+      case 'invalid_sql':
+      case 'unsupported_version':
+        return t('features.dataTransfer.database.invalidBackup');
+      case 'decryption_failed':
+        return t('features.dataTransfer.database.decryptFailed');
+      case 'incomplete_upload':
+        return t('features.dataTransfer.database.uploadIncomplete');
+      case 'restore_in_progress':
+        return t('features.dataTransfer.database.restoreInProgress');
+      case 'snapshot_failed':
+        return t('features.dataTransfer.database.snapshotFailed');
+      case 'database_too_large':
+        return t('features.dataTransfer.database.databaseTooLarge');
+      case 'database_result_too_large':
+        return t('features.dataTransfer.database.databaseResultTooLarge');
+      case 'too_many_statements':
+        return t('features.dataTransfer.database.tooManyStatements');
+      case 'RESTORE_FAILED_ROLLED_BACK':
+        return t('features.dataTransfer.database.rolledBack');
+      case 'RESTORE_FAILED_DB_UNKNOWN':
+        return t('features.dataTransfer.database.rollbackFailed');
+      default:
+        return fallback;
+    }
+  }
+
+  function restoreStatus(message: string, result: BackupResult) {
+    return result.beforeRestorePath
+      ? `${message} ${t('features.dataTransfer.database.snapshotLocation', { path: result.beforeRestorePath })}`
+      : message;
+  }
+
+  const confirmBackupPassphrase = backupAction?.kind !== 'restore' || !backupAction.encrypted;
+  const backupActionTitle = {
+    download: t('features.dataTransfer.database.download'),
+    cloud: t('features.dataTransfer.mega.upload'),
+    restore: t('features.dataTransfer.database.restore'),
+  };
+  const backupProgressLabel = {
+    download: t('features.dataTransfer.database.downloading'),
+    cloud: t('features.dataTransfer.mega.uploading'),
+    restore: t('features.dataTransfer.database.restoring'),
+  };
+
+  async function submitBackupAction(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!backupAction || backupSubmitting) return;
+    if (!isValidBackupPassphrase(backupPassphrase)) {
+      setBackupError(t('features.dataTransfer.database.passphraseHelp'));
+      return;
+    }
+    if (confirmBackupPassphrase && backupPassphrase !== backupConfirmation) {
+      setBackupError(t('features.dataTransfer.database.passphraseMismatch'));
+      return;
+    }
+
+    const action = backupAction;
+    const passphrase = backupPassphrase;
+    setBackupSubmitting(true);
+    setBackupError('');
+    setBackupPassphrase('');
+    setBackupConfirmation('');
+    const jsonRequest: RequestInit = {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passphrase }),
+    };
+    const fallback = action.kind === 'download'
+      ? t('features.dataTransfer.messages.dbExportFailed')
+      : action.kind === 'cloud'
+        ? t('features.dataTransfer.messages.megaBackupFailed')
+        : t('features.dataTransfer.messages.dbRestoreFailed');
+    try {
+      if (action.kind === 'download') {
+        await downloadFromUrl('/api/database/export', {
+          request: jsonRequest,
+          errorMessage: (status, data) => backupErrorMessage(status, data, fallback),
+        });
+        setDbStatus(t('features.dataTransfer.messages.dbExportDone'));
+      } else if (action.kind === 'cloud') {
+        const res = await fetch('/api/database/mega-s4', jsonRequest);
+        const data: BackupResult = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(backupErrorMessage(res.status, data, fallback));
+        setMegaS4Message(t('features.dataTransfer.messages.uploadedTo', { bucket: data.bucket || '', key: data.key || '' }));
+      } else {
+        const form = new FormData();
+        form.append('file', action.file);
+        form.append('passphrase', passphrase);
+        const res = await fetch('/api/database/import', {
+          method: 'POST',
+          credentials: 'include',
+          cache: 'no-store',
+          body: form,
+        });
+        const data: BackupResult = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const message = restoreStatus(backupErrorMessage(res.status, data, fallback), data);
+          if (data.beforeRestorePath) {
+            setDbStatus(message);
+            setBackupAction(null);
+            return;
+          }
+          throw new Error(message);
+        }
+        setDbStatus(restoreStatus(t('features.dataTransfer.messages.dbRestoreDone'), data));
+      }
+      setBackupAction(null);
+    } catch (error) {
+      setBackupError(error instanceof Error ? error.message : fallback);
+    } finally {
+      setBackupSubmitting(false);
+    }
   }
 
   async function handleMegaS4Configure(e: React.FormEvent) {
@@ -514,7 +641,7 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
         )}
       </section>
 
-      {user?.isAdmin && (
+      {user?.isSuperAdmin && (
         <section className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-5 shadow-sm space-y-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">{t('features.dataTransfer.database.title')}</h2>
@@ -522,21 +649,26 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={handleDbExport} disabled={busyKey === 'db-export'}>
-              {busyKey === 'db-export' ? t('features.dataTransfer.database.downloading') : t('features.dataTransfer.database.download')}
+            <Button onClick={() => openBackupDialog({ kind: 'download' })}>
+              {t('features.dataTransfer.database.download')}
             </Button>
-            <label className="inline-flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50">
-              <span>{busyKey === 'db-import' ? t('features.dataTransfer.database.restoring') : t('features.dataTransfer.database.restore')}</span>
-              <input
-                type="file"
-                accept=".db,.sql,application/octet-stream,application/x-sqlite3,application/sql,text/plain"
-                className="hidden"
-                onChange={(e) => handleDbImport(e.target.files?.[0] || null)}
-              />
-            </label>
+            <Button variant="outline" onClick={() => backupFileInput.current?.click()}>
+              {t('features.dataTransfer.database.restore')}
+            </Button>
+            <input
+              ref={backupFileInput}
+              type="file"
+              accept=".apb,.sql"
+              hidden
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = '';
+                if (file) void selectRestoreFile(file);
+              }}
+            />
           </div>
 
-          {dbStatus && <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">{dbStatus}</div>}
+          {dbStatus && <div role="status" className="break-all rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300">{dbStatus}</div>}
         </section>
       )}
 
@@ -563,8 +695,8 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={handleMegaS4Backup} disabled={!megaS4Status?.configured || busyKey === 'mega-s4-backup'}>
-              {busyKey === 'mega-s4-backup' ? t('features.dataTransfer.mega.uploading') : t('features.dataTransfer.mega.upload')}
+            <Button onClick={() => openBackupDialog({ kind: 'cloud' })} disabled={!user.isSuperAdmin || !megaS4Status?.configured}>
+              {t('features.dataTransfer.mega.upload')}
             </Button>
             <Button
               variant="outline"
@@ -623,8 +755,56 @@ export default function DataTransferClient({ user }: { user: UserLike }) {
             </form>
           )}
 
-          {megaS4Message && <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300">{megaS4Message}</div>}
+          {megaS4Message && <div role="status" className="break-all rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300">{megaS4Message}</div>}
         </section>
+      )}
+      {backupAction && (
+        <Modal open onClose={closeBackupDialog} title={backupActionTitle[backupAction.kind]}>
+          <form onSubmit={submitBackupAction} className="space-y-3 pt-4" aria-busy={backupSubmitting}>
+            {backupAction.kind === 'restore' && (
+              <div className="space-y-1 text-sm">
+                <p className="break-all font-medium">{backupAction.file.name}</p>
+                <p>{t('features.dataTransfer.database.restoreHelp')}</p>
+                {!backupAction.encrypted && <p>{t('features.dataTransfer.database.legacyPassphraseHelp')}</p>}
+              </div>
+            )}
+            <p id="backup-passphrase-help" className="text-sm text-muted-foreground">
+              {t('features.dataTransfer.database.passphraseHelp')}
+            </p>
+            <Input
+              label={t('features.dataTransfer.database.passphraseLabel')}
+              type="password"
+              autoComplete={confirmBackupPassphrase ? 'new-password' : 'off'}
+              spellCheck={false}
+              required
+              aria-describedby="backup-passphrase-help"
+              value={backupPassphrase}
+              onChange={(event) => setBackupPassphrase(event.target.value)}
+              disabled={backupSubmitting}
+            />
+            {confirmBackupPassphrase && (
+              <Input
+                label={t('features.dataTransfer.database.passphraseConfirmation')}
+                type="password"
+                autoComplete="new-password"
+                spellCheck={false}
+                required
+                value={backupConfirmation}
+                onChange={(event) => setBackupConfirmation(event.target.value)}
+                disabled={backupSubmitting}
+              />
+            )}
+            {backupError && <p role="alert" className="text-sm text-destructive">{backupError}</p>}
+            <div className="flex justify-end gap-3 pt-1">
+              <Button type="button" variant="outline" onClick={closeBackupDialog} disabled={backupSubmitting}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={backupSubmitting}>
+                {backupSubmitting ? backupProgressLabel[backupAction.kind] : t('common.confirm')}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

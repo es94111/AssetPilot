@@ -15,6 +15,7 @@ interface PgWorkerPayload {
   ok: boolean;
   result?: PgQueryResult;
   error?: string;
+  code?: string;
 }
 
 interface StatementLike {
@@ -131,6 +132,12 @@ function translateSql(
   return translatePlaceholders(next, params);
 }
 
+const RESULT_TOO_LARGE_CODE = "POSTGRES_RESULT_TOO_LARGE";
+
+export function isPostgresResultTooLarge(error: unknown): boolean {
+  return error instanceof Error && "code" in error && error.code === RESULT_TOO_LARGE_CODE;
+}
+
 function runPg(
   sql: string,
   params: DbValue[] = [],
@@ -159,7 +166,13 @@ function runPg(
   // SAFETY: the shape guard above verifies the discriminant; result/error are
   // optional fields represented by the PgWorkerPayload interface.
   const payload = decoded as PgWorkerPayload;
-  if (!payload.ok) throw new Error(payload.error || "PostgreSQL query failed");
+  if (!payload.ok) {
+    const error = new Error(payload.error || "PostgreSQL query failed");
+    if (payload.code === RESULT_TOO_LARGE_CODE) {
+      throw Object.assign(error, { code: RESULT_TOO_LARGE_CODE });
+    }
+    throw error;
+  }
   return payload.result || { rows: [], fields: [], rowCount: 0 };
 }
 
@@ -237,6 +250,12 @@ export class PostgresCompatDatabase {
 
   prepare(sql: string): StatementLike {
     return new PostgresStatement(sql, () => this.transactionIdForQuery(sql));
+  }
+
+  /** Run native PostgreSQL statements without changing literals in a backup. */
+  runPostgresSql(sql: string): void {
+    const result = runPg(sql, [], this.transactionIdForQuery(sql));
+    lastRowsModified = result.rowCount;
   }
 
   run(sql: string, params: DbValue[] = []): void {

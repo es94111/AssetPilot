@@ -134,6 +134,10 @@ function translateSql(
 
 const RESULT_TOO_LARGE_CODE = "POSTGRES_RESULT_TOO_LARGE";
 
+class PostgresResultTooLargeError extends Error {
+  readonly code = RESULT_TOO_LARGE_CODE;
+}
+
 export function isPostgresResultTooLarge(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === RESULT_TOO_LARGE_CODE;
 }
@@ -167,11 +171,11 @@ function runPg(
   // optional fields represented by the PgWorkerPayload interface.
   const payload = decoded as PgWorkerPayload;
   if (!payload.ok) {
-    const error = new Error(payload.error || "PostgreSQL query failed");
+    const message = payload.error || "PostgreSQL query failed";
     if (payload.code === RESULT_TOO_LARGE_CODE) {
-      throw Object.assign(error, { code: RESULT_TOO_LARGE_CODE });
+      throw new PostgresResultTooLargeError(message);
     }
-    throw error;
+    throw new Error(message);
   }
   return payload.result || { rows: [], fields: [], rowCount: 0 };
 }

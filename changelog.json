@@ -1,6 +1,18 @@
 {
-  "currentVersion": "6.2.0",
+  "currentVersion": "6.2.1",
   "releases": [
+    {
+      "version": "6.2.1",
+      "date": "2026-11-27",
+      "title": "修正資料庫備份的靜態掃描警示",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "資料庫回傳超出讀取上限時，以專用錯誤類型保留固定錯誤碼，修正備份流程的 Semgrep 靜態掃描警示。"
+        }
+      ]
+    },
     {
       "version": "6.2.0",
       "date": "2026-11-27",

@@ -47,6 +47,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
+  String get notificationCaptureImportShortcut => 'Add or update shortcut';
+
+  @override
+  String notificationCaptureTemplateVersion(int version) {
+    return 'Shortcut template v$version';
+  }
+
+  @override
+  String get notificationCaptureTemplateChooseSource =>
+      'Confirm the import in Shortcuts, then choose your bank or payment app. Follow the prompts to enable the automation.';
+
+  @override
+  String get notificationCaptureTemplateReplace =>
+      'After updating, check the source app and run options. If both copies appear, turn off the old automation before enabling the new one.';
+
+  @override
+  String get notificationCaptureTemplateLocked =>
+      'To run while your iPhone is locked, turn on Allow Running When Locked in the shortcut’s privacy settings.';
+
+  @override
+  String get notificationCaptureManualSetup => 'Set up manually';
+
+  @override
+  String get notificationCaptureTemplateUnavailable =>
+      'Couldn’t open the shortcut template. Use the manual steps below.';
+
+  @override
   String get notificationCaptureStepTrigger =>
       '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
@@ -60,7 +87,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
+      '4. Choose how the automation runs in Shortcuts. After the first real payment alert, return here to check the last notification received.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

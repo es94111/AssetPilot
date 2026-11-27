@@ -189,6 +189,48 @@ abstract class AppLocalizations {
   /// **'設定 iPhone 捷徑'**
   String get notificationCaptureSetup;
 
+  /// Web path: notificationCapture.importShortcut
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'加入／更新捷徑'**
+  String get notificationCaptureImportShortcut;
+
+  /// Web path: notificationCapture.templateVersion
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'捷徑範本 v{version}'**
+  String notificationCaptureTemplateVersion(int version);
+
+  /// Web path: notificationCapture.templateChooseSource
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'在捷徑確認加入，然後選取要接收通知的銀行或支付 App。依照捷徑提示啟用自動化。'**
+  String get notificationCaptureTemplateChooseSource;
+
+  /// Web path: notificationCapture.templateReplace
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'更新後請核對通知來源與執行選項。若保留兩份捷徑，先停用舊版自動化，再啟用新版。'**
+  String get notificationCaptureTemplateReplace;
+
+  /// Web path: notificationCapture.templateLocked
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'需要鎖定時執行時，可在捷徑的隱私權設定開啟「允許在鎖定時執行」。'**
+  String get notificationCaptureTemplateLocked;
+
+  /// Web path: notificationCapture.manualSetup
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'手動設定'**
+  String get notificationCaptureManualSetup;
+
+  /// Web path: notificationCapture.templateUnavailable
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'無法開啟捷徑範本。請使用下方的手動設定。'**
+  String get notificationCaptureTemplateUnavailable;
+
   /// Web path: notificationCapture.stepTrigger
   ///
   /// In zh_Hant_TW, this message translates to:
@@ -210,7 +252,7 @@ abstract class AppLocalizations {
   /// Web path: notificationCapture.stepRun
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'4. 開啟自動執行與「允許在鎖定時執行」。收到第一則真實消費通知後，回來查看最近一次接收狀態。'**
+  /// **'4. 依捷徑提供的選項設定執行方式。收到第一則實際消費通知後，回來查看「最近一次接收」。'**
   String get notificationCaptureStepRun;
 
   /// Web path: notificationCapture.openShortcuts

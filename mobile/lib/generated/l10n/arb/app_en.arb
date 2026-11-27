@@ -63,6 +63,46 @@
     "description": "Web path: notificationCapture.setup",
     "x-webPath": "notificationCapture.setup"
   },
+  "notificationCaptureImportShortcut": "Add or update shortcut",
+  "@notificationCaptureImportShortcut": {
+    "description": "Web path: notificationCapture.importShortcut",
+    "x-webPath": "notificationCapture.importShortcut"
+  },
+  "notificationCaptureTemplateVersion": "Shortcut template v{version}",
+  "@notificationCaptureTemplateVersion": {
+    "description": "Web path: notificationCapture.templateVersion",
+    "x-webPath": "notificationCapture.templateVersion",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationCaptureTemplateChooseSource": "Confirm the import in Shortcuts, then choose your bank or payment app. Follow the prompts to enable the automation.",
+  "@notificationCaptureTemplateChooseSource": {
+    "description": "Web path: notificationCapture.templateChooseSource",
+    "x-webPath": "notificationCapture.templateChooseSource"
+  },
+  "notificationCaptureTemplateReplace": "After updating, check the source app and run options. If both copies appear, turn off the old automation before enabling the new one.",
+  "@notificationCaptureTemplateReplace": {
+    "description": "Web path: notificationCapture.templateReplace",
+    "x-webPath": "notificationCapture.templateReplace"
+  },
+  "notificationCaptureTemplateLocked": "To run while your iPhone is locked, turn on Allow Running When Locked in the shortcut’s privacy settings.",
+  "@notificationCaptureTemplateLocked": {
+    "description": "Web path: notificationCapture.templateLocked",
+    "x-webPath": "notificationCapture.templateLocked"
+  },
+  "notificationCaptureManualSetup": "Set up manually",
+  "@notificationCaptureManualSetup": {
+    "description": "Web path: notificationCapture.manualSetup",
+    "x-webPath": "notificationCapture.manualSetup"
+  },
+  "notificationCaptureTemplateUnavailable": "Couldn’t open the shortcut template. Use the manual steps below.",
+  "@notificationCaptureTemplateUnavailable": {
+    "description": "Web path: notificationCapture.templateUnavailable",
+    "x-webPath": "notificationCapture.templateUnavailable"
+  },
   "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
@@ -78,7 +118,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.",
+  "notificationCaptureStepRun": "4. Choose how the automation runs in Shortcuts. After the first real payment alert, return here to check the last notification received.",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

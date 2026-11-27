@@ -47,6 +47,34 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
+  String get notificationCaptureImportShortcut =>
+      'Ajouter ou mettre à jour le raccourci';
+
+  @override
+  String notificationCaptureTemplateVersion(int version) {
+    return 'Modèle de raccourci v$version';
+  }
+
+  @override
+  String get notificationCaptureTemplateChooseSource =>
+      'Confirmez l’importation dans Raccourcis, puis choisissez votre app bancaire ou de paiement. Suivez les instructions pour activer l’automatisation.';
+
+  @override
+  String get notificationCaptureTemplateReplace =>
+      'Après la mise à jour, vérifiez l’app source et les options d’exécution. Si deux copies apparaissent, désactivez l’ancienne automatisation avant d’activer la nouvelle.';
+
+  @override
+  String get notificationCaptureTemplateLocked =>
+      'Pour que le raccourci s’exécute quand l’iPhone est verrouillé, autorisez l’exécution en mode verrouillé dans les réglages de confidentialité du raccourci.';
+
+  @override
+  String get notificationCaptureManualSetup => 'Configurer manuellement';
+
+  @override
+  String get notificationCaptureTemplateUnavailable =>
+      'Impossible d’ouvrir le modèle de raccourci. Suivez les étapes de configuration manuelle ci-dessous.';
+
+  @override
   String get notificationCaptureStepTrigger =>
       '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
@@ -60,7 +88,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
+      '4. Choisissez le mode d’exécution de l’automatisation dans Raccourcis. Après la première notification de paiement réelle, revenez ici pour voir la dernière notification reçue.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

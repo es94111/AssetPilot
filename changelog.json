@@ -1,6 +1,22 @@
 {
-  "currentVersion": "6.2.1",
+  "currentVersion": "6.2.2",
   "releases": [
+    {
+      "version": "6.2.2",
+      "date": "2026-11-27",
+      "title": "改善 iPhone 通知記帳捷徑設定",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "更新 iPhone 手機通知自動記帳的手動設定指引，收到第一則真實消費通知後可在最近一次接收核對。"
+        },
+        {
+          "tag": "fixed",
+          "text": "捷徑匯入期間若辨識服務狀態更新，畫面會保留匯入進度及手動設定，避免重複開啟。正式範本經實機驗收後才開放匯入按鈕。"
+        }
+      ]
+    },
     {
       "version": "6.2.1",
       "date": "2026-11-27",

@@ -204,7 +204,7 @@ abstract class AppLocalizations {
   /// Web path: notificationCapture.templateChooseSource
   ///
   /// In zh_Hant_TW, this message translates to:
-  /// **'在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。開啟匯入的捷徑，展開通知觸發器旁的箭頭，打開「自動化操作」。'**
+  /// **'在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。'**
   String get notificationCaptureTemplateChooseSource;
 
   /// Web path: notificationCapture.templateReplace

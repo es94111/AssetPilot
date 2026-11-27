@@ -57,7 +57,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Ouvrez-le et développez le déclencheur de notification pour activer l’automatisation.';
+      'Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Dans l’éditeur, touchez + à côté du déclencheur de notification pour ajouter d’autres apps. Développez le déclencheur et activez l’automatisation.';
 
   @override
   String get notificationCaptureTemplateReplace =>

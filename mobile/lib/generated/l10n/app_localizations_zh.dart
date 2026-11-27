@@ -54,7 +54,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。開啟匯入的捷徑，展開通知觸發器旁的箭頭，打開「自動化操作」。';
+      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -6832,7 +6832,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      '在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。打开已导入的快捷指令，展开通知触发器旁的箭头，打开自动化。';
+      '在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。编辑已导入的快捷指令时，可点按通知触发器旁的「＋」添加其他 App。展开箭头并打开自动化。';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -13514,7 +13514,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。開啟匯入的捷徑，展開通知觸發器旁的箭頭，打開「自動化操作」。';
+      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。';
 
   @override
   String get notificationCaptureTemplateReplace =>

@@ -78,7 +78,7 @@
       }
     }
   },
-  "notificationCaptureTemplateChooseSource": "在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。打开已导入的快捷指令，展开通知触发器旁的箭头，打开自动化。",
+  "notificationCaptureTemplateChooseSource": "在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。编辑已导入的快捷指令时，可点按通知触发器旁的「＋」添加其他 App。展开箭头并打开自动化。",
   "@notificationCaptureTemplateChooseSource": {
     "description": "Web path: notificationCapture.templateChooseSource",
     "x-webPath": "notificationCapture.templateChooseSource"

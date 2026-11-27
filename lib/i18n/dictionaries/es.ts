@@ -16,7 +16,7 @@ export const es = {
     setup: "Set up iPhone Shortcuts",
     importShortcut: "Añadir o actualizar atajo",
     templateVersion: "Plantilla de atajo v{version}",
-    templateChooseSource: "En Atajos, configura el atajo, elige la app de tu banco o de pagos y añade el atajo. Ábrelo, despliega el activador de notificaciones y activa la automatización.",
+    templateChooseSource: "En Atajos, configura el atajo, elige la app de tu banco o de pagos y añade el atajo. Al editarlo, pulsa + junto al activador de notificaciones para añadir más apps. Despliega el activador y activa la automatización.",
     templateReplace: "Tras actualizar, revisa la app de origen y las opciones de ejecución. Si aparecen dos copias, desactiva la automatización anterior antes de activar la nueva.",
     templateLocked: "Para ejecutar el atajo con el iPhone bloqueado, permite su ejecución con el dispositivo bloqueado en los ajustes de privacidad del atajo.",
     manualSetup: "Configurar manualmente",

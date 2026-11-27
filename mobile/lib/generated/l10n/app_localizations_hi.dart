@@ -57,7 +57,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'शॉर्टकट्स में शॉर्टकट सेट अप करें, अपना बैंक या भुगतान ऐप चुनें और शॉर्टकट जोड़ें। जोड़ा गया शॉर्टकट खोलें, सूचना का ट्रिगर विस्तृत करें और ऑटोमेशन चालू करें।';
+      'शॉर्टकट्स में शॉर्टकट सेट अप करें, अपना बैंक या भुगतान ऐप चुनें और शॉर्टकट जोड़ें। शॉर्टकट संपादित करते समय, और ऐप जोड़ने के लिए सूचना ट्रिगर के पास + पर टैप करें। ट्रिगर को विस्तृत करें और ऑटोमेशन चालू करें।';
 
   @override
   String get notificationCaptureTemplateReplace =>

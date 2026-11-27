@@ -56,7 +56,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'افتح إعداد الاختصار واختر تطبيق البنك أو الدفع، ثم أضف الاختصار. افتح الاختصار المضاف ووسّع مشغّل الإشعارات لتفعيل الأتمتة.';
+      'افتح إعداد الاختصار واختر تطبيق البنك أو الدفع، ثم أضف الاختصار. عند تعديل الاختصار المضاف، اضغط على + بجوار مشغّل الإشعارات لإضافة تطبيقات أخرى. وسّع المشغّل وفعّل الأتمتة.';
 
   @override
   String get notificationCaptureTemplateReplace =>

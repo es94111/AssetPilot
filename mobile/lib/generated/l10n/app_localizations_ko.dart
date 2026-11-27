@@ -56,7 +56,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      '단축어 앱에서 단축어를 설정하고 은행 또는 결제 앱을 선택한 다음 추가하세요. 가져온 단축어를 열고 알림 트리거를 펼쳐 자동화를 켜세요.';
+      '단축어 앱에서 단축어를 설정하고 은행 또는 결제 앱을 선택한 다음 추가하세요. 가져온 단축어를 편집할 때 알림 트리거 옆의 +를 눌러 앱을 더 추가할 수 있습니다. 트리거를 펼쳐 자동화를 켜세요.';
 
   @override
   String get notificationCaptureTemplateReplace =>

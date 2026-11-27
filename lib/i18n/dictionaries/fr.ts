@@ -16,7 +16,7 @@ export const fr = {
     setup: "Set up iPhone Shortcuts",
     importShortcut: "Ajouter ou mettre à jour le raccourci",
     templateVersion: "Modèle de raccourci v{version}",
-    templateChooseSource: "Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Ouvrez-le et développez le déclencheur de notification pour activer l’automatisation.",
+    templateChooseSource: "Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Dans l’éditeur, touchez + à côté du déclencheur de notification pour ajouter d’autres apps. Développez le déclencheur et activez l’automatisation.",
     templateReplace: "Après la mise à jour, vérifiez l’app source et les options d’exécution. Si deux copies apparaissent, désactivez l’ancienne automatisation avant d’activer la nouvelle.",
     templateLocked: "Pour que le raccourci s’exécute quand l’iPhone est verrouillé, autorisez l’exécution en mode verrouillé dans les réglages de confidentialité du raccourci.",
     manualSetup: "Configurer manuellement",

@@ -78,7 +78,7 @@
       }
     }
   },
-  "notificationCaptureTemplateChooseSource": "No app Atalhos, configure o atalho, escolha seu app bancário ou de pagamentos e adicione o atalho. Abra-o, expanda o acionador de notificações e ative a automação.",
+  "notificationCaptureTemplateChooseSource": "No app Atalhos, configure o atalho, escolha seu app bancário ou de pagamentos e adicione o atalho. Ao editar o atalho importado, toque em + ao lado do acionador de notificações para incluir mais apps. Expanda o acionador e ative a automação.",
   "@notificationCaptureTemplateChooseSource": {
     "description": "Web path: notificationCapture.templateChooseSource",
     "x-webPath": "notificationCapture.templateChooseSource"

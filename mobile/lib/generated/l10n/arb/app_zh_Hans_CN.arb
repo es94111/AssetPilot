@@ -63,6 +63,46 @@
     "description": "Web path: notificationCapture.setup",
     "x-webPath": "notificationCapture.setup"
   },
+  "notificationCaptureImportShortcut": "添加或更新快捷指令",
+  "@notificationCaptureImportShortcut": {
+    "description": "Web path: notificationCapture.importShortcut",
+    "x-webPath": "notificationCapture.importShortcut"
+  },
+  "notificationCaptureTemplateVersion": "快捷指令模板 v{version}",
+  "@notificationCaptureTemplateVersion": {
+    "description": "Web path: notificationCapture.templateVersion",
+    "x-webPath": "notificationCapture.templateVersion",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationCaptureTemplateChooseSource": "在快捷指令中确认添加，然后选择要接收通知的银行或支付 App。依照快捷指令提示启用自动化。",
+  "@notificationCaptureTemplateChooseSource": {
+    "description": "Web path: notificationCapture.templateChooseSource",
+    "x-webPath": "notificationCapture.templateChooseSource"
+  },
+  "notificationCaptureTemplateReplace": "更新后请核对通知来源和运行选项。如果保留了两份快捷指令，请先停用旧版自动化，再启用新版。",
+  "@notificationCaptureTemplateReplace": {
+    "description": "Web path: notificationCapture.templateReplace",
+    "x-webPath": "notificationCapture.templateReplace"
+  },
+  "notificationCaptureTemplateLocked": "如需在锁定时运行，可在快捷指令的隐私设置中开启「允许在锁定时运行」。",
+  "@notificationCaptureTemplateLocked": {
+    "description": "Web path: notificationCapture.templateLocked",
+    "x-webPath": "notificationCapture.templateLocked"
+  },
+  "notificationCaptureManualSetup": "手动设置",
+  "@notificationCaptureManualSetup": {
+    "description": "Web path: notificationCapture.manualSetup",
+    "x-webPath": "notificationCapture.manualSetup"
+  },
+  "notificationCaptureTemplateUnavailable": "无法打开快捷指令模板。请使用下方的手动设置。",
+  "@notificationCaptureTemplateUnavailable": {
+    "description": "Web path: notificationCapture.templateUnavailable",
+    "x-webPath": "notificationCapture.templateUnavailable"
+  },
   "notificationCaptureStepTrigger": "1. 在快捷指令新增“收到通知”自动化，选取要接收的银行或支付 App。需要多组自动化时，可复制快捷指令再更换来源。",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
@@ -78,7 +118,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. 开启自动运行与“允许在锁定时运行”。收到第一条真实消费通知后，回来查看最近一次接收状态。",
+  "notificationCaptureStepRun": "4. 按快捷指令提供的选项设置运行方式。收到第一条实际消费通知后，回来查看「最近一次接收」。",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

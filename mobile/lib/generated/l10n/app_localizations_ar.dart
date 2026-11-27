@@ -47,6 +47,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
+  String get notificationCaptureImportShortcut => 'إضافة الاختصار أو تحديثه';
+
+  @override
+  String notificationCaptureTemplateVersion(int version) {
+    return 'قالب الاختصار v$version';
+  }
+
+  @override
+  String get notificationCaptureTemplateChooseSource =>
+      'أكّد الإضافة في تطبيق «الاختصارات»، ثم اختر تطبيق البنك أو الدفع. اتبع تعليمات «الاختصارات» لتفعيل الأتمتة.';
+
+  @override
+  String get notificationCaptureTemplateReplace =>
+      'بعد التحديث، راجع التطبيق المصدر وخيارات التشغيل. إذا ظهرت نسختان، أوقف الأتمتة القديمة قبل تفعيل الجديدة.';
+
+  @override
+  String get notificationCaptureTemplateLocked =>
+      'للتشغيل أثناء قفل iPhone، فعّل خيار السماح بالتشغيل عند القفل في إعدادات خصوصية الاختصار.';
+
+  @override
+  String get notificationCaptureManualSetup => 'الإعداد اليدوي';
+
+  @override
+  String get notificationCaptureTemplateUnavailable =>
+      'تعذّر فتح قالب الاختصار. استخدم خطوات الإعداد اليدوي أدناه.';
+
+  @override
   String get notificationCaptureStepTrigger =>
       '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
@@ -60,7 +87,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
+      '٤. اختر طريقة تشغيل الأتمتة في تطبيق «الاختصارات». بعد أول إشعار دفع فعلي، ارجع إلى هنا للتحقق من آخر إشعار ورد.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

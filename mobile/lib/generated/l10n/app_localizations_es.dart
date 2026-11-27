@@ -47,6 +47,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
+  String get notificationCaptureImportShortcut => 'Añadir o actualizar atajo';
+
+  @override
+  String notificationCaptureTemplateVersion(int version) {
+    return 'Plantilla de atajo v$version';
+  }
+
+  @override
+  String get notificationCaptureTemplateChooseSource =>
+      'Confirma la importación en Atajos y elige la app de tu banco o de pagos. Sigue las indicaciones para activar la automatización.';
+
+  @override
+  String get notificationCaptureTemplateReplace =>
+      'Tras actualizar, revisa la app de origen y las opciones de ejecución. Si aparecen dos copias, desactiva la automatización anterior antes de activar la nueva.';
+
+  @override
+  String get notificationCaptureTemplateLocked =>
+      'Para ejecutar el atajo con el iPhone bloqueado, permite su ejecución con el dispositivo bloqueado en los ajustes de privacidad del atajo.';
+
+  @override
+  String get notificationCaptureManualSetup => 'Configurar manualmente';
+
+  @override
+  String get notificationCaptureTemplateUnavailable =>
+      'No se pudo abrir la plantilla del atajo. Usa los pasos de configuración manual que aparecen a continuación.';
+
+  @override
   String get notificationCaptureStepTrigger =>
       '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
@@ -60,7 +87,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
+      '4. Elige cómo se ejecuta la automatización en Atajos. Tras el primer aviso de pago real, vuelve aquí para consultar la última notificación recibida.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

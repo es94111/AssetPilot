@@ -47,6 +47,34 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
+  String get notificationCaptureImportShortcut =>
+      'Добавить или обновить команду';
+
+  @override
+  String notificationCaptureTemplateVersion(int version) {
+    return 'Шаблон команды v$version';
+  }
+
+  @override
+  String get notificationCaptureTemplateChooseSource =>
+      'Подтвердите импорт в приложении «Команды» и выберите банковское или платежное приложение. Следуйте подсказкам, чтобы включить автоматизацию.';
+
+  @override
+  String get notificationCaptureTemplateReplace =>
+      'После обновления проверьте исходное приложение и параметры запуска. Если появились две копии, отключите старую автоматизацию перед включением новой.';
+
+  @override
+  String get notificationCaptureTemplateLocked =>
+      'Для запуска на заблокированном iPhone разрешите запуск при блокировке в настройках конфиденциальности команды.';
+
+  @override
+  String get notificationCaptureManualSetup => 'Настроить вручную';
+
+  @override
+  String get notificationCaptureTemplateUnavailable =>
+      'Не удалось открыть шаблон команды. Воспользуйтесь инструкцией по ручной настройке ниже.';
+
+  @override
   String get notificationCaptureStepTrigger =>
       '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
@@ -60,7 +88,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
+      '4. Выберите способ запуска автоматизации в приложении «Команды». После первого реального уведомления об оплате вернитесь сюда и проверьте последнее полученное уведомление.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

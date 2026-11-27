@@ -47,6 +47,34 @@ class AppLocalizationsHi extends AppLocalizations {
   String get notificationCaptureSetup => 'Set up iPhone Shortcuts';
 
   @override
+  String get notificationCaptureImportShortcut =>
+      'शॉर्टकट जोड़ें या अपडेट करें';
+
+  @override
+  String notificationCaptureTemplateVersion(int version) {
+    return 'शॉर्टकट टेम्पलेट v$version';
+  }
+
+  @override
+  String get notificationCaptureTemplateChooseSource =>
+      'शॉर्टकट्स में शॉर्टकट जोड़ने की पुष्टि करें, फिर अपना बैंक या भुगतान ऐप चुनें। ऑटोमेशन चालू करने के लिए स्क्रीन पर दिए गए निर्देशों का पालन करें।';
+
+  @override
+  String get notificationCaptureTemplateReplace =>
+      'अपडेट के बाद स्रोत ऐप और चलाने के विकल्प जाँचें। अगर दो प्रतियाँ दिखें, तो नया ऑटोमेशन चालू करने से पहले पुराना बंद करें।';
+
+  @override
+  String get notificationCaptureTemplateLocked =>
+      'iPhone लॉक होने पर चलाने के लिए, शॉर्टकट की गोपनीयता सेटिंग में लॉक होने पर चलाने की अनुमति दें।';
+
+  @override
+  String get notificationCaptureManualSetup => 'मैन्युअल रूप से सेट करें';
+
+  @override
+  String get notificationCaptureTemplateUnavailable =>
+      'शॉर्टकट टेम्पलेट नहीं खुल सका। नीचे दिए गए मैन्युअल चरण अपनाएँ।';
+
+  @override
   String get notificationCaptureStepTrigger =>
       '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
 
@@ -60,7 +88,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.';
+      '4. शॉर्टकट्स में चुनें कि ऑटोमेशन कैसे चलेगा। पहला वास्तविक भुगतान अलर्ट मिलने के बाद, अंतिम सूचना देखने के लिए यहाँ लौटें।';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

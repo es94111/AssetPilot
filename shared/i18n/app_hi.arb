@@ -63,6 +63,46 @@
     "description": "Web path: notificationCapture.setup",
     "x-webPath": "notificationCapture.setup"
   },
+  "notificationCaptureImportShortcut": "शॉर्टकट जोड़ें या अपडेट करें",
+  "@notificationCaptureImportShortcut": {
+    "description": "Web path: notificationCapture.importShortcut",
+    "x-webPath": "notificationCapture.importShortcut"
+  },
+  "notificationCaptureTemplateVersion": "शॉर्टकट टेम्पलेट v{version}",
+  "@notificationCaptureTemplateVersion": {
+    "description": "Web path: notificationCapture.templateVersion",
+    "x-webPath": "notificationCapture.templateVersion",
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationCaptureTemplateChooseSource": "शॉर्टकट्स में शॉर्टकट जोड़ने की पुष्टि करें, फिर अपना बैंक या भुगतान ऐप चुनें। ऑटोमेशन चालू करने के लिए स्क्रीन पर दिए गए निर्देशों का पालन करें।",
+  "@notificationCaptureTemplateChooseSource": {
+    "description": "Web path: notificationCapture.templateChooseSource",
+    "x-webPath": "notificationCapture.templateChooseSource"
+  },
+  "notificationCaptureTemplateReplace": "अपडेट के बाद स्रोत ऐप और चलाने के विकल्प जाँचें। अगर दो प्रतियाँ दिखें, तो नया ऑटोमेशन चालू करने से पहले पुराना बंद करें।",
+  "@notificationCaptureTemplateReplace": {
+    "description": "Web path: notificationCapture.templateReplace",
+    "x-webPath": "notificationCapture.templateReplace"
+  },
+  "notificationCaptureTemplateLocked": "iPhone लॉक होने पर चलाने के लिए, शॉर्टकट की गोपनीयता सेटिंग में लॉक होने पर चलाने की अनुमति दें।",
+  "@notificationCaptureTemplateLocked": {
+    "description": "Web path: notificationCapture.templateLocked",
+    "x-webPath": "notificationCapture.templateLocked"
+  },
+  "notificationCaptureManualSetup": "मैन्युअल रूप से सेट करें",
+  "@notificationCaptureManualSetup": {
+    "description": "Web path: notificationCapture.manualSetup",
+    "x-webPath": "notificationCapture.manualSetup"
+  },
+  "notificationCaptureTemplateUnavailable": "शॉर्टकट टेम्पलेट नहीं खुल सका। नीचे दिए गए मैन्युअल चरण अपनाएँ।",
+  "@notificationCaptureTemplateUnavailable": {
+    "description": "Web path: notificationCapture.templateUnavailable",
+    "x-webPath": "notificationCapture.templateUnavailable"
+  },
   "notificationCaptureStepTrigger": "1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
@@ -78,7 +118,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. Enable automatic execution and Allow Running When Locked. After the first real payment alert, return here to check the last notification status.",
+  "notificationCaptureStepRun": "4. शॉर्टकट्स में चुनें कि ऑटोमेशन कैसे चलेगा। पहला वास्तविक भुगतान अलर्ट मिलने के बाद, अंतिम सूचना देखने के लिए यहाँ लौटें।",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

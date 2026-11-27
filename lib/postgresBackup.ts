@@ -1,4 +1,5 @@
 import { disableReportsWithoutEmail, ensureSharedLedgerOwnerProtection, getDB, queryOne, queryAll } from "./db";
+import { clearKeyringCache } from "./keyring";
 
 export type AnyRow = Record<string, unknown>;
 
@@ -137,6 +138,8 @@ const RESTORE_STATEMENT_PATTERNS: RegExp[] = [
 
 export class RestoreValidationError extends Error {}
 
+export class RestoreLimitError extends RestoreValidationError {}
+
 export class RestoreTransactionError extends Error {
   constructor(readonly rolledBack: boolean, cause: unknown) {
     super("PostgreSQL restore transaction failed", { cause });
@@ -199,7 +202,7 @@ function* readTopLevelStatements(sql: string) {
 
 function readRestorableTransaction(sql: string) {
   if (Buffer.byteLength(sql, "utf8") > MAX_RESTORE_SQL_BYTES) {
-    throw new RestoreValidationError(
+    throw new RestoreLimitError(
       `備份檔過大（上限 ${Math.round(MAX_RESTORE_SQL_BYTES / 1024 / 1024)}MB）`,
     );
   }
@@ -211,7 +214,7 @@ function readRestorableTransaction(sql: string) {
   for (const statement of readTopLevelStatements(sql)) {
     count += 1;
     if (count > MAX_RESTORE_STATEMENTS) {
-      throw new RestoreValidationError(
+      throw new RestoreLimitError(
         `備份檔陳述式數量過多（上限 ${MAX_RESTORE_STATEMENTS}）`,
       );
     }
@@ -452,4 +455,5 @@ export function restorePostgresBackupSql(sql: string, options: {
     }
     throw new RestoreTransactionError(rolledBack, error);
   }
+  clearKeyringCache();
 }

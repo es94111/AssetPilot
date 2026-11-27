@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { requireSuperAdmin } from '../../../../lib/apiHelpers';
-import { writeOperationAudit } from '../../../../lib/auditHelpers';
+import { auditSensitiveAction } from '../../../../lib/auditHelpers';
 import { makeBackupArchiveFilename } from '../../../../lib/backupArchive';
 import { BACKUP_NO_STORE, BackupInputError, noStoreBackupResponse, readBackupPassphrase } from '../../../../lib/backupRequests';
 import { createEncryptedDatabaseBackup } from '../../../../lib/databaseBackups';
-import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 
 export const runtime = 'nodejs';
 
@@ -17,14 +16,9 @@ export async function POST(request: Request) {
     const body = await createEncryptedDatabaseBackup(passphrase);
     const filename = makeBackupArchiveFilename('assetpilot-postgres-backup');
 
-    writeOperationAudit({
-      userId: auth.userId,
-      role: 'admin',
+    auditSensitiveAction(request, auth, {
       action: 'download_backup',
-      ipAddress: getRequestIpFromHeaders(request.headers),
-      userAgent: request.headers.get('user-agent') || '',
       result: 'success',
-      isAdminOperation: true,
       metadata: { byteSize: body.length, filename, format: 'apb' },
     });
 

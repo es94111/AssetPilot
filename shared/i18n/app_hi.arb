@@ -2986,6 +2986,11 @@
     "description": "Web path: features.dataTransfer.database.uploadTooLarge",
     "x-webPath": "features.dataTransfer.database.uploadTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "मौजूदा डेटाबेस बैकअप के लिए तय SQL आकार या स्टेटमेंट की सीमा से बड़ा है।",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "एन्क्रिप्टेड रिकवरी कॉपी नहीं बन सकी। बैकअप फ़ोल्डर की अनुमतियाँ और खाली जगह जाँचें।",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

@@ -1901,6 +1901,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '백업이 크기 한도를 초과했습니다. SQL은 최대 200 MiB이며 배포 환경의 업로드 한도는 더 낮을 수 있습니다.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      '현재 데이터베이스가 백업의 SQL 크기 또는 문장 수 한도를 초과했습니다.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       '암호화된 복구 사본을 만들 수 없습니다. 백업 폴더의 권한과 남은 공간을 확인하세요.';
 

@@ -1092,6 +1092,7 @@ export const zhCN = {
         uploadIncomplete: "备份未完整上传。请检查文件及部署的上传大小限制。",
         restoreInProgress: "数据库正在还原，请稍后重试。",
         uploadTooLarge: "备份文件过大。SQL 上限为 200 MiB，部署的上传限制可能更低。",
+        databaseTooLarge: "当前数据库超过可备份的 SQL 大小或语句数量上限。",
         snapshotFailed: "无法创建还原前的加密副本。请检查备份目录权限和可用空间。",
         rolledBack: "还原失败，数据库已恢复至还原前的状态。",
         rollbackFailed: "无法自动恢复。请使用还原前的加密副本恢复。",

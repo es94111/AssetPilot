@@ -2986,6 +2986,11 @@
     "description": "Web path: features.dataTransfer.database.uploadTooLarge",
     "x-webPath": "features.dataTransfer.database.uploadTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "La base actuelle dépasse la limite de taille ou de nombre d’instructions SQL de la sauvegarde.",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "Impossible de créer la copie de secours chiffrée. Vérifiez les droits du dossier et l’espace disponible.",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

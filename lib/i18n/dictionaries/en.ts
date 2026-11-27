@@ -1092,6 +1092,7 @@ export const en = {
         uploadIncomplete: "The upload was incomplete. Check the file and your deployment’s upload limit.",
         restoreInProgress: "Another database restore is in progress. Try again shortly.",
         uploadTooLarge: "The backup exceeds the size limit. SQL is limited to 200 MiB, and your deployment may have a lower upload limit.",
+        databaseTooLarge: "The current database exceeds the backup limit for SQL size or statement count.",
         snapshotFailed: "The encrypted recovery copy could not be created. Check the backup directory permissions and available space.",
         rolledBack: "The restore failed. The database returned to its previous state.",
         rollbackFailed: "Automatic rollback failed. Use the encrypted recovery copy to recover your data.",

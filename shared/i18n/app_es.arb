@@ -2986,6 +2986,11 @@
     "description": "Web path: features.dataTransfer.database.uploadTooLarge",
     "x-webPath": "features.dataTransfer.database.uploadTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "La base de datos actual supera el límite de tamaño o de sentencias SQL de la copia.",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "No se pudo crear la copia de recuperación cifrada. Comprueba los permisos de la carpeta y el espacio disponible.",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

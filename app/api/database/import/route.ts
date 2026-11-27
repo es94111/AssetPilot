@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { readFileSync } from 'node:fs';
 import { requireSuperAdmin } from '../../../../lib/apiHelpers';
-import { writeOperationAudit } from '../../../../lib/auditHelpers';
+import { auditSensitiveAction } from '../../../../lib/auditHelpers';
 import { BackupArchiveError, decryptBackupArchive, isBackupArchive, withNewBackupArchive } from '../../../../lib/backupArchive';
 import { BACKUP_NO_STORE, BackupInputError, noStoreBackupResponse, readBackupRestore } from '../../../../lib/backupRequests';
 import { createRestorableDatabaseBackup, pruneRestoreSnapshots, withDatabaseRestoreLock, writeRestoreSnapshot } from '../../../../lib/databaseBackups';
-import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 import { isAssetPilotPostgresBackup, MAX_RESTORE_SQL_BYTES, restorePostgresBackupSql, RestoreTransactionError, RestoreValidationError } from '../../../../lib/postgresBackup';
 
 export const runtime = 'nodejs';
@@ -26,13 +25,6 @@ export async function POST(request: Request) {
   const auth = await requireSuperAdmin(request);
   if (auth instanceof NextResponse) return noStoreBackupResponse(auth);
 
-  const audit = {
-    userId: auth.userId,
-    role: 'admin',
-    ipAddress: getRequestIpFromHeaders(request.headers),
-    userAgent: request.headers.get('user-agent') || '',
-    isAdminOperation: true,
-  };
   try {
     const { file, passphrase } = await readBackupRestore(request);
     const encrypted = isBackupArchive(file);
@@ -57,13 +49,14 @@ export async function POST(request: Request) {
           if (!savingSnapshot && error instanceof RestoreValidationError) {
             throw new BackupInputError('invalid_sql');
           }
-          console.error('[database-backup] snapshot_failed');
-          writeOperationAudit({
-            ...audit,
+          const snapshotError = error instanceof BackupInputError ? error : undefined;
+          if (!snapshotError) console.error('[database-backup] snapshot_failed');
+          auditSensitiveAction(request, auth, {
             action: 'restore_failed',
             result: 'failed',
-            metadata: { failure_stage: 'before_restore_backup', failure_reason: 'snapshot_failed' },
+            metadata: { failure_stage: 'before_restore_backup', failure_reason: snapshotError?.code ?? 'snapshot_failed' },
           });
+          if (snapshotError) return snapshotError.toResponse();
           return NextResponse.json(
             { error: '無法建立還原前的加密副本，請檢查 backups/ 目錄與可用空間。', code: 'snapshot_failed' },
             { status: 500, headers: BACKUP_NO_STORE },
@@ -79,8 +72,7 @@ export async function POST(request: Request) {
           }
         } catch {
           console.error('[database-backup] rollback_failed');
-          writeOperationAudit({
-            ...audit,
+          auditSensitiveAction(request, auth, {
             action: 'restore_failed',
             result: 'failed',
             metadata: { failure_stage: 'rollback_postgres_sql', before_restore_path: beforeRestorePath },
@@ -92,8 +84,7 @@ export async function POST(request: Request) {
         }
 
         pruneRestoreSnapshots(snapshot.path);
-        writeOperationAudit({
-          ...audit,
+        auditSensitiveAction(request, auth, {
           action: 'restore_failed',
           result: 'rolled_back',
           metadata: { failure_stage: 'restore_postgres_sql', before_restore_path: beforeRestorePath },
@@ -107,8 +98,7 @@ export async function POST(request: Request) {
       // The restore helper only returns after calling beforeApply successfully.
       const beforeRestorePath = snapshot!.relativePath;
       pruneRestoreSnapshots(snapshot!.path);
-      writeOperationAudit({
-        ...audit,
+      auditSensitiveAction(request, auth, {
         action: 'restore_backup',
         result: 'success',
         metadata: { format: encrypted ? 'apb' : 'sql', byteSize: file.length, before_restore_path: beforeRestorePath },
@@ -120,8 +110,7 @@ export async function POST(request: Request) {
     }));
   } catch (error) {
     const inputError = error instanceof BackupArchiveError ? new BackupInputError(error.code) : error;
-    writeOperationAudit({
-      ...audit,
+    auditSensitiveAction(request, auth, {
       action: 'restore_failed',
       result: 'failed',
       metadata: {

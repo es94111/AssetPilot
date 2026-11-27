@@ -1954,6 +1954,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'حجم النسخة أكبر من الحد المسموح. الحد الأقصى لملف SQL هو 200 MiB وقد يكون حد الرفع في إعدادات النشر أقل.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'تتجاوز قاعدة البيانات الحالية الحد الأقصى لحجم SQL أو عدد العبارات في النسخة الاحتياطية.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'تعذّر إنشاء نسخة الاسترداد المشفّرة. تحقّق من أذونات مجلد النسخ الاحتياطي والمساحة المتاحة.';
 

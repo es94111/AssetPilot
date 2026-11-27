@@ -1993,6 +1993,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'La copia supera el límite de tamaño. El SQL admite hasta 200 MiB y tu instalación puede aplicar un límite de carga menor.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'La base de datos actual supera el límite de tamaño o de sentencias SQL de la copia.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'No se pudo crear la copia de recuperación cifrada. Comprueba los permisos de la carpeta y el espacio disponible.';
 

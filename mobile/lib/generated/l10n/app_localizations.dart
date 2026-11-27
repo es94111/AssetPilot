@@ -3595,6 +3595,12 @@ abstract class AppLocalizations {
   /// **'備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。'**
   String get featuresDataTransferDatabaseUploadTooLarge;
 
+  /// Web path: features.dataTransfer.database.databaseTooLarge
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'目前資料庫超過可備份的 SQL 大小或陳述式數量上限。'**
+  String get featuresDataTransferDatabaseDatabaseTooLarge;
+
   /// Web path: features.dataTransfer.database.snapshotFailed
   ///
   /// In zh_Hant_TW, this message translates to:

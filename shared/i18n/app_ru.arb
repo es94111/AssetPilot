@@ -2986,6 +2986,11 @@
     "description": "Web path: features.dataTransfer.database.uploadTooLarge",
     "x-webPath": "features.dataTransfer.database.uploadTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "Текущая база данных превышает предел размера или числа SQL-команд для резервной копии.",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "Не удалось создать зашифрованную копию для восстановления. Проверьте права доступа к каталогу и свободное место.",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

@@ -15,10 +15,12 @@ const ERROR_MESSAGES = {
   restore_in_progress: '已有另一個資料庫還原正在執行，請稍後再試。',
   incomplete_upload: '上傳的備份未完整送達。請確認檔案及部署的上傳大小限制。',
   too_large: '備份超過 200 MiB 的 SQL 大小上限。',
+  database_too_large: '目前資料庫超過備份的 SQL 大小或陳述式數量上限。',
 };
 const ERROR_STATUS: Partial<Record<keyof typeof ERROR_MESSAGES, number>> = {
   restore_in_progress: 409,
   too_large: 413,
+  database_too_large: 422,
 };
 
 export class BackupInputError extends Error {

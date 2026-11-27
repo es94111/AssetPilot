@@ -1851,6 +1851,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      '目前資料庫超過可備份的 SQL 大小或陳述式數量上限。';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       '無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。';
 
@@ -8592,6 +8596,10 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
       '备份文件过大。SQL 上限为 200 MiB，部署的上传限制可能更低。';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      '当前数据库超过可备份的 SQL 大小或语句数量上限。';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       '无法创建还原前的加密副本。请检查备份目录权限和可用空间。';
 
@@ -15233,6 +15241,10 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
   @override
   String get featuresDataTransferDatabaseUploadTooLarge =>
       '備份大小超過上限。SQL 上限為 200 MiB，部署的上傳限制可能更低。';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      '目前資料庫超過可備份的 SQL 大小或陳述式數量上限。';
 
   @override
   String get featuresDataTransferDatabaseSnapshotFailed =>

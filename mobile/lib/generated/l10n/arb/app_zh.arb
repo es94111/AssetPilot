@@ -2986,6 +2986,11 @@
     "description": "Web path: features.dataTransfer.database.uploadTooLarge",
     "x-webPath": "features.dataTransfer.database.uploadTooLarge"
   },
+  "featuresDataTransferDatabaseDatabaseTooLarge": "目前資料庫超過可備份的 SQL 大小或陳述式數量上限。",
+  "@featuresDataTransferDatabaseDatabaseTooLarge": {
+    "description": "Web path: features.dataTransfer.database.databaseTooLarge",
+    "x-webPath": "features.dataTransfer.database.databaseTooLarge"
+  },
   "featuresDataTransferDatabaseSnapshotFailed": "無法建立還原前的加密副本。請檢查備份目錄的權限及可用空間。",
   "@featuresDataTransferDatabaseSnapshotFailed": {
     "description": "Web path: features.dataTransfer.database.snapshotFailed",

@@ -1092,6 +1092,7 @@ export const ptBR = {
         uploadIncomplete: "O envio ficou incompleto. Verifique o arquivo e o limite de upload da sua instalação.",
         restoreInProgress: "Já há uma restauração em andamento. Tente novamente em instantes.",
         uploadTooLarge: "O backup excede o limite de tamanho. O SQL está limitado a 200 MiB e sua instalação pode ter um limite menor.",
+        databaseTooLarge: "O banco atual excede o limite de tamanho ou de instruções SQL do backup.",
         snapshotFailed: "Não foi possível criar a cópia de recuperação criptografada. Verifique as permissões da pasta e o espaço disponível.",
         rolledBack: "A restauração falhou. O banco de dados voltou ao estado anterior.",
         rollbackFailed: "A recuperação automática falhou. Use a cópia de recuperação criptografada.",

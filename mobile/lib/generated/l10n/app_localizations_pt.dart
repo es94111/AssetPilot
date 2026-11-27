@@ -1985,6 +1985,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'O backup excede o limite de tamanho. O SQL está limitado a 200 MiB e sua instalação pode ter um limite menor.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'O banco atual excede o limite de tamanho ou de instruções SQL do backup.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'Não foi possível criar a cópia de recuperação criptografada. Verifique as permissões da pasta e o espaço disponível.';
 
@@ -9141,6 +9145,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get featuresDataTransferDatabaseUploadTooLarge =>
       'O backup excede o limite de tamanho. O SQL está limitado a 200 MiB e sua instalação pode ter um limite menor.';
+
+  @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'O banco atual excede o limite de tamanho ou de instruções SQL do backup.';
 
   @override
   String get featuresDataTransferDatabaseSnapshotFailed =>

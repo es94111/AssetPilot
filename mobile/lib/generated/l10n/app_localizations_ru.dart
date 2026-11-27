@@ -1983,6 +1983,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Копия превышает допустимый размер. Для SQL действует предел в 200 МиБ, а ограничение загрузки может быть ниже.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'Текущая база данных превышает предел размера или числа SQL-команд для резервной копии.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'Не удалось создать зашифрованную копию для восстановления. Проверьте права доступа к каталогу и свободное место.';
 

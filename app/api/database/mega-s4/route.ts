@@ -1,28 +1,17 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import { requireAdmin, requireSuperAdmin } from '../../../../lib/apiHelpers';
-import { writeOperationAudit } from '../../../../lib/auditHelpers';
+import { auditSensitiveAction } from '../../../../lib/auditHelpers';
 import { makeBackupArchiveFilename } from '../../../../lib/backupArchive';
 import { BACKUP_NO_STORE, BackupInputError, noStoreBackupResponse, readBackupPassphrase } from '../../../../lib/backupRequests';
 import { createEncryptedDatabaseBackup } from '../../../../lib/databaseBackups';
 import { getMegaS4ConfigStatus, uploadMegaS4Backup } from '../../../../lib/megaS4';
 import { assertSafeS3Endpoint } from '../../../../lib/s3Storage';
 import { writeEnvVars } from '../../../../lib/envSecrets';
-import { getRequestIpFromHeaders } from '../../../../lib/loginHelpers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-function auditBase(request, auth) {
-  return {
-    userId: auth.userId,
-    role: 'admin',
-    ipAddress: getRequestIpFromHeaders(request.headers),
-    userAgent: request.headers.get('user-agent') || '',
-    isAdminOperation: true,
-  };
-}
 
 export async function GET(request) {
   const auth = await requireAdmin(request);
@@ -53,8 +42,7 @@ export async function POST(request) {
     const filename = makeBackupArchiveFilename('assetpilot-backup');
     const result = await uploadMegaS4Backup(archive, filename);
 
-    writeOperationAudit({
-      ...auditBase(request, auth),
+    auditSensitiveAction(request, auth, {
       action: 'mega_s4_backup',
       result: 'success',
       metadata: {
@@ -72,8 +60,7 @@ export async function POST(request) {
   } catch (error) {
     if (error instanceof BackupInputError) return error.toResponse();
     console.error('[database-backup] mega_s4_backup_failed');
-    writeOperationAudit({
-      ...auditBase(request, auth),
+    auditSensitiveAction(request, auth, {
       action: 'mega_s4_backup',
       result: 'failed',
       metadata: { failure_reason: 'mega_s4_backup_failed' },
@@ -126,8 +113,7 @@ export async function PUT(request) {
 
   writeEnvVars(updates);
 
-  writeOperationAudit({
-    ...auditBase(request, auth),
+  auditSensitiveAction(request, auth, {
     action: 'mega_s4_config_update',
     result: 'success',
     metadata: {

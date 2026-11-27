@@ -1092,6 +1092,7 @@ export const es = {
         uploadIncomplete: "La carga quedó incompleta. Comprueba el archivo y el límite de carga de tu instalación.",
         restoreInProgress: "Ya hay una restauración en curso. Inténtalo de nuevo en unos instantes.",
         uploadTooLarge: "La copia supera el límite de tamaño. El SQL admite hasta 200 MiB y tu instalación puede aplicar un límite de carga menor.",
+        databaseTooLarge: "La base de datos actual supera el límite de tamaño o de sentencias SQL de la copia.",
         snapshotFailed: "No se pudo crear la copia de recuperación cifrada. Comprueba los permisos de la carpeta y el espacio disponible.",
         rolledBack: "La restauración falló. La base de datos volvió a su estado anterior.",
         rollbackFailed: "Falló la recuperación automática. Usa la copia de recuperación cifrada.",

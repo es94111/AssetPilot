@@ -1968,6 +1968,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'बैकअप तय आकार से बड़ा है। SQL की सीमा 200 MiB है और आपकी स्थापना की अपलोड सीमा कम हो सकती है।';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'मौजूदा डेटाबेस बैकअप के लिए तय SQL आकार या स्टेटमेंट की सीमा से बड़ा है।';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'एन्क्रिप्टेड रिकवरी कॉपी नहीं बन सकी। बैकअप फ़ोल्डर की अनुमतियाँ और खाली जगह जाँचें।';
 

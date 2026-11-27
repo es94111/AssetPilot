@@ -39,8 +39,6 @@ import { getActiveKey, getKeyById, getLegacyKeys, isKeyringEnabled, KEYRING_ROTA
 
 export { isEncryptedBlob };
 
-const dekCache = new Map<string, Buffer>();
-
 export function isPhotoEncryptionEnabled(): boolean {
   if (!isKeyringEnabled()) return isLegacyPhotoEncryptionEnabled();
   const active = getActiveKey('photo');
@@ -103,22 +101,15 @@ export function unwrapStoredDek(row: Record<string, string | number | null>, rin
 }
 
 function getUserDek(userId: string, create: boolean): Buffer | null {
-  const cached = dekCache.get(userId);
-  if (cached) return cached;
-
-  const initialRingEnabled = isKeyringEnabled();
+  // The current database is authoritative after a restore, including on other replicas.
   const row = queryOne(
     'SELECT wrapped_dek, iv, tag, key_id FROM user_photo_keys WHERE user_id = ?',
     [userId],
   );
-  if (row?.wrapped_dek) {
-    const dek = unwrapStoredDek(row, initialRingEnabled);
-    dekCache.set(userId, dek);
-    return dek;
-  }
+  if (row?.wrapped_dek) return unwrapStoredDek(row, isKeyringEnabled());
   if (!create) return null;
 
-  if (initialRingEnabled) {
+  if (isKeyringEnabled()) {
     const photoKey = getActiveKey('photo');
     photoKey?.key.fill(0);
   }
@@ -140,7 +131,6 @@ function getUserDek(userId: string, create: boolean): Buffer | null {
       const dek = unwrapStoredDek(lockedRow, Number(queryOne('SELECT enabled FROM keyring_control WHERE id = 1')?.enabled) === 1);
       db.run('COMMIT');
       committed = true;
-      dekCache.set(userId, dek);
       return dek;
     }
 
@@ -179,7 +169,6 @@ function getUserDek(userId: string, create: boolean): Buffer | null {
       db.run('COMMIT');
       committed = true;
       saveDB();
-      dekCache.set(userId, createdDek);
       return createdDek;
     }
 
@@ -193,7 +182,6 @@ function getUserDek(userId: string, create: boolean): Buffer | null {
     const dek = unwrapStoredDek(winner, ringEnabled);
     db.run('COMMIT');
     committed = true;
-    dekCache.set(userId, dek);
     return dek;
   } catch (error) {
     if (!committed) {
@@ -215,7 +203,11 @@ export function encryptPhoto(userId: string, plain: Buffer): Buffer {
   if (!isPhotoEncryptionEnabled()) return plain;
   const dek = getUserDek(userId, true);
   if (!dek) return plain;
-  return encryptWithDek(dek, plain);
+  try {
+    return encryptWithDek(dek, plain);
+  } finally {
+    dek.fill(0);
+  }
 }
 
 /**
@@ -226,12 +218,14 @@ export function decryptPhoto(userId: string, stored: Buffer): Buffer {
   if (!isEncryptedBlob(stored)) return stored; // 舊明文照片
   const dek = getUserDek(userId, false);
   if (!dek) throw new Error('找不到使用者照片金鑰，無法解密');
-  return decryptWithDek(dek, stored);
+  try {
+    return decryptWithDek(dek, stored);
+  } finally {
+    dek.fill(0);
+  }
 }
 
 /** 清除快取（測試用 / 金鑰輪替後）。 */
 export function _resetPhotoCryptoCache(): void {
   _resetMasterKeyCache();
-  for (const dek of dekCache.values()) dek.fill(0);
-  dekCache.clear();
 }

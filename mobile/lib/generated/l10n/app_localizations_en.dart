@@ -1961,6 +1961,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The backup exceeds the size limit. SQL is limited to 200 MiB, and your deployment may have a lower upload limit.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'The current database exceeds the backup limit for SQL size or statement count.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'The encrypted recovery copy could not be created. Check the backup directory permissions and available space.';
 

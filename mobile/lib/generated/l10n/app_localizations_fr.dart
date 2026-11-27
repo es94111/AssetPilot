@@ -1989,6 +1989,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'La sauvegarde dépasse la taille autorisée. Le SQL est limité à 200 Mio, et votre installation peut imposer une limite d’envoi inférieure.';
 
   @override
+  String get featuresDataTransferDatabaseDatabaseTooLarge =>
+      'La base actuelle dépasse la limite de taille ou de nombre d’instructions SQL de la sauvegarde.';
+
+  @override
   String get featuresDataTransferDatabaseSnapshotFailed =>
       'Impossible de créer la copie de secours chiffrée. Vérifiez les droits du dossier et l’espace disponible.';
 

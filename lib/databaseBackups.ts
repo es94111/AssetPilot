@@ -4,7 +4,7 @@ import { Client } from 'pg';
 import { makeBackupArchiveFilename, withNewBackupArchive } from './backupArchive';
 import { BackupInputError } from './backupRequests';
 import { getDB } from './db';
-import { assertRestorableBackupSql, createPostgresBackupSql, listPostgresBackupTables, MAX_RESTORE_SQL_BYTES } from './postgresBackup';
+import { assertRestorableBackupSql, createPostgresBackupSql, listPostgresBackupTables, RestoreLimitError } from './postgresBackup';
 
 const BEFORE_RESTORE_BACKUP_RE = /^before-restore-\d{14}(?:\.sql|-[a-f\d-]{36}\.apb)$/;
 const BACKUP_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
@@ -23,8 +23,12 @@ export function createRestorableDatabaseBackup() {
     try { db.run('ROLLBACK'); } catch { /* connection may already be closed */ }
     throw error;
   }
-  if (Buffer.byteLength(backup.sql, 'utf8') > MAX_RESTORE_SQL_BYTES) throw new BackupInputError('too_large');
-  assertRestorableBackupSql(backup.sql);
+  try {
+    assertRestorableBackupSql(backup.sql);
+  } catch (error) {
+    if (error instanceof RestoreLimitError) throw new BackupInputError('database_too_large');
+    throw error;
+  }
   return backup;
 }
 
@@ -51,11 +55,24 @@ export async function withDatabaseRestoreLock<T>(run: () => T): Promise<T> {
   }
 }
 
+function syncBackupDirectory(directory: string): void {
+  // Windows does not expose directory handles through Node's fs.openSync.
+  if (process.platform === 'win32') return;
+  const descriptor = fs.openSync(directory, 'r');
+  try {
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
 export function writeRestoreSnapshot(archive: Buffer) {
   const dataDirectory = path.dirname(path.resolve(process.env.ENV_PATH || '.env'));
   const relativePath = path.join('backups', makeBackupArchiveFilename('before-restore'));
   const destination = path.join(dataDirectory, relativePath);
-  fs.mkdirSync(path.dirname(destination), { recursive: true, mode: 0o700 });
+  const directory = path.dirname(destination);
+  const firstCreated = fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const lastDirectoryToSync = firstCreated ? path.dirname(firstCreated) : directory;
 
   const temporary = `${destination}.tmp`;
   const fd = fs.openSync(temporary, 'wx', 0o600);
@@ -67,6 +84,11 @@ export function writeRestoreSnapshot(archive: Buffer) {
       fs.closeSync(fd);
     }
     fs.renameSync(temporary, destination);
+    // Sync the new filename and any newly created directory entries before restoring.
+    for (let current = directory; ; current = path.dirname(current)) {
+      syncBackupDirectory(current);
+      if (current === lastDirectoryToSync) break;
+    }
   } catch (error) {
     try { fs.unlinkSync(temporary); } catch { /* best-effort cleanup */ }
     throw error;

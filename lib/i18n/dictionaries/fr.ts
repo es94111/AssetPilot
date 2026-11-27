@@ -1092,6 +1092,7 @@ export const fr = {
         uploadIncomplete: "L’envoi est incomplet. Vérifiez le fichier et la limite de taille de votre installation.",
         restoreInProgress: "Une autre restauration est en cours. Réessayez dans quelques instants.",
         uploadTooLarge: "La sauvegarde dépasse la taille autorisée. Le SQL est limité à 200 Mio, et votre installation peut imposer une limite d’envoi inférieure.",
+        databaseTooLarge: "La base actuelle dépasse la limite de taille ou de nombre d’instructions SQL de la sauvegarde.",
         snapshotFailed: "Impossible de créer la copie de secours chiffrée. Vérifiez les droits du dossier et l’espace disponible.",
         rolledBack: "La restauration a échoué. La base de données est revenue à son état précédent.",
         rollbackFailed: "Le retour automatique a échoué. Utilisez la copie de secours chiffrée.",

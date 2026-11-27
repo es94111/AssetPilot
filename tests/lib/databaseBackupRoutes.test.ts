@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import dns from 'node:dns/promises';
+import fs from 'node:fs';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -14,6 +15,7 @@ if (!fixtureUrl) {
     process.env.DATABASE_URL = fixtureUrl;
     process.env.APP_URL = 'https://backup-tests.example';
     process.env.JWT_SECRET = 'fixture-only-backup-tests-session-signing-secret';
+    process.env.PHOTO_MASTER_KEY = Buffer.alloc(32, 42).toString('base64');
     const dataDirectory = mkdtempSync(path.join(tmpdir(), 'assetpilot-backup-route-test-'));
     const envPath = path.join(dataDirectory, '.env');
     const snapshotDirectory = path.join(dataDirectory, 'backups');
@@ -36,6 +38,7 @@ if (!fixtureUrl) {
     const { createLoginSession } = await import('../../lib/sessionHelpers');
     const { decryptBackupArchive } = await import('../../lib/backupArchive');
     const { DATABASE_RESTORE_LOCK } = await import('../../lib/databaseBackups');
+    const { encryptPhoto, decryptPhoto, isEncryptedBlob, _resetPhotoCryptoCache } = await import('../../lib/photoCrypto');
     const { createPostgresBackupSql, MAX_RESTORE_SQL_BYTES } = await import('../../lib/postgresBackup');
     const download = await import('../../app/api/database/export/route');
     const cloud = await import('../../app/api/database/mega-s4/route');
@@ -147,6 +150,7 @@ if (!fixtureUrl) {
       assert.notDeepEqual(object, downloaded);
       assert.equal(object.includes(Buffer.from(originalNote)), false);
       assert.ok((await decryptBackupArchive(object, passphrase)).includes(originalNote));
+      assert.equal(queryOne("SELECT role FROM data_operation_audit_log WHERE action = 'mega_s4_backup'")?.role, 'super_admin');
     });
 
     await t.test('invalid inputs create no recovery copies and do not change financial data', async () => {
@@ -198,9 +202,20 @@ if (!fixtureUrl) {
 
     await t.test('encrypted and legacy restores replace data and protect the previous state', async () => {
       setNote('state before encrypted restore');
+      const photoUser = 'backup-admin';
+      const oldPhoto = encryptPhoto(photoUser, Buffer.from('photo uploaded after the backup'));
+      assert.ok(isEncryptedBlob(oldPhoto));
+      assert.ok(queryOne('SELECT 1 FROM user_photo_keys WHERE user_id = ?', [photoUser]));
       const fromArchive = await restore.POST(restorePost(downloaded, 'renamed.sql'));
       assert.equal(fromArchive.status, 200);
       assert.ok((await snapshotSql(fromArchive, passphrase)).includes('state before encrypted restore'));
+      assert.equal(queryOne('SELECT 1 FROM user_photo_keys WHERE user_id = ?', [photoUser]), null);
+      const newPhotoContent = Buffer.from('photo uploaded after the restore');
+      const newPhoto = encryptPhoto(photoUser, newPhotoContent);
+      assert.ok(isEncryptedBlob(newPhoto));
+      assert.ok(queryOne('SELECT 1 FROM user_photo_keys WHERE user_id = ?', [photoUser]));
+      _resetPhotoCryptoCache();
+      assert.deepEqual(decryptPhoto(photoUser, newPhoto), newPhotoContent);
       assert.equal(getNote(), originalNote);
 
       setNote('state before legacy restore');
@@ -271,9 +286,47 @@ COMMIT;`);
       }
       assert.equal(getNote(), 'state before unavailable storage');
       assert.equal(readdirSync(snapshotDirectory).length, 4);
-      const audit = JSON.stringify(queryAll('SELECT action, metadata FROM data_operation_audit_log'));
+      const auditRows = queryAll('SELECT role, action, metadata FROM data_operation_audit_log');
+      assert.ok(auditRows.some((row) => row.action === 'restore_failed' && row.role === 'super_admin'));
+      const audit = JSON.stringify(auditRows);
       assert.equal(audit.includes(passphrase), false);
       assert.equal(audit.includes(legacyPassphrase), false);
+    });
+
+    await t.test('oversized current database returns a database limit error before applying the restore', async (subtest) => {
+      const currentState = 'current database is over its backup size limit';
+      setNote(currentState);
+      const snapshotsBefore = readdirSync(snapshotDirectory);
+      const byteLength = Buffer.byteLength;
+      subtest.mock.method(Buffer, 'byteLength', (value: Parameters<typeof Buffer.byteLength>[0], encoding?: BufferEncoding) => {
+        if (typeof value === 'string' && value.startsWith('-- AssetPilot PostgreSQL backup') && value.includes(currentState)) {
+          return MAX_RESTORE_SQL_BYTES + 1;
+        }
+        return byteLength(value, encoding);
+      });
+      const failed = await restore.POST(restorePost(downloaded, 'backup.apb'));
+      await statusCode(failed, 422, 'database_too_large');
+      assert.equal(getNote(), currentState);
+      assert.deepEqual(readdirSync(snapshotDirectory), snapshotsBefore);
+    });
+
+    await t.test('directory sync failure prevents restoring after the snapshot rename', { skip: process.platform === 'win32' }, async (subtest) => {
+      const currentState = 'state before snapshot directory failure';
+      setNote(currentState);
+      const fsync = fs.fsyncSync;
+      let syncedFile = false;
+      subtest.mock.method(fs, 'fsyncSync', (descriptor: number) => {
+        if (fs.fstatSync(descriptor).isDirectory()) {
+          assert.ok(syncedFile);
+          throw new Error('fixture: snapshot directory sync failed');
+        }
+        fsync(descriptor);
+        syncedFile = true;
+      });
+      const failed = await restore.POST(restorePost(downloaded, 'backup.apb'));
+      await statusCode(failed, 500, 'snapshot_failed');
+      assert.ok(syncedFile);
+      assert.equal(getNote(), currentState);
     });
   });
 }

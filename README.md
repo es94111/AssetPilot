@@ -45,7 +45,7 @@
 
 | 優勢 | 說明 |
 | ---- | ---- |
-| 🏠 **自托管，資料自控** | 資料庫以 ChaCha20-Poly1305 加密儲存在**你自己的**伺服器，財務資訊**不上傳任何外部伺服器**，所有權完全屬於你。 |
+| 🏠 **自架，資料自控** | 帳本存放在你指定的 PostgreSQL。需要異地備份時，可選擇將加密檔上傳至 MEGA S4。 |
 | 🐳 **一鍵 Docker 部部署** | 單行指令啟動；`JWT_SECRET` 等敏感金鑰**首次啟動自動產生**並寫入持久化 Volume，重啟自動讀取，不用手動設定密鑰。 |
 | 📊 **台股深度整合** | 串接 TWSE OpenAPI：即時股價、除權息自動同步、FIFO **全精度逐筆損益**（decimal.js）、定期定額自動順延休市日、下市凍結處理。 |
 | 💱 **多幣別支援** | 串接 exchangerate-api.com 即時匯率，ISO 4217 白名單驗證，台股／美股／外幣一體管理。 |
@@ -549,7 +549,7 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 - **CSV 匯出**：交易／分類／股票交易／股利紀錄；純伺服器端 stream + UTF-8 BOM + Formula Injection 防護
 - **Excel 匯出**：同一組匯出端點加上 `?format=xlsx`，欄位標題、日期與數字（金額）為正確型別，沿用 Formula Injection 防護；伺服器以 `xlsx-stream-writer` 逐列串流產生、資料庫以固定 1,000 列 keyset 分頁；支援 File System Access API 的瀏覽器直接串流寫檔，其他瀏覽器使用 Blob 下載
 - **CSV 匯入**：互斥鎖（重入回 409）+ 全 DB transaction 原子化 + 進度回饋
-- **整檔備份／還原**：SQL 備份下載／上傳、還原失敗自動回滾、管理員列管 5 份／90 天
+- **整檔備份／還原**：下載加密 `.apb` 或上傳至 MEGA S4，支援還原 `.apb` 與舊版 `.sql`，還原前的加密副本保留最多 5 份／90 天
 - **稽核日誌**：管理員與使用者分開檢視；過濾、CSV 匯出、清空、保留天數設定
 - **交易照片附件**：最多 5 張、本機或 S3 儲存、讀取一律走登入授權 API
 
@@ -605,7 +605,7 @@ API：`GET /api/setup/status`、`POST /api/setup/passkey/challenge`、`POST /api
 
 | 機制 | 說明 |
 | ---- | ---- |
-| 資料庫加密 | ChaCha20-Poly1305 AEAD + PBKDF2-SHA256 金鑰推導 |
+| 整庫備份加密 | AES-256-GCM，使用 scrypt 從備份密語衍生金鑰 |
 | 身份驗證 | 僅接受 Google、Apple、Passkey 等外部／無密碼方式；不建立本機密碼 |
 | XSS 防護 | 所有使用者輸入經 `escHtml()` 跳脫後才插入 DOM |
 | 安全標頭 | HSTS、X-Content-Type-Options、Referrer-Policy |

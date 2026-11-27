@@ -84,6 +84,32 @@ final class NotificationCaptureTests: XCTestCase {
     XCTAssertNil(encrypted.range(of: Data("星星商店".utf8)))
   }
 
+  func testRecentReceiptOnlyChangesForPaymentNotifications() async throws {
+    let recognizer = Recognizer()
+    let clock = Clock(time)
+    let (service, _, _) = try fixture(recognizer: recognizer, clock: clock)
+    try await enable(service)
+
+    let empty = try await service.capture(appName: "LINE Pay", title: nil, subtitle: nil, body: nil, receivedAt: nil)
+    let initial = try await service.snapshot()
+    XCTAssertEqual(empty, "empty")
+    XCTAssertNil(initial.lastReceivedAt)
+
+    _ = try await service.capture(appName: "LINE Pay", title: "付款通知", subtitle: nil, body: sample, receivedAt: time)
+    let payment = try await service.snapshot()
+    XCTAssertEqual(payment.lastReceivedAt, time)
+    XCTAssertEqual(payment.lastStatus, "ready")
+
+    clock.advance(60)
+    let source = try await service.capture(appName: "LINE", title: "付款通知", subtitle: nil, body: sample, receivedAt: clock.now())
+    let ignored = try await service.capture(appName: "LINE Pay", title: "刷卡驗證碼", subtitle: nil, body: "你的刷卡驗證碼 123411", receivedAt: clock.now())
+    let after = try await service.snapshot()
+    XCTAssertEqual(source, "source")
+    XCTAssertEqual(ignored, "ignored")
+    XCTAssertEqual(after.lastReceivedAt, payment.lastReceivedAt)
+    XCTAssertEqual(after.lastStatus, payment.lastStatus)
+  }
+
   func testIdentifierUsesUnmaskedIdentityOnlyInMemory() async throws {
     let recognizer = Recognizer()
     let (service, _, _) = try fixture(recognizer: recognizer, clock: Clock(time))

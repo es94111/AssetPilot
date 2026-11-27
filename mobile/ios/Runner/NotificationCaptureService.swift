@@ -224,7 +224,8 @@ actor NotificationCaptureService {
     }
     return NotificationCaptureSnapshot(ownerId: owner, revision: revision,
       drafts: inbox.drafts.values.sorted { $0.receivedAt > $1.receivedAt },
-      lastStatus: inbox.lastStatus, lastReceivedAt: inbox.lastReceivedAt, nextRetryAt: nextRetryAt)
+      lastStatus: inbox.lastStatus, lastReceivedAt: inbox.lastEventId == nil ? nil : inbox.lastReceivedAt,
+      nextRetryAt: nextRetryAt)
   }
 
   func discard(ownerId: String, draftId: String) throws {
@@ -274,13 +275,16 @@ actor NotificationCaptureService {
     } else {
       status = "ignored"
     }
-    inbox.lastReceivedAt = now
-    inbox.lastEventId = id
-    inbox.lastStatus = status
+    if let id {
+      inbox.lastReceivedAt = now
+      inbox.lastEventId = id
+      inbox.lastStatus = status
+    }
     state.inboxes[owner] = inbox
     // Commit the queue before awaiting the network or returning to Shortcuts.
     try write(state)
     try await process(ownerId: owner, limit: 2)
+    guard id != nil else { return status }
     return try read().inboxes[owner]?.lastStatus ?? status
   }
 

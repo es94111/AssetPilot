@@ -222,9 +222,12 @@ actor NotificationCaptureService {
         entry.status == .queued && entry.notice != nil && !self.inFlight.contains("\(owner ?? "")/\(entry.id)")
       }.map { $0.retryAt ?? $0.queuedAt }.min()
     }
+    let hasReceipt = inbox.lastEventId != nil
+    let needsActivation = inbox.lastStatus == "consent" || inbox.lastStatus == "session"
     return NotificationCaptureSnapshot(ownerId: owner, revision: revision,
       drafts: inbox.drafts.values.sorted { $0.receivedAt > $1.receivedAt },
-      lastStatus: inbox.lastStatus, lastReceivedAt: inbox.lastEventId == nil ? nil : inbox.lastReceivedAt,
+      lastStatus: hasReceipt || needsActivation ? inbox.lastStatus : nil,
+      lastReceivedAt: hasReceipt ? inbox.lastReceivedAt : nil,
       nextRetryAt: nextRetryAt)
   }
 

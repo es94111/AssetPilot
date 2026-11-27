@@ -110,6 +110,24 @@ final class NotificationCaptureTests: XCTestCase {
     XCTAssertEqual(after.lastStatus, payment.lastStatus)
   }
 
+  func testRecentReceiptHidesLegacyEmptyInvocation() async throws {
+    let (service, folder, _) = try fixture(recognizer: Recognizer(), clock: Clock(time))
+    try await service.bindOwner("alice")
+    let archive: [String: Any] = [
+      "ownerId": "alice",
+      "inboxes": ["alice": [
+        "drafts": [:], "seen": [:], "lastStatus": "empty", "lastReceivedAt": time.timeIntervalSinceReferenceDate,
+      ]],
+    ]
+    let bytes = try JSONSerialization.data(withJSONObject: archive)
+    let encrypted = try OfflineFileCrypto.encrypt(bytes, key: FixtureKey().key())
+    try encrypted.write(to: folder.appendingPathComponent("inbox.v1"), options: .atomic)
+
+    let receipt = try await service.snapshot()
+    XCTAssertNil(receipt.lastReceivedAt)
+    XCTAssertNil(receipt.lastStatus)
+  }
+
   func testIdentifierUsesUnmaskedIdentityOnlyInMemory() async throws {
     let recognizer = Recognizer()
     let (service, _, _) = try fixture(recognizer: recognizer, clock: Clock(time))

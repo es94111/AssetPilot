@@ -208,7 +208,10 @@ class _NotificationCaptureSettingsScreenState
                 ),
               ),
               const Divider(),
-              _NotificationShortcutSetup(template: widget.shortcutTemplate),
+              _NotificationShortcutSetup(
+                key: const ValueKey('notificationShortcutSetup'),
+                template: widget.shortcutTemplate,
+              ),
               const SizedBox(height: 16),
               for (final group in ['payment', 'bank'])
                 ExpansionTile(
@@ -252,7 +255,7 @@ class _NotificationCaptureSettingsScreenState
 class _NotificationShortcutSetup extends StatefulWidget {
   final NotificationCaptureShortcutTemplate? template;
 
-  const _NotificationShortcutSetup({required this.template});
+  const _NotificationShortcutSetup({super.key, required this.template});
 
   @override
   State<_NotificationShortcutSetup> createState() =>

@@ -197,6 +197,52 @@ void main() {
     },
   );
 
+  testWidgets('keeps an in-progress handoff when the service status loads', (
+    tester,
+  ) async {
+    final serviceStatus = Completer<http.Response>();
+    final handoff = Completer<bool>();
+    final messenger = tester.binding.defaultBinaryMessenger;
+    var launches = 0;
+    messenger.setMockMethodCallHandler(_launcher, (_) {
+      launches++;
+      return handoff.future;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(_launcher, null));
+
+    await http.runWithClient(() async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: NotificationCaptureSettingsScreen(
+            ownerId: 'fixture-owner',
+            shortcutTemplate: _fixture,
+          ),
+        ),
+      );
+      await tester.pump();
+    }, () => MockClient((_) => serviceStatus.future));
+
+    final action = find.widgetWithText(
+      FilledButton,
+      trKey('notificationCaptureImportShortcut'),
+    );
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    await tester.tap(action);
+    await tester.pump();
+    expect(tester.widget<FilledButton>(action).onPressed, isNull);
+
+    serviceStatus.complete(http.Response('{"available":false}', 200));
+    await tester.pump();
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(tester.widget<FilledButton>(action).onPressed, isNull);
+    await tester.tap(action);
+    expect(launches, 1);
+
+    handoff.complete(false);
+    await tester.pumpAndSettle();
+    expect(find.text(trKey('notificationCaptureStepInput')), findsOneWidget);
+  });
+
   testWidgets('reveals manual setup when iOS reports no handler', (
     tester,
   ) async {

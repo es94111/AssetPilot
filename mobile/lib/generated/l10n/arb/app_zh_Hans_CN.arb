@@ -78,7 +78,7 @@
       }
     }
   },
-  "notificationCaptureTemplateChooseSource": "在快捷指令中确认添加，然后选择要接收通知的银行或支付 App。依照快捷指令提示启用自动化。",
+  "notificationCaptureTemplateChooseSource": "在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。编辑已导入的快捷指令时，可点按通知触发器旁的「＋」添加其他 App。展开箭头并打开自动化。",
   "@notificationCaptureTemplateChooseSource": {
     "description": "Web path: notificationCapture.templateChooseSource",
     "x-webPath": "notificationCapture.templateChooseSource"
@@ -103,7 +103,7 @@
     "description": "Web path: notificationCapture.templateUnavailable",
     "x-webPath": "notificationCapture.templateUnavailable"
   },
-  "notificationCaptureStepTrigger": "1. 在快捷指令新增“收到通知”自动化，选取要接收的银行或支付 App。需要多组自动化时，可复制快捷指令再更换来源。",
+  "notificationCaptureStepTrigger": "1. 在快捷指令中编辑或新建一条快捷指令，添加「通知」触发器并选择银行或支付 App。点按「＋」添加其他来源。",
   "@notificationCaptureStepTrigger": {
     "description": "Web path: notificationCapture.stepTrigger",
     "x-webPath": "notificationCapture.stepTrigger"
@@ -118,7 +118,7 @@
     "description": "Web path: notificationCapture.stepInput",
     "x-webPath": "notificationCapture.stepInput"
   },
-  "notificationCaptureStepRun": "4. 按快捷指令提供的选项设置运行方式。收到第一条实际消费通知后，回来查看「最近一次接收」。",
+  "notificationCaptureStepRun": "4. 展开通知触发器旁的箭头，打开自动化。收到第一条消费通知后，回来查看「最近一次接收」。",
   "@notificationCaptureStepRun": {
     "description": "Web path: notificationCapture.stepRun",
     "x-webPath": "notificationCapture.stepRun"

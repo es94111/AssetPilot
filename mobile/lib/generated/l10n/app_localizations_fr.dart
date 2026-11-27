@@ -57,7 +57,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Confirmez l’importation dans Raccourcis, puis choisissez votre app bancaire ou de paiement. Suivez les instructions pour activer l’automatisation.';
+      'Dans Raccourcis, configurez le raccourci, choisissez votre app bancaire ou de paiement, puis ajoutez-le. Dans l’éditeur, touchez + à côté du déclencheur de notification pour ajouter d’autres apps. Développez le déclencheur et activez l’automatisation.';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -76,7 +76,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. Dans Raccourcis, modifiez ou créez un raccourci. Ajoutez le déclencheur de notification et choisissez votre app bancaire ou de paiement. Touchez + pour ajouter d’autres apps.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +88,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Choisissez le mode d’exécution de l’automatisation dans Raccourcis. Après la première notification de paiement réelle, revenez ici pour voir la dernière notification reçue.';
+      '4. Développez le déclencheur de notification et activez l’automatisation. Après la première notification de paiement, revenez ici pour voir la dernière notification reçue.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

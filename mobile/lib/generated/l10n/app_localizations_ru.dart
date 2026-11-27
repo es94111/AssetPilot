@@ -57,7 +57,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Подтвердите импорт в приложении «Команды» и выберите банковское или платежное приложение. Следуйте подсказкам, чтобы включить автоматизацию.';
+      'В приложении «Команды» настройте команду, выберите банковское или платёжное приложение и добавьте команду. При редактировании команды нажмите + рядом с триггером уведомлений, чтобы добавить другие приложения. Разверните триггер и включите автоматизацию.';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -76,7 +76,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. В приложении «Команды» откройте редактор команды или создайте новую. Добавьте триггер уведомлений и выберите банковское или платёжное приложение. Нажмите +, чтобы добавить другие приложения.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -88,7 +88,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Выберите способ запуска автоматизации в приложении «Команды». После первого реального уведомления об оплате вернитесь сюда и проверьте последнее полученное уведомление.';
+      '4. Разверните триггер уведомлений и включите автоматизацию. Когда придёт первое уведомление об оплате, вернитесь сюда, чтобы проверить последнее полученное уведомление.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

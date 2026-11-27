@@ -54,7 +54,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      '在捷徑確認加入，然後選取要接收通知的銀行或支付 App。依照捷徑提示啟用自動化。';
+      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -72,7 +72,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。';
+      '1. 在「捷徑」編輯或新增一份捷徑，加入「通知」觸發器並選擇銀行或支付 App。點「＋」加入其他來源。';
 
   @override
   String get notificationCaptureStepAction =>
@@ -84,7 +84,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. 依捷徑提供的選項設定執行方式。收到第一則實際消費通知後，回來查看「最近一次接收」。';
+      '4. 展開通知觸發器旁的箭頭，開啟「自動化操作」。收到第一則消費通知後，回來查看「最近一次接收」。';
 
   @override
   String get notificationCaptureOpenShortcuts => '開啟捷徑';
@@ -6832,7 +6832,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      '在快捷指令中确认添加，然后选择要接收通知的银行或支付 App。依照快捷指令提示启用自动化。';
+      '在快捷指令中点按「设置快捷指令」，选择银行或支付 App，再点按「添加快捷指令」。编辑已导入的快捷指令时，可点按通知触发器旁的「＋」添加其他 App。展开箭头并打开自动化。';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -6850,7 +6850,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. 在快捷指令新增“收到通知”自动化，选取要接收的银行或支付 App。需要多组自动化时，可复制快捷指令再更换来源。';
+      '1. 在快捷指令中编辑或新建一条快捷指令，添加「通知」触发器并选择银行或支付 App。点按「＋」添加其他来源。';
 
   @override
   String get notificationCaptureStepAction =>
@@ -6862,7 +6862,7 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. 按快捷指令提供的选项设置运行方式。收到第一条实际消费通知后，回来查看「最近一次接收」。';
+      '4. 展开通知触发器旁的箭头，打开自动化。收到第一条消费通知后，回来查看「最近一次接收」。';
 
   @override
   String get notificationCaptureOpenShortcuts => '打开快捷指令';
@@ -13514,7 +13514,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      '在捷徑確認加入，然後選取要接收通知的銀行或支付 App。依照捷徑提示啟用自動化。';
+      '在捷徑點「設定捷徑」，選擇銀行或支付 App，再點「加入捷徑」。編輯匯入的捷徑時，可點通知觸發器旁的「＋」加入其他 App。展開箭頭並打開「自動化操作」。';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -13532,7 +13532,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. 在捷徑新增「收到通知」自動化，選取要接收的銀行或支付 App。需要多組自動化時，可複製捷徑再更換來源。';
+      '1. 在「捷徑」編輯或新增一份捷徑，加入「通知」觸發器並選擇銀行或支付 App。點「＋」加入其他來源。';
 
   @override
   String get notificationCaptureStepAction =>
@@ -13544,7 +13544,7 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. 依捷徑提供的選項設定執行方式。收到第一則實際消費通知後，回來查看「最近一次接收」。';
+      '4. 展開通知觸發器旁的箭頭，開啟「自動化操作」。收到第一則消費通知後，回來查看「最近一次接收」。';
 
   @override
   String get notificationCaptureOpenShortcuts => '開啟捷徑';

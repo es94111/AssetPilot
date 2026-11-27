@@ -56,7 +56,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationCaptureTemplateChooseSource =>
-      'Confirma la importación en Atajos y elige la app de tu banco o de pagos. Sigue las indicaciones para activar la automatización.';
+      'En Atajos, configura el atajo, elige la app de tu banco o de pagos y añade el atajo. Al editarlo, pulsa + junto al activador de notificaciones para añadir más apps. Despliega el activador y activa la automatización.';
 
   @override
   String get notificationCaptureTemplateReplace =>
@@ -75,7 +75,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationCaptureStepTrigger =>
-      '1. In Shortcuts, add a Notification automation and select the bank or payment app. Duplicate the shortcut for a separate trigger if needed.';
+      '1. En Atajos, edita o crea un atajo. Añade el activador de notificaciones y elige la app de tu banco o de pagos. Pulsa + para añadir más apps.';
 
   @override
   String get notificationCaptureStepAction =>
@@ -87,7 +87,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationCaptureStepRun =>
-      '4. Elige cómo se ejecuta la automatización en Atajos. Tras el primer aviso de pago real, vuelve aquí para consultar la última notificación recibida.';
+      '4. Despliega el activador de notificaciones y activa la automatización. Cuando recibas el primer aviso de pago, vuelve aquí para consultar la última notificación recibida.';
 
   @override
   String get notificationCaptureOpenShortcuts => 'Open Shortcuts';

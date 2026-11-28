@@ -1163,15 +1163,15 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       </div>
 
       <div className="tx-page-summary" aria-label={t('features.transactions.pageSummaryAria')}>
-        <div className="tx-page-summary-item tx-page-summary-income">
+        <div className="tx-page-summary-item">
           <span className="tx-page-summary-label">{t('features.transactions.pageIncome')}</span>
           <strong className="tx-page-summary-value amount-income">{fmt(pageTotals.income, locale)}</strong>
         </div>
-        <div className="tx-page-summary-item tx-page-summary-expense">
+        <div className="tx-page-summary-item">
           <span className="tx-page-summary-label">{t('features.transactions.pageExpense')}</span>
           <strong className="tx-page-summary-value amount-expense">{fmt(pageTotals.expense, locale)}</strong>
         </div>
-        <div className="tx-page-summary-item tx-page-summary-net">
+        <div className="tx-page-summary-item">
           <span className="tx-page-summary-label">{t('features.transactions.pageTotal')}</span>
           <strong className={`tx-page-summary-value ${pageNet >= 0 ? 'amount-income' : 'amount-expense'}`}>
             {pageNet >= 0 ? '+' : '-'}{fmt(Math.abs(pageNet), locale)}

@@ -265,11 +265,18 @@ export default function AccountsClient() {
 
   function renderAccountCard(account: any) {
     const Icon = ACCOUNT_TYPES.find((item) => item.value === account.category)?.icon || CircleDot;
+    const accentColor = account.color || '#4f6ef7';
     return (
-      <div key={account.id} className={`p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm border-t-4 ${account.category === 'credit_card' && account.isActive === false ? 'opacity-70' : ''}`} style={{ borderTopColor: account.color || '#4f6ef7' }}>
+      <div key={account.id} className={`rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-4 ${account.category === 'credit_card' && account.isActive === false ? 'opacity-70' : ''}`}>
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <Icon size={22} style={{ color: account.color || '#4f6ef7' }} />
+            <span
+              aria-hidden="true"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-[9px]"
+              style={{ color: accentColor, backgroundColor: `color-mix(in srgb, ${accentColor} 12%, var(--surface))` }}
+            >
+              <Icon size={22} />
+            </span>
             <div className="min-w-0">
               <h3 className="font-semibold text-lg truncate">{account.name}</h3>
               <div className="flex items-center gap-2">

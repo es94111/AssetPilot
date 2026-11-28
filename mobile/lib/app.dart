@@ -215,7 +215,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     ApiClient.instance.activeLedgerReadOnlyChanges.addListener(
       _updateLedgerPermissions,
     );
-    unawaited(ApiClient.instance.refreshLedgerRole());
+    unawaited(_restoreActiveLedger());
     ConnectivityService.instance.isOnline.addListener(
       _scheduleNotificationRetry,
     );
@@ -230,6 +230,19 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_handleInitialLink());
     });
+  }
+
+  Future<void> _restoreActiveLedger() async {
+    final api = ApiClient.instance;
+    final savedId = api.activeLedgerId;
+    if (savedId.isEmpty) return;
+    try {
+      final ledgers = await api.ledgers();
+      if (!mounted) return;
+      if (await api.resetMissingActiveLedger(savedId, ledgers)) _reloadAll();
+    } catch (_) {
+      // 離線無法確認權限時，保留目前帳本選取。
+    }
   }
 
   /// 把離線草稿服務綁定到目前使用者與帳本，避免跨帳號／跨帳本混用草稿。

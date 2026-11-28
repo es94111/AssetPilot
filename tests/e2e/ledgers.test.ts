@@ -44,7 +44,10 @@ test('creating an empty shared ledger keeps personal transactions private and sw
     await expect(authedPage.getByText('Private ledger fixture', { exact: true })).toHaveCount(0);
     const response = await authedPage.request.get('/api/transactions', { headers: { 'x-ledger-id': ledgerId } });
     expect((await response.json()).total).toBe(0);
+    await authedPage.getByRole('button', { name: '收合側邊欄' }).click();
+    await expect(activeLedger).toHaveValue(ledgerId);
     await activeLedger.selectOption(`personal:${testUser.id}`);
+    await expect(authedPage).toHaveURL(/\/finance\/transactions/);
     await expect(authedPage.getByText('Private ledger fixture', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   } finally {
     if (ledgerId) {

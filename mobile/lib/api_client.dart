@@ -1154,10 +1154,25 @@ class ApiClient {
   // ── 共享帳本（issue #281）────────────────────────────────────
   /// 列出目前仍是成員的帳本（含角色），同時更新目前帳本的唯讀狀態。
   Future<List<dynamic>> ledgers() async {
-    final r = await _send('GET', '/api/ledgers');
-    final rows = r is List ? r : const [];
+    final rows = await _send('GET', '/api/ledgers');
+    if (rows is! List) throw const FormatException('Invalid ledger list');
     updateLedgerRoleState(rows);
     return rows;
+  }
+
+  /// 只有成功載入清單，且期間沒有另選帳本時，才回到個人帳本。
+  Future<bool> resetMissingActiveLedger(
+    String expectedId,
+    List<dynamic> ledgers,
+  ) async {
+    if (expectedId.isEmpty || expectedId != _activeLedgerId) return false;
+    if (ledgers.any(
+      (ledger) => ledger is Map && '${ledger['id'] ?? ''}' == expectedId,
+    )) {
+      return false;
+    }
+    await setActiveLedgerId('');
+    return true;
   }
 
   /// 向伺服器重新確認目前帳本的角色並回傳是否唯讀。冷啟動後旗標尚未載入

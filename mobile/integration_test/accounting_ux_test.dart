@@ -89,16 +89,15 @@ void main() {
 
     final semantics = tester.ensureSemantics();
     try {
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          supportedLocales: const [Locale('zh', 'TW')],
-          locale: const Locale('zh', 'TW'),
-          theme: buildAssetPilotTheme(Brightness.light),
-          darkTheme: buildAssetPilotTheme(Brightness.dark),
-          home: HomeShell(onLoggedOut: () {}),
-        ),
+      final app = MaterialApp(
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [Locale('zh', 'TW')],
+        locale: const Locale('zh', 'TW'),
+        theme: buildAssetPilotTheme(Brightness.light),
+        darkTheme: buildAssetPilotTheme(Brightness.dark),
+        home: HomeShell(onLoggedOut: () {}),
       );
+      await tester.pumpWidget(app);
       await tester.pumpAndSettle();
       ConnectivityService.instance.isOnline.value = true;
 
@@ -278,6 +277,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(DashboardScreen), findsOneWidget);
       expect(find.byType(ReportsScreen), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await ApiClient.instance.setActiveLedgerId(
+        'viewer-ledger',
+        readOnly: true,
+      );
+      await tester.pumpWidget(app);
+      await tester.pumpAndSettle();
+      expect(ApiClient.instance.activeLedgerId, isEmpty);
+      expect(find.byType(RecordButton), findsOneWidget);
     } finally {
       semantics.dispose();
     }

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
 import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { useT } from '@/components/i18n/I18nProvider';
@@ -115,33 +114,41 @@ export default function LedgerSwitcher({ compact = false, inline = false }: { co
   const { t } = useT();
   const { ledgers, activeId, selectLedger } = useActiveLedger();
   const id = useId();
+  const label = t('ledger.activeLedger');
+  const picker = (
+    <select
+      id={id}
+      aria-label={compact ? label : undefined}
+      value={activeId}
+      onChange={event => selectLedger(event.target.value)}
+      className={compact
+        ? 'absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-default'
+        : 'min-h-11 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]'}
+      disabled={ledgers.length === 0}
+    >
+      {ledgers.length === 0 && <option value="">{t('features.common.unspecified')}</option>}
+      {ledgers.map(ledger => (
+        <option key={ledger.id} value={ledger.id}>
+          {ledger.isShared ? ledger.name : t('ledger.personal')}
+        </option>
+      ))}
+    </select>
+  );
   if (compact) {
     return (
       <div className="px-3 pt-2">
-        <Link href="/settings/ledgers" title={t('ledger.manage')} aria-label={t('ledger.manage')} className="nav-link min-h-11 justify-center">
+        <div title={label} className="nav-link relative min-h-11 justify-center focus-within:outline-2 focus-within:outline-[var(--focus-ring)]">
           <BookOpen size={18} aria-hidden="true" />
-        </Link>
+          {picker}
+        </div>
       </div>
     );
   }
 
   return (
     <div className={inline ? 'flex min-h-12 items-center gap-3' : 'space-y-1 border-b border-[var(--border)] p-3'}>
-      <label htmlFor={id} className="shrink-0 text-xs font-medium text-[var(--text-secondary)]">{t('ledger.activeLedger')}</label>
-      <select
-        id={id}
-        value={activeId}
-        onChange={event => selectLedger(event.target.value)}
-        className="min-h-11 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]"
-        disabled={ledgers.length === 0}
-      >
-        {ledgers.length === 0 && <option value="">{t('features.common.unspecified')}</option>}
-        {ledgers.map(ledger => (
-          <option key={ledger.id} value={ledger.id}>
-            {ledger.isShared ? ledger.name : t('ledger.personal')}
-          </option>
-        ))}
-      </select>
+      <label htmlFor={id} className="shrink-0 text-xs font-medium text-[var(--text-secondary)]">{label}</label>
+      {picker}
     </div>
   );
 }

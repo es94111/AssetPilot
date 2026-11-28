@@ -1,9 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { BookOpen } from 'lucide-react';
+import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { useT } from '@/components/i18n/I18nProvider';
-import { apiGet, ACTIVE_LEDGER_STORAGE_KEY, LEDGER_CHANGED_EVENT, setActiveLedgerId } from '@/lib/clientApi';
+import {
+  ACTIVE_LEDGER_STORAGE_KEY, LEDGER_CHANGED_EVENT, apiGet, getActiveLedgerId, setActiveLedgerId,
+} from '@/lib/clientApi';
 
 type LedgerOption = {
   id: string;
@@ -13,125 +15,140 @@ type LedgerOption = {
   role: 'owner' | 'editor' | 'viewer';
 };
 
-export default function LedgerSwitcher({
-  collapsed = false,
-  onNavigate,
-}: {
-  collapsed?: boolean;
-  onNavigate?: () => void;
-}) {
-  const { t } = useT();
+type ActiveLedgerContextValue = {
+  ledgers: LedgerOption[];
+  activeId: string;
+  canWrite: boolean;
+  readOnly: boolean;
+  selectLedger: (id: string) => void;
+};
+
+const ActiveLedgerContext = createContext<ActiveLedgerContextValue>({
+  ledgers: [], activeId: '', canWrite: false, readOnly: false, selectLedger: () => {},
+});
+
+export function useActiveLedger() {
+  return useContext(ActiveLedgerContext);
+}
+
+export function ActiveLedgerProvider({ children }: { children: ReactNode }) {
   const [ledgers, setLedgers] = useState<LedgerOption[]>([]);
   const [activeId, setActiveId] = useState('');
 
   useEffect(() => {
-    let active = true;
-    apiGet('/api/ledgers')
-      .then((rows: LedgerOption[]) => {
-        if (!active || !Array.isArray(rows)) return;
+    let mounted = true;
+    let request = 0;
+    let restoringSelection = false;
+
+    async function load() {
+      const current = ++request;
+      try {
+        const rows = await apiGet('/api/ledgers') as LedgerOption[];
+        if (!mounted || current !== request || !Array.isArray(rows)) return;
+        const stored = getActiveLedgerId();
+        const selected = rows.find(ledger => ledger.id === stored)
+          ?? rows.find(ledger => ledger.isPersonal)
+          ?? rows[0];
         setLedgers(rows);
-        const stored = window.localStorage.getItem(ACTIVE_LEDGER_STORAGE_KEY) || '';
-        const selected = rows.find((ledger) => ledger.id === stored)
-          || rows.find((ledger) => ledger.isPersonal)
-          || rows[0];
-        if (selected) {
-          const previousCookie = document.cookie.split(';').map((value) => value.trim())
-            .find((value) => value.startsWith('activeLedgerId='))?.slice('activeLedgerId='.length);
-          setActiveId(selected.id);
+        setActiveId(selected?.id ?? '');
+        if (!selected) return;
+
+        const currentCookie = document.cookie.split('; ').find(item => item.startsWith('activeLedgerId='));
+        if (stored === selected.id && currentCookie === `activeLedgerId=${encodeURIComponent(selected.id)}`) return;
+        restoringSelection = true;
+        try {
           setActiveLedgerId(selected.id);
-          if ((stored && stored !== selected.id && window.location.pathname !== '/dashboard')
-            || (selected.isShared && window.location.pathname === '/dashboard' && previousCookie !== encodeURIComponent(selected.id))) {
+          if ((stored && stored !== selected.id) || (window.location.pathname === '/dashboard' && (selected.isShared || currentCookie))) {
             window.location.reload();
           }
+        } finally {
+          restoringSelection = false;
         }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const onChange = (event: Event) => {
-      const ledgerId = (event as CustomEvent<{ ledgerId: string }>).detail?.ledgerId;
-      if (ledgerId) {
-        setActiveId(ledgerId);
-        void apiGet('/api/ledgers').then((rows) => {
-          if (Array.isArray(rows)) setLedgers(rows);
-        }).catch(() => {});
+      } catch {
+        // Retain the already loaded ledger when the connection drops.
       }
-    };
-    const onStorage = (event: StorageEvent) => {
+    }
+
+    function onLedgerChange() {
+      if (restoringSelection) return;
+      setActiveId(getActiveLedgerId());
+      void load();
+    }
+    function onStorage(event: StorageEvent) {
       if (event.key === ACTIVE_LEDGER_STORAGE_KEY) window.location.reload();
-    };
-    window.addEventListener(LEDGER_CHANGED_EVENT, onChange);
+    }
+
+    void load();
+    window.addEventListener(LEDGER_CHANGED_EVENT, onLedgerChange);
     window.addEventListener('storage', onStorage);
+    window.addEventListener('online', onLedgerChange);
     return () => {
-      window.removeEventListener(LEDGER_CHANGED_EVENT, onChange);
+      mounted = false;
+      window.removeEventListener(LEDGER_CHANGED_EVENT, onLedgerChange);
       window.removeEventListener('storage', onStorage);
+      window.removeEventListener('online', onLedgerChange);
     };
   }, []);
 
-  const selectLedger = (ledgerId: string) => {
-    if (!ledgerId || ledgerId === activeId) return;
+  const active = ledgers.find(ledger => ledger.id === activeId);
+  function selectLedger(id: string) {
+    if (!id || id === activeId || !ledgers.some(ledger => ledger.id === id)) return;
     try {
-      setActiveLedgerId(ledgerId);
+      setActiveLedgerId(id);
+      window.location.reload();
     } catch {
-      return;
+      // A blocked storage operation leaves the current ledger selected.
     }
-    setActiveId(ledgerId);
-    window.location.reload();
-  };
+  }
 
-  if (collapsed) {
+  return (
+    <ActiveLedgerContext.Provider value={{
+      ledgers, activeId, selectLedger, canWrite: !!active && active.role !== 'viewer', readOnly: active?.role === 'viewer',
+    }}>
+      {children}
+    </ActiveLedgerContext.Provider>
+  );
+}
+
+export default function LedgerSwitcher({ compact = false, inline = false }: { compact?: boolean; inline?: boolean }) {
+  const { t } = useT();
+  const { ledgers, activeId, selectLedger } = useActiveLedger();
+  const id = useId();
+  const label = t('ledger.activeLedger');
+  const picker = (
+    <select
+      id={id}
+      aria-label={compact ? label : undefined}
+      value={activeId}
+      onChange={event => selectLedger(event.target.value)}
+      className={compact
+        ? 'absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-default'
+        : 'min-h-11 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]'}
+      disabled={ledgers.length === 0}
+    >
+      {ledgers.length === 0 && <option value="">{t('features.common.unspecified')}</option>}
+      {ledgers.map(ledger => (
+        <option key={ledger.id} value={ledger.id}>
+          {ledger.isShared ? ledger.name : t('ledger.personal')}
+        </option>
+      ))}
+    </select>
+  );
+  if (compact) {
     return (
       <div className="px-3 pt-2">
-        <Link
-          href="/settings/ledgers"
-          onClick={onNavigate}
-          title={t('ledger.manage')}
-          aria-label={t('ledger.manage')}
-          className="nav-link justify-center px-0"
-        >
-          <span aria-hidden="true">◫</span>
-        </Link>
+        <div title={label} className="nav-link relative min-h-11 justify-center focus-within:outline-2 focus-within:outline-[var(--focus-ring)]">
+          <BookOpen size={18} aria-hidden="true" />
+          {picker}
+        </div>
       </div>
     );
   }
 
   return (
-    <section className="mx-3 my-3 rounded-xl p-3" style={{ background: 'var(--surface-subtle)' }} aria-label={t('ledger.activeLedger')}>
-      <label htmlFor="active-ledger" className="mb-1 block text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-        {t('ledger.activeLedger')}
-      </label>
-      <select
-        id="active-ledger"
-        value={activeId}
-        onChange={(event) => selectLedger(event.target.value)}
-        className="min-h-10 w-full rounded-lg border px-2 text-sm"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }}
-        disabled={ledgers.length === 0}
-      >
-        {ledgers.map((ledger) => (
-          <option key={ledger.id} value={ledger.id}>
-            {ledger.isShared ? ledger.name : t('ledger.personal')}
-          </option>
-        ))}
-      </select>
-      {ledgers.find((ledger) => ledger.id === activeId)?.isShared && (
-        <p className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{t('ledger.emptySharedNotice')}</p>
-      )}
-      {ledgers.find((ledger) => ledger.id === activeId)?.role === 'viewer' && (
-        <p className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{t('ledger.viewer')}</p>
-      )}
-      <Link
-        href="/settings/ledgers"
-        onClick={onNavigate}
-        className="mt-2 inline-flex min-h-8 items-center text-xs font-medium"
-        style={{ color: 'var(--text)' }}
-      >
-        {t('ledger.manage')}
-      </Link>
-    </section>
+    <div className={inline ? 'flex min-h-12 items-center gap-3' : 'space-y-1 border-b border-[var(--border)] p-3'}>
+      <label htmlFor={id} className="shrink-0 text-xs font-medium text-[var(--text-secondary)]">{label}</label>
+      {picker}
+    </div>
   );
 }

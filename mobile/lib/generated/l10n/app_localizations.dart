@@ -12357,6 +12357,126 @@ abstract class AppLocalizations {
   /// In zh_Hant_TW, this message translates to:
   /// **'桌面 Widget 預設不顯示金額，避免財務資訊外洩'**
   String get settingsWidgetHideAmountsSubtitle;
+
+  /// Web path: ux.bookkeeping
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'記帳'**
+  String get uxBookkeeping;
+
+  /// Web path: ux.ledgerTools
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳務管理'**
+  String get uxLedgerTools;
+
+  /// Web path: ux.budgetsAndReports
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'預算與報表'**
+  String get uxBudgetsAndReports;
+
+  /// Web path: ux.settingsAndHelp
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'設定與說明'**
+  String get uxSettingsAndHelp;
+
+  /// Web path: ux.preferences
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'個人偏好'**
+  String get uxPreferences;
+
+  /// Web path: ux.security
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'帳號與安全'**
+  String get uxSecurity;
+
+  /// Web path: ux.notificationsAndIntegrations
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'通知與整合'**
+  String get uxNotificationsAndIntegrations;
+
+  /// Web path: ux.dataAndAdmin
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'資料與管理'**
+  String get uxDataAndAdmin;
+
+  /// Web path: ux.transactionDetails
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'交易細節'**
+  String get uxTransactionDetails;
+
+  /// Web path: ux.includedInStats
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'僅顯示計入統計的交易'**
+  String get uxIncludedInStats;
+
+  /// Web path: ux.advancedOptions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'進階選項'**
+  String get uxAdvancedOptions;
+
+  /// Web path: ux.drafts
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'待處理草稿'**
+  String get uxDrafts;
+
+  /// Web path: ux.stockTools
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股票工具'**
+  String get uxStockTools;
+
+  /// Web path: ux.stockView
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'股票頁面'**
+  String get uxStockView;
+
+  /// Web path: ux.reportOptions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'報表選項'**
+  String get uxReportOptions;
+
+  /// Web path: ux.viewReports
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查看報表'**
+  String get uxViewReports;
+
+  /// Web path: ux.viewAllTransactions
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'查看全部交易'**
+  String get uxViewAllTransactions;
+
+  /// Web path: ux.dashboardDetails
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'財務分析'**
+  String get uxDashboardDetails;
+
+  /// Web path: ux.emptyLedgerHint
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'點「記一筆」新增第一筆收支。'**
+  String get uxEmptyLedgerHint;
+
+  /// Web path: ux.export
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'匯出'**
+  String get uxExport;
 }
 
 class _AppLocalizationsDelegate

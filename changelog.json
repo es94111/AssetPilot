@@ -1,6 +1,26 @@
 {
-  "currentVersion": "6.2.4",
+  "currentVersion": "6.3.0",
   "releases": [
+    {
+      "version": "6.3.0",
+      "date": "2026-11-28",
+      "title": "簡化網站與手機 App 的記帳操作",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "將網站與手機 App 的常用導覽整理為首頁、記帳、股票、更多，並將帳戶、預算、報表及設定依用途分組。"
+        },
+        {
+          "tag": "improved",
+          "text": "首頁保留快速記帳與近期交易，篩選和進階記帳欄位可按需要展開。"
+        },
+        {
+          "tag": "fixed",
+          "text": "修正報表開啟交易明細的分類範圍，並依帳本權限顯示網站與手機 App 的編輯入口。"
+        }
+      ]
+    },
     {
       "version": "6.2.4",
       "date": "2026-11-27",

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { Wallet } from 'lucide-react';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { Plus, Trash2, Edit3, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -29,12 +30,14 @@ function pct(spent: number, budget: number) {
 
 export default function BudgetClient(_props: { user?: any } = {}) {
   const { t, locale } = useT();
+  const { canWrite } = useActiveLedger();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -55,6 +58,12 @@ export default function BudgetClient(_props: { user?: any } = {}) {
   useEffect(() => { loadCats(); }, [loadCats]);
   useEffect(() => { load(); }, [load]);
 
+  function prepareForm(budget?: any) {
+    setForm(budget ? { categoryId: budget.category_id || budget.categoryId || '', amount: budget.amount, period: budget.period } : EMPTY_FORM);
+    setEditId(budget?.id ?? null);
+    setFormError('');
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form.amount || Number(form.amount) <= 0) { setFormError(t('features.budget.messages.amountRequired')); return; }
@@ -64,6 +73,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
       const body = { categoryId: form.categoryId || null, amount: Number(form.amount), period: form.period, yearMonth: month };
       if (editId) { await apiPut(`/api/budgets/${editId}`, body); }
       else { await apiPost('/api/budgets', body); }
+      setFormOpen(false);
       await load();
     } catch (e: any) { setFormError(e.message); }
     setSaving(false);
@@ -83,7 +93,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
   const totalBudget = budgets.reduce((s, b) => s + (Number(b.amount) || 0), 0);
   const totalSpent = budgets.reduce((s, b) => s + (Number(b.used) || 0), 0);
 
-  return (
+  const content = (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{t('features.budget.title')}</h2>
       <div className="flex items-center gap-4 justify-center">
@@ -107,11 +117,10 @@ export default function BudgetClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button onClick={() => { setForm(EMPTY_FORM); setEditId(null); setFormError(''); }}><Plus size={16} className="mr-2" /> {t('features.budget.addBudget')}</Button>
-        </DialogTrigger>
-        <DialogContent>
+      {canWrite && <DialogTrigger asChild>
+        <Button onClick={() => prepareForm()}><Plus size={16} className="mr-2" /> {t('features.budget.addBudget')}</Button>
+      </DialogTrigger>}
+        <DialogContent closeLabel={t('common.close')}>
           <DialogHeader><DialogTitle>{editId ? t('features.budget.editBudget') : t('features.budget.newBudget')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <Select label={t('features.budget.categoryLabel')} options={[
@@ -127,10 +136,9 @@ export default function BudgetClient(_props: { user?: any } = {}) {
             ]} value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} />
             <Input label={t('features.budget.amountLabel')} type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
-            <DialogClose asChild><Button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button></DialogClose>
+            <Button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
           </form>
         </DialogContent>
-      </Dialog>
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" aria-busy="true">
@@ -140,7 +148,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
         <div className="empty-state rounded-xl border border-dashed" style={{ borderColor: 'var(--border-strong)' }}>
           <div className="empty-state-icon"><Wallet size={22} aria-hidden="true" /></div>
           <p className="empty-state-title">{t('common.noData')}</p>
-          <p className="empty-state-hint">{t('features.budget.totalBudget')}：{t('features.budget.addBudget')}</p>
+          {canWrite && <p className="empty-state-hint">{t('features.budget.totalBudget')}：{t('features.budget.addBudget')}</p>}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -152,10 +160,12 @@ export default function BudgetClient(_props: { user?: any } = {}) {
               <div key={b.id} className="p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-2">
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold">{catName}</h3>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => { setForm({ categoryId: b.category_id || b.categoryId || '', amount: b.amount, period: b.period }); setEditId(b.id); }}><Edit3 size={16} /></Button>
-                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(b.id)}><Trash2 size={16} /></Button>
-                  </div>
+                  {canWrite && <div className="flex gap-1">
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label={t('features.budget.editBudget')} onClick={() => prepareForm(b)}><Edit3 size={16} /></Button>
+                    </DialogTrigger>
+                    <Button variant="ghost" size="icon" aria-label={t('common.delete')} className="text-red-500" onClick={() => setDeleteId(b.id)}><Trash2 size={16} /></Button>
+                  </div>}
                 </div>
                 <div className={`text-lg font-bold ${overBudget ? 'text-red-600' : 'text-slate-900'}`}>{fmt(b.used, locale)} / {fmt(b.amount, locale)}</div>
                 <div className="w-full bg-slate-100 rounded-full h-2.5">
@@ -168,7 +178,7 @@ export default function BudgetClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      {deleteId && (
+      {canWrite && deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">{t('common.confirmDelete')}</h3>
@@ -182,4 +192,5 @@ export default function BudgetClient(_props: { user?: any } = {}) {
       )}
     </div>
   );
+  return <Dialog open={canWrite && formOpen} onOpenChange={setFormOpen}>{content}</Dialog>;
 }

@@ -15,7 +15,8 @@ class _ReportData {
 }
 
 class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key});
+  final DateTimeRange? initialRange;
+  const ReportsScreen({super.key, this.initialRange});
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -30,7 +31,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _range = DateTimeRange(start: DateTime(now.year, now.month, 1), end: now);
+    _range =
+        widget.initialRange ??
+        DateTimeRange(start: DateTime(now.year, now.month, 1), end: now);
     _future = _load();
   }
 
@@ -52,7 +55,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return _ReportData(breakdown, total);
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _pickRange() async {
     final r = await showDateRangePicker(
@@ -61,7 +69,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       lastDate: DateTime(2100),
       initialDateRange: _range,
     );
-    if (r != null) {
+    if (r != null && mounted) {
       setState(() {
         _range = r;
         _future = _load();
@@ -89,28 +97,39 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             child: Column(
               children: [
-                SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'expense',
-                      label: Text(trKey('dashboardOverviewExpense')),
+                Wrap(
+                  spacing: ApSpace.sm,
+                  runSpacing: ApSpace.sm,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _pickRange,
+                      icon: const Icon(Icons.date_range),
+                      label: Text(
+                        '${_fmt(_range.start)} – ${_fmt(_range.end)}',
+                      ),
                     ),
-                    ButtonSegment(
-                      value: 'income',
-                      label: Text(trKey('dashboardOverviewIncome')),
+                    SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(
+                          value: 'expense',
+                          label: Text(trKey('dashboardOverviewExpense')),
+                        ),
+                        ButtonSegment(
+                          value: 'income',
+                          label: Text(trKey('dashboardOverviewIncome')),
+                        ),
+                      ],
+                      selected: {_type},
+                      onSelectionChanged: (selection) {
+                        setState(() {
+                          _type = selection.first;
+                          _future = _load();
+                        });
+                      },
                     ),
                   ],
-                  selected: {_type},
-                  onSelectionChanged: (s) {
-                    setState(() => _type = s.first);
-                    _reload();
-                  },
-                ),
-                const SizedBox(height: ApSpace.sm),
-                OutlinedButton.icon(
-                  onPressed: _pickRange,
-                  icon: const Icon(Icons.date_range),
-                  label: Text('${_fmt(_range.start)} ～ ${_fmt(_range.end)}'),
                 ),
               ],
             ),
@@ -132,8 +151,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 if (data.breakdown.isEmpty) {
                   return EmptyState(
                     icon: Icons.bar_chart,
-                    title: trKey('mobileLegacyNoDataForThisPeriod'),
-                    message: trKey('mobileLegacyFilterTransactions'),
+                    message: trKey('mobileLegacyNoDataForThisPeriod'),
+                    onAction: _pickRange,
+                    actionLabel: trKey('featuresReportsPeriodLabel'),
                   );
                 }
                 final sorted = [...data.breakdown]

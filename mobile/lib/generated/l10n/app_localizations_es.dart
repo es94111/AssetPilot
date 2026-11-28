@@ -7205,4 +7205,66 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'Los widgets de la pantalla de inicio no muestran importes por defecto, para proteger los datos financieros';
+
+  @override
+  String get uxBookkeeping => 'Movimientos';
+
+  @override
+  String get uxLedgerTools => 'Gestión de cuentas';
+
+  @override
+  String get uxBudgetsAndReports => 'Presupuestos e informes';
+
+  @override
+  String get uxSettingsAndHelp => 'Ajustes y ayuda';
+
+  @override
+  String get uxPreferences => 'Preferencias';
+
+  @override
+  String get uxSecurity => 'Cuenta y seguridad';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'Notificaciones e integraciones';
+
+  @override
+  String get uxDataAndAdmin => 'Datos y administración';
+
+  @override
+  String get uxTransactionDetails => 'Detalles del movimiento';
+
+  @override
+  String get uxIncludedInStats =>
+      'Solo transacciones incluidas en las estadísticas';
+
+  @override
+  String get uxAdvancedOptions => 'Opciones avanzadas';
+
+  @override
+  String get uxDrafts => 'Borradores pendientes';
+
+  @override
+  String get uxStockTools => 'Herramientas de inversión';
+
+  @override
+  String get uxStockView => 'Vista de acciones';
+
+  @override
+  String get uxReportOptions => 'Opciones del informe';
+
+  @override
+  String get uxViewReports => 'Ver informes';
+
+  @override
+  String get uxViewAllTransactions => 'Ver todos los movimientos';
+
+  @override
+  String get uxDashboardDetails => 'Análisis financiero';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'Toca «Añadir movimiento» para registrar tu primer ingreso o gasto.';
+
+  @override
+  String get uxExport => 'Exportar';
 }

@@ -73,20 +73,26 @@ class _LedgerScreenState extends State<LedgerScreen> {
   }
 
   Future<List<LedgerOption>> _load() async {
-    final rows = await ApiClient.instance.ledgers();
+    final api = ApiClient.instance;
+    final selectedId = api.activeLedgerId;
+    final rows = await api.ledgers();
     final ledgers = rows
         .map((e) => LedgerOption.fromJson((e as Map).cast<String, dynamic>()))
         .toList();
     // 選取的帳本若已失效（離開／被移除／已刪除），安全地退回個人帳本，
     // 避免後續請求持續帶著已無權限的帳本 id。
-    final active = ApiClient.instance.activeLedgerId;
-    if (active.isNotEmpty && !ledgers.any((l) => l.id == active)) {
-      await ApiClient.instance.setActiveLedgerId('');
+    if (mounted && await api.resetMissingActiveLedger(selectedId, rows)) {
+      if (mounted) widget.onLedgerChanged?.call();
     }
     return ledgers;
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _acceptInvitation() async {
     final token = widget.invitationToken ?? '';
@@ -131,7 +137,7 @@ class _LedgerScreenState extends State<LedgerScreen> {
     final ctrl = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('ledgerCreate')),
         content: TextField(
           controller: ctrl,

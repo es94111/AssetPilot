@@ -7061,4 +7061,65 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'لا تعرض أدوات الشاشة الرئيسية المبالغ افتراضيًا، للحفاظ على خصوصية البيانات المالية';
+
+  @override
+  String get uxBookkeeping => 'المعاملات';
+
+  @override
+  String get uxLedgerTools => 'إدارة الحسابات';
+
+  @override
+  String get uxBudgetsAndReports => 'الميزانيات والتقارير';
+
+  @override
+  String get uxSettingsAndHelp => 'الإعدادات والمساعدة';
+
+  @override
+  String get uxPreferences => 'التفضيلات';
+
+  @override
+  String get uxSecurity => 'الحساب والأمان';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'الإشعارات والتكاملات';
+
+  @override
+  String get uxDataAndAdmin => 'البيانات والإدارة';
+
+  @override
+  String get uxTransactionDetails => 'تفاصيل المعاملة';
+
+  @override
+  String get uxIncludedInStats => 'المعاملات المشمولة في الإحصاءات فقط';
+
+  @override
+  String get uxAdvancedOptions => 'خيارات متقدمة';
+
+  @override
+  String get uxDrafts => 'المسودات المعلقة';
+
+  @override
+  String get uxStockTools => 'أدوات الأسهم';
+
+  @override
+  String get uxStockView => 'عرض الأسهم';
+
+  @override
+  String get uxReportOptions => 'خيارات التقرير';
+
+  @override
+  String get uxViewReports => 'عرض التقارير';
+
+  @override
+  String get uxViewAllTransactions => 'عرض كل المعاملات';
+
+  @override
+  String get uxDashboardDetails => 'التحليل المالي';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'اضغط على «إضافة معاملة» لتسجيل أول دخل أو مصروف.';
+
+  @override
+  String get uxExport => 'تصدير';
 }

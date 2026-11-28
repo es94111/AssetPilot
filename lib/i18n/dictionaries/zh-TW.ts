@@ -2354,6 +2354,28 @@ export const zhTW = {
     closed: "系統已完成初始化",
     backToLogin: "返回登入",
   },
+  ux: {
+    bookkeeping: "記帳",
+    ledgerTools: "帳務管理",
+    budgetsAndReports: "預算與報表",
+    settingsAndHelp: "設定與說明",
+    preferences: "個人偏好",
+    security: "帳號與安全",
+    notificationsAndIntegrations: "通知與整合",
+    dataAndAdmin: "資料與管理",
+    transactionDetails: "交易細節",
+    includedInStats: "僅顯示計入統計的交易",
+    advancedOptions: "進階選項",
+    drafts: "待處理草稿",
+    stockTools: "股票工具",
+    stockView: "股票頁面",
+    reportOptions: "報表選項",
+    viewReports: "查看報表",
+    viewAllTransactions: "查看全部交易",
+    dashboardDetails: "財務分析",
+    emptyLedgerHint: "點「記一筆」新增第一筆收支。",
+    export: "匯出",
+  },
 };
 
 export type Dictionary = typeof zhTW;

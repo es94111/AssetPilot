@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/clientApi";
 import StocksTabNav from "./StocksTabNav";
+import Disclosure from "@/components/ui/Disclosure";
+import { useActiveLedger } from "@/components/features/ledgers/LedgerSwitcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -71,6 +73,7 @@ function readPageSizeParam(searchParams: QueryParams) {
 }
 
 export default function StockTxClient(_props: { user?: any } = {}) {
+  const { canWrite } = useActiveLedger();
   const { t, locale } = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -252,7 +255,8 @@ export default function StockTxClient(_props: { user?: any } = {}) {
       </h2>
       <StocksTabNav />
 
-      <div className="flex gap-2 items-center p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
+      <Disclosure title={t("mobileLegacy.filter")} hint={stocks.find(stock => stock.id === filterStockId)?.symbol || [filterDateFrom, filterDateTo].filter(Boolean).join(" – ")}>
+        <div className="flex flex-wrap items-end gap-3">
         <Select
           options={stocks.map((s) => ({
             label: `${String(s.market || "TW").toUpperCase() === "US" ? t("features.stocks.common.marketUs") : t("features.stocks.common.marketTaiwan")} · ${s.symbol} ${s.name}`,
@@ -261,7 +265,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
           value={filterStockId}
           onChange={(e) => updateFilter(setFilterStockId, e.target.value)}
           label={t("features.stocks.common.stockLabel")}
-          className="w-48"
+          className="min-w-0 sm:w-48"
         />
         <Input
           type="date"
@@ -286,10 +290,12 @@ export default function StockTxClient(_props: { user?: any } = {}) {
         >
           {t("common.clear")}
         </Button>
-      </div>
+        </div>
+      </Disclosure>
 
-      <div className="flex justify-between items-center">
-        <Button
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {canWrite && (
+          <Button
           onClick={() => {
             setForm({
               ...EMPTY_FORM,
@@ -304,6 +310,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
           <Plus size={16} className="mr-2" />{" "}
           {t("features.stocks.transactions.addTransaction")}
         </Button>
+          )}
         <div className="flex items-center gap-3">
           <span className="text-sm text-slate-500">
             {t("common.totalRecords", { count: total })}
@@ -328,7 +335,7 @@ export default function StockTxClient(_props: { user?: any } = {}) {
         </div>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen && canWrite} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -431,6 +438,9 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                 setForm((f) => ({ ...f, price: e.target.value }))
               }
             />
+            <Disclosure title={t("ux.advancedOptions")}
+              onInvalidCapture={(event) => { event.currentTarget.open = true; }}>
+              <div className="space-y-3">
             <Input
               label={t("features.stocks.transactions.feeLabel")}
               type="number"
@@ -475,6 +485,8 @@ export default function StockTxClient(_props: { user?: any } = {}) {
               value={form.note}
               onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
             />
+              </div>
+            </Disclosure>
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
             <div className="flex gap-2">
               <Button
@@ -550,9 +562,11 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                     {fmtCurrency(total, tx.currency, locale)}
                   </TableCell>
                   <TableCell className="flex gap-2">
+                    {canWrite && <>
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={t("common.edit")}
                       onClick={() => {
                         setForm({
                           stockId: tx.stockId || tx.stock_id,
@@ -584,10 +598,13 @@ export default function StockTxClient(_props: { user?: any } = {}) {
                       variant="ghost"
                       size="icon"
                       className="text-red-600"
+                      aria-label={t("common.delete")}
                       onClick={() => setDeleteId(tx.id)}
                     >
                       <Trash2 size={16} />
                     </Button>
+
+                    </>}
                   </TableCell>
                 </TableRow>
               );

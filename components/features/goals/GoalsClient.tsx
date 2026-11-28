@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { addMonthsClamped, buildAmortizationSchedule, todayInTimezone } from '@/lib/savingsGoal';
 
@@ -98,6 +99,7 @@ function dayLabel(date: string, locale: string) {
 
 export default function GoalsClient({ userTimezone }: { userTimezone: string }) {
   const { t, locale } = useT();
+  const { canWrite } = useActiveLedger();
   const [goals, setGoals] = useState<GoalView[]>([]);
   const [plans, setPlans] = useState<RepaymentPlanView[]>([]);
   const [accounts, setAccounts] = useState<Option[]>([]);
@@ -304,9 +306,9 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
           <h2 id="goals-savings-title" className="flex items-center gap-2 text-2xl font-bold">
             <Target size={24} aria-hidden="true" />{t('features.goals.savingsTitle')}
           </h2>
-          <Button onClick={() => openGoalDialog()}>
+          {canWrite && <Button onClick={() => openGoalDialog()}>
             <Plus size={16} className="mr-2" aria-hidden="true" />{t('features.goals.addGoal')}
-          </Button>
+          </Button>}
         </div>
 
         {loading ? (
@@ -326,10 +328,10 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
                         {t('features.goals.targetDateLabel')}：{dayLabel(goal.targetDate, locale)}　·　{linkLabel(goal.accountId, goal.categoryId)}
                       </p>
                     </div>
-                    <div className="flex shrink-0 gap-1">
+                    {canWrite && <div className="flex shrink-0 gap-1">
                       <Button variant="ghost" size="icon" aria-label={t('features.goals.editGoal')} onClick={() => openGoalDialog(goal)}><Pencil aria-hidden="true" /></Button>
                       <Button variant="ghost" size="icon" aria-label={t('features.goals.deleteGoal')} onClick={() => setDeleteGoalId(goal.id)}><Trash2 aria-hidden="true" /></Button>
-                    </div>
+                    </div>}
                   </div>
 
                   <div className="mt-3">
@@ -379,9 +381,9 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
           <h2 id="goals-repayment-title" className="flex items-center gap-2 text-2xl font-bold">
             <HandCoins size={24} aria-hidden="true" />{t('features.goals.repaymentTitle')}
           </h2>
-          <Button onClick={() => openPlanDialog()}>
+          {canWrite && <Button onClick={() => openPlanDialog()}>
             <Plus size={16} className="mr-2" aria-hidden="true" />{t('features.goals.addPlan')}
-          </Button>
+          </Button>}
         </div>
 
         {loading ? (
@@ -405,10 +407,10 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
                         })}
                       </p>
                     </div>
-                    <div className="flex shrink-0 gap-1">
+                    {canWrite && <div className="flex shrink-0 gap-1">
                       <Button variant="ghost" size="icon" aria-label={t('features.goals.editPlan')} onClick={() => openPlanDialog(plan)}><Pencil aria-hidden="true" /></Button>
                       <Button variant="ghost" size="icon" aria-label={t('features.goals.deletePlan')} onClick={() => setDeletePlanId(plan.id)}><Trash2 aria-hidden="true" /></Button>
-                    </div>
+                    </div>}
                   </div>
 
                   {plan.scheduleValid ? (
@@ -470,7 +472,7 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
       </section>
 
       {/* 目標編輯對話框 */}
-      <Dialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen}>
+      <Dialog open={canWrite && goalDialogOpen} onOpenChange={setGoalDialogOpen}>
         <DialogContent closeLabel={t('common.close')}>
           <DialogHeader><DialogTitle>{goalEditId ? t('features.goals.editGoal') : t('features.goals.newGoal')}</DialogTitle></DialogHeader>
           <form onSubmit={saveGoal} className="space-y-1">
@@ -506,7 +508,7 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
       </Dialog>
 
       {/* 還款計畫編輯對話框（含即時攤還試算） */}
-      <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
+      <Dialog open={canWrite && planDialogOpen} onOpenChange={setPlanDialogOpen}>
         <DialogContent closeLabel={t('common.close')} className="max-h-[min(90vh,44rem)] overflow-y-auto">
           <DialogHeader><DialogTitle>{planEditId ? t('features.goals.editPlan') : t('features.goals.newPlan')}</DialogTitle></DialogHeader>
           <form onSubmit={savePlan} className="space-y-1">
@@ -586,7 +588,7 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
       </Dialog>
 
       {/* 刪除二次確認 */}
-      <Dialog open={deleteGoalId !== null} onOpenChange={open => { if (!open) setDeleteGoalId(null); }}>
+      <Dialog open={canWrite && deleteGoalId !== null} onOpenChange={open => { if (!open) setDeleteGoalId(null); }}>
         <DialogContent closeLabel={t('common.close')}>
           <DialogHeader><DialogTitle>{t('features.goals.deleteGoal')}</DialogTitle></DialogHeader>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -599,7 +601,7 @@ export default function GoalsClient({ userTimezone }: { userTimezone: string }) 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deletePlanId !== null} onOpenChange={open => { if (!open) setDeletePlanId(null); }}>
+      <Dialog open={canWrite && deletePlanId !== null} onOpenChange={open => { if (!open) setDeletePlanId(null); }}>
         <DialogContent closeLabel={t('common.close')}>
           <DialogHeader><DialogTitle>{t('features.goals.deletePlan')}</DialogTitle></DialogHeader>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>

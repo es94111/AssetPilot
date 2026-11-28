@@ -7168,4 +7168,65 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'Виджеты на экране «Домой» по умолчанию не показывают суммы, чтобы финансовые данные оставались конфиденциальными';
+
+  @override
+  String get uxBookkeeping => 'Операции';
+
+  @override
+  String get uxLedgerTools => 'Управление счетами';
+
+  @override
+  String get uxBudgetsAndReports => 'Бюджеты и отчёты';
+
+  @override
+  String get uxSettingsAndHelp => 'Настройки и помощь';
+
+  @override
+  String get uxPreferences => 'Предпочтения';
+
+  @override
+  String get uxSecurity => 'Аккаунт и безопасность';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'Уведомления и интеграции';
+
+  @override
+  String get uxDataAndAdmin => 'Данные и администрирование';
+
+  @override
+  String get uxTransactionDetails => 'Детали операции';
+
+  @override
+  String get uxIncludedInStats => 'Только операции, включённые в статистику';
+
+  @override
+  String get uxAdvancedOptions => 'Дополнительные параметры';
+
+  @override
+  String get uxDrafts => 'Ожидающие черновики';
+
+  @override
+  String get uxStockTools => 'Инструменты для акций';
+
+  @override
+  String get uxStockView => 'Раздел акций';
+
+  @override
+  String get uxReportOptions => 'Параметры отчёта';
+
+  @override
+  String get uxViewReports => 'Смотреть отчёты';
+
+  @override
+  String get uxViewAllTransactions => 'Все операции';
+
+  @override
+  String get uxDashboardDetails => 'Финансовый анализ';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'Нажмите «Добавить операцию», чтобы записать первый доход или расход.';
+
+  @override
+  String get uxExport => 'Экспорт';
 }

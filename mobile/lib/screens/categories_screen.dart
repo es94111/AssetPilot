@@ -52,11 +52,18 @@ class _CategoriesScreenState extends State<CategoriesScreen>
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openForm({Category? existing, List<Category>? all}) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _CategoryForm(
@@ -69,26 +76,29 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   }
 
   Future<void> _delete(Category c) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(trKey('mobileLegacyDeleteCategory')),
         content: Text(
           trKey('mobileDynamicConfirmDeleteNamed', {'name': c.name}),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(trKey('commonCancel')),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(trKey('commonDelete')),
           ),
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true || !mounted || ApiClient.instance.activeLedgerReadOnly) {
+      return;
+    }
     try {
       await ApiClient.instance.deleteCategory(c.id);
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
@@ -99,7 +109,12 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: ApiClient.instance.activeLedgerReadOnlyChanges,
+    builder: (context, readOnly, _) => _buildScreen(readOnly),
+  );
+
+  Widget _buildScreen(bool readOnly) {
     return Scaffold(
       appBar: AppBar(
         title: Text(trKey('dashboardTableCategory')),
@@ -112,22 +127,27 @@ class _CategoriesScreenState extends State<CategoriesScreen>
           ],
         ),
       ),
-      floatingActionButton: AsyncFab(
-        future: _future,
-        onPressed: (all) => _openForm(all: all),
-      ),
+      floatingActionButton: readOnly
+          ? null
+          : AsyncFab(
+              future: _future,
+              onPressed: (all) => _openForm(all: all),
+            ),
       body: AsyncView<List<Category>>(
         future: _future,
         onRetry: _reload,
         builder: (context, all) => TabBarView(
           controller: _tab,
-          children: [_buildList(all, 'expense'), _buildList(all, 'income')],
+          children: [
+            _buildList(all, 'expense', readOnly),
+            _buildList(all, 'income', readOnly),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildList(List<Category> all, String type) {
+  Widget _buildList(List<Category> all, String type, bool readOnly) {
     final parents = all.where((c) => c.type == type && c.isParent).toList();
     if (parents.isEmpty) {
       return EmptyState(
@@ -149,22 +169,20 @@ class _CategoriesScreenState extends State<CategoriesScreen>
             LedgerCard(
               margin: const EdgeInsets.only(bottom: ApSpace.xs + 2),
               padding: EdgeInsets.zero,
-              onTap: () => _openForm(existing: p, all: all),
               child: ListTile(
                 leading: _dot(p.color),
                 title: Text(
                   p.name,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                onTap: () => _openForm(existing: p, all: all),
-                onLongPress: () => _delete(p),
+                onTap: readOnly ? null : () => _openForm(existing: p, all: all),
+                onLongPress: readOnly ? null : () => _delete(p),
               ),
             ),
             for (final child in all.where((c) => c.parentId == p.id))
               LedgerCard(
                 margin: const EdgeInsets.only(bottom: ApSpace.xs + 2),
                 padding: EdgeInsets.zero,
-                onTap: () => _openForm(existing: child, all: all),
                 child: ListTile(
                   contentPadding: const EdgeInsets.only(
                     left: 56,
@@ -172,8 +190,10 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                   ),
                   leading: _dot(child.color),
                   title: Text(child.name),
-                  onTap: () => _openForm(existing: child, all: all),
-                  onLongPress: () => _delete(child),
+                  onTap: readOnly
+                      ? null
+                      : () => _openForm(existing: child, all: all),
+                  onLongPress: readOnly ? null : () => _delete(child),
                 ),
               ),
             const SizedBox(height: ApSpace.sm),

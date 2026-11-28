@@ -2,7 +2,7 @@ openapi: "3.2.0"
 
 info:
   title: AssetPilot API
-  version: "6.2.4"
+  version: "6.3.0"
   description: |
     個人資產管理平台 AssetPilot 的完整 API Schema。
     供 Cloudflare API Shield Schema Validation 使用。
@@ -1928,6 +1928,18 @@ paths:
           in: query
           schema:
             type: string
+        - name: categoryMatch
+          in: query
+          description: 指定 exact 時只比對所選分類，不展開子分類。
+          schema:
+            type: string
+            enum: [exact]
+        - name: includedInStats
+          in: query
+          description: 指定 1 時只列出計入統計的交易。
+          schema:
+            type: string
+            enum: ["1"]
         - name: accountId
           in: query
           schema:

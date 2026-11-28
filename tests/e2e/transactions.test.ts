@@ -84,9 +84,9 @@ test('user gets an explicit category suggestion from matching transaction histor
   }
 
   await authedPage.goto('/finance/transactions');
-  await authedPage.getByRole('button', { name: '新增交易' }).first().click();
+  await authedPage.getByRole('button', { name: '記一筆' }).first().click();
   const dialog = authedPage.getByRole('dialog');
-  await dialog.locator('details > summary').click();
+  await dialog.getByText('交易細節', { exact: true }).click();
   await dialog.locator('#transaction-note').fill('coffee shop');
 
   // The recommendation is a button with a confidence percentage; it is not
@@ -134,15 +134,17 @@ async function expectAddKeepsPageAndFilters(page: Page, userId: string, openAddD
 }
 
 test('adding a transaction from the page button keeps the current page and filters', async ({ authedPage, testUser }) => {
-  await expectAddKeepsPageAndFilters(authedPage, testUser.id, (page) => page.getByRole('button', { name: '新增交易' }).first().click());
+  await expectAddKeepsPageAndFilters(authedPage, testUser.id, (page) => page.getByRole('button', { name: '記一筆' }).first().click());
 });
 
-test.describe('top bar quick add', () => {
-  // 頂端列只在 1024px 以下顯示（桌機改用側邊欄）；768px 以上列表仍是表格版。
+test.describe('keyboard quick add', () => {
   test.use({ viewport: { width: 900, height: 900 } });
 
-  test('adding a transaction from the top bar quick add keeps the current page and filters', async ({ authedPage, testUser }) => {
-    await expectAddKeepsPageAndFilters(authedPage, testUser.id, (page) => page.getByRole('banner').getByRole('link', { name: '新增交易' }).click());
+  test('Alt+N opens the same form without losing the current page or filters', async ({ authedPage, testUser }) => {
+    await expectAddKeepsPageAndFilters(authedPage, testUser.id, async (page) => {
+      await expect(page.getByRole('button', { name: '記一筆' })).toBeEnabled();
+      await page.keyboard.press('Alt+n');
+    });
   });
 });
 
@@ -163,4 +165,61 @@ test('editing the only transaction on the last filtered page falls back to the n
   await expect(authedPage.locator('.data-table tbody tr')).toHaveCount(20);
   await expect(targetRow).toHaveCount(0);
   await expectListQuery(authedPage, { page: '2', categoryId: from.id });
+});
+
+test('the same form records income and transfers with a single save action', async ({ authedPage: page }) => {
+  await page.goto('/dashboard');
+  const add = page.getByRole('link', { name: '記一筆', exact: true });
+  await expect(add).toHaveCount(1);
+  await add.click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: '支出', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await dialog.getByRole('button', { name: '收入', exact: true }).click();
+  await dialog.locator('#transaction-amount').fill('245');
+  const incomeRequest = page.waitForRequest(req => new URL(req.url()).pathname === '/api/transactions' && req.method() === 'POST');
+  await dialog.getByRole('button', { name: '儲存', exact: true }).click();
+  expect((await incomeRequest).postDataJSON()).toMatchObject({ type: 'income', amount: 245 });
+  await expect(dialog).toBeHidden();
+
+  // The seeded test user already has a cash account. Make a second one for transfer.
+  const origin = new URL(page.url()).origin;
+  const accountResponse = await page.request.post('/api/accounts', {
+    headers: { Origin: origin },
+    data: { name: 'UI QA transfer account', category: 'bank', currency: 'TWD', initialBalance: 0 },
+  });
+  expect(accountResponse.ok(), await accountResponse.text()).toBeTruthy();
+  const { id: destination } = await accountResponse.json();
+  const accounts = await (await page.request.get('/api/accounts')).json() as Array<{ id: string }>;
+  const source = accounts.find(account => account.id !== destination)?.id;
+  expect(source).toBeTruthy();
+
+  // Reload account options, then open the existing calendar-style prefilled URL.
+  await page.goto('/finance/transactions?action=add&date=2026-01-04');
+  await dialog.getByRole('button', { name: '轉帳', exact: true }).click();
+  await dialog.locator('#transaction-amount').fill('18');
+  await dialog.getByLabel('轉出帳戶', { exact: false }).selectOption(source!);
+  await dialog.getByLabel('轉入帳戶', { exact: false }).selectOption(destination);
+  const transferRequest = page.waitForRequest(req => new URL(req.url()).pathname === '/api/transactions/transfer' && req.method() === 'POST');
+  await dialog.getByRole('button', { name: '確認轉帳' }).click();
+  expect((await transferRequest).postDataJSON()).toMatchObject({
+    amount: 18, date: '2026-01-04', fromAccountId: source, toAccountId: destination,
+  });
+  await expect(dialog).toBeHidden();
+});
+
+test('a viewer can open the list without seeing or launching write controls', async ({ authedPage: page, testUser }) => {
+  await page.route('**/api/ledgers', route => route.fulfill({
+    json: [{ id: 'personal:' + testUser.id, name: 'UI QA', isPersonal: true, isShared: false, role: 'viewer' }],
+  }));
+  await page.goto('/finance/transactions?action=add');
+  await expect(page.getByText('此帳本為唯讀，你只能檢視資料。')).toBeVisible();
+  await expect(page.getByRole('button', { name: '記一筆' })).toHaveCount(0);
+  await page.keyboard.press('Alt+n');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  for (const [path, writeAction] of [['/finance/accounts', '新增帳戶'], ['/finance/budget', '新增預算']]) {
+    await page.goto(path);
+    await expect(page.getByText('此帳本為唯讀，你只能檢視資料。')).toBeVisible();
+    await expect(page.getByRole('button', { name: writeAction, exact: true })).toHaveCount(0);
+  }
 });

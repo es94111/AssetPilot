@@ -75,11 +75,18 @@ class _RecurringScreenState extends State<RecurringScreen> {
     );
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openForm(_RecurringData data, [Recurring? existing]) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _RecurringForm(
@@ -92,6 +99,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
   }
 
   Future<void> _toggle(Recurring r) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     try {
       await ApiClient.instance.toggleRecurring(r.id);
       _reload();
@@ -101,6 +109,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
   }
 
   Future<void> _delete(Recurring r) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     try {
       await ApiClient.instance.deleteRecurring(r.id);
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
@@ -111,17 +120,24 @@ class _RecurringScreenState extends State<RecurringScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: ApiClient.instance.activeLedgerReadOnlyChanges,
+    builder: (context, readOnly, _) => _buildScreen(readOnly),
+  );
+
+  Widget _buildScreen(bool readOnly) {
     return Scaffold(
       appBar: AppBar(title: Text(trKey('navRecurring'))),
-      floatingActionButton: FutureBuilder<_RecurringData>(
-        future: _future,
-        builder: (context, snap) => FloatingActionButton.extended(
-          onPressed: snap.hasData ? () => _openForm(snap.data!) : null,
-          icon: Icon(Icons.add),
-          label: Text(trKey('commonAdd')),
-        ),
-      ),
+      floatingActionButton: readOnly
+          ? null
+          : FutureBuilder<_RecurringData>(
+              future: _future,
+              builder: (context, snap) => FloatingActionButton.extended(
+                onPressed: snap.hasData ? () => _openForm(snap.data!) : null,
+                icon: Icon(Icons.add),
+                label: Text(trKey('commonAdd')),
+              ),
+            ),
       body: AsyncView<_RecurringData>(
         future: _future,
         onRetry: _reload,
@@ -151,7 +167,6 @@ class _RecurringScreenState extends State<RecurringScreen> {
                   child: LedgerCard(
                     margin: const EdgeInsets.only(bottom: ApSpace.sm),
                     padding: EdgeInsets.zero,
-                    onTap: () => _openForm(data, r),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: ApSpace.md + 2,
@@ -191,12 +206,12 @@ class _RecurringScreenState extends State<RecurringScreen> {
                           ),
                           Switch(
                             value: r.isActive,
-                            onChanged: (_) => _toggle(r),
+                            onChanged: readOnly ? null : (_) => _toggle(r),
                           ),
                         ],
                       ),
-                      onTap: () => _openForm(data, r),
-                      onLongPress: () => _delete(r),
+                      onTap: readOnly ? null : () => _openForm(data, r),
+                      onLongPress: readOnly ? null : () => _delete(r),
                     ),
                   ),
                 );

@@ -7087,4 +7087,65 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'वित्तीय जानकारी को निजी रखने के लिए होम स्क्रीन विजेट में राशि डिफ़ॉल्ट रूप से नहीं दिखाते';
+
+  @override
+  String get uxBookkeeping => 'लेनदेन';
+
+  @override
+  String get uxLedgerTools => 'खाता प्रबंधन';
+
+  @override
+  String get uxBudgetsAndReports => 'बजट और रिपोर्ट';
+
+  @override
+  String get uxSettingsAndHelp => 'सेटिंग और सहायता';
+
+  @override
+  String get uxPreferences => 'प्राथमिकताएँ';
+
+  @override
+  String get uxSecurity => 'खाता और सुरक्षा';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'सूचनाएँ और इंटीग्रेशन';
+
+  @override
+  String get uxDataAndAdmin => 'डेटा और प्रशासन';
+
+  @override
+  String get uxTransactionDetails => 'लेनदेन का विवरण';
+
+  @override
+  String get uxIncludedInStats => 'केवल आँकड़ों में शामिल लेन-देन';
+
+  @override
+  String get uxAdvancedOptions => 'उन्नत विकल्प';
+
+  @override
+  String get uxDrafts => 'लंबित ड्राफ़्ट';
+
+  @override
+  String get uxStockTools => 'शेयर टूल';
+
+  @override
+  String get uxStockView => 'शेयर दृश्य';
+
+  @override
+  String get uxReportOptions => 'रिपोर्ट के विकल्प';
+
+  @override
+  String get uxViewReports => 'रिपोर्ट देखें';
+
+  @override
+  String get uxViewAllTransactions => 'सभी लेनदेन देखें';
+
+  @override
+  String get uxDashboardDetails => 'वित्तीय विश्लेषण';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'अपनी पहली आय या खर्च दर्ज करने के लिए “लेनदेन जोड़ें” पर टैप करें।';
+
+  @override
+  String get uxExport => 'निर्यात करें';
 }

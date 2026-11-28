@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import { apiGet } from '@/lib/clientApi';
 import { useT } from '@/components/i18n/I18nProvider';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { localeTag } from '@/lib/i18n/localeTag';
 import { getCalendarRange, listCalendarDates, shiftCalendarAnchor, type CalendarRange, type CalendarView } from '@/lib/calendarDates';
 import type { CalendarEvent } from '@/lib/calendarEvents';
@@ -50,6 +51,7 @@ function currencyAmount(amount: number, currency: string, locale: string): strin
 
 export default function CalendarClient({ initialDate }: { initialDate: string }) {
   const { t, locale } = useT();
+  const { canWrite } = useActiveLedger();
   const router = useRouter();
   const [anchor, setAnchor] = useState(initialDate);
   const [view, setView] = useState<CalendarView>('month');
@@ -255,9 +257,9 @@ export default function CalendarClient({ initialDate }: { initialDate: string })
               {selectedEvents.length ? t('features.calendar.eventCount', { count: selectedEvents.length }) : t('features.calendar.noEvents')}
             </p>
           </div>
-          <button type="button" onClick={addTransaction} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          {canWrite && <button type="button" onClick={addTransaction} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             <Plus size={17} aria-hidden="true" />{t('features.calendar.addTransaction')}
-          </button>
+          </button>}
         </div>
 
         {selectedEvents.length > 0 ? (

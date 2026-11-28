@@ -16,6 +16,8 @@ class StocksScreen extends StatefulWidget {
   State<StocksScreen> createState() => _StocksScreenState();
 }
 
+enum _StockTool { prices, dividends, settings }
+
 class _StocksScreenState extends State<StocksScreen>
     with SingleTickerProviderStateMixin {
   final _key = GlobalKey<_HoldingsTabState>();
@@ -41,7 +43,7 @@ class _StocksScreenState extends State<StocksScreen>
   }
 
   Future<void> _updatePrices() async {
-    if (_updating) return;
+    if (_updating || ApiClient.instance.activeLedgerReadOnly) return;
     setState(() => _updating = true);
     try {
       await _key.currentState?.updatePrices();
@@ -51,7 +53,7 @@ class _StocksScreenState extends State<StocksScreen>
   }
 
   Future<void> _syncDividends() async {
-    if (_syncingDividends) return;
+    if (_syncingDividends || ApiClient.instance.activeLedgerReadOnly) return;
     setState(() => _syncingDividends = true);
     try {
       await _divKey.currentState?.syncDividends();
@@ -60,52 +62,38 @@ class _StocksScreenState extends State<StocksScreen>
     }
   }
 
-  static const _appBarSpinner = Padding(
-    padding: EdgeInsets.symmetric(horizontal: 16),
-    child: Center(
-      child: SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
-    ),
-  );
+  void _useTool(_StockTool tool) {
+    switch (tool) {
+      case _StockTool.prices:
+        _updatePrices();
+      case _StockTool.dividends:
+        _syncDividends();
+      case _StockTool.settings:
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => StockSettingsScreen()));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final onHoldings = _tab.index == 0;
-    final onDividends = _tab.index == 2;
+    final readOnly = ApiClient.instance.activeLedgerReadOnly;
+    final busy = _updating || _syncingDividends;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(trKey('featuresCommonStock')),
-        actions: [
-          if (onHoldings)
-            _updating
-                ? _appBarSpinner
-                : IconButton(
-                    onPressed: _updatePrices,
-                    icon: Icon(Icons.refresh),
-                    tooltip: trKey('featuresStocksPortfolioUpdatePrices'),
-                  ),
-          if (onDividends)
-            _syncingDividends
-                ? _appBarSpinner
-                : IconButton(
-                    onPressed: _syncDividends,
-                    icon: Icon(Icons.sync),
-                    tooltip: trKey('mobileLegacySyncDividends'),
-                  ),
-          IconButton(
-            tooltip: trKey('navStocksSettings'),
-            icon: Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => StockSettingsScreen())),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: _StockViewSelector(
+      appBar: AppBar(title: Text(trKey('featuresCommonStock'))),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (readOnly)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.lg,
+                0,
+                ApSpace.lg,
+                ApSpace.sm,
+              ),
+              child: Text(trKey('ledgerReadOnlyNotice')),
+            ),
+          _StockViewSelector(
             controller: _tab,
             labels: [
               trKey('mobileLegacyHoldings'),
@@ -114,15 +102,64 @@ class _StocksScreenState extends State<StocksScreen>
               trKey('mobileLegacyReturns'),
             ],
           ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tab,
-        children: [
-          _HoldingsTab(key: _key),
-          _StockTxnTab(),
-          _DividendTab(key: _divKey),
-          _RealizedTab(),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: ApSpace.lg),
+              child: PopupMenuButton<_StockTool>(
+                tooltip: trKey('uxStockTools'),
+                enabled: !busy,
+                onSelected: _useTool,
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _StockTool.settings,
+                    child: Text(trKey('navStocksSettings')),
+                  ),
+                  if (!readOnly && _tab.index == 0)
+                    PopupMenuItem(
+                      value: _StockTool.prices,
+                      child: Text(trKey('featuresStocksPortfolioUpdatePrices')),
+                    ),
+                  if (!readOnly && _tab.index == 2)
+                    PopupMenuItem(
+                      value: _StockTool.dividends,
+                      child: Text(trKey('mobileLegacySyncDividends')),
+                    ),
+                ],
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: ApSpace.md),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (busy) ...[
+                          const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: ApSpace.sm),
+                        ],
+                        Flexible(child: Text(trKey('uxStockTools'))),
+                        if (!busy) const Icon(Icons.arrow_drop_down),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tab,
+              children: [
+                _HoldingsTab(key: _key),
+                const _StockTxnTab(),
+                _DividendTab(key: _divKey),
+                const _RealizedTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -137,40 +174,20 @@ class _StockViewSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: scheme.outlineVariant),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              Icon(Icons.view_list_outlined, size: 20, color: scheme.primary),
-              SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: controller.index,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    items: [
-                      for (var i = 0; i < labels.length; i++)
-                        DropdownMenuItem(value: i, child: Text(labels[i])),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) controller.animateTo(value);
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: ApSpace.lg),
+      child: DropdownButtonFormField<int>(
+        key: ValueKey(controller.index),
+        initialValue: controller.index,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: trKey('uxStockView')),
+        items: [
+          for (var i = 0; i < labels.length; i++)
+            DropdownMenuItem(value: i, child: Text(labels[i])),
+        ],
+        onChanged: (value) {
+          if (value != null) controller.animateTo(value);
+        },
       ),
     );
   }
@@ -211,7 +228,12 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     return _HoldingsData(stocks, summary);
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   // 從 TWSE/TPEx 批次抓最新價並寫回現價，再重新載入持股。
   // 由上層 StocksScreen 的 AppBar「更新股價」按鈕透過 GlobalKey 呼叫。
@@ -260,6 +282,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
   Future<void> _addStock() async {
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _StockForm(),
@@ -270,6 +293,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
   Future<void> _editStock(Stock s) async {
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _StockForm(existing: s),
@@ -280,7 +304,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
   Future<void> _deleteStock(Stock s) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyDeleteStock')),
         content: Text(
           trKey('mobileDynamicDeleteStock', {
@@ -312,50 +336,53 @@ class _HoldingsTabState extends State<_HoldingsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addStock,
-        icon: Icon(Icons.add),
-        label: Text(trKey('featuresStocksPortfolioAddStock')),
-      ),
-      body: AsyncView<_HoldingsData>(
-        future: _future,
-        onRetry: _reload,
-        builder: (context, data) => RefreshIndicator(
-          onRefresh: () async => _reload(),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              ApSpace.lg,
-              ApSpace.lg,
-              ApSpace.lg,
-              88,
-            ),
-            children: [
-              _PortfolioCard(s: data.summary),
-              const SizedBox(height: ApSpace.lg),
-              if (data.stocks.isEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: ApSpace.xxl),
-                  child: EmptyState(
-                    icon: Icons.trending_up,
-                    title: trKey('mobileLegacyNoHoldingsYet'),
-                    message: trKey('featuresStocksPortfolioAddStock'),
-                    onAction: _addStock,
-                    actionLabel: trKey('featuresStocksPortfolioAddStock'),
-                  ),
-                )
-              else
-                ...data.stocks.indexed.map(
-                  (e) => StaggerIn(
-                    index: e.$1,
-                    child: _HoldingTile(
-                      s: e.$2,
-                      onTap: () => _editStock(e.$2),
-                      onLongPress: () => _deleteStock(e.$2),
+    return ValueListenableBuilder<bool>(
+      valueListenable: ApiClient.instance.activeLedgerReadOnlyChanges,
+      builder: (context, readOnly, _) => Scaffold(
+        floatingActionButton: readOnly
+            ? null
+            : FloatingActionButton.extended(
+                heroTag: null,
+                onPressed: _addStock,
+                icon: Icon(Icons.add),
+                label: Text(trKey('featuresStocksPortfolioAddStock')),
+              ),
+        body: AsyncView<_HoldingsData>(
+          future: _future,
+          onRetry: _reload,
+          builder: (context, data) => RefreshIndicator(
+            onRefresh: () async => _reload(),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                ApSpace.lg,
+                ApSpace.lg,
+                ApSpace.lg,
+                88,
+              ),
+              children: [
+                _PortfolioCard(s: data.summary),
+                const SizedBox(height: ApSpace.lg),
+                if (data.stocks.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: ApSpace.xxl),
+                    child: EmptyState(
+                      icon: Icons.trending_up,
+                      message: trKey('mobileLegacyNoHoldingsYet'),
+                    ),
+                  )
+                else
+                  ...data.stocks.indexed.map(
+                    (e) => StaggerIn(
+                      index: e.$1,
+                      child: _HoldingTile(
+                        s: e.$2,
+                        onTap: readOnly ? null : () => _editStock(e.$2),
+                        onLongPress: readOnly ? null : () => _deleteStock(e.$2),
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -462,8 +489,8 @@ class _PortfolioCard extends StatelessWidget {
 
 class _HoldingTile extends StatelessWidget {
   final Stock s;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   const _HoldingTile({
     required this.s,
     required this.onTap,
@@ -557,7 +584,12 @@ class _StockTxnTabState extends State<_StockTxnTab> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openForm([StockTxn? existing]) async {
     final stocksJson = await ApiClient.instance.stocks();
@@ -571,6 +603,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
     }
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _StockTxnForm(stocks: stocks, existing: existing),
@@ -590,85 +623,91 @@ class _StockTxnTabState extends State<_StockTxnTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        icon: Icon(Icons.add),
-        label: Text(trKey('featuresTransactionsAdd')),
-      ),
-      body: AsyncView<List<StockTxn>>(
-        future: _future,
-        onRetry: _reload,
-        builder: (context, list) {
-          if (list.isEmpty) {
-            return EmptyState(
-              icon: Icons.swap_vert,
-              message: trKey('mobileLegacyNoStockTransactions'),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _reload(),
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                ApSpace.lg,
-                ApSpace.sm,
-                ApSpace.lg,
-                88,
+    return ValueListenableBuilder<bool>(
+      valueListenable: ApiClient.instance.activeLedgerReadOnlyChanges,
+      builder: (context, readOnly, _) => Scaffold(
+        floatingActionButton: readOnly
+            ? null
+            : FloatingActionButton.extended(
+                heroTag: null,
+                onPressed: () => _openForm(),
+                icon: Icon(Icons.add),
+                label: Text(trKey('mobileLegacyAddStockTransaction')),
               ),
-              itemCount: list.length,
-              separatorBuilder: (_, _) =>
-                  const Divider(height: 1, indent: ApSpace.lg),
-              itemBuilder: (context, i) {
-                final t = list[i];
-                final isBuy = t.type == 'buy';
-                final flow = flowColor(income: isBuy, context: context);
-                return StaggerIn(
-                  index: i,
-                  child: LedgerCard(
-                    margin: const EdgeInsets.only(bottom: ApSpace.sm),
-                    padding: EdgeInsets.zero,
-                    onTap: () => _openForm(t),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: ApSpace.md + 2,
-                        vertical: ApSpace.xs,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: flow.withValues(alpha: 0.14),
-                        child: Text(
-                          isBuy
-                              ? trKey('mobileLegacyBuy')
-                              : trKey('mobileLegacySell'),
-                          style: TextStyle(
-                            color: flow,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
+        body: AsyncView<List<StockTxn>>(
+          future: _future,
+          onRetry: _reload,
+          builder: (context, list) {
+            if (list.isEmpty) {
+              return EmptyState(
+                icon: Icons.swap_vert,
+                message: trKey('mobileLegacyNoStockTransactions'),
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: () async => _reload(),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                  ApSpace.lg,
+                  ApSpace.sm,
+                  ApSpace.lg,
+                  88,
+                ),
+                itemCount: list.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, indent: ApSpace.lg),
+                itemBuilder: (context, i) {
+                  final t = list[i];
+                  final isBuy = t.type == 'buy';
+                  final flow = flowColor(income: isBuy, context: context);
+                  return StaggerIn(
+                    index: i,
+                    child: LedgerCard(
+                      margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                      padding: EdgeInsets.zero,
+                      onTap: readOnly ? null : () => _openForm(t),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: ApSpace.md + 2,
+                          vertical: ApSpace.xs,
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: flow.withValues(alpha: 0.14),
+                          child: Text(
+                            isBuy
+                                ? trKey('mobileLegacyBuy')
+                                : trKey('mobileLegacySell'),
+                            style: TextStyle(
+                              color: flow,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
+                        title: Text(
+                          '${t.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${t.symbol} ${t.stockName}',
+                        ),
+                        subtitle: Text(
+                          trKey('mobileDynamicStockTransactionSubtitle', {
+                            'date': t.date,
+                            'shares': intFmt(t.shares),
+                            'price': money(t.price, t.currency),
+                          }),
+                        ),
+                        trailing: Text(
+                          money(t.shares * t.price, t.currency),
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        onTap: readOnly ? null : () => _openForm(t),
+                        onLongPress: readOnly ? null : () => _delete(t),
                       ),
-                      title: Text(
-                        '${t.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${t.symbol} ${t.stockName}',
-                      ),
-                      subtitle: Text(
-                        trKey('mobileDynamicStockTransactionSubtitle', {
-                          'date': t.date,
-                          'shares': intFmt(t.shares),
-                          'price': money(t.price, t.currency),
-                        }),
-                      ),
-                      trailing: Text(
-                        money(t.shares * t.price, t.currency),
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      onTap: () => _openForm(t),
-                      onLongPress: () => _delete(t),
                     ),
-                  ),
-                );
-              },
-            ),
-          );
-        },
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -698,7 +737,12 @@ class _DividendTabState extends State<_DividendTab> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openForm([Dividend? existing]) async {
     final api = ApiClient.instance;
@@ -717,6 +761,7 @@ class _DividendTabState extends State<_DividendTab> {
     }
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) =>
@@ -728,7 +773,7 @@ class _DividendTabState extends State<_DividendTab> {
   Future<void> _delete(Dividend d) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyDeleteDividend')),
         content: Text(
           trKey('mobileDynamicDeleteDividend', {
@@ -787,83 +832,92 @@ class _DividendTabState extends State<_DividendTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        icon: Icon(Icons.add),
-        label: Text(trKey('featuresStocksDividendsAddDividend')),
-      ),
-      body: AsyncView<List<Dividend>>(
-        future: _future,
-        onRetry: _reload,
-        builder: (context, list) {
-          if (list.isEmpty) {
-            return EmptyState(
-              icon: Icons.savings_outlined,
-              message: trKey('mobileLegacyNoDividendRecords'),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _reload(),
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                ApSpace.lg,
-                ApSpace.sm,
-                ApSpace.lg,
-                88,
+    return ValueListenableBuilder<bool>(
+      valueListenable: ApiClient.instance.activeLedgerReadOnlyChanges,
+      builder: (context, readOnly, _) => Scaffold(
+        floatingActionButton: readOnly
+            ? null
+            : FloatingActionButton.extended(
+                heroTag: null,
+                onPressed: () => _openForm(),
+                icon: Icon(Icons.add),
+                label: Text(trKey('featuresStocksDividendsAddDividend')),
               ),
-              itemCount: list.length,
-              separatorBuilder: (_, _) =>
-                  const Divider(height: 1, indent: ApSpace.lg),
-              itemBuilder: (context, i) {
-                final d = list[i];
-                return StaggerIn(
-                  index: i,
-                  child: LedgerCard(
-                    margin: const EdgeInsets.only(bottom: ApSpace.sm),
-                    padding: EdgeInsets.zero,
-                    onTap: () => _openForm(d),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: ApSpace.md + 2,
-                        vertical: ApSpace.xs,
-                      ),
-                      onTap: () => _openForm(d),
-                      onLongPress: () => _delete(d),
-                      title: Text(
-                        '${d.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${d.symbol} ${d.stockName}',
-                      ),
-                      subtitle: Text(d.date),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (d.cashDividend > 0)
-                            Text(
-                              trKey('mobileDynamicCashDividend', {
-                                'amount': money(d.cashDividend, d.currency),
-                              }),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: flowColor(income: true, context: context),
+        body: AsyncView<List<Dividend>>(
+          future: _future,
+          onRetry: _reload,
+          builder: (context, list) {
+            if (list.isEmpty) {
+              return EmptyState(
+                icon: Icons.savings_outlined,
+                message: trKey('mobileLegacyNoDividendRecords'),
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: () async => _reload(),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                  ApSpace.lg,
+                  ApSpace.sm,
+                  ApSpace.lg,
+                  88,
+                ),
+                itemCount: list.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, indent: ApSpace.lg),
+                itemBuilder: (context, i) {
+                  final d = list[i];
+                  return StaggerIn(
+                    index: i,
+                    child: LedgerCard(
+                      margin: const EdgeInsets.only(bottom: ApSpace.sm),
+                      padding: EdgeInsets.zero,
+                      onTap: readOnly ? null : () => _openForm(d),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: ApSpace.md + 2,
+                          vertical: ApSpace.xs,
+                        ),
+                        onTap: readOnly ? null : () => _openForm(d),
+                        onLongPress: readOnly ? null : () => _delete(d),
+                        title: Text(
+                          '${d.market == 'US' ? trKey('featuresStocksCommonMarketUs') : trKey('featuresStocksCommonMarketTaiwan')} · ${d.symbol} ${d.stockName}',
+                        ),
+                        subtitle: Text(d.date),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (d.cashDividend > 0)
+                              Text(
+                                trKey('mobileDynamicCashDividend', {
+                                  'amount': money(d.cashDividend, d.currency),
+                                }),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: flowColor(
+                                    income: true,
+                                    context: context,
+                                  ),
+                                ),
                               ),
-                            ),
-                          if (d.stockDividendShares > 0)
-                            Text(
-                              trKey('mobileDynamicStockDividendShares', {
-                                'shares': intFmt(d.stockDividendShares),
-                              }),
-                              style: TextStyle(fontSize: 12),
-                            ),
-                        ],
+                            if (d.stockDividendShares > 0)
+                              Text(
+                                trKey('mobileDynamicStockDividendShares', {
+                                  'shares': intFmt(d.stockDividendShares),
+                                }),
+                                style: TextStyle(fontSize: 12),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          );
-        },
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -893,7 +947,12 @@ class _RealizedTabState extends State<_RealizedTab> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1336,38 +1395,6 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                 ],
               ),
               SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _fee,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: trKey('mobileLegacyFeeOptional'),
-                        hintText: trKey('mobileLegacyAutomatic'),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _tax,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: trKey('mobileLegacyTransactionTaxOptional'),
-                        hintText: trKey('mobileLegacyAutomatic'),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12),
               ListTile(
                 shape: RoundedRectangleBorder(
                   side: BorderSide(
@@ -1389,17 +1416,57 @@ class _StockTxnFormState extends State<_StockTxnForm> {
                 },
               ),
               SizedBox(height: 12),
-              TextFormField(
-                controller: _note,
-                decoration: InputDecoration(
-                  labelText: trKey('mobileLegacyNoteOptional'),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                trKey('mobileLegacyLeaveFeeAndTaxBlankToCalculateThem'),
-                style: Theme.of(context).textTheme.bodySmall,
+              OptionGroup(
+                label: trKey('uxAdvancedOptions'),
+                maintainState: true,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _fee,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: trKey('mobileLegacyFeeOptional'),
+                            hintText: trKey('mobileLegacyAutomatic'),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _tax,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: trKey(
+                              'mobileLegacyTransactionTaxOptional',
+                            ),
+                            hintText: trKey('mobileLegacyAutomatic'),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  TextFormField(
+                    controller: _note,
+                    decoration: InputDecoration(
+                      labelText: trKey('mobileLegacyNoteOptional'),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    trKey('mobileLegacyLeaveFeeAndTaxBlankToCalculateThem'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ),
               SizedBox(height: 16),
               FilledButton(
@@ -1624,12 +1691,18 @@ class _DividendFormState extends State<_DividendForm> {
                 onChanged: (v) => setState(() => _accountId = v),
               ),
               SizedBox(height: 12),
-              TextFormField(
-                controller: _note,
-                decoration: InputDecoration(
-                  labelText: trKey('mobileLegacyNoteOptional'),
-                  border: OutlineInputBorder(),
-                ),
+              OptionGroup(
+                label: trKey('uxAdvancedOptions'),
+                maintainState: true,
+                children: [
+                  TextFormField(
+                    controller: _note,
+                    decoration: InputDecoration(
+                      labelText: trKey('mobileLegacyNoteOptional'),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 20),
               FilledButton(

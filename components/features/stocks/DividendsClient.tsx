@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/clientApi";
 import StocksTabNav from "./StocksTabNav";
+import Disclosure from "@/components/ui/Disclosure";
+import { useActiveLedger } from "@/components/features/ledgers/LedgerSwitcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -56,6 +58,7 @@ function readPageSizeParam(searchParams: QueryParams) {
 }
 
 export default function DividendsClient(_props: { user?: any } = {}) {
+  const { canWrite } = useActiveLedger();
   const { t, locale } = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -246,9 +249,21 @@ export default function DividendsClient(_props: { user?: any } = {}) {
       <h2 className="text-2xl font-bold">
         {t("features.stocks.dividends.title")}
       </h2>
-      <StocksTabNav />
+      <StocksTabNav tools={canWrite ? (
+        <Button
+            variant="outline"
+            onClick={() => {
+              setSyncResult(null);
+              setSyncModal(true);
+            }}
+          >
+            <RefreshCw size={16} className="mr-2" />{" "}
+            {t("features.stocks.dividends.syncExDividends")}
+          </Button>
+      ) : null} />
 
-      <div className="flex gap-2 items-center p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
+      <Disclosure title={t("mobileLegacy.filter")} hint={stocks.find(stock => stock.id === filterStockId)?.symbol || [filterDateFrom, filterDateTo].filter(Boolean).join(" – ")}>
+        <div className="flex flex-wrap items-end gap-3">
         <Select
           options={stocks.map((s) => ({
             label: `${String(s.market || "TW").toUpperCase() === "US" ? t("features.stocks.common.marketUs") : t("features.stocks.common.marketTaiwan")} · ${s.symbol} ${s.name}`,
@@ -257,7 +272,7 @@ export default function DividendsClient(_props: { user?: any } = {}) {
           value={filterStockId}
           onChange={(e) => updateFilter(setFilterStockId, e.target.value)}
           label={t("features.stocks.common.stockLabel")}
-          className="w-48"
+          className="min-w-0 sm:w-48"
         />
         <Input
           type="date"
@@ -282,10 +297,12 @@ export default function DividendsClient(_props: { user?: any } = {}) {
         >
           {t("common.clear")}
         </Button>
-      </div>
+        </div>
+      </Disclosure>
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
+          {canWrite && (
           <Button
             onClick={() => {
               setForm({
@@ -301,16 +318,8 @@ export default function DividendsClient(_props: { user?: any } = {}) {
             <Plus size={16} className="mr-2" />{" "}
             {t("features.stocks.dividends.addDividend")}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSyncResult(null);
-              setSyncModal(true);
-            }}
-          >
-            <RefreshCw size={16} className="mr-2" />{" "}
-            {t("features.stocks.dividends.syncExDividends")}
-          </Button>
+          )}
+
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-slate-500">
@@ -336,7 +345,7 @@ export default function DividendsClient(_props: { user?: any } = {}) {
         </div>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen && canWrite} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -416,6 +425,8 @@ export default function DividendsClient(_props: { user?: any } = {}) {
                 />
               </>
             )}
+            <Disclosure title={t("ux.advancedOptions")}>
+              <div className="space-y-3">
             <Select
               label={t("features.stocks.dividends.depositAccount")}
               options={[
@@ -435,6 +446,8 @@ export default function DividendsClient(_props: { user?: any } = {}) {
               value={form.note}
               onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
             />
+              </div>
+            </Disclosure>
             {formError && <p className="text-red-500 text-sm">{formError}</p>}
             <div className="flex gap-2">
               <Button
@@ -452,7 +465,7 @@ export default function DividendsClient(_props: { user?: any } = {}) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={syncModal} onOpenChange={setSyncModal}>
+      <Dialog open={syncModal && canWrite} onOpenChange={setSyncModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -545,9 +558,11 @@ export default function DividendsClient(_props: { user?: any } = {}) {
                   {d.note || t("features.common.notRecorded")}
                 </TableCell>
                 <TableCell className="flex gap-2">
+                  {canWrite && <>
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={t("common.edit")}
                     onClick={() => {
                       setForm({
                         stockId: d.stockId || d.stock_id,
@@ -573,11 +588,14 @@ export default function DividendsClient(_props: { user?: any } = {}) {
                     variant="ghost"
                     size="icon"
                     className="text-red-500"
+                    aria-label={t("common.delete")}
                     onClick={() => setDeleteId(d.id)}
                   >
                     <Trash2 size={16} />
                   </Button>
-                </TableCell>
+
+                  </>}
+                  </TableCell>
               </TableRow>
             ))}
           </TableBody>

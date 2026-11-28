@@ -10695,5 +10695,105 @@
   "@settingsWidgetHideAmountsSubtitle": {
     "description": "Web path: settings.widgetHideAmounts.subtitle",
     "x-webPath": "settings.widgetHideAmounts.subtitle"
+  },
+  "uxBookkeeping": "거래",
+  "@uxBookkeeping": {
+    "description": "Web path: ux.bookkeeping",
+    "x-webPath": "ux.bookkeeping"
+  },
+  "uxLedgerTools": "장부 관리",
+  "@uxLedgerTools": {
+    "description": "Web path: ux.ledgerTools",
+    "x-webPath": "ux.ledgerTools"
+  },
+  "uxBudgetsAndReports": "예산 및 보고서",
+  "@uxBudgetsAndReports": {
+    "description": "Web path: ux.budgetsAndReports",
+    "x-webPath": "ux.budgetsAndReports"
+  },
+  "uxSettingsAndHelp": "설정 및 도움말",
+  "@uxSettingsAndHelp": {
+    "description": "Web path: ux.settingsAndHelp",
+    "x-webPath": "ux.settingsAndHelp"
+  },
+  "uxPreferences": "환경설정",
+  "@uxPreferences": {
+    "description": "Web path: ux.preferences",
+    "x-webPath": "ux.preferences"
+  },
+  "uxSecurity": "계정 및 보안",
+  "@uxSecurity": {
+    "description": "Web path: ux.security",
+    "x-webPath": "ux.security"
+  },
+  "uxNotificationsAndIntegrations": "알림 및 연동",
+  "@uxNotificationsAndIntegrations": {
+    "description": "Web path: ux.notificationsAndIntegrations",
+    "x-webPath": "ux.notificationsAndIntegrations"
+  },
+  "uxDataAndAdmin": "데이터 및 관리",
+  "@uxDataAndAdmin": {
+    "description": "Web path: ux.dataAndAdmin",
+    "x-webPath": "ux.dataAndAdmin"
+  },
+  "uxTransactionDetails": "거래 세부 정보",
+  "@uxTransactionDetails": {
+    "description": "Web path: ux.transactionDetails",
+    "x-webPath": "ux.transactionDetails"
+  },
+  "uxIncludedInStats": "통계에 포함되는 거래만",
+  "@uxIncludedInStats": {
+    "description": "Web path: ux.includedInStats",
+    "x-webPath": "ux.includedInStats"
+  },
+  "uxAdvancedOptions": "고급 옵션",
+  "@uxAdvancedOptions": {
+    "description": "Web path: ux.advancedOptions",
+    "x-webPath": "ux.advancedOptions"
+  },
+  "uxDrafts": "대기 중인 초안",
+  "@uxDrafts": {
+    "description": "Web path: ux.drafts",
+    "x-webPath": "ux.drafts"
+  },
+  "uxStockTools": "주식 도구",
+  "@uxStockTools": {
+    "description": "Web path: ux.stockTools",
+    "x-webPath": "ux.stockTools"
+  },
+  "uxStockView": "주식 화면",
+  "@uxStockView": {
+    "description": "Web path: ux.stockView",
+    "x-webPath": "ux.stockView"
+  },
+  "uxReportOptions": "보고서 옵션",
+  "@uxReportOptions": {
+    "description": "Web path: ux.reportOptions",
+    "x-webPath": "ux.reportOptions"
+  },
+  "uxViewReports": "보고서 보기",
+  "@uxViewReports": {
+    "description": "Web path: ux.viewReports",
+    "x-webPath": "ux.viewReports"
+  },
+  "uxViewAllTransactions": "모든 거래 보기",
+  "@uxViewAllTransactions": {
+    "description": "Web path: ux.viewAllTransactions",
+    "x-webPath": "ux.viewAllTransactions"
+  },
+  "uxDashboardDetails": "재무 분석",
+  "@uxDashboardDetails": {
+    "description": "Web path: ux.dashboardDetails",
+    "x-webPath": "ux.dashboardDetails"
+  },
+  "uxEmptyLedgerHint": "첫 수입이나 지출을 기록하려면 ‘거래 추가’를 누르세요.",
+  "@uxEmptyLedgerHint": {
+    "description": "Web path: ux.emptyLedgerHint",
+    "x-webPath": "ux.emptyLedgerHint"
+  },
+  "uxExport": "내보내기",
+  "@uxExport": {
+    "description": "Web path: ux.export",
+    "x-webPath": "ux.export"
   }
 }

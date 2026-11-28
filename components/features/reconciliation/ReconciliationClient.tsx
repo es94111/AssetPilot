@@ -10,6 +10,7 @@ import { apiDelete, apiGet, apiPost } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { useT } from '@/components/i18n/I18nProvider';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { localeTag } from '@/lib/i18n/localeTag';
 import {
   RECONCILIATION_ACCEPT_EXTENSIONS,
@@ -76,6 +77,7 @@ const DIFF_ORDER = ['amount_mismatch', 'statement_only', 'ledger_only'] as const
 
 export default function ReconciliationClient() {
   const { locale, t } = useT();
+  const { canWrite } = useActiveLedger();
   const dateLocale = localeTag(locale);
   const ta = (key: string, vars?: Record<string, string | number>) =>
     t(`features.reconciliation.${key}`, vars);
@@ -372,7 +374,7 @@ export default function ReconciliationClient() {
         </div>
       )}
 
-      <section className={CARD_CLASS} aria-labelledby="reconciliation-import-heading">
+      {canWrite && <section className={CARD_CLASS} aria-labelledby="reconciliation-import-heading">
         <h2
           id="reconciliation-import-heading"
           className="text-lg font-semibold text-slate-900 dark:text-slate-50"
@@ -641,7 +643,7 @@ export default function ReconciliationClient() {
           </Button>
           <span className="text-xs text-slate-500 dark:text-slate-400">{ta('import.atomicNote')}</span>
         </div>
-      </section>
+      </section>}
 
       {result && (
         <section className={CARD_CLASS} aria-labelledby="reconciliation-result-heading">

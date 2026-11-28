@@ -7172,6 +7172,68 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'Os widgets da tela inicial não mostram valores por padrão, para manter os dados financeiros privados';
+
+  @override
+  String get uxBookkeeping => 'Transações';
+
+  @override
+  String get uxLedgerTools => 'Gerenciar contas';
+
+  @override
+  String get uxBudgetsAndReports => 'Orçamentos e relatórios';
+
+  @override
+  String get uxSettingsAndHelp => 'Configurações e ajuda';
+
+  @override
+  String get uxPreferences => 'Preferências';
+
+  @override
+  String get uxSecurity => 'Conta e segurança';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'Notificações e integrações';
+
+  @override
+  String get uxDataAndAdmin => 'Dados e administração';
+
+  @override
+  String get uxTransactionDetails => 'Detalhes da transação';
+
+  @override
+  String get uxIncludedInStats =>
+      'Somente transações incluídas nas estatísticas';
+
+  @override
+  String get uxAdvancedOptions => 'Opções avançadas';
+
+  @override
+  String get uxDrafts => 'Rascunhos pendentes';
+
+  @override
+  String get uxStockTools => 'Ferramentas de ações';
+
+  @override
+  String get uxStockView => 'Visão de ações';
+
+  @override
+  String get uxReportOptions => 'Opções do relatório';
+
+  @override
+  String get uxViewReports => 'Ver relatórios';
+
+  @override
+  String get uxViewAllTransactions => 'Ver todas as transações';
+
+  @override
+  String get uxDashboardDetails => 'Análise financeira';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'Toque em “Adicionar transação” para registrar sua primeira receita ou despesa.';
+
+  @override
+  String get uxExport => 'Exportar';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -14235,4 +14297,66 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'Os widgets da tela inicial não mostram valores por padrão, para manter os dados financeiros privados';
+
+  @override
+  String get uxBookkeeping => 'Transações';
+
+  @override
+  String get uxLedgerTools => 'Gerenciar contas';
+
+  @override
+  String get uxBudgetsAndReports => 'Orçamentos e relatórios';
+
+  @override
+  String get uxSettingsAndHelp => 'Configurações e ajuda';
+
+  @override
+  String get uxPreferences => 'Preferências';
+
+  @override
+  String get uxSecurity => 'Conta e segurança';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'Notificações e integrações';
+
+  @override
+  String get uxDataAndAdmin => 'Dados e administração';
+
+  @override
+  String get uxTransactionDetails => 'Detalhes da transação';
+
+  @override
+  String get uxIncludedInStats =>
+      'Somente transações incluídas nas estatísticas';
+
+  @override
+  String get uxAdvancedOptions => 'Opções avançadas';
+
+  @override
+  String get uxDrafts => 'Rascunhos pendentes';
+
+  @override
+  String get uxStockTools => 'Ferramentas de ações';
+
+  @override
+  String get uxStockView => 'Visão de ações';
+
+  @override
+  String get uxReportOptions => 'Opções do relatório';
+
+  @override
+  String get uxViewReports => 'Ver relatórios';
+
+  @override
+  String get uxViewAllTransactions => 'Ver todas as transações';
+
+  @override
+  String get uxDashboardDetails => 'Análise financeira';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'Toque em “Adicionar transação” para registrar sua primeira receita ou despesa.';
+
+  @override
+  String get uxExport => 'Exportar';
 }

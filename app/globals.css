@@ -264,49 +264,6 @@
   --twse-text: #e5b567;
 }
 
-.app-sidebar {
-  transform: translateX(-100%);
-  visibility: hidden;
-  pointer-events: none;
-}
-.app-sidebar[data-open='true'] {
-  transform: translateX(0);
-  visibility: visible;
-  pointer-events: auto;
-}
-
-:dir(rtl) .app-sidebar {
-  transform: translateX(100%);
-}
-
-:dir(rtl) .app-sidebar[data-open='true'] {
-  transform: translateX(0);
-}
-
-@media (min-width: 1024px) {
-  .app-sidebar {
-    position: static;
-    transform: translateX(0);
-    visibility: visible;
-    pointer-events: auto;
-    flex-shrink: 0;
-  }
-
-  :dir(rtl) .app-sidebar {
-    transform: translateX(0);
-  }
-
-  /* Collapsed rail: hide text labels, keep icons centered */
-  .app-sidebar[data-collapsed='true'] .nav-link {
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .app-topnav {
-    display: none;
-  }
-}
-
 .system-theme { color-scheme: light; }
 @media (prefers-color-scheme: dark) {
   .system-theme { color-scheme: dark; }
@@ -348,7 +305,7 @@
 .nav-link:active {
   background: var(--primary-soft-hover);
 }
-.nav-link[aria-current='page'] {
+.nav-link:is([aria-current='page'], [aria-current='location']) {
   background: var(--primary-light-bg);
   /* --primary 在淺色模式對 --primary-light-bg 僅 4.43:1（未達 WCAG AA 4.5:1，
      issue #264 無障礙檢測抓到）；--primary-solid 較深、對比足夠。暗色模式則維持
@@ -358,12 +315,12 @@
   color: var(--primary-solid);
   font-weight: 600;
 }
-.nav-link[aria-current='page']:hover {
+.nav-link:is([aria-current='page'], [aria-current='location']):hover {
   background: var(--primary-soft-hover);
   color: var(--primary-solid);
 }
-.dark-mode .nav-link[aria-current='page'],
-.dark-mode .nav-link[aria-current='page']:hover {
+.dark-mode .nav-link:is([aria-current='page'], [aria-current='location']),
+.dark-mode .nav-link:is([aria-current='page'], [aria-current='location']):hover {
   color: var(--primary);
 }
 .nav-link:focus-visible {
@@ -529,10 +486,7 @@
   animation: splash-rise 0.8s 0.35s ease both;
 }
 .splash-name span {
-  background: linear-gradient(90deg, #8ea2ff, #7de0c8 60%, #fbbf24);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #8ea2ff;
 }
 .splash-tagline {
   margin-top: 10px;
@@ -895,8 +849,39 @@
 }
 
 .dashboard-page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border);
+}
+
+.dashboard-period {
+  grid-column: 1 / -1;
+}
+
+.dashboard-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-totals > :last-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 640px) {
+  .dashboard-totals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-totals > :last-child { grid-column: auto; }
+}
+
+@media (min-width: 768px) {
+  .dashboard-page-header { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .dashboard-period { grid-column: auto; }
+}
+
+details[open] > summary .disclosure-chevron {
+  transform: rotate(180deg);
 }
 
 .page-header .dashboard-eyebrow {
@@ -2387,11 +2372,6 @@
 /* Shared finishing details, applied across authenticated routes. */
 .app-main { margin-inline: auto; min-width: 0; }
 .app-main:focus { outline: none; }
-.app-topnav p {
-  font-family: var(--font-display), Georgia, "Noto Serif TC", "Noto Serif SC", serif;
-  font-size: 1.13rem;
-  font-weight: 600;
-}
 .app-mobile-nav a { font-size: .72rem; }
 .app-sidebar nav,
 .app-main,

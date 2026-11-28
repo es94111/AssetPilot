@@ -30,8 +30,12 @@ class _OfflineDraftsScreenState extends State<OfflineDraftsScreen> {
     _future = OfflineDraftService.instance.list();
   }
 
-  void _reload() =>
-      setState(() => _future = OfflineDraftService.instance.list());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = OfflineDraftService.instance.list();
+    });
+  }
 
   Future<void> _submit(OfflineDraft draft) async {
     setState(() => _busy = true);

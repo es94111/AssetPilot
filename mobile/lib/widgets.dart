@@ -292,7 +292,7 @@ class LedgerCard extends StatelessWidget {
             ),
           ];
     final content = Padding(padding: padding, child: child);
-    Widget card = DecoratedBox(
+    final card = DecoratedBox(
       decoration: BoxDecoration(
         color: gradient == null ? (color ?? scheme.surface) : null,
         gradient: gradient,
@@ -300,18 +300,13 @@ class LedgerCard extends StatelessWidget {
         border: Border.all(color: tokens.glassBorder),
         boxShadow: shadows,
       ),
-      child: content,
+      child: Material(
+        type: MaterialType.transparency,
+        child: onTap == null
+            ? content
+            : InkWell(onTap: onTap, borderRadius: radius, child: content),
+      ),
     );
-    if (onTap != null) {
-      card = Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: card,
-        ),
-      );
-    }
     return Card(
       margin: margin ?? EdgeInsets.zero,
       elevation: 0,
@@ -414,7 +409,7 @@ class EmptyState extends StatelessWidget {
       container: true,
       label: title == null ? message : '$title. $message',
       child: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(ApSpace.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -462,7 +457,11 @@ class EmptyState extends StatelessWidget {
 class NoticeBanner extends StatelessWidget {
   final String message;
   final ApNoticeKind kind;
-  const NoticeBanner({super.key, required this.message, this.kind = ApNoticeKind.info});
+  const NoticeBanner({
+    super.key,
+    required this.message,
+    this.kind = ApNoticeKind.info,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -597,7 +596,10 @@ class _StaggerInState extends State<StaggerIn>
   @override
   Widget build(BuildContext context) {
     if (apReduceMotion(context)) return widget.child;
-    final curved = CurvedAnimation(parent: _controller, curve: ApMotion.easeOut);
+    final curved = CurvedAnimation(
+      parent: _controller,
+      curve: ApMotion.easeOut,
+    );
     return FadeTransition(
       opacity: curved,
       child: SlideTransition(
@@ -653,9 +655,87 @@ class ApPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: title == null ? null : Text(title!), actions: actions, bottom: bottom),
+      appBar: AppBar(
+        title: title == null ? null : Text(title!),
+        actions: actions,
+        bottom: bottom,
+      ),
       floatingActionButton: floatingActionButton,
       body: body,
+    );
+  }
+}
+
+/// A labelled group of related actions or fields.
+class OptionGroup extends StatelessWidget {
+  final String label;
+  final String? hint;
+  final List<Widget> children;
+  final bool initiallyExpanded;
+  final bool maintainState;
+  final ExpansibleController? controller;
+
+  const OptionGroup({
+    super.key,
+    required this.label,
+    required this.children,
+    this.hint,
+    this.initiallyExpanded = false,
+    this.maintainState = false,
+    this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: ApRadius.rMd,
+      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+    );
+    return ExpansionTile(
+      controller: controller,
+      initiallyExpanded: initiallyExpanded,
+      maintainState: maintainState,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      collapsedBackgroundColor: Theme.of(context).colorScheme.surface,
+      shape: shape,
+      collapsedShape: shape,
+      tilePadding: const EdgeInsets.symmetric(horizontal: ApSpace.lg),
+      childrenPadding: const EdgeInsets.fromLTRB(
+        ApSpace.sm,
+        0,
+        ApSpace.sm,
+        ApSpace.sm,
+      ),
+      expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+      title: Text(label, style: Theme.of(context).textTheme.titleSmall),
+      subtitle: hint == null ? null : Text(hint!),
+      children: children,
+    );
+  }
+}
+
+/// The same primary accounting action on the dashboard and transaction list.
+class RecordButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const RecordButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = trKey('mobileLegacyAddTransaction');
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      button: true,
+      enabled: true,
+      label: label,
+      onTap: onPressed,
+      child: FloatingActionButton.extended(
+        heroTag: null,
+        onPressed: onPressed,
+        icon: const Icon(Icons.add),
+        label: Text(label),
+      ),
     );
   }
 }

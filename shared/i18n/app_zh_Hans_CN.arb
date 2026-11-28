@@ -10695,5 +10695,105 @@
   "@settingsWidgetHideAmountsSubtitle": {
     "description": "Web path: settings.widgetHideAmounts.subtitle",
     "x-webPath": "settings.widgetHideAmounts.subtitle"
+  },
+  "uxBookkeeping": "记账",
+  "@uxBookkeeping": {
+    "description": "Web path: ux.bookkeeping",
+    "x-webPath": "ux.bookkeeping"
+  },
+  "uxLedgerTools": "账务管理",
+  "@uxLedgerTools": {
+    "description": "Web path: ux.ledgerTools",
+    "x-webPath": "ux.ledgerTools"
+  },
+  "uxBudgetsAndReports": "预算与报表",
+  "@uxBudgetsAndReports": {
+    "description": "Web path: ux.budgetsAndReports",
+    "x-webPath": "ux.budgetsAndReports"
+  },
+  "uxSettingsAndHelp": "设置与帮助",
+  "@uxSettingsAndHelp": {
+    "description": "Web path: ux.settingsAndHelp",
+    "x-webPath": "ux.settingsAndHelp"
+  },
+  "uxPreferences": "个人偏好",
+  "@uxPreferences": {
+    "description": "Web path: ux.preferences",
+    "x-webPath": "ux.preferences"
+  },
+  "uxSecurity": "账号与安全",
+  "@uxSecurity": {
+    "description": "Web path: ux.security",
+    "x-webPath": "ux.security"
+  },
+  "uxNotificationsAndIntegrations": "通知与集成",
+  "@uxNotificationsAndIntegrations": {
+    "description": "Web path: ux.notificationsAndIntegrations",
+    "x-webPath": "ux.notificationsAndIntegrations"
+  },
+  "uxDataAndAdmin": "数据与管理",
+  "@uxDataAndAdmin": {
+    "description": "Web path: ux.dataAndAdmin",
+    "x-webPath": "ux.dataAndAdmin"
+  },
+  "uxTransactionDetails": "交易详情",
+  "@uxTransactionDetails": {
+    "description": "Web path: ux.transactionDetails",
+    "x-webPath": "ux.transactionDetails"
+  },
+  "uxIncludedInStats": "仅显示计入统计的交易",
+  "@uxIncludedInStats": {
+    "description": "Web path: ux.includedInStats",
+    "x-webPath": "ux.includedInStats"
+  },
+  "uxAdvancedOptions": "高级选项",
+  "@uxAdvancedOptions": {
+    "description": "Web path: ux.advancedOptions",
+    "x-webPath": "ux.advancedOptions"
+  },
+  "uxDrafts": "待处理草稿",
+  "@uxDrafts": {
+    "description": "Web path: ux.drafts",
+    "x-webPath": "ux.drafts"
+  },
+  "uxStockTools": "股票工具",
+  "@uxStockTools": {
+    "description": "Web path: ux.stockTools",
+    "x-webPath": "ux.stockTools"
+  },
+  "uxStockView": "股票页面",
+  "@uxStockView": {
+    "description": "Web path: ux.stockView",
+    "x-webPath": "ux.stockView"
+  },
+  "uxReportOptions": "报表选项",
+  "@uxReportOptions": {
+    "description": "Web path: ux.reportOptions",
+    "x-webPath": "ux.reportOptions"
+  },
+  "uxViewReports": "查看报表",
+  "@uxViewReports": {
+    "description": "Web path: ux.viewReports",
+    "x-webPath": "ux.viewReports"
+  },
+  "uxViewAllTransactions": "查看全部交易",
+  "@uxViewAllTransactions": {
+    "description": "Web path: ux.viewAllTransactions",
+    "x-webPath": "ux.viewAllTransactions"
+  },
+  "uxDashboardDetails": "财务分析",
+  "@uxDashboardDetails": {
+    "description": "Web path: ux.dashboardDetails",
+    "x-webPath": "ux.dashboardDetails"
+  },
+  "uxEmptyLedgerHint": "点「记一笔」添加第一笔收支。",
+  "@uxEmptyLedgerHint": {
+    "description": "Web path: ux.emptyLedgerHint",
+    "x-webPath": "ux.emptyLedgerHint"
+  },
+  "uxExport": "导出",
+  "@uxExport": {
+    "description": "Web path: ux.export",
+    "x-webPath": "ux.export"
   }
 }

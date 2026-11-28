@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiGet } from "@/lib/clientApi";
 import StocksTabNav from "./StocksTabNav";
+import Disclosure from "@/components/ui/Disclosure";
 import { Select } from "@/components/ui/Select";
 import {
   Table,
@@ -146,7 +147,8 @@ export default function PerformanceClient() {
             {t("features.stocks.performance.subtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-2 pt-2 sm:pt-0">
+        <Disclosure title={t("ux.export")} className="sm:min-w-40">
+          <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -163,13 +165,14 @@ export default function PerformanceClient() {
           >
             {t("features.stocks.performance.exportXlsx")}
           </Button>
-        </div>
+          </div>
+        </Disclosure>
       </div>
 
       <StocksTabNav />
 
       {/* 篩選條件區 */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <Disclosure title={t("mobileLegacy.filter")} hint={`${from} – ${to}`}>
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-32">
             <label className="mb-1 block text-xs font-medium text-slate-500">
@@ -228,7 +231,7 @@ export default function PerformanceClient() {
           </Button>
 
           {/* 期間快速選取標籤 */}
-          <div className="ml-auto flex flex-wrap gap-1">
+          <div className="ms-auto flex flex-wrap gap-2">
             {[
               { id: "1m", label: t("features.stocks.performance.preset1m") },
               { id: "3m", label: t("features.stocks.performance.preset3m") },
@@ -241,14 +244,14 @@ export default function PerformanceClient() {
                 key={p.id}
                 type="button"
                 onClick={() => handlePreset(p.id as any)}
-                className="rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="min-h-11 rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 {p.label}
               </button>
             ))}
           </div>
         </div>
-      </div>
+      </Disclosure>
 
       {/* 警告通知 */}
       {errorMsg && (

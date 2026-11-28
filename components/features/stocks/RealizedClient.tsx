@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { apiGet } from "@/lib/clientApi";
 import StocksTabNav from "./StocksTabNav";
+import Disclosure from "@/components/ui/Disclosure";
 import { Select } from "@/components/ui/Select";
 import {
   Table,
@@ -176,7 +177,8 @@ export default function RealizedClient(_props: { user?: any } = {}) {
         ))}
       </div>
 
-      <div className="flex gap-2 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
+      <Disclosure title={t("mobileLegacy.filter")} hint={stocks.find(stock => stock.id === filterStockId)?.symbol}>
+        <div className="flex flex-wrap items-end gap-2">
         <Select
           options={stocks.map((s) => ({
             label: `${String(s.market || "TW").toUpperCase() === "US" ? t("features.stocks.common.marketUs") : t("features.stocks.common.marketTaiwan")} · ${s.symbol} ${s.name}`,
@@ -185,14 +187,15 @@ export default function RealizedClient(_props: { user?: any } = {}) {
           value={filterStockId}
           onChange={(e) => setFilterStockId(e.target.value)}
           label={t("features.stocks.common.stockLabel")}
-          className="w-48"
+          className="min-w-0 sm:w-48"
         />
         {filterStockId && (
           <Button variant="outline" onClick={() => setFilterStockId("")}>
             {t("common.clear")}
           </Button>
         )}
-      </div>
+        </div>
+      </Disclosure>
 
       {loading ? (
         <div className="space-y-2" aria-busy="true"><div className="ui-skeleton h-12 w-full" /><div className="ui-skeleton h-12 w-full" /><div className="ui-skeleton h-12 w-full" /></div>

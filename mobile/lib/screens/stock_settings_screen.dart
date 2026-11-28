@@ -65,7 +65,12 @@ class _StockSettingsScreenState extends State<StockSettingsScreen> {
     );
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,15 +84,36 @@ class _StockSettingsScreenState extends State<StockSettingsScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _StockSettingsForm(initial: data.settings, onSaved: _reload),
-              SizedBox(height: 24),
-              _StockStatusSection(stocks: data.stocks, onChanged: _reload),
-              SizedBox(height: 24),
-              _RecurringSection(
-                stocks: data.stocks,
-                accounts: data.accounts,
-                recurring: data.recurring,
-                onChanged: _reload,
+              if (ApiClient.instance.activeLedgerReadOnly)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(trKey('ledgerReadOnlyNotice')),
+                ),
+              OptionGroup(
+                label: trKey('featuresStocksSettingsFeeTitle'),
+                maintainState: true,
+                children: [
+                  _StockSettingsForm(initial: data.settings, onSaved: _reload),
+                ],
+              ),
+              const SizedBox(height: 12),
+              OptionGroup(
+                label: trKey('featuresStocksSettingsStockStatusTitle'),
+                children: [
+                  _StockStatusSection(stocks: data.stocks, onChanged: _reload),
+                ],
+              ),
+              const SizedBox(height: 12),
+              OptionGroup(
+                label: trKey('featuresStocksSettingsRecurringTitle'),
+                children: [
+                  _RecurringSection(
+                    stocks: data.stocks,
+                    accounts: data.accounts,
+                    recurring: data.recurring,
+                    onChanged: _reload,
+                  ),
+                ],
               ),
             ],
           ),
@@ -192,6 +218,7 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: c,
+        enabled: !ApiClient.instance.activeLedgerReadOnly,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: label,
@@ -216,11 +243,6 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            trKey('featuresStocksSettingsFeeTitle'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: 12),
           _num(
             trKey('mobileLegacyCommissionRate'),
             _feeRate,
@@ -249,7 +271,9 @@ class _StockSettingsFormState extends State<_StockSettingsForm> {
           _num(trKey('mobileLegacyMinimumTransactionTax'), _taxMin),
           SizedBox(height: 8),
           FilledButton(
-            onPressed: _saving ? null : _save,
+            onPressed: (_saving || ApiClient.instance.activeLedgerReadOnly)
+                ? null
+                : _save,
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -313,11 +337,6 @@ class _StockStatusSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          trKey('featuresStocksSettingsStockStatusTitle'),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        SizedBox(height: 12),
         if (stocks.isEmpty)
           EmptyState(
             icon: Icons.trending_up,
@@ -354,7 +373,9 @@ class _StockStatusSection extends StatelessWidget {
                     ),
                     SizedBox(width: 8),
                     TextButton(
-                      onPressed: () => _toggleDelisted(context, s),
+                      onPressed: ApiClient.instance.activeLedgerReadOnly
+                          ? null
+                          : () => _toggleDelisted(context, s),
                       child: Text(
                         s.delisted
                             ? trKey('featuresStocksSettingsRestoreTracking')
@@ -401,6 +422,7 @@ class _RecurringSection extends StatelessWidget {
     }
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _RecurringForm(
@@ -424,7 +446,7 @@ class _RecurringSection extends StatelessWidget {
   Future<void> _delete(BuildContext context, StockRecurring r) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('featuresStocksSettingsDeleteRecurringConfirm')),
         actions: [
           TextButton(
@@ -455,21 +477,15 @@ class _RecurringSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                trKey('featuresStocksSettingsRecurringTitle'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            FilledButton.tonalIcon(
+        if (!ApiClient.instance.activeLedgerReadOnly)
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FilledButton.tonalIcon(
               onPressed: () => _openForm(context),
-              icon: Icon(Icons.add, size: 18),
+              icon: const Icon(Icons.add, size: 18),
               label: Text(trKey('featuresStocksSettingsAddRecurringShort')),
             ),
-          ],
-        ),
+          ),
         SizedBox(height: 12),
         if (recurring.isEmpty)
           EmptyState(
@@ -511,17 +527,23 @@ class _RecurringSection extends StatelessWidget {
                           ? trKey('featuresStocksSettingsInactive')
                           : trKey('featuresStocksSettingsActive'),
                       icon: Icon(r.isActive ? Icons.pause : Icons.play_arrow),
-                      onPressed: () => _toggle(context, r),
+                      onPressed: ApiClient.instance.activeLedgerReadOnly
+                          ? null
+                          : () => _toggle(context, r),
                     ),
                     IconButton(
                       tooltip: trKey('featuresStocksSettingsEditRecurring'),
                       icon: Icon(Icons.edit_outlined),
-                      onPressed: () => _openForm(context, r),
+                      onPressed: ApiClient.instance.activeLedgerReadOnly
+                          ? null
+                          : () => _openForm(context, r),
                     ),
                     IconButton(
                       tooltip: trKey('commonDelete'),
                       icon: Icon(Icons.delete_outline),
-                      onPressed: () => _delete(context, r),
+                      onPressed: ApiClient.instance.activeLedgerReadOnly
+                          ? null
+                          : () => _delete(context, r),
                     ),
                   ],
                 ),
@@ -739,7 +761,9 @@ class _RecurringFormState extends State<_RecurringForm> {
               ),
               SizedBox(height: 20),
               FilledButton(
-                onPressed: _saving ? null : _save,
+                onPressed: (_saving || ApiClient.instance.activeLedgerReadOnly)
+                    ? null
+                    : _save,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),

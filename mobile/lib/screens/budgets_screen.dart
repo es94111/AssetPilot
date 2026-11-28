@@ -56,7 +56,12 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
     return _BudgetData(budgets, catById);
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   void _shiftMonth(int delta) => setState(() {
     _month = DateTime(_month.year, _month.month + delta);
@@ -64,14 +69,16 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   });
 
   Future<void> _add() async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     final cats = await ApiClient.instance.categories();
     final categories = cats
         .map((e) => Category.fromJson((e as Map).cast<String, dynamic>()))
         .where((c) => c.type == 'expense')
         .toList();
-    if (!mounted) return;
+    if (!mounted || ApiClient.instance.activeLedgerReadOnly) return;
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _BudgetForm(yearMonth: _ym, categories: categories),
@@ -80,6 +87,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   }
 
   Future<void> _delete(Budget b) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     try {
       await ApiClient.instance.deleteBudget(b.id);
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
@@ -90,7 +98,12 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: ApiClient.instance.activeLedgerReadOnlyChanges,
+    builder: (context, readOnly, _) => _buildScreen(readOnly),
+  );
+
+  Widget _buildScreen(bool readOnly) {
     return Scaffold(
       appBar: AppBar(
         title: Text(trKey('mobileLegacyBudgets')),
@@ -106,11 +119,13 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _add,
-        icon: Icon(Icons.add),
-        label: Text(trKey('featuresBudgetAddBudget')),
-      ),
+      floatingActionButton: readOnly
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _add,
+              icon: Icon(Icons.add),
+              label: Text(trKey('featuresBudgetAddBudget')),
+            ),
       body: AsyncView<_BudgetData>(
         future: _future,
         onRetry: _reload,
@@ -119,8 +134,10 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
             return EmptyState(
               icon: Icons.savings_outlined,
               title: trKey('mobileLegacyNoBudgetThisMonth'),
-              message: trKey('featuresBudgetAddBudget'),
-              onAction: _add,
+              message: trKey(
+                readOnly ? 'ledgerReadOnlyNotice' : 'featuresBudgetAddBudget',
+              ),
+              onAction: readOnly ? null : _add,
               actionLabel: trKey('featuresBudgetAddBudget'),
             );
           }
@@ -143,7 +160,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                           ? trKey('mobileLegacyMonthlyBudget')
                           : (data.catById[b.categoryId]?.name ??
                                 trKey('mobileLegacyUnknownCategory')),
-                      onDelete: () => _delete(b),
+                      onDelete: readOnly ? null : () => _delete(b),
                     ),
                   ),
               ],
@@ -158,7 +175,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
 class _BudgetTile extends StatelessWidget {
   final Budget budget;
   final String name;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
   const _BudgetTile({
     required this.budget,
     required this.name,
@@ -189,11 +206,12 @@ class _BudgetTile extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                onPressed: onDelete,
-                icon: Icon(Icons.delete_outline, size: 20),
-              ),
+              if (onDelete != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onDelete,
+                  icon: Icon(Icons.delete_outline, size: 20),
+                ),
             ],
           ),
           const SizedBox(height: ApSpace.sm),

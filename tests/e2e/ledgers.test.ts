@@ -22,7 +22,7 @@ test('stale or revoked ledger selection resets safely to the current user person
     }
   });
   await authedPage.goto('/finance/transactions');
-  await expect(authedPage.locator('#active-ledger')).toHaveValue(`personal:${testUser.id}`);
+  await expect(authedPage.getByRole('combobox', { name: '目前帳本', exact: true })).toHaveValue(`personal:${testUser.id}`);
   await expect(authedPage.getByText('Personal after revoked selection', { exact: true }).filter({ visible: true }).first()).toBeVisible();
 });
 
@@ -38,12 +38,16 @@ test('creating an empty shared ledger keeps personal transactions private and sw
     await expect(authedPage.getByRole('status')).toHaveText('共享帳本已建立。');
     ledgerId = await authedPage.locator('#ledger-select').inputValue();
     expect(ledgerId).not.toBe(`personal:${testUser.id}`);
-    await expect(authedPage.locator('#active-ledger')).toHaveValue(ledgerId);
+    const activeLedger = authedPage.getByRole('combobox', { name: '目前帳本', exact: true });
     await authedPage.goto('/finance/transactions');
+    await expect(activeLedger).toHaveValue(ledgerId);
     await expect(authedPage.getByText('Private ledger fixture', { exact: true })).toHaveCount(0);
     const response = await authedPage.request.get('/api/transactions', { headers: { 'x-ledger-id': ledgerId } });
     expect((await response.json()).total).toBe(0);
-    await authedPage.locator('#active-ledger').selectOption(`personal:${testUser.id}`);
+    await authedPage.getByRole('button', { name: '收合側邊欄' }).click();
+    await expect(activeLedger).toHaveValue(ledgerId);
+    await activeLedger.selectOption(`personal:${testUser.id}`);
+    await expect(authedPage).toHaveURL(/\/finance\/transactions/);
     await expect(authedPage.getByText('Private ledger fixture', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   } finally {
     if (ledgerId) {

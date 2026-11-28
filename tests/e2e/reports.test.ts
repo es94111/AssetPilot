@@ -1,14 +1,8 @@
 // tests/e2e/reports.test.ts — 報表（issue #264 / #255）
 import { readFile } from 'node:fs/promises';
 import { test, expect } from './support/fixtures';
-import { createE2ETransaction } from './support/testUser';
+import { createE2EExpenseCategory, createE2ETransaction } from './support/testUser';
 
-// ReportsClient 的「本月」等預設區間是用瀏覽器本地時間的 `new Date(y, m, d)`
-// 算出端點後再 `.toISOString()` 轉成日期字串；在 UTC+ 時區下，本地午夜換算成
-// UTC 會變成「前一天」，使區間上限實際變成「到昨天」（既有、與本次變更無關的
-// 邊界問題）。改用「自訂區間」並直接帶入種子交易當天的日期字串
-// （`new Date('YYYY-MM-DD')` 一律以 UTC 午夜解析，不受本地時區影響），完全
-// 避開這個問題，也不受「月初測試可能落到上個月」這類日期邊界影響。
 function todayIsoDate(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -37,6 +31,7 @@ test('reports page converts to the selected base currency and exports matching C
   await authedPage.getByLabel('期間').selectOption({ label: '自訂' });
   await authedPage.getByLabel('開始').fill(seedDate);
   await authedPage.getByLabel('結束').fill(seedDate);
+  await authedPage.getByText('報表選項', { exact: true }).click();
   await authedPage.getByLabel('基準幣別').selectOption('USD');
 
   await expect(authedPage.getByText('95.24 USD').first()).toBeVisible();
@@ -51,4 +46,38 @@ test('reports page converts to the selected base currency and exports matching C
   expect(csv).toContain('95.24');
   expect(csv).toContain('匯率來源');
   expect(csv).toContain('匯率時間');
+});
+
+test('report drill-down matches uncategorized and direct parent totals', async ({ authedPage: page, testUser }) => {
+  const date = todayIsoDate();
+  const parentId = await createE2EExpenseCategory(testUser.id, '報表父分類');
+  const childId = await createE2EExpenseCategory(testUser.id, '報表子分類', parentId);
+
+  await createE2ETransaction(testUser.id, { date, amount: 100, note: '篩選未分類交易' });
+  await createE2ETransaction(testUser.id, { date, amount: 200, note: '篩選父分類交易', categoryId: parentId });
+  await createE2ETransaction(testUser.id, { date, amount: 300, note: '篩選子分類交易', categoryId: childId });
+  await createE2ETransaction(testUser.id, { date, amount: 400, note: '篩選統計以外交易', categoryId: parentId, excludeFromStats: true });
+
+  const report = `/finance/reports?period=custom&from=${date}&to=${date}`;
+  const transactions = page.getByRole('table');
+  await page.goto(report);
+  await page.getByRole('link', { name: '查看對應交易 · 未分類 › （其他）', exact: true }).click();
+  await expect(transactions.getByText('篩選未分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選父分類交易', { exact: true })).toBeHidden();
+
+  await page.goto(report);
+  await page.getByRole('link', { name: '查看對應交易 · 報表父分類 › （其他）', exact: true }).click();
+  await expect(transactions.getByText('篩選父分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選子分類交易', { exact: true })).toBeHidden();
+  await expect(transactions.getByText('篩選統計以外交易', { exact: true })).toBeHidden();
+  await page.getByRole('button', { name: /^篩選/ }).click();
+  await page.getByRole('checkbox', { name: '僅顯示計入統計的交易' }).uncheck();
+  await page.getByRole('button', { name: '套用' }).click();
+  await expect(transactions.getByText('篩選統計以外交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選子分類交易', { exact: true })).toBeHidden();
+
+  await page.goto(`/finance/transactions?categoryId=${parentId}`);
+  await expect(transactions.getByText('篩選父分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選子分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選統計以外交易', { exact: true })).toBeVisible();
 });

@@ -18,8 +18,6 @@ import 'screens/dashboard_screen.dart';
 import 'screens/ledger_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/more_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'screens/reports_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/stocks_screen.dart';
 import 'screens/transaction_form_screen.dart';
@@ -186,7 +184,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 }
 
-/// 自適應主畫面：Compact 使用底部導覽，較大視窗使用 NavigationRail。
+/// 手機使用底部導覽，較大視窗使用 NavigationRail。
 class HomeShell extends StatefulWidget {
   final VoidCallback onLoggedOut;
   const HomeShell({super.key, required this.onLoggedOut});
@@ -200,6 +198,11 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
 
   /// 帳本切換時遞增，讓 IndexedStack 內的分頁全部重建（不保留舊帳本快取）。
   int _homeEpoch = 0;
+  int _transactionsRevision = 0;
+  final _sectionNavigators = List.generate(
+    4,
+    (_) => GlobalKey<NavigatorState>(),
+  );
   final DeepLinkService _deepLinks = DeepLinkService.instance;
   StreamSubscription<Uri>? _linkSubscription;
   Timer? _notificationRetryTimer;
@@ -209,6 +212,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ApiClient.instance.activeLedgerReadOnlyChanges.addListener(
+      _updateLedgerPermissions,
+    );
+    unawaited(_restoreActiveLedger());
     ConnectivityService.instance.isOnline.addListener(
       _scheduleNotificationRetry,
     );
@@ -220,11 +227,22 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     // 離線草稿需要知道目前連線狀態，以及草稿所屬的使用者／帳本。
     unawaited(ConnectivityService.instance.start());
     unawaited(_bindOfflineDrafts());
-    // 第一次進到主畫面時自動彈出使用教學（看過後不再出現）。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_handleInitialLink());
-      if (mounted) OnboardingScreen.showIfFirstTime(context);
     });
+  }
+
+  Future<void> _restoreActiveLedger() async {
+    final api = ApiClient.instance;
+    final savedId = api.activeLedgerId;
+    if (savedId.isEmpty) return;
+    try {
+      final ledgers = await api.ledgers();
+      if (!mounted) return;
+      if (await api.resetMissingActiveLedger(savedId, ledgers)) _reloadAll();
+    } catch (_) {
+      // 離線無法確認權限時，保留目前帳本選取。
+    }
   }
 
   /// 把離線草稿服務綁定到目前使用者與帳本，避免跨帳號／跨帳本混用草稿。
@@ -292,6 +310,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    ApiClient.instance.activeLedgerReadOnlyChanges.removeListener(
+      _updateLedgerPermissions,
+    );
     ConnectivityService.instance.isOnline.removeListener(
       _scheduleNotificationRetry,
     );
@@ -369,7 +390,11 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         ),
       );
       if (changed == true && mounted) {
-        setState(() => _index = 0);
+        _backToSectionRoot(0);
+        setState(() {
+          _index = 0;
+          _transactionsRevision++;
+        });
       }
     } finally {
       _openingDeepLink = false;
@@ -404,9 +429,18 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     return (customScheme || verifiedWebLink) && token.isNotEmpty;
   }
 
-  /// 切換帳本後重建所有分頁，確保畫面上不留前一個帳本的資料；
-  /// 同時把離線草稿服務換到新帳本，避免草稿被標成舊帳本。
-  void _reloadAll() {
+  void _backToSectionRoot(int section) {
+    _sectionNavigators[section].currentState?.popUntil(
+      (route) => route.isFirst,
+    );
+  }
+
+  /// 清除舊帳本的子頁與快取，並把離線草稿服務繫結到新帳本。
+  void _reloadAll({int? keepSection}) {
+    if (!mounted) return;
+    for (var section = 0; section < _sectionNavigators.length; section++) {
+      if (section != keepSection) _backToSectionRoot(section);
+    }
     setState(() => _homeEpoch += 1);
     unawaited(
       OfflineDraftService.instance.bindLedger(
@@ -415,43 +449,81 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     );
   }
 
+  void _updateLedgerPermissions() {
+    if (mounted) setState(() {});
+  }
+
+  void _refreshTransactionViews() {
+    if (mounted) setState(() => _transactionsRevision++);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 五個分頁：總覽／交易／股票／報表／更多。報表從「更多」提升為一級分頁，
-    // 高頻功能（帳戶、預算）則由 Dashboard 快速入口與「更多」分區進入。
     final pages = [
-      DashboardScreen(key: ValueKey('dashboard-$_homeEpoch')),
+      DashboardScreen(
+        key: ValueKey('dashboard-$_homeEpoch'),
+        transactionsRevision: _transactionsRevision,
+        onTransactionsChanged: _refreshTransactionViews,
+        onShowTransactions: () {
+          _backToSectionRoot(1);
+          setState(() => _index = 1);
+        },
+      ),
       TransactionsScreen(
         key: ValueKey('transactions-$_homeEpoch'),
-        onLedgerChanged: _reloadAll,
+        transactionsRevision: _transactionsRevision,
+        onTransactionsChanged: _refreshTransactionViews,
+        onLedgerChanged: () => _reloadAll(keepSection: 1),
       ),
       StocksScreen(key: ValueKey('stocks-$_homeEpoch')),
-      ReportsScreen(key: ValueKey('reports-$_homeEpoch')),
       MoreScreen(
         key: ValueKey('more-$_homeEpoch'),
         onLoggedOut: widget.onLoggedOut,
-        onLedgerChanged: _reloadAll,
+        onLedgerChanged: () => _reloadAll(keepSection: 3),
       ),
     ];
     final labels = [
       trKey('mobileLegacyHome'),
-      trKey('mobileLegacyTransactions8084a8ea'),
+      trKey('uxBookkeeping'),
       trKey('featuresCommonStock'),
-      trKey('navReports'),
       trKey('mobileLegacyMore'),
     ];
     final icons = [
       (Icons.space_dashboard_outlined, Icons.space_dashboard),
       (Icons.receipt_long_outlined, Icons.receipt_long),
       (Icons.trending_up_outlined, Icons.trending_up),
-      (Icons.donut_small_outlined, Icons.donut_small),
-      (Icons.menu, Icons.menu_open),
+      (Icons.folder_open_outlined, Icons.folder_open),
     ];
-    final width = MediaQuery.sizeOf(context).width;
-    final compact = width < 600;
-    final extended = width >= 840;
+    final size = MediaQuery.sizeOf(context);
+    final phonePlatform =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.android);
+    final compact =
+        size.width < 600 || (phonePlatform && size.shortestSide < 600);
+    final extended = size.width >= 840;
     final content = Expanded(
-      child: IndexedStack(index: _index, children: pages),
+      child: IndexedStack(
+        index: _index,
+        children: [
+          for (var section = 0; section < pages.length; section++)
+            NavigatorPopHandler<Object?>(
+              enabled: section == _index,
+              onPopWithResult: (_) {
+                if (section == _index) {
+                  _sectionNavigators[section].currentState?.maybePop();
+                }
+              },
+              child: HeroControllerScope.none(
+                child: Navigator(
+                  key: _sectionNavigators[section],
+                  pages: [MaterialPage<void>(child: pages[section])],
+                  onDidRemovePage: (_) {},
+                ),
+              ),
+            ),
+        ],
+      ),
     );
 
     return Scaffold(

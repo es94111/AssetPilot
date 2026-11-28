@@ -6754,6 +6754,66 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsWidgetHideAmountsSubtitle => '桌面 Widget 預設不顯示金額，避免財務資訊外洩';
+
+  @override
+  String get uxBookkeeping => '記帳';
+
+  @override
+  String get uxLedgerTools => '帳務管理';
+
+  @override
+  String get uxBudgetsAndReports => '預算與報表';
+
+  @override
+  String get uxSettingsAndHelp => '設定與說明';
+
+  @override
+  String get uxPreferences => '個人偏好';
+
+  @override
+  String get uxSecurity => '帳號與安全';
+
+  @override
+  String get uxNotificationsAndIntegrations => '通知與整合';
+
+  @override
+  String get uxDataAndAdmin => '資料與管理';
+
+  @override
+  String get uxTransactionDetails => '交易細節';
+
+  @override
+  String get uxIncludedInStats => '僅顯示計入統計的交易';
+
+  @override
+  String get uxAdvancedOptions => '進階選項';
+
+  @override
+  String get uxDrafts => '待處理草稿';
+
+  @override
+  String get uxStockTools => '股票工具';
+
+  @override
+  String get uxStockView => '股票頁面';
+
+  @override
+  String get uxReportOptions => '報表選項';
+
+  @override
+  String get uxViewReports => '查看報表';
+
+  @override
+  String get uxViewAllTransactions => '查看全部交易';
+
+  @override
+  String get uxDashboardDetails => '財務分析';
+
+  @override
+  String get uxEmptyLedgerHint => '點「記一筆」新增第一筆收支。';
+
+  @override
+  String get uxExport => '匯出';
 }
 
 /// The translations for Chinese, as used in China, using the Han script (`zh_Hans_CN`).
@@ -13410,6 +13470,66 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get settingsWidgetHideAmountsSubtitle => '桌面小组件默认不显示金额，避免财务信息泄露';
+
+  @override
+  String get uxBookkeeping => '记账';
+
+  @override
+  String get uxLedgerTools => '账务管理';
+
+  @override
+  String get uxBudgetsAndReports => '预算与报表';
+
+  @override
+  String get uxSettingsAndHelp => '设置与帮助';
+
+  @override
+  String get uxPreferences => '个人偏好';
+
+  @override
+  String get uxSecurity => '账号与安全';
+
+  @override
+  String get uxNotificationsAndIntegrations => '通知与集成';
+
+  @override
+  String get uxDataAndAdmin => '数据与管理';
+
+  @override
+  String get uxTransactionDetails => '交易详情';
+
+  @override
+  String get uxIncludedInStats => '仅显示计入统计的交易';
+
+  @override
+  String get uxAdvancedOptions => '高级选项';
+
+  @override
+  String get uxDrafts => '待处理草稿';
+
+  @override
+  String get uxStockTools => '股票工具';
+
+  @override
+  String get uxStockView => '股票页面';
+
+  @override
+  String get uxReportOptions => '报表选项';
+
+  @override
+  String get uxViewReports => '查看报表';
+
+  @override
+  String get uxViewAllTransactions => '查看全部交易';
+
+  @override
+  String get uxDashboardDetails => '财务分析';
+
+  @override
+  String get uxEmptyLedgerHint => '点「记一笔」添加第一笔收支。';
+
+  @override
+  String get uxExport => '导出';
 }
 
 /// The translations for Chinese, as used in Taiwan, using the Han script (`zh_Hant_TW`).
@@ -20162,4 +20282,64 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get settingsWidgetHideAmountsSubtitle => '桌面 Widget 預設不顯示金額，避免財務資訊外洩';
+
+  @override
+  String get uxBookkeeping => '記帳';
+
+  @override
+  String get uxLedgerTools => '帳務管理';
+
+  @override
+  String get uxBudgetsAndReports => '預算與報表';
+
+  @override
+  String get uxSettingsAndHelp => '設定與說明';
+
+  @override
+  String get uxPreferences => '個人偏好';
+
+  @override
+  String get uxSecurity => '帳號與安全';
+
+  @override
+  String get uxNotificationsAndIntegrations => '通知與整合';
+
+  @override
+  String get uxDataAndAdmin => '資料與管理';
+
+  @override
+  String get uxTransactionDetails => '交易細節';
+
+  @override
+  String get uxIncludedInStats => '僅顯示計入統計的交易';
+
+  @override
+  String get uxAdvancedOptions => '進階選項';
+
+  @override
+  String get uxDrafts => '待處理草稿';
+
+  @override
+  String get uxStockTools => '股票工具';
+
+  @override
+  String get uxStockView => '股票頁面';
+
+  @override
+  String get uxReportOptions => '報表選項';
+
+  @override
+  String get uxViewReports => '查看報表';
+
+  @override
+  String get uxViewAllTransactions => '查看全部交易';
+
+  @override
+  String get uxDashboardDetails => '財務分析';
+
+  @override
+  String get uxEmptyLedgerHint => '點「記一筆」新增第一筆收支。';
+
+  @override
+  String get uxExport => '匯出';
 }

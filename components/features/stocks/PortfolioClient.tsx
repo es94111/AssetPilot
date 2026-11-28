@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/clientApi";
 import StocksTabNav from "./StocksTabNav";
+import { useActiveLedger } from "@/components/features/ledgers/LedgerSwitcher";
 import StockHistoryDialog from "./StockHistoryDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
@@ -171,6 +172,7 @@ async function fetchUserSideStockPrices(
 }
 
 export default function PortfolioClient(_props: { user?: any } = {}) {
+  const { canWrite } = useActiveLedger();
   const { t, locale } = useT();
   const [stocks, setStocks] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
@@ -336,7 +338,33 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
       <h2 className="text-2xl font-bold">
         {t("features.stocks.portfolio.title")}
       </h2>
-      <StocksTabNav />
+      <StocksTabNav tools={canWrite ? (
+        <Button
+          variant="outline"
+          onClick={() => {
+            setPriceResult(null);
+            setPriceModal(true);
+          }}
+        >
+          <RefreshCw size={16} className="mr-2" />{" "}
+          {t("features.stocks.portfolio.updatePrices")}
+        </Button>
+      ) : null} />
+
+      {canWrite && <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => {
+            setForm(EMPTY_FORM);
+            setEditId(null);
+            setFormError("");
+            setAddDialogOpen(true);
+          }}
+        >
+          <Plus size={16} className="mr-2" />{" "}
+          {t("features.stocks.portfolio.addStock")}
+        </Button>
+
+      </div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
@@ -382,31 +410,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
         ))}
       </div>
 
-      <div className="flex gap-2">
-        <Button
-          onClick={() => {
-            setForm(EMPTY_FORM);
-            setEditId(null);
-            setFormError("");
-            setAddDialogOpen(true);
-          }}
-        >
-          <Plus size={16} className="mr-2" />{" "}
-          {t("features.stocks.portfolio.addStock")}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            setPriceResult(null);
-            setPriceModal(true);
-          }}
-        >
-          <RefreshCw size={16} className="mr-2" />{" "}
-          {t("features.stocks.portfolio.updatePrices")}
-        </Button>
-      </div>
-
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+      <Dialog open={addDialogOpen && canWrite} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -480,7 +484,7 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={priceModal} onOpenChange={setPriceModal}>
+      <Dialog open={priceModal && canWrite} onOpenChange={setPriceModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -589,9 +593,11 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
                     </span>
                   </div>
                   <div className="flex gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    {canWrite && <>
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={t("common.edit")}
                       onClick={() => {
                         setForm({
                           market: s.market || "TW",
@@ -611,10 +617,12 @@ export default function PortfolioClient(_props: { user?: any } = {}) {
                       variant="ghost"
                       size="icon"
                       className="text-[var(--danger)]"
+                      aria-label={t("common.delete")}
                       onClick={() => handleDelete(s)}
                     >
                       <Trash2 size={15} />
                     </Button>
+                    </>}
                   </div>
                 </div>
 

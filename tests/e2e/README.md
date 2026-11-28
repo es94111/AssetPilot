@@ -8,7 +8,7 @@
 | --- | --- |
 | `login.test.ts` | 未登入導向 `/login`；登入頁渲染 |
 | `dashboard.test.ts` | 儀表板收支總覽 |
-| `transactions.test.ts` | 交易列表、新增交易的分類建議；編輯／新增（頁面按鈕與頂端列快速新增）儲存後維持目前頁碼與篩選（目前頁碼超出範圍時退回最後一頁） |
+| `transactions.test.ts` | 交易列表、新增交易的分類建議；編輯／新增（頁面按鈕與 Alt+N 快捷鍵）儲存後維持目前頁碼與篩選（目前頁碼超出範圍時退回最後一頁） |
 | `budget.test.ts` | 新增預算 |
 | `portfolio.test.ts` | 記一筆股票買進交易，持股總覽正確反映 |
 | `reports.test.ts` | 統計報表本期合計 |

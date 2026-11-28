@@ -10695,5 +10695,105 @@
   "@settingsWidgetHideAmountsSubtitle": {
     "description": "Web path: settings.widgetHideAmounts.subtitle",
     "x-webPath": "settings.widgetHideAmounts.subtitle"
+  },
+  "uxBookkeeping": "Transactions",
+  "@uxBookkeeping": {
+    "description": "Web path: ux.bookkeeping",
+    "x-webPath": "ux.bookkeeping"
+  },
+  "uxLedgerTools": "Gérer les comptes",
+  "@uxLedgerTools": {
+    "description": "Web path: ux.ledgerTools",
+    "x-webPath": "ux.ledgerTools"
+  },
+  "uxBudgetsAndReports": "Budgets et rapports",
+  "@uxBudgetsAndReports": {
+    "description": "Web path: ux.budgetsAndReports",
+    "x-webPath": "ux.budgetsAndReports"
+  },
+  "uxSettingsAndHelp": "Paramètres et aide",
+  "@uxSettingsAndHelp": {
+    "description": "Web path: ux.settingsAndHelp",
+    "x-webPath": "ux.settingsAndHelp"
+  },
+  "uxPreferences": "Préférences",
+  "@uxPreferences": {
+    "description": "Web path: ux.preferences",
+    "x-webPath": "ux.preferences"
+  },
+  "uxSecurity": "Compte et sécurité",
+  "@uxSecurity": {
+    "description": "Web path: ux.security",
+    "x-webPath": "ux.security"
+  },
+  "uxNotificationsAndIntegrations": "Notifications et intégrations",
+  "@uxNotificationsAndIntegrations": {
+    "description": "Web path: ux.notificationsAndIntegrations",
+    "x-webPath": "ux.notificationsAndIntegrations"
+  },
+  "uxDataAndAdmin": "Données et administration",
+  "@uxDataAndAdmin": {
+    "description": "Web path: ux.dataAndAdmin",
+    "x-webPath": "ux.dataAndAdmin"
+  },
+  "uxTransactionDetails": "Détails de la transaction",
+  "@uxTransactionDetails": {
+    "description": "Web path: ux.transactionDetails",
+    "x-webPath": "ux.transactionDetails"
+  },
+  "uxIncludedInStats": "Seulement les opérations incluses dans les statistiques",
+  "@uxIncludedInStats": {
+    "description": "Web path: ux.includedInStats",
+    "x-webPath": "ux.includedInStats"
+  },
+  "uxAdvancedOptions": "Options avancées",
+  "@uxAdvancedOptions": {
+    "description": "Web path: ux.advancedOptions",
+    "x-webPath": "ux.advancedOptions"
+  },
+  "uxDrafts": "Brouillons en attente",
+  "@uxDrafts": {
+    "description": "Web path: ux.drafts",
+    "x-webPath": "ux.drafts"
+  },
+  "uxStockTools": "Outils boursiers",
+  "@uxStockTools": {
+    "description": "Web path: ux.stockTools",
+    "x-webPath": "ux.stockTools"
+  },
+  "uxStockView": "Vue boursière",
+  "@uxStockView": {
+    "description": "Web path: ux.stockView",
+    "x-webPath": "ux.stockView"
+  },
+  "uxReportOptions": "Options du rapport",
+  "@uxReportOptions": {
+    "description": "Web path: ux.reportOptions",
+    "x-webPath": "ux.reportOptions"
+  },
+  "uxViewReports": "Voir les rapports",
+  "@uxViewReports": {
+    "description": "Web path: ux.viewReports",
+    "x-webPath": "ux.viewReports"
+  },
+  "uxViewAllTransactions": "Voir toutes les transactions",
+  "@uxViewAllTransactions": {
+    "description": "Web path: ux.viewAllTransactions",
+    "x-webPath": "ux.viewAllTransactions"
+  },
+  "uxDashboardDetails": "Analyse financière",
+  "@uxDashboardDetails": {
+    "description": "Web path: ux.dashboardDetails",
+    "x-webPath": "ux.dashboardDetails"
+  },
+  "uxEmptyLedgerHint": "Touchez « Ajouter une transaction » pour enregistrer votre premier revenu ou votre première dépense.",
+  "@uxEmptyLedgerHint": {
+    "description": "Web path: ux.emptyLedgerHint",
+    "x-webPath": "ux.emptyLedgerHint"
+  },
+  "uxExport": "Exporter",
+  "@uxExport": {
+    "description": "Web path: ux.export",
+    "x-webPath": "ux.export"
   }
 }

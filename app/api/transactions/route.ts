@@ -117,6 +117,8 @@ export async function GET(request: NextRequest) {
   const dateTo = searchParams.get('dateTo') || '';
   const type = searchParams.get('type') || '';
   const categoryId = searchParams.get('categoryId') || '';
+  const matchCategoryExactly = searchParams.get('categoryMatch') === 'exact';
+  const includedInStats = searchParams.get('includedInStats') === '1';
   const accountId = searchParams.get('accountId') || '';
   const page = searchParams.get('page') || '1';
   const keyword = String(searchParams.get('keyword') || '').trim();
@@ -168,22 +170,22 @@ export async function GET(request: NextRequest) {
     if (categoryId === '__uncategorized__') {
       where += " AND (t.category_id IS NULL OR t.category_id = '') AND t.type IN ('income', 'expense') AND COALESCE(t.exclude_from_stats, 0) = 0";
     } else {
-    const requested = String(categoryId).split(',').map(s => s.trim()).filter(Boolean);
-    if (requested.length > 0) {
-      const placeholders = requested.map(() => '?').join(',');
-      const childRows = asRows<{ id: string }>(queryAll(
-        `SELECT id FROM categories WHERE user_id = ? AND parent_id IN (${placeholders})`,
-        [auth.userId, ...requested]
-      ));
-      const expanded = new Set(requested);
-      childRows.forEach(r => expanded.add(r.id));
-      const ids = [...expanded];
-      const idPh = ids.map(() => '?').join(',');
-      where += ` AND t.category_id IN (${idPh})`;
-      params.push(...ids);
-    }
+      const ids = new Set(categoryId.split(',').map(id => id.trim()).filter(Boolean));
+      if (ids.size > 0) {
+        if (!matchCategoryExactly) {
+          const placeholders = [...ids].map(() => '?').join(',');
+          const children = asRows<{ id: string }>(queryAll(
+            `SELECT id FROM categories WHERE user_id = ? AND parent_id IN (${placeholders})`,
+            [auth.userId, ...ids],
+          ));
+          children.forEach(child => ids.add(child.id));
+        }
+        where += ` AND t.category_id IN (${[...ids].map(() => '?').join(',')})`;
+        params.push(...ids);
+      }
     }
   }
+  if (includedInStats) where += ' AND t.exclude_from_stats = 0';
   if (accountId && accountId !== 'all') { where += ' AND t.account_id = ?'; params.push(accountId); }
   if (keyword) { where += ' AND LOWER(t.note) LIKE LOWER(?)'; params.push(`%${keyword}%`); }
   const tagIds = dedupeIds((searchParams.get('tagIds') || '').split(','));

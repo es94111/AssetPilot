@@ -6873,4 +6873,64 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       '재무 정보를 보호하기 위해 홈 화면 위젯은 기본적으로 금액을 표시하지 않습니다';
+
+  @override
+  String get uxBookkeeping => '거래';
+
+  @override
+  String get uxLedgerTools => '장부 관리';
+
+  @override
+  String get uxBudgetsAndReports => '예산 및 보고서';
+
+  @override
+  String get uxSettingsAndHelp => '설정 및 도움말';
+
+  @override
+  String get uxPreferences => '환경설정';
+
+  @override
+  String get uxSecurity => '계정 및 보안';
+
+  @override
+  String get uxNotificationsAndIntegrations => '알림 및 연동';
+
+  @override
+  String get uxDataAndAdmin => '데이터 및 관리';
+
+  @override
+  String get uxTransactionDetails => '거래 세부 정보';
+
+  @override
+  String get uxIncludedInStats => '통계에 포함되는 거래만';
+
+  @override
+  String get uxAdvancedOptions => '고급 옵션';
+
+  @override
+  String get uxDrafts => '대기 중인 초안';
+
+  @override
+  String get uxStockTools => '주식 도구';
+
+  @override
+  String get uxStockView => '주식 화면';
+
+  @override
+  String get uxReportOptions => '보고서 옵션';
+
+  @override
+  String get uxViewReports => '보고서 보기';
+
+  @override
+  String get uxViewAllTransactions => '모든 거래 보기';
+
+  @override
+  String get uxDashboardDetails => '재무 분석';
+
+  @override
+  String get uxEmptyLedgerHint => '첫 수입이나 지출을 기록하려면 ‘거래 추가’를 누르세요.';
+
+  @override
+  String get uxExport => '내보내기';
 }

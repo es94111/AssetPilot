@@ -76,7 +76,12 @@ class _SystemSettingsTabState extends State<_SystemSettingsTab> {
   Future<Map<String, dynamic>> _load() =>
       ApiClient.instance.adminSystemSettings();
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -457,7 +462,12 @@ class _UsersTabState extends State<_UsersTab> {
 
   Future<List<dynamic>> _load() => ApiClient.instance.adminUsers();
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _toggleAdmin(Map<String, dynamic> user) async {
     final next = !(user['isAdmin'] == true);
@@ -477,7 +487,7 @@ class _UsersTabState extends State<_UsersTab> {
   Future<void> _deleteUser(Map<String, dynamic> user) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('adminDeleteUser')),
         content: Text(
           trKey('adminDeleteUserConfirm', {
@@ -591,7 +601,12 @@ class _LoginAuditTabState extends State<_LoginAuditTab> {
 
   Future<List<dynamic>> _load() => ApiClient.instance.adminLoginAudit();
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   String _methodLabel(String method) => switch (method) {
     'google' => 'Google',

@@ -86,7 +86,12 @@ class _LedgerScreenState extends State<LedgerScreen> {
     return ledgers;
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _acceptInvitation() async {
     final token = widget.invitationToken ?? '';
@@ -131,7 +136,7 @@ class _LedgerScreenState extends State<LedgerScreen> {
     final ctrl = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('ledgerCreate')),
         content: TextField(
           controller: ctrl,

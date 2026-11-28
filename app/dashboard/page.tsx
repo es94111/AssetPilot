@@ -475,7 +475,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
       </section>
     ),
     incomeRecent: (
-      <div className="section-card">
+      <div key="incomeRecent" className="section-card">
           <div className="section-card-header"><h2 className="section-card-title">{t('dashboard.sections.incomeCategories')}</h2><span className="section-card-sub">{fmtMoney(totalIncome, locale)}</span></div>
           {incomeRows.length === 0 ? <div className="empty-hint py-10"><p>{t('dashboard.empty.noIncome')}</p></div> : (
             <div className="space-y-4">{incomeRows.map((row: any, index: number) => (

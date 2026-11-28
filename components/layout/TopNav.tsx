@@ -29,6 +29,8 @@ export default function TopNav() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [canWrite, pathname, router, searchParams]);
 
+  if (pathname === '/settings/ledgers') return null;
+
   return (
     <header className="border-b border-[var(--border)] bg-[var(--surface)] px-4 [padding-top:env(safe-area-inset-top)] lg:hidden">
       <LedgerSwitcher inline />

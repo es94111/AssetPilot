@@ -5,6 +5,8 @@ import 'package:assetpilot/app.dart';
 import 'package:assetpilot/l10n.dart';
 import 'package:assetpilot/offline/connectivity_service.dart';
 import 'package:assetpilot/screens/dashboard_screen.dart';
+import 'package:assetpilot/screens/ledger_screen.dart';
+import 'package:assetpilot/screens/reports_screen.dart';
 import 'package:assetpilot/screens/transaction_form_screen.dart';
 import 'package:assetpilot/screens/transactions_screen.dart';
 import 'package:assetpilot/theme.dart';
@@ -24,6 +26,8 @@ void main() {
   ) async {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(() => ApiClient.instance.setActiveLedgerId(''));
     addTearDown(() => ApiClient.testClientFactory = null);
     final writes = <Map<String, dynamic>>[];
     Uri? report;
@@ -35,7 +39,12 @@ void main() {
         result = {'id': 'test-transaction'};
       } else if (path == '/api/accounts') {
         result = [
-          {'id': 'cash', 'name': '現金', 'currency': 'TWD', 'category': 'cash'},
+          {
+            'id': 'cash',
+            'name': '現金帳戶（測試）',
+            'currency': 'TWD',
+            'category': 'cash',
+          },
         ];
       } else if (path == '/api/categories') {
         result = [
@@ -56,9 +65,17 @@ void main() {
           'yearMonth': request.url.queryParameters['yearMonth'],
           'recent': [],
         };
-      } else if (path == '/api/recurring' ||
-          path == '/api/budgets' ||
-          path == '/api/ledgers') {
+      } else if (path == '/api/ledgers') {
+        result = [
+          {'id': '', 'name': '', 'role': 'owner', 'isPersonal': true},
+          {
+            'id': 'viewer-ledger',
+            'name': '唯讀測試帳本',
+            'role': 'viewer',
+            'isShared': true,
+          },
+        ];
+      } else if (path == '/api/recurring' || path == '/api/budgets') {
         result = [];
       }
       return http.Response(
@@ -149,8 +166,18 @@ void main() {
       final expectedMonth =
           '${previous.year}-${previous.month.toString().padLeft(2, '0')}';
       expect(report?.queryParameters['from'], '$expectedMonth-01');
-      await tester.tap(find.byType(BackButton));
+      expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        0,
+      );
+      await tester.tap(find.text(trKey('uxBookkeeping')));
       await tester.pumpAndSettle();
+      await tester.tap(find.text(trKey('mobileLegacyHome')));
+      await tester.pumpAndSettle();
+      expect(find.byType(ReportsScreen), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(ReportsScreen), findsNothing);
 
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
       tester.platformDispatcher.textScaleFactorTestValue = 1.5;
@@ -174,6 +201,51 @@ void main() {
       await tester.tap(find.text(trKey('uxLedgerTools')));
       await tester.pumpAndSettle();
       expect(find.text(trKey('navAccounts')), findsOneWidget);
+
+      await tester.tap(find.text(trKey('ledgerSwitchTitle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(trKey('ledgerCreate')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(trKey('commonCancel')));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      await tester.tap(find.text('唯讀測試帳本'));
+      await tester.pumpAndSettle();
+      expect(find.byType(LedgerScreen), findsOneWidget);
+      expect(ApiClient.instance.activeLedgerReadOnly, isTrue);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(trKey('uxLedgerTools')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(trKey('navAccounts')));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        3,
+      );
+      expect(find.byType(FloatingActionButton), findsNothing);
+      expect(
+        find.byTooltip(trKey('featuresAccountsRepaymentTitle')),
+        findsNothing,
+      );
+      await tester.tap(find.text('現金帳戶（測試）'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(trKey('uxBudgetsAndReports')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(trKey('mobileLegacyBudgets')));
+      await tester.pumpAndSettle();
+      expect(find.text(trKey('featuresBudgetAddBudget')), findsNothing);
+
+      tester.platformDispatcher.textScaleFactorTestValue = 1;
+      tester.view.physicalSize = Size(844, 390) * tester.view.devicePixelRatio;
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
       expect(tester.takeException(), isNull);
     } finally {
       semantics.dispose();

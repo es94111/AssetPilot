@@ -98,7 +98,9 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
       appBar: AppBar(title: Text(trKey('mobileLegacyCurrencySettings'))),
       body: AsyncView<void>(
         future: _future,
-        onRetry: () => setState(() => _future = _load()),
+        onRetry: () => setState(() {
+          _future = _load();
+        }),
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -196,13 +198,18 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _rename(Passkey p) async {
     final ctrl = TextEditingController(text: p.deviceName);
     final name = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyRename')),
         content: TextField(
           controller: ctrl,
@@ -233,7 +240,7 @@ class _PasskeysScreenState extends State<PasskeysScreen> {
   Future<void> _delete(Passkey p) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyDeletePasskey')),
         content: Text(
           trKey('mobileDynamicConfirmDeleteNamed', {'name': p.deviceName}),
@@ -344,12 +351,17 @@ class _AccountBindingsScreenState extends State<AccountBindingsScreen> {
   Future<AppUser> _load() async =>
       AppUser.fromJson(await ApiClient.instance.me());
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _unlink(String provider) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(
           trKey('mobileDynamicUnlinkProvider', {'provider': provider}),
         ),
@@ -490,7 +502,12 @@ class _SessionsScreenState extends State<SessionsScreen> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _revoke(LoginSession s) async {
     try {
@@ -575,7 +592,12 @@ class _LoginAuditScreenState extends State<LoginAuditScreen> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   String _method(String m) => switch (m) {
     'google' => 'Google',

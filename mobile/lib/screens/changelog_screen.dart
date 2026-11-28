@@ -30,7 +30,9 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = _load(refresh: true));
+    setState(() {
+      _future = _load(refresh: true);
+    });
     await _future;
   }
 
@@ -49,7 +51,9 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
       ),
       body: AsyncView<_VersionInfo>(
         future: _future,
-        onRetry: () => setState(() => _future = _load()),
+        onRetry: () => setState(() {
+          _future = _load();
+        }),
         builder: (context, info) => RefreshIndicator(
           onRefresh: _refresh,
           child: ListView(

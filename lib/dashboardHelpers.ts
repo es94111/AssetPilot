@@ -153,7 +153,7 @@ export function buildCategoryAggregateNodes(rows: DashboardCategoryAggregateRow[
     const childColor = r.cat_color || '#94a3b8';
     const parentId = r.cat_parent_id ? String(r.cat_parent_id) : '';
     const isLeaf = !!parentId;
-    const parentKey = isLeaf ? parentId : (childCategoryId || `name:${childName}`);
+    const parentKey = isLeaf ? parentId : (childCategoryId || '__uncategorized__');
     const parentName = isLeaf ? (r.cat_parent_name || '未分類') : childName;
     const parentColor = isLeaf ? (r.cat_parent_color || childColor) : childColor;
     if (!parentMap.has(parentKey)) {

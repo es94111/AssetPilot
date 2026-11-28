@@ -65,7 +65,12 @@ class _StockSettingsScreenState extends State<StockSettingsScreen> {
     );
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -417,6 +422,7 @@ class _RecurringSection extends StatelessWidget {
     }
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _RecurringForm(
@@ -440,7 +446,7 @@ class _RecurringSection extends StatelessWidget {
   Future<void> _delete(BuildContext context, StockRecurring r) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('featuresStocksSettingsDeleteRecurringConfirm')),
         actions: [
           TextButton(

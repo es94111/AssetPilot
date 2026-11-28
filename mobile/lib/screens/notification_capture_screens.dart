@@ -303,7 +303,7 @@ class _NotificationDraftsScreenState extends State<NotificationDraftsScreen> {
   }
 
   Future<void> _review(NotificationDraft draft) async {
-    final saved = await Navigator.of(context).push<bool>(
+    final saved = await Navigator.of(context, rootNavigator: true).push<bool>(
       MaterialPageRoute(
         builder: (_) => TransactionFormScreen(notificationDraft: draft),
       ),

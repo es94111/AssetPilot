@@ -228,7 +228,12 @@ class _HoldingsTabState extends State<_HoldingsTab> {
     return _HoldingsData(stocks, summary);
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   // 從 TWSE/TPEx 批次抓最新價並寫回現價，再重新載入持股。
   // 由上層 StocksScreen 的 AppBar「更新股價」按鈕透過 GlobalKey 呼叫。
@@ -277,6 +282,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
   Future<void> _addStock() async {
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _StockForm(),
@@ -287,6 +293,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
   Future<void> _editStock(Stock s) async {
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _StockForm(existing: s),
@@ -297,7 +304,7 @@ class _HoldingsTabState extends State<_HoldingsTab> {
   Future<void> _deleteStock(Stock s) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyDeleteStock')),
         content: Text(
           trKey('mobileDynamicDeleteStock', {
@@ -577,7 +584,12 @@ class _StockTxnTabState extends State<_StockTxnTab> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openForm([StockTxn? existing]) async {
     final stocksJson = await ApiClient.instance.stocks();
@@ -591,6 +603,7 @@ class _StockTxnTabState extends State<_StockTxnTab> {
     }
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _StockTxnForm(stocks: stocks, existing: existing),
@@ -724,7 +737,12 @@ class _DividendTabState extends State<_DividendTab> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openForm([Dividend? existing]) async {
     final api = ApiClient.instance;
@@ -743,6 +761,7 @@ class _DividendTabState extends State<_DividendTab> {
     }
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) =>
@@ -754,7 +773,7 @@ class _DividendTabState extends State<_DividendTab> {
   Future<void> _delete(Dividend d) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyDeleteDividend')),
         content: Text(
           trKey('mobileDynamicDeleteDividend', {
@@ -928,7 +947,12 @@ class _RealizedTabState extends State<_RealizedTab> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

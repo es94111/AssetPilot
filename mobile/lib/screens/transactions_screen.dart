@@ -151,7 +151,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return _TransactionsData(items, catName, accounts, filterCats);
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _refreshDashboardWidget() async {
     try {
@@ -167,6 +172,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Future<void> _openFilters(_TransactionsData data) async {
     final applied = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _TxnFilterSheet(
@@ -208,7 +214,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   Future<void> _openForm([Txn? txn]) async {
     if (ApiClient.instance.activeLedgerReadOnly) return;
-    final changed = await Navigator.of(context).push<bool>(
+    final changed = await Navigator.of(context, rootNavigator: true).push<bool>(
       MaterialPageRoute(builder: (_) => TransactionFormScreen(existing: txn)),
     );
     if (changed == true) _transactionsChanged();
@@ -218,7 +224,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Future<bool> _delete(Txn t) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyDeleteTransaction')),
         content: Text(
           trKey('mobileDynamicDeleteTransactionCompact', {'date': t.date}),
@@ -256,7 +262,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       if (!mounted) return;
       await showDialog<void>(
         context: context,
-        builder: (_) => AlertDialog(
+        builder: (context) => AlertDialog(
           title: Text(trKey('featuresTransactionsRepaymentSummaryTitle')),
           content: SingleChildScrollView(
             child: Column(
@@ -317,7 +323,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Future<void> _restoreAiCreated(Txn t) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('featuresTransactionsRestoreCreatedTitle')),
         content: Text(trKey('featuresTransactionsRestoreCreatedMessage')),
         actions: [
@@ -355,7 +361,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (!mounted) return;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('featuresTransactionsRestoreNoteTitle')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -413,6 +419,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ? 'offline'
         : await showModalBottomSheet<String>(
             context: context,
+            useRootNavigator: true,
             useSafeArea: true,
             builder: (context) => SafeArea(
               child: ListView(

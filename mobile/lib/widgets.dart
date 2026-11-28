@@ -292,7 +292,7 @@ class LedgerCard extends StatelessWidget {
             ),
           ];
     final content = Padding(padding: padding, child: child);
-    Widget card = DecoratedBox(
+    final card = DecoratedBox(
       decoration: BoxDecoration(
         color: gradient == null ? (color ?? scheme.surface) : null,
         gradient: gradient,
@@ -300,14 +300,13 @@ class LedgerCard extends StatelessWidget {
         border: Border.all(color: tokens.glassBorder),
         boxShadow: shadows,
       ),
-      child: content,
+      child: Material(
+        type: MaterialType.transparency,
+        child: onTap == null
+            ? content
+            : InkWell(onTap: onTap, borderRadius: radius, child: content),
+      ),
     );
-    if (onTap != null) {
-      card = Material(
-        color: Colors.transparent,
-        child: InkWell(onTap: onTap, borderRadius: radius, child: card),
-      );
-    }
     return Card(
       margin: margin ?? EdgeInsets.zero,
       elevation: 0,

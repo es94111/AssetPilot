@@ -55,7 +55,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return _ReportData(breakdown, total);
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _pickRange() async {
     final r = await showDateRangePicker(

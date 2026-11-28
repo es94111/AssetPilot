@@ -184,7 +184,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 }
 
-/// 自適應主畫面：Compact 使用底部導覽，較大視窗使用 NavigationRail。
+/// 手機使用底部導覽，較大視窗使用 NavigationRail。
 class HomeShell extends StatefulWidget {
   final VoidCallback onLoggedOut;
   const HomeShell({super.key, required this.onLoggedOut});
@@ -199,6 +199,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   /// 帳本切換時遞增，讓 IndexedStack 內的分頁全部重建（不保留舊帳本快取）。
   int _homeEpoch = 0;
   int _transactionsRevision = 0;
+  final _sectionNavigators = List.generate(
+    4,
+    (_) => GlobalKey<NavigatorState>(),
+  );
   final DeepLinkService _deepLinks = DeepLinkService.instance;
   StreamSubscription<Uri>? _linkSubscription;
   Timer? _notificationRetryTimer;
@@ -373,6 +377,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         ),
       );
       if (changed == true && mounted) {
+        _backToSectionRoot(0);
         setState(() {
           _index = 0;
           _transactionsRevision++;
@@ -411,9 +416,18 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     return (customScheme || verifiedWebLink) && token.isNotEmpty;
   }
 
-  /// 切換帳本後重建所有分頁，確保畫面上不留前一個帳本的資料；
-  /// 同時把離線草稿服務換到新帳本，避免草稿被標成舊帳本。
-  void _reloadAll() {
+  void _backToSectionRoot(int section) {
+    _sectionNavigators[section].currentState?.popUntil(
+      (route) => route.isFirst,
+    );
+  }
+
+  /// 清除舊帳本的子頁與快取，並把離線草稿服務繫結到新帳本。
+  void _reloadAll({int? keepSection}) {
+    if (!mounted) return;
+    for (var section = 0; section < _sectionNavigators.length; section++) {
+      if (section != keepSection) _backToSectionRoot(section);
+    }
     setState(() => _homeEpoch += 1);
     unawaited(
       OfflineDraftService.instance.bindLedger(
@@ -437,19 +451,22 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         key: ValueKey('dashboard-$_homeEpoch'),
         transactionsRevision: _transactionsRevision,
         onTransactionsChanged: _refreshTransactionViews,
-        onShowTransactions: () => setState(() => _index = 1),
+        onShowTransactions: () {
+          _backToSectionRoot(1);
+          setState(() => _index = 1);
+        },
       ),
       TransactionsScreen(
         key: ValueKey('transactions-$_homeEpoch'),
         transactionsRevision: _transactionsRevision,
         onTransactionsChanged: _refreshTransactionViews,
-        onLedgerChanged: _reloadAll,
+        onLedgerChanged: () => _reloadAll(keepSection: 1),
       ),
       StocksScreen(key: ValueKey('stocks-$_homeEpoch')),
       MoreScreen(
         key: ValueKey('more-$_homeEpoch'),
         onLoggedOut: widget.onLoggedOut,
-        onLedgerChanged: _reloadAll,
+        onLedgerChanged: () => _reloadAll(keepSection: 3),
       ),
     ];
     final labels = [
@@ -464,11 +481,36 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
       (Icons.trending_up_outlined, Icons.trending_up),
       (Icons.folder_open_outlined, Icons.folder_open),
     ];
-    final width = MediaQuery.sizeOf(context).width;
-    final compact = width < 600;
-    final extended = width >= 840;
+    final size = MediaQuery.sizeOf(context);
+    final phonePlatform =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.android);
+    final compact =
+        size.width < 600 || (phonePlatform && size.shortestSide < 600);
+    final extended = size.width >= 840;
     final content = Expanded(
-      child: IndexedStack(index: _index, children: pages),
+      child: IndexedStack(
+        index: _index,
+        children: [
+          for (var section = 0; section < pages.length; section++)
+            NavigatorPopHandler<Object?>(
+              enabled: section == _index,
+              onPopWithResult: (_) {
+                if (section == _index) {
+                  _sectionNavigators[section].currentState?.maybePop();
+                }
+              },
+              child: HeroControllerScope.none(
+                child: Navigator(
+                  key: _sectionNavigators[section],
+                  pages: [MaterialPage<void>(child: pages[section])],
+                  onDidRemovePage: (_) {},
+                ),
+              ),
+            ),
+        ],
+      ),
     );
 
     return Scaffold(

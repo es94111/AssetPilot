@@ -77,11 +77,17 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openForm([ReportSchedule? existing]) async {
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _ReportScheduleForm(existing: existing),
@@ -103,7 +109,7 @@ class _ReportScheduleScreenState extends State<ReportScheduleScreen> {
   Future<void> _delete(ReportSchedule s) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('mobileLegacyDeleteSchedule')),
         content: Text(
           trKey('mobileLegacyDeleteThisReportNotificationSchedule'),

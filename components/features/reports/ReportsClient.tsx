@@ -12,6 +12,7 @@ import Chart from 'chart.js/auto';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/components/i18n/I18nProvider';
 import { localeTag } from '@/lib/i18n/localeTag';
+import type { DashboardCategoryNode } from '@/lib/dashboardHelpers';
 import {
   REPORT_BASE_CURRENCY_DEFAULT,
   formatReportMoney,
@@ -419,16 +420,16 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     setExporting(false);
   }
 
-  function transactionsHref(row: any) {
+  function transactionsHref(row: DashboardCategoryNode) {
     const { from, to } = getDateRange(period, customFrom, customTo);
-    const categoryId = row?.categoryId || (row?.isOtherGroup ? row?.parentId : '')
-      || (row?.parentId === '__uncategorized__' ? '__uncategorized__' : '');
     const params = new URLSearchParams({
       type,
       dateFrom: from,
       dateTo: to,
+      categoryId: row.categoryId || row.parentId,
+      includedInStats: '1',
     });
-    if (categoryId) params.set('categoryId', categoryId);
+    if (row.isOtherGroup && row.parentId !== '__uncategorized__') params.set('categoryMatch', 'exact');
     return `/finance/transactions?${params.toString()}`;
   }
 
@@ -525,7 +526,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      {activeTab === 'category' && catRows.length > 0 && (
+      {!loading && activeTab === 'category' && catRows.length > 0 && (
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
           <div className="flex flex-wrap justify-between gap-2 border-b pb-2">
             <h3 className="font-semibold text-lg">{t('features.reports.detailTitle', { type: type === 'expense' ? t('features.common.expense') : t('features.common.income') })}</h3>
@@ -575,7 +576,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                           {child.name}
                         </span>
                         <Link href={transactionsHref(child)}
-                          aria-label={`${t('features.reports.viewTransactions')} · ${child.name}`}
+                          aria-label={`${t('features.reports.viewTransactions')} · ${group.parentName} › ${child.name}`}
                           className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">
                           {t('features.reports.viewTransactions')}
                         </Link>
@@ -598,7 +599,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                 <span className="w-12 text-right">{percentage}%</span>
                 <span className="shrink-0 text-end font-medium">{money(row.total, baseCurrency, locale)}</span>
                 <Link href={transactionsHref(row)}
-                  aria-label={`${t('features.reports.viewTransactions')} · ${row.name}`}
+                  aria-label={`${t('features.reports.viewTransactions')} · ${row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}${row.name}`}
                   className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">
                   {t('features.reports.viewTransactions')}
                 </Link>

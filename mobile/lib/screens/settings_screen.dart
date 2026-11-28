@@ -41,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final ctrl = TextEditingController(text: user.displayName);
     final newName = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(trKey('settingsAccountEditDisplayName')),
         content: TextField(
           controller: ctrl,
@@ -65,7 +65,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await ApiClient.instance.updateDisplayName(newName);
       if (mounted) {
         toast(context, trKey('mobileLegacyUpdated'));
-        setState(() => _future = _load());
+        setState(() {
+          _future = _load();
+        });
       }
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -215,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _pickLanguage() async {
     final picked = await showDialog<String>(
       context: context,
-      builder: (_) => SimpleDialog(
+      builder: (context) => SimpleDialog(
         title: Text(trKey('mobileLegacyAppNotificationAndWebLanguage')),
         children: [
           for (final e in appLocaleLabels.entries)
@@ -252,7 +254,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(title: Text(trKey('settingsTitle'))),
       body: AsyncView<AppUser>(
         future: _future,
-        onRetry: () => setState(() => _future = _load()),
+        onRetry: () => setState(() {
+          _future = _load();
+        }),
         builder: (context, user) => ListView(
           padding: const EdgeInsets.all(ApSpace.lg),
           children: [
@@ -292,7 +296,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () async {
                       final picked = await showDialog<ThemeMode>(
                         context: context,
-                        builder: (_) => SimpleDialog(
+                        builder: (context) => SimpleDialog(
                           title: Text(trKey('mobileLegacyChooseTheme')),
                           children: [
                             for (final m in ThemeMode.values)

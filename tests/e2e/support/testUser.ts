@@ -71,20 +71,31 @@ export async function createE2EStock(
   return { id, symbol, name };
 }
 
+export async function createE2EExpenseCategory(userId: string, name: string, parentId = ''): Promise<string> {
+  await ensureDb();
+  const id = uid();
+  getDB().run(
+    'INSERT INTO categories (id, user_id, name, type, color, parent_id) VALUES (?,?,?,?,?,?)',
+    [id, userId, name, 'expense', '#ef4444', parentId],
+  );
+  saveDB();
+  return id;
+}
+
 /**
  * 直接在 DB 建立一筆交易，供報表／匯出等不需要重複測試「新增交易」流程的
  * 情境快速準備資料。
  */
 export async function createE2ETransaction(
   userId: string,
-  options: { type?: 'income' | 'expense'; amount?: number; date?: string; note?: string; categoryId?: string },
+  options: { type?: 'income' | 'expense'; amount?: number; date?: string; note?: string; categoryId?: string; excludeFromStats?: boolean },
 ): Promise<string> {
   await ensureDb();
   const id = uid();
   const now = Date.now();
   const db = getDB();
   db.run(
-    'INSERT INTO transactions (id, user_id, type, amount, currency, date, note, category_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
+    'INSERT INTO transactions (id, user_id, type, amount, currency, date, note, category_id, exclude_from_stats, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
     [
       id,
       userId,
@@ -94,6 +105,7 @@ export async function createE2ETransaction(
       options.date || new Date().toISOString().slice(0, 10),
       options.note || 'E2E seed',
       options.categoryId ?? null,
+      options.excludeFromStats ? 1 : 0,
       now,
       now,
     ],

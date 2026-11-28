@@ -35,7 +35,7 @@ export default function Sidebar() {
         <Image src="/favicon.svg" alt="" width={28} height={28} />
         {!collapsed && <span className="font-bold">AssetPilot</span>}
       </div>
-      <LedgerSwitcher compact={collapsed} />
+      {pathname !== '/settings/ledgers' && <LedgerSwitcher compact={collapsed} />}
       <nav className="flex-1 space-y-1 px-3 py-4" aria-label={t('shell.mainNav')}>
         {MAIN_NAV.map(({ id, path, label, icon: Icon }) => (
           <Link

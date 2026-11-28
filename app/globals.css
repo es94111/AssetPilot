@@ -305,7 +305,7 @@
 .nav-link:active {
   background: var(--primary-soft-hover);
 }
-.nav-link[aria-current='page'] {
+.nav-link:is([aria-current='page'], [aria-current='location']) {
   background: var(--primary-light-bg);
   /* --primary 在淺色模式對 --primary-light-bg 僅 4.43:1（未達 WCAG AA 4.5:1，
      issue #264 無障礙檢測抓到）；--primary-solid 較深、對比足夠。暗色模式則維持
@@ -315,12 +315,12 @@
   color: var(--primary-solid);
   font-weight: 600;
 }
-.nav-link[aria-current='page']:hover {
+.nav-link:is([aria-current='page'], [aria-current='location']):hover {
   background: var(--primary-soft-hover);
   color: var(--primary-solid);
 }
-.dark-mode .nav-link[aria-current='page'],
-.dark-mode .nav-link[aria-current='page']:hover {
+.dark-mode .nav-link:is([aria-current='page'], [aria-current='location']),
+.dark-mode .nav-link:is([aria-current='page'], [aria-current='location']):hover {
   color: var(--primary);
 }
 .nav-link:focus-visible {
@@ -486,10 +486,7 @@
   animation: splash-rise 0.8s 0.35s ease both;
 }
 .splash-name span {
-  background: linear-gradient(90deg, #8ea2ff, #7de0c8 60%, #fbbf24);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #8ea2ff;
 }
 .splash-tagline {
   margin-top: 10px;

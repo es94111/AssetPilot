@@ -19,7 +19,7 @@ import { applyReceiptOcrPrefill, createReceiptOcrRequestGate } from '@/lib/recei
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
 const EMPTY_TRANSFER_ACCOUNTS = { fromAccountId: '', toAccountId: '' };
-const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '', excludeTransfer: '', tagIds: '', tagMode: '' };
+const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', categoryMatch: '', includedInStats: '', dateFrom: '', dateTo: '', keyword: '', excludeTransfer: '', tagIds: '', tagMode: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];
 
@@ -114,10 +114,13 @@ function readFilters(searchParams: QueryParams) {
   // contradict each other, even from a hand-written URL.
   const excludeTransfer = searchParams.get('excludeTransfer') === '1' ? '1' : '';
   const type = searchParams.get('type') || '';
+  const categoryId = searchParams.get('categoryId') || '';
   return {
     type: excludeTransfer && type === 'transfer' ? '' : type,
     accountId: searchParams.get('accountId') || '',
-    categoryId: searchParams.get('categoryId') || '',
+    categoryId,
+    categoryMatch: categoryId && searchParams.get('categoryMatch') === 'exact' ? 'exact' : '',
+    includedInStats: searchParams.get('includedInStats') === '1' ? '1' : '',
     dateFrom: searchParams.get('dateFrom') || '',
     dateTo: searchParams.get('dateTo') || '',
     keyword: searchParams.get('keyword') || '',
@@ -225,6 +228,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         ...(filters.type ? { type: filters.type } : {}),
         ...(filters.accountId ? { accountId: filters.accountId } : {}),
         ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+        ...(filters.categoryMatch ? { categoryMatch: filters.categoryMatch } : {}),
+        ...(filters.includedInStats ? { includedInStats: filters.includedInStats } : {}),
         ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
         ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
         ...(filters.keyword ? { keyword: filters.keyword } : {}),
@@ -960,7 +965,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, [modal, overseasApplies, autoFxFee, fxFeeEdited]);
 
   const activeFilterCount = Object.entries(filters)
-    .filter(([key, value]) => key !== 'keyword' && key !== 'tagMode' && Boolean(value)).length;
+    .filter(([key, value]) => !['keyword', 'tagMode', 'categoryMatch', 'includedInStats'].includes(key) && Boolean(value)).length;
   const filterControlClass = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
   const draftTagIds = filterDraft.tagIds.split(',').filter(Boolean);
   const updateFilterDraft = (patch: Partial<typeof EMPTY_FILTERS>) =>
@@ -972,6 +977,10 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     [filters.dateFrom, filters.dateTo].filter(Boolean).join(' – '),
     filters.excludeTransfer && t('features.transactions.excludeTransfer'),
   ].filter(Boolean);
+  const exactParentId = filterDraft.categoryMatch === 'exact'
+    && allParents.some(parent => parent.id === filterDraft.categoryId)
+    ? filterDraft.categoryId
+    : '';
   const filterFields = (
     <>
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor="transaction-filter-type">
@@ -993,13 +1002,23 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       </label>
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor="transaction-filter-category">
         {t('features.recurring.category')}
-        <select id="transaction-filter-category" className={filterControlClass} value={filterDraft.categoryId} onChange={(e) => updateFilterDraft({ categoryId: e.target.value })}>
+        <select id="transaction-filter-category" className={filterControlClass}
+          value={exactParentId ? `exact:${exactParentId}` : filterDraft.categoryId}
+          onChange={(e) => {
+            const value = e.target.value;
+            updateFilterDraft(value.startsWith('exact:')
+              ? { categoryId: value.slice(6), categoryMatch: 'exact' }
+              : { categoryId: value, categoryMatch: '' });
+          }}>
           <option value="">{t('features.transactions.allCategories')}</option>
           <option value="__uncategorized__">{t('features.common.uncategorized')}</option>
           {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           {allParents.map((parent: any) => (
             <optgroup key={parent.id} label={parent.name}>
               <option value={parent.id}>{t('features.transactions.parentAll', { name: parent.name })}</option>
+              {parent.id === exactParentId && (
+                <option value={`exact:${parent.id}`}>{parent.name}</option>
+              )}
               {allChildren.filter((c: any) => c.parentId === parent.id).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </optgroup>
           ))}

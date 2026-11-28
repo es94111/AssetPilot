@@ -118,7 +118,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _reload() {
     final yearMonth = _ym;
-    setState(() => _future = _load(yearMonth));
+    setState(() {
+      _future = _load(yearMonth);
+    });
   }
 
   void _shiftMonth(int delta) {
@@ -268,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _openNewTxn() async {
     if (ApiClient.instance.activeLedgerReadOnly) return;
-    final changed = await Navigator.of(context).push<bool>(
+    final changed = await Navigator.of(context, rootNavigator: true).push<bool>(
       MaterialPageRoute(builder: (_) => const TransactionFormScreen()),
     );
     if (changed != true || !mounted) return;

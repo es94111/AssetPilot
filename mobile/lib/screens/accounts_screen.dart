@@ -41,12 +41,15 @@ class _AccountsScreenState extends State<AccountsScreen> {
         .toList();
   }
 
-  void _reload() => setState(() => _future = _load());
-
-  // 供 AppBar「信用卡還款」按鈕取用最近載入的帳戶清單。
-  List<Account>? _lastAccounts;
+  void _reload() {
+    if (!mounted) return;
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openRepayment(List<Account> accounts) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     // FR-016：付款帳戶收斂為銀行帳戶（與 Web 的 bankAccounts 一致）。
     final payers = accounts.where((a) => a.category == 'bank').toList();
     if (payers.isEmpty) {
@@ -55,6 +58,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     }
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _RepaymentSheet(payers: payers),
@@ -66,8 +70,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _openForm([Account? account]) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     final changed = await showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _AccountForm(existing: account),
@@ -76,36 +82,50 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: ApiClient.instance.activeLedgerReadOnlyChanges,
+    builder: (context, readOnly, _) => _buildScreen(context, readOnly),
+  );
+
+  Widget _buildScreen(BuildContext context, bool readOnly) {
     return Scaffold(
       appBar: AppBar(
         title: Text(trKey('featuresCommonAccount')),
         actions: [
-          IconButton(
-            tooltip: trKey('featuresAccountsRepaymentTitle'),
-            icon: Icon(Icons.credit_score_outlined),
-            onPressed: _lastAccounts == null
-                ? null
-                : () => _openRepayment(_lastAccounts!),
-          ),
+          if (!readOnly)
+            FutureBuilder<List<Account>>(
+              future: _future,
+              builder: (context, snapshot) => IconButton(
+                tooltip: trKey('featuresAccountsRepaymentTitle'),
+                icon: const Icon(Icons.credit_score_outlined),
+                onPressed: snapshot.hasData
+                    ? () => _openRepayment(snapshot.data!)
+                    : null,
+              ),
+            ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        icon: Icon(Icons.add),
-        label: Text(trKey('featuresAccountsAddAccount')),
-      ),
+      floatingActionButton: readOnly
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _openForm(),
+              icon: Icon(Icons.add),
+              label: Text(trKey('featuresAccountsAddAccount')),
+            ),
       body: AsyncView<List<Account>>(
         future: _future,
         onRetry: _reload,
         builder: (context, list) {
-          _lastAccounts = list;
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.account_balance_wallet,
               title: trKey('notificationsEmptyNoAccount'),
-              message: trKey('featuresAccountsAddAccount'),
-              onAction: () => _openForm(),
+              message: trKey(
+                readOnly
+                    ? 'ledgerReadOnlyNotice'
+                    : 'featuresAccountsAddAccount',
+              ),
+              onAction: readOnly ? null : () => _openForm(),
               actionLabel: trKey('featuresAccountsAddAccount'),
             );
           }
@@ -172,7 +192,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     child: LedgerCard(
                       margin: const EdgeInsets.only(bottom: ApSpace.sm),
                       padding: EdgeInsets.zero,
-                      onTap: () => _openForm(e.$2),
+                      onTap: readOnly ? null : () => _openForm(e.$2),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: ApSpace.md + 2,
@@ -298,6 +318,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Future<void> _openCycles(Account a) async {
     await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _StatementCyclesSheet(account: a),
@@ -772,11 +793,10 @@ class _RepaymentSheetState extends State<_RepaymentSheet> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Text(
-            trKey('featuresAccountsMessagesRepaymentTotalAmountTooSmall',
-                {'min': _minTotalAmount}),
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-            ),
+            trKey('featuresAccountsMessagesRepaymentTotalAmountTooSmall', {
+              'min': _minTotalAmount,
+            }),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ),
       if (_error != null)

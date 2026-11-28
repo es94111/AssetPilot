@@ -1,6 +1,22 @@
 {
-  "currentVersion": "6.3.0",
+  "currentVersion": "6.3.1",
   "releases": [
+    {
+      "version": "6.3.1",
+      "date": "2026-11-28",
+      "title": "調整網站帳務卡片與動畫",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "交易摘要改用中性細框，帳戶卡片將自訂色集中在圖示，讓金額與帳戶名稱更容易辨識。"
+        },
+        {
+          "tag": "improved",
+          "text": "儀表板進度條改為平滑滑動並支援由右至左的語系。啟動畫面的小柱從底部依序升起。"
+        }
+      ]
+    },
     {
       "version": "6.3.0",
       "date": "2026-11-28",

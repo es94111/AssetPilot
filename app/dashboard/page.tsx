@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -438,7 +438,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
                 <span className="flex min-w-0 items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: group.parentColor }} /><span className="truncate font-semibold" style={{ color: 'var(--text)' }}>{group.parentName}</span></span>
                 <span className="flex shrink-0 items-baseline gap-2"><span className="font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{fmtMoney(group.total, locale)}</span><span className="text-xs tabular-nums" style={{ color: 'var(--text-muted)' }}>{percentLabel(totalExpense, group.total)}</span></span>
               </div>
-              <div className="progress-track" style={{ height: 8 }} aria-hidden="true"><div className="progress-fill" style={{ width: `${percentOf(totalExpense, group.total)}%`, background: group.parentColor }} /></div>
+              <div className="progress-track" style={{ height: 8 }} aria-hidden="true">
+                <div className="progress-fill" style={{
+                  '--progress-percent': `${percentOf(totalExpense, group.total)}%`,
+                  background: group.parentColor,
+                } as CSSProperties} />
+              </div>
             </div>
           ))}</div>
         )}
@@ -481,7 +486,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
             <div className="space-y-4">{incomeRows.map((row: any, index: number) => (
               <div key={`${row.parentId}-${row.categoryId ?? index}`}>
                 <div className="mb-2 flex items-center justify-between gap-4 text-sm"><span className="flex min-w-0 items-center gap-2 font-medium" style={{ color: 'var(--text)' }}><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: row.color || row.parentColor || 'var(--text-muted)' }} /><span className="truncate">{row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name}</span></span><span className="shrink-0 font-semibold tabular-nums" style={{ color: 'var(--text)' }}>{fmtMoney(row.total, locale)}</span></div>
-                <div className="progress-track" aria-hidden="true"><div className="progress-fill" style={{ width: `${percentOf(totalIncome, Number(row.total) || 0)}%`, background: row.color || row.parentColor || 'var(--text-muted)' }} /></div>
+                <div className="progress-track" aria-hidden="true">
+                  <div className="progress-fill" style={{
+                    '--progress-percent': `${percentOf(totalIncome, Number(row.total) || 0)}%`,
+                    background: row.color || row.parentColor || 'var(--text-muted)',
+                  } as CSSProperties} />
+                </div>
               </div>
             ))}</div>
           )}

@@ -2366,6 +2366,7 @@ export const ar = {
     notificationsAndIntegrations: "الإشعارات والتكاملات",
     dataAndAdmin: "البيانات والإدارة",
     transactionDetails: "تفاصيل المعاملة",
+    includedInStats: "المعاملات المشمولة في الإحصاءات فقط",
     advancedOptions: "خيارات متقدمة",
     drafts: "المسودات المعلقة",
     stockTools: "أدوات الأسهم",

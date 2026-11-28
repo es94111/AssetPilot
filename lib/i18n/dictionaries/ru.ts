@@ -2366,6 +2366,7 @@ export const ru = {
     notificationsAndIntegrations: "Уведомления и интеграции",
     dataAndAdmin: "Данные и администрирование",
     transactionDetails: "Детали операции",
+    includedInStats: "Только операции, включённые в статистику",
     advancedOptions: "Дополнительные параметры",
     drafts: "Ожидающие черновики",
     stockTools: "Инструменты для акций",

@@ -18,21 +18,22 @@ const THEMES: ThemeMode[] = ['light', 'dark'];
 
 test.describe('visual regression', () => {
   for (const theme of THEMES) {
-    test(`login page (${theme})`, async ({ page }) => {
+    // testUser 已建立測試站台的第一位使用者，page 本身保持未登入。
+    test(`login page (${theme})`, async ({ page, testUser }) => {
       await forceTheme(page, theme);
       await page.goto('/login');
-      await expect(page.getByRole('heading', { name: 'AssetPilot' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'AssetPilot', exact: true })).toBeVisible();
       await expect(page).toHaveScreenshot(`login-${theme}.png`, {
         maxDiffPixelRatio: 0.02,
       });
     });
 
     test(`dashboard hero (${theme})`, async ({ authedPage, testUser }) => {
-      const today = new Date().toISOString().slice(0, 10);
-      await createE2ETransaction(testUser.id, { type: 'income', amount: 50000, date: today });
-      await createE2ETransaction(testUser.id, { type: 'expense', amount: 20000, date: today });
+      const date = '2026-10-15';
+      await createE2ETransaction(testUser.id, { type: 'income', amount: 50000, date });
+      await createE2ETransaction(testUser.id, { type: 'expense', amount: 20000, date });
       await forceTheme(authedPage, theme);
-      await authedPage.goto('/dashboard');
+      await authedPage.goto(`/dashboard?month=${date.slice(0, 7)}`);
 
       const hero = authedPage.locator('.dashboard-hero');
       await expect(hero).toBeVisible();

@@ -7197,6 +7197,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get uxTransactionDetails => 'Детали операции';
 
   @override
+  String get uxIncludedInStats => 'Только операции, включённые в статистику';
+
+  @override
   String get uxAdvancedOptions => 'Дополнительные параметры';
 
   @override

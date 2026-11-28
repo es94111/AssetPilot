@@ -13,12 +13,12 @@
 import { test, expect } from './support/fixtures';
 
 test.describe('login', () => {
-  test('unauthenticated users are redirected to /login', async ({ page }) => {
+  test('unauthenticated users are redirected to /login', async ({ page, testUser }) => {
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/\/login(\?.*)?$/);
   });
 
-  test('login page renders available sign-in methods', async ({ page }) => {
+  test('login page renders available sign-in methods', async ({ page, testUser }) => {
     await page.goto('/login');
     await expect(page.getByRole('heading', { name: 'AssetPilot' })).toBeVisible();
     await expect(page.getByText('歡迎回來，請登入您的帳號')).toBeVisible();

@@ -13,9 +13,10 @@ const THEMES: ThemeMode[] = ['light', 'dark'];
 
 test.describe('accessibility — public pages', () => {
   for (const theme of THEMES) {
-    test(`login page has no serious violations (${theme})`, async ({ page }, testInfo) => {
+    test(`login page has no serious violations (${theme})`, async ({ page, testUser }, testInfo) => {
       await forceTheme(page, theme);
       await page.goto('/login');
+      await expect(page.getByRole('heading', { name: 'AssetPilot', exact: true })).toBeVisible();
       await assertNoSeriousA11yViolations(page, testInfo, `login-${theme}`);
     });
   }

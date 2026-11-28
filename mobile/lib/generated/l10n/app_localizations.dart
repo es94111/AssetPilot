@@ -12412,6 +12412,12 @@ abstract class AppLocalizations {
   /// **'交易細節'**
   String get uxTransactionDetails;
 
+  /// Web path: ux.includedInStats
+  ///
+  /// In zh_Hant_TW, this message translates to:
+  /// **'僅顯示計入統計的交易'**
+  String get uxIncludedInStats;
+
   /// Web path: ux.advancedOptions
   ///
   /// In zh_Hant_TW, this message translates to:

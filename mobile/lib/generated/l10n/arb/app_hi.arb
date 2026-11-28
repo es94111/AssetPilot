@@ -10741,6 +10741,11 @@
     "description": "Web path: ux.transactionDetails",
     "x-webPath": "ux.transactionDetails"
   },
+  "uxIncludedInStats": "केवल आँकड़ों में शामिल लेन-देन",
+  "@uxIncludedInStats": {
+    "description": "Web path: ux.includedInStats",
+    "x-webPath": "ux.includedInStats"
+  },
   "uxAdvancedOptions": "उन्नत विकल्प",
   "@uxAdvancedOptions": {
     "description": "Web path: ux.advancedOptions",

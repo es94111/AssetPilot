@@ -2366,6 +2366,7 @@ export const en = {
     notificationsAndIntegrations: "Notifications and integrations",
     dataAndAdmin: "Data and administration",
     transactionDetails: "Transaction details",
+    includedInStats: "Only transactions included in reports",
     advancedOptions: "Advanced options",
     drafts: "Pending drafts",
     stockTools: "Stock tools",

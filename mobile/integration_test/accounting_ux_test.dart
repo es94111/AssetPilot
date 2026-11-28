@@ -31,6 +31,7 @@ void main() {
     addTearDown(() => ApiClient.testClientFactory = null);
     final writes = <Map<String, dynamic>>[];
     Uri? report;
+    var viewerRevoked = false;
     ApiClient.testClientFactory = () => MockClient((request) async {
       Object result = {};
       final path = request.url.path;
@@ -68,12 +69,13 @@ void main() {
       } else if (path == '/api/ledgers') {
         result = [
           {'id': '', 'name': '', 'role': 'owner', 'isPersonal': true},
-          {
-            'id': 'viewer-ledger',
-            'name': '唯讀測試帳本',
-            'role': 'viewer',
-            'isShared': true,
-          },
+          if (!viewerRevoked)
+            {
+              'id': 'viewer-ledger',
+              'name': '唯讀測試帳本',
+              'role': 'viewer',
+              'isShared': true,
+            },
         ];
       } else if (path == '/api/recurring' || path == '/api/budgets') {
         result = [];
@@ -247,6 +249,35 @@ void main() {
       expect(find.byType(NavigationBar), findsOneWidget);
       expect(find.byType(NavigationRail), findsNothing);
       expect(tester.takeException(), isNull);
+
+      tester.view.resetPhysicalSize();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(trKey('mobileLegacyHome')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(reports);
+      await tester.tap(reports);
+      await tester.pumpAndSettle();
+      expect(find.byType(ReportsScreen), findsOneWidget);
+
+      viewerRevoked = true;
+      await tester.tap(find.text(trKey('mobileLegacyMore')));
+      await tester.pumpAndSettle();
+      final ledgerTile = find.text(trKey('ledgerSwitchTitle'));
+      if (ledgerTile.evaluate().isEmpty) {
+        await tester.tap(find.text(trKey('uxLedgerTools')));
+        await tester.pumpAndSettle();
+      }
+      await tester.ensureVisible(ledgerTile);
+      await tester.tap(ledgerTile);
+      await tester.pumpAndSettle();
+      expect(find.byType(LedgerScreen), findsOneWidget);
+      expect(ApiClient.instance.activeLedgerId, isEmpty);
+      await tester.tap(find.text(trKey('mobileLegacyHome')));
+      await tester.pumpAndSettle();
+      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.byType(ReportsScreen), findsNothing);
     } finally {
       semantics.dispose();
     }

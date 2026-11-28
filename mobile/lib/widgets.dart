@@ -409,7 +409,7 @@ class EmptyState extends StatelessWidget {
       container: true,
       label: title == null ? message : '$title. $message',
       child: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(ApSpace.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,

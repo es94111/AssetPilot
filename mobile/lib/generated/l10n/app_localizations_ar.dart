@@ -7090,6 +7090,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get uxTransactionDetails => 'تفاصيل المعاملة';
 
   @override
+  String get uxIncludedInStats => 'المعاملات المشمولة في الإحصاءات فقط';
+
+  @override
   String get uxAdvancedOptions => 'خيارات متقدمة';
 
   @override

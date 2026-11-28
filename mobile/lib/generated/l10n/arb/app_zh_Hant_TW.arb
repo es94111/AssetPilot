@@ -10914,6 +10914,11 @@
     "description": "Web path: ux.transactionDetails",
     "x-webPath": "ux.transactionDetails"
   },
+  "uxIncludedInStats": "僅顯示計入統計的交易",
+  "@uxIncludedInStats": {
+    "description": "Web path: ux.includedInStats",
+    "x-webPath": "ux.includedInStats"
+  },
   "uxAdvancedOptions": "進階選項",
   "@uxAdvancedOptions": {
     "description": "Web path: ux.advancedOptions",

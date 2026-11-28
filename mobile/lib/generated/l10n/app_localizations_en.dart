@@ -7126,6 +7126,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uxTransactionDetails => 'Transaction details';
 
   @override
+  String get uxIncludedInStats => 'Only transactions included in reports';
+
+  @override
   String get uxAdvancedOptions => 'Advanced options';
 
   @override

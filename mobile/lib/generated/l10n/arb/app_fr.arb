@@ -10741,6 +10741,11 @@
     "description": "Web path: ux.transactionDetails",
     "x-webPath": "ux.transactionDetails"
   },
+  "uxIncludedInStats": "Seulement les opérations incluses dans les statistiques",
+  "@uxIncludedInStats": {
+    "description": "Web path: ux.includedInStats",
+    "x-webPath": "ux.includedInStats"
+  },
   "uxAdvancedOptions": "Options avancées",
   "@uxAdvancedOptions": {
     "description": "Web path: ux.advancedOptions",

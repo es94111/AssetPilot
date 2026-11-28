@@ -520,7 +520,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
             <div className="dashboard-hero-gridline pointer-events-none absolute inset-0" aria-hidden="true" />
             <div className="dashboard-hero-mark pointer-events-none absolute -right-10 -top-14 h-64 w-64 rounded-full" aria-hidden="true" />
             <div className="relative grid gap-4 sm:gap-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-              <div className="min-w-0"><p id="dashboard-overview-title" className="dashboard-hero-label text-sm font-medium text-white/90">{t('dashboard.kpi.net')}</p><h2 className="dashboard-hero-value mt-1 break-all text-3xl font-extrabold tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">{fmtMoney(net, locale)}</h2><p className="mt-3 text-sm text-white/90">{dashboardMonth}</p></div>
+              <div className="min-w-0"><p id="dashboard-overview-title" className="dashboard-hero-label text-sm font-medium text-white/90">{t('dashboard.kpi.net')}</p><h2 className="dashboard-hero-value mt-1 wrap-anywhere text-3xl font-extrabold tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">{fmtMoney(net, locale)}</h2><p className="mt-3 text-sm text-white/90">{dashboardMonth}</p></div>
               <div className="dashboard-totals gap-2 sm:gap-3">
                 {[
                   [t('dashboard.overview.income'), fmtMoney(totalIncome, locale), transactionHref(data.yearMonth, 'income')],
@@ -528,7 +528,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
                   comparison?.available && comparison.delta
                     ? [t('dashboard.comparison.netChange'), `${comparison.delta.net >= 0 ? '+' : '−'}${fmtMoney(Math.abs(comparison.delta.net), locale)}`, reportsHref]
                     : [t('dashboard.kpi.bankAccounts'), fmtMoney(data.bankBalance, locale), '/finance/accounts'],
-                ].map(([label, value, href]) => <Link key={label} href={href} className="group min-w-0 rounded-2xl border border-white/10 bg-white/10 p-3 transition-colors hover:bg-white/16 sm:p-4"><span className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">{label}<ArrowUpRight size={15} aria-hidden="true" /></span><strong className="mt-2 block break-all text-lg font-bold text-white tabular-nums">{value}</strong></Link>)}
+                ].map(([label, value, href]) => <Link key={label} href={href} className="group min-w-0 rounded-2xl border border-white/10 bg-white/10 p-3 transition-colors hover:bg-white/16 sm:p-4"><span className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">{label}<ArrowUpRight size={15} aria-hidden="true" /></span><strong className="mt-2 block wrap-anywhere text-base font-bold text-white tabular-nums">{value}</strong></Link>)}
               </div>
             </div>
           </section>

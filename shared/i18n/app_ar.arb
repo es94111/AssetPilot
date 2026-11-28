@@ -10741,6 +10741,11 @@
     "description": "Web path: ux.transactionDetails",
     "x-webPath": "ux.transactionDetails"
   },
+  "uxIncludedInStats": "المعاملات المشمولة في الإحصاءات فقط",
+  "@uxIncludedInStats": {
+    "description": "Web path: ux.includedInStats",
+    "x-webPath": "ux.includedInStats"
+  },
   "uxAdvancedOptions": "خيارات متقدمة",
   "@uxAdvancedOptions": {
     "description": "Web path: ux.advancedOptions",

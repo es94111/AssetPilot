@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -51,6 +52,7 @@ function categoryLabel(category: string, t: (path: string) => string) {
 
 export default function AccountsClient() {
   const { t, locale } = useT();
+  const { canWrite } = useActiveLedger();
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -276,15 +278,15 @@ export default function AccountsClient() {
               </div>
             </div>
           </div>
-          <div className="flex gap-1 shrink-0">
+          {canWrite && <div className="flex gap-1 shrink-0">
             {account.category === 'credit_card' && (
               <Button variant="ghost" size="icon" className={account.isActive === false ? 'text-emerald-600' : 'text-amber-600'} onClick={() => toggleCard(account)} title={account.isActive === false ? t('features.accounts.enableCard') : t('features.accounts.disableCard')}>
                 <Power size={16} />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={() => openEdit(account)}><Edit3 size={16} /></Button>
-            <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(account.id)}><Trash2 size={16} /></Button>
-          </div>
+            <Button variant="ghost" size="icon" aria-label={t('features.accounts.editAccount')} onClick={() => openEdit(account)}><Edit3 size={16} /></Button>
+            <Button variant="ghost" size="icon" aria-label={t('common.delete')} className="text-red-500" onClick={() => setDeleteId(account.id)}><Trash2 size={16} /></Button>
+          </div>}
         </div>
         <p className="font-bold text-lg mt-2">{fmt(account.balance, account.currency, locale)}</p>
         {account.currency !== 'TWD' && <p className="text-sm text-slate-500 mt-1">{t('features.accounts.convertedTotal', { amount: fmt(account.twdAccumulated, 'TWD', locale) })}</p>}
@@ -336,8 +338,8 @@ export default function AccountsClient() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
-          <Button onClick={openAdd}><Plus size={16} className="mr-2" /> {t('features.accounts.addAccount')}</Button>
+        <Dialog open={canWrite && accountDialogOpen} onOpenChange={setAccountDialogOpen}>
+          {canWrite && <Button onClick={openAdd}><Plus size={16} className="mr-2" /> {t('features.accounts.addAccount')}</Button>}
           <DialogContent>
             <DialogHeader><DialogTitle>{editId ? t('features.accounts.editAccount') : t('features.accounts.newAccount')}</DialogTitle></DialogHeader>
             <form onSubmit={handleSave} className="space-y-4">
@@ -369,7 +371,7 @@ export default function AccountsClient() {
           </DialogContent>
         </Dialog>
 
-        {creditAccounts.length > 0 && (
+        {canWrite && creditAccounts.length > 0 && (
           <Button variant="outline" onClick={() => setRepaymentOpen(true)}>
             {t('features.accounts.repayment.title')}
           </Button>
@@ -406,14 +408,14 @@ export default function AccountsClient() {
       )}
 
       <CreditCardRepaymentDialog
-        open={repaymentOpen}
+        open={canWrite && repaymentOpen}
         onClose={() => setRepaymentOpen(false)}
         bankAccounts={bankAccounts}
         defaultCurrency={defaultCurrency}
         onDone={load}
       />
 
-      {deleteId && (
+      {canWrite && deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">{t('common.confirmDelete')}</h3>
@@ -474,7 +476,7 @@ export default function AccountsClient() {
       <section className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h3 className="text-lg font-semibold">{t('features.accounts.fx.title')}</h3>
-          <div className="flex items-center gap-3 flex-wrap">
+          {canWrite && <div className="flex items-center gap-3 flex-wrap">
             {!fxSettings.sharedLedger && (
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={fxSettings.autoUpdate} onChange={(e) => handleFxAutoUpdate(e.target.checked)} className="w-4 h-4" />
@@ -484,7 +486,7 @@ export default function AccountsClient() {
             <Button variant="outline" size="sm" onClick={handleFxSync} disabled={fxSyncing}>
               {fxSyncing ? t('features.accounts.fx.syncing') : t('features.accounts.fx.syncNow')}
             </Button>
-          </div>
+          </div>}
         </div>
         {fxSettings.lastSyncedAt && (
           <p className="text-xs text-slate-500">{t('features.accounts.fx.lastSynced', { date: new Date(fxSettings.lastSyncedAt).toLocaleString(localeTag(locale)) })}</p>
@@ -496,7 +498,7 @@ export default function AccountsClient() {
                 <tr className="border-b text-slate-500 text-left">
                   <th className="pb-2 pr-6">{t('features.accounts.fx.currency')}</th>
                   <th className="pb-2 pr-6">{t('features.accounts.fx.unitToTwd')}</th>
-                  <th className="pb-2"></th>
+                  {canWrite && <th className="pb-2"></th>}
                 </tr>
               </thead>
               <tbody>
@@ -504,9 +506,9 @@ export default function AccountsClient() {
                   <tr key={r.currency} className="border-b last:border-0">
                     <td className="py-2 pr-6 font-medium">{r.currency}</td>
                     <td className="py-2 pr-6">{r.rateToTwd}</td>
-                    <td className="py-2">
+                    {canWrite && <td className="py-2">
                       <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 h-7 px-2" onClick={() => handleFxDelete(r.currency)} disabled={fxSaving}>{t('common.delete')}</Button>
-                    </td>
+                    </td>}
                   </tr>
                 ))}
               </tbody>
@@ -515,7 +517,7 @@ export default function AccountsClient() {
         ) : (
           <p className="text-sm text-slate-500">{t('features.accounts.fx.empty')}</p>
         )}
-        <form onSubmit={handleFxAdd} className="flex flex-wrap gap-2 items-end">
+        {canWrite && <form onSubmit={handleFxAdd} className="flex flex-wrap gap-2 items-end">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-slate-500">{t('features.accounts.fx.currencyLabel')}</label>
             <input
@@ -533,7 +535,7 @@ export default function AccountsClient() {
             />
           </div>
           <Button type="submit" size="sm" disabled={fxSaving}>{t('features.accounts.fx.addOrUpdate')}</Button>
-        </form>
+        </form>}
         {fxMsg && <p className={`text-sm ${fxMsg === t('features.accounts.messages.saved') || fxMsg === t('features.accounts.messages.ratesUpdated') ? 'text-green-600' : 'text-red-500'}`}>{fxMsg}</p>}
       </section>
     </div>

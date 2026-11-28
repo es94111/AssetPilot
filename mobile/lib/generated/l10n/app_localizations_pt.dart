@@ -7201,6 +7201,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get uxTransactionDetails => 'Detalhes da transação';
 
   @override
+  String get uxIncludedInStats =>
+      'Somente transações incluídas nas estatísticas';
+
+  @override
   String get uxAdvancedOptions => 'Opções avançadas';
 
   @override
@@ -14320,6 +14324,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get uxTransactionDetails => 'Detalhes da transação';
+
+  @override
+  String get uxIncludedInStats =>
+      'Somente transações incluídas nas estatísticas';
 
   @override
   String get uxAdvancedOptions => 'Opções avançadas';

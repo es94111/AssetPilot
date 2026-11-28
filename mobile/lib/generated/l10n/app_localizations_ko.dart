@@ -6902,6 +6902,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get uxTransactionDetails => '거래 세부 정보';
 
   @override
+  String get uxIncludedInStats => '통계에 포함되는 거래만';
+
+  @override
   String get uxAdvancedOptions => '고급 옵션';
 
   @override

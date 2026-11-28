@@ -2366,6 +2366,7 @@ export const hi = {
     notificationsAndIntegrations: "सूचनाएँ और इंटीग्रेशन",
     dataAndAdmin: "डेटा और प्रशासन",
     transactionDetails: "लेनदेन का विवरण",
+    includedInStats: "केवल आँकड़ों में शामिल लेन-देन",
     advancedOptions: "उन्नत विकल्प",
     drafts: "लंबित ड्राफ़्ट",
     stockTools: "शेयर टूल",

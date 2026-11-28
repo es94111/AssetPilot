@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/components/i18n/I18nProvider';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { Plus, Edit3, Trash2, Tags as TagsIcon } from 'lucide-react';
 
 interface TagItem { id: string; name: string; color: string; isActive: boolean; usageCount: number }
@@ -20,6 +21,7 @@ const fmt = (n: number) => Math.round(n).toLocaleString();
 
 export default function TagsClient() {
   const { t } = useT();
+  const { canWrite } = useActiveLedger();
   const [tags, setTags] = useState<TagItem[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,10 +136,10 @@ export default function TagsClient() {
         <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{t('features.tags.v1Note')}</p>
       </div>
 
-      <Button onClick={openCreate}><Plus size={16} className="mr-2" /> {t('features.tags.add')}</Button>
+      {canWrite && <Button onClick={openCreate}><Plus size={16} className="mr-2" /> {t('features.tags.add')}</Button>}
       {loadError && <p className="text-red-500 text-sm" role="alert">{loadError}</p>}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={canWrite && dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editId ? t('features.tags.edit') : t('features.tags.add')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
@@ -152,7 +154,7 @@ export default function TagsClient() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+      <Dialog open={canWrite && !!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{t('features.tags.deleteTitle')}</DialogTitle></DialogHeader>
           {deleteTarget && (
@@ -184,11 +186,13 @@ export default function TagsClient() {
               {!tag.isActive && <span className="text-xs text-slate-500">{t('features.tags.disabled')}</span>}
               <span className="text-xs text-slate-500">{t('features.tags.usage', { count: tag.usageCount })}</span>
               <span className="flex-1" />
-              <Button size="sm" variant="outline" onClick={() => toggleActive(tag)}>
-                {tag.isActive ? t('features.tags.disable') : t('features.tags.enable')}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => openEdit(tag)} aria-label={t('features.tags.edit')}><Edit3 size={14} /></Button>
-              <Button size="sm" variant="outline" onClick={() => { setDeleteError(''); setDeleteTarget(tag); }} aria-label={t('features.tags.deleteTitle')}><Trash2 size={14} /></Button>
+              {canWrite && <>
+                <Button size="sm" variant="outline" onClick={() => toggleActive(tag)}>
+                  {tag.isActive ? t('features.tags.disable') : t('features.tags.enable')}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => openEdit(tag)} aria-label={t('features.tags.edit')}><Edit3 size={14} /></Button>
+                <Button size="sm" variant="outline" onClick={() => { setDeleteError(''); setDeleteTarget(tag); }} aria-label={t('features.tags.deleteTitle')}><Trash2 size={14} /></Button>
+              </>}
             </li>
           ))}
         </ul>

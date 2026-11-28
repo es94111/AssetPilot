@@ -965,7 +965,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, [modal, overseasApplies, autoFxFee, fxFeeEdited]);
 
   const activeFilterCount = Object.entries(filters)
-    .filter(([key, value]) => !['keyword', 'tagMode', 'categoryMatch', 'includedInStats'].includes(key) && Boolean(value)).length;
+    .filter(([key, value]) => !['keyword', 'tagMode', 'categoryMatch'].includes(key) && Boolean(value)).length;
   const filterControlClass = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
   const draftTagIds = filterDraft.tagIds.split(',').filter(Boolean);
   const updateFilterDraft = (patch: Partial<typeof EMPTY_FILTERS>) =>
@@ -976,6 +976,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     filters.categoryId === '__uncategorized__' ? t('features.common.uncategorized') : categories.find(category => category.id === filters.categoryId)?.name,
     [filters.dateFrom, filters.dateTo].filter(Boolean).join(' – '),
     filters.excludeTransfer && t('features.transactions.excludeTransfer'),
+    filters.includedInStats && t('ux.includedInStats'),
   ].filter(Boolean);
   const exactParentId = filterDraft.categoryMatch === 'exact'
     && allParents.some(parent => parent.id === filterDraft.categoryId)
@@ -1063,6 +1064,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         />
         {t('features.transactions.excludeTransfer')}
       </label>
+      {filters.includedInStats && (
+        <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+            checked={filterDraft.includedInStats === '1'}
+            onChange={e => updateFilterDraft({ includedInStats: e.target.checked ? '1' : '' })}
+          />
+          {t('ux.includedInStats')}
+        </label>
+      )}
     </>
   );
 

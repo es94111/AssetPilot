@@ -217,4 +217,9 @@ test('a viewer can open the list without seeing or launching write controls', as
   await expect(page.getByRole('button', { name: '記一筆' })).toHaveCount(0);
   await page.keyboard.press('Alt+n');
   await expect(page.getByRole('dialog')).toHaveCount(0);
+  for (const [path, writeAction] of [['/finance/accounts', '新增帳戶'], ['/finance/budget', '新增預算']]) {
+    await page.goto(path);
+    await expect(page.getByText('此帳本為唯讀，你只能檢視資料。')).toBeVisible();
+    await expect(page.getByRole('button', { name: writeAction, exact: true })).toHaveCount(0);
+  }
 });

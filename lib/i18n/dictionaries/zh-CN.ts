@@ -2366,6 +2366,7 @@ export const zhCN = {
     notificationsAndIntegrations: "通知与集成",
     dataAndAdmin: "数据与管理",
     transactionDetails: "交易详情",
+    includedInStats: "仅显示计入统计的交易",
     advancedOptions: "高级选项",
     drafts: "待处理草稿",
     stockTools: "股票工具",

@@ -82,6 +82,7 @@ class _LedgerScreenState extends State<LedgerScreen> {
     final active = ApiClient.instance.activeLedgerId;
     if (active.isNotEmpty && !ledgers.any((l) => l.id == active)) {
       await ApiClient.instance.setActiveLedgerId('');
+      if (mounted) widget.onLedgerChanged?.call();
     }
     return ledgers;
   }

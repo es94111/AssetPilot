@@ -6783,6 +6783,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get uxTransactionDetails => '交易細節';
 
   @override
+  String get uxIncludedInStats => '僅顯示計入統計的交易';
+
+  @override
   String get uxAdvancedOptions => '進階選項';
 
   @override
@@ -13494,6 +13497,9 @@ class AppLocalizationsZhHansCn extends AppLocalizationsZh {
 
   @override
   String get uxTransactionDetails => '交易详情';
+
+  @override
+  String get uxIncludedInStats => '仅显示计入统计的交易';
 
   @override
   String get uxAdvancedOptions => '高级选项';
@@ -20303,6 +20309,9 @@ class AppLocalizationsZhHantTw extends AppLocalizationsZh {
 
   @override
   String get uxTransactionDetails => '交易細節';
+
+  @override
+  String get uxIncludedInStats => '僅顯示計入統計的交易';
 
   @override
   String get uxAdvancedOptions => '進階選項';

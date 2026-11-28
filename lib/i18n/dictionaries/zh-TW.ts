@@ -2364,6 +2364,7 @@ export const zhTW = {
     notificationsAndIntegrations: "通知與整合",
     dataAndAdmin: "資料與管理",
     transactionDetails: "交易細節",
+    includedInStats: "僅顯示計入統計的交易",
     advancedOptions: "進階選項",
     drafts: "待處理草稿",
     stockTools: "股票工具",

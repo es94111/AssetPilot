@@ -2366,6 +2366,7 @@ export const ptBR = {
     notificationsAndIntegrations: "Notificações e integrações",
     dataAndAdmin: "Dados e administração",
     transactionDetails: "Detalhes da transação",
+    includedInStats: "Somente transações incluídas nas estatísticas",
     advancedOptions: "Opções avançadas",
     drafts: "Rascunhos pendentes",
     stockTools: "Ferramentas de ações",

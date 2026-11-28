@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -12,6 +13,7 @@ import { Plus, Edit3, Trash2, Tags } from 'lucide-react';
 const EMPTY_FORM = { name: '', type: 'expense', color: '#94a3b8', parentId: '', icon: '' };
 
 export default function CategoriesClient(_props: { user?: any } = {}) {
+  const { canWrite } = useActiveLedger();
   const { t } = useT();
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +92,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
   }
 
   async function handleDrop(targetId: string, scope: string) {
+    if (!canWrite) return;
     if (!draggingId || draggingId === targetId || dragOverScope !== scope) {
       setDraggingId(null);
       setDragOverScope(null);
@@ -152,9 +155,9 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
         ))}
       </div>
 
-      <Button onClick={openCreate}><Plus size={16} className="mr-2" /> {t('features.categories.addCategory')}</Button>
+      {canWrite && <Button onClick={openCreate}><Plus size={16} className="mr-2" /> {t('features.categories.addCategory')}</Button>}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={canWrite && dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editId ? t('features.categories.editCategory') : t('features.categories.newCategory')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
@@ -186,7 +189,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
             <div key={parent.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
               <div
                 className={`flex items-center gap-3 p-3 font-semibold border-b ${draggingId === parent.id ? 'opacity-50' : ''} ${dragOverScope === `parents:${activeTab}` && dragOverId === parent.id ? 'bg-blue-50 dark:bg-blue-950/40' : ''}`}
-                draggable
+                draggable={canWrite}
                 onDragStart={() => { setDraggingId(parent.id); setDragOverScope(`parents:${activeTab}`); }}
                 onDragEnd={() => { setDraggingId(null); setDragOverScope(null); setDragOverId(null); }}
                 onDragOver={(e) => {
@@ -202,14 +205,16 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
               >
                 <span className="w-3 h-3 rounded-full" style={{ background: parent.color || '#94a3b8' }} />
                 <span className="flex-1">{parent.name}</span>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(parent)}><Edit3 size={16} /></Button>
-                <Button variant="ghost" size="icon" className="text-red-500" onClick={() => { setDeleteError(''); setDeleteId(parent.id); }}><Trash2 size={16} /></Button>
+                {canWrite && <>
+                  <Button variant="ghost" size="icon" aria-label={t('features.categories.editCategory')} onClick={() => openEdit(parent)}><Edit3 size={16} /></Button>
+                  <Button variant="ghost" size="icon" aria-label={t('common.delete')} className="text-red-500" onClick={() => { setDeleteError(''); setDeleteId(parent.id); }}><Trash2 size={16} /></Button>
+                </>}
               </div>
               {children(parent.id).map(child => (
                 <div
                   key={child.id}
                   className={`flex items-center gap-3 p-3 pl-8 text-sm ${draggingId === child.id ? 'opacity-50' : ''} ${dragOverScope === `children:${parent.id}` && dragOverId === child.id ? 'bg-blue-50 dark:bg-blue-950/40' : ''}`}
-                  draggable
+                  draggable={canWrite}
                   onDragStart={() => { setDraggingId(child.id); setDragOverScope(`children:${parent.id}`); }}
                   onDragEnd={() => { setDraggingId(null); setDragOverScope(null); setDragOverId(null); }}
                   onDragOver={(e) => {
@@ -225,8 +230,10 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
                 >
                   <span className="w-3 h-3 rounded-full" style={{ background: child.color || parent.color || '#94a3b8' }} />
                   <span className="flex-1">{child.name}</span>
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(child)}><Edit3 size={16} /></Button>
-                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => { setDeleteError(''); setDeleteId(child.id); }}><Trash2 size={16} /></Button>
+                  {canWrite && <>
+                    <Button variant="ghost" size="icon" aria-label={t('features.categories.editCategory')} onClick={() => openEdit(child)}><Edit3 size={16} /></Button>
+                    <Button variant="ghost" size="icon" aria-label={t('common.delete')} className="text-red-500" onClick={() => { setDeleteError(''); setDeleteId(child.id); }}><Trash2 size={16} /></Button>
+                  </>}
                 </div>
               ))}
             </div>
@@ -234,7 +241,7 @@ export default function CategoriesClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      {deleteId && (
+      {canWrite && deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">{t('common.confirmDelete')}</h3>

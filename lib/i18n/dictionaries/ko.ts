@@ -2366,6 +2366,7 @@ export const ko = {
     notificationsAndIntegrations: "알림 및 연동",
     dataAndAdmin: "데이터 및 관리",
     transactionDetails: "거래 세부 정보",
+    includedInStats: "통계에 포함되는 거래만",
     advancedOptions: "고급 옵션",
     drafts: "대기 중인 초안",
     stockTools: "주식 도구",

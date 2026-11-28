@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '@/lib/clientApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/Input';
@@ -24,6 +25,7 @@ function fmtAmountForEdit(n: number): string {
 }
 
 export default function RecurringClient(_props: { user?: any } = {}) {
+  const { canWrite } = useActiveLedger();
   const { t, locale } = useT();
   const [recs, setRecs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -314,9 +316,9 @@ export default function RecurringClient(_props: { user?: any } = {}) {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{t('features.recurring.title')}</h2>
 
-      <Button onClick={openCreate}><Plus size={16} className="mr-2" /> {t('features.recurring.add')}</Button>
+      {canWrite && <Button onClick={openCreate}><Plus size={16} className="mr-2" /> {t('features.recurring.add')}</Button>}
 
-      <Dialog open={dialogOpen} onOpenChange={(open) => {
+      <Dialog open={canWrite && dialogOpen} onOpenChange={(open) => {
         if (!open) closeDialog();
         else setDialogOpen(true);
       }}>
@@ -412,11 +414,11 @@ export default function RecurringClient(_props: { user?: any } = {}) {
         </DialogContent>
       </Dialog>
 
-      {!suggestionsEnabled && (
+      {canWrite && !suggestionsEnabled && (
         <p className="text-xs text-slate-500">{t('features.smartAssist.disabledNotice')}</p>
       )}
 
-      {suggestionsEnabled && suggestions.length > 0 && (
+      {canWrite && suggestionsEnabled && suggestions.length > 0 && (
         <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40">
           <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100">{t('features.smartAssist.recurringTitle')}</h3>
           <p className="mt-1 text-xs leading-snug text-amber-800 dark:text-amber-200">{t('features.smartAssist.recurringHint')}</p>
@@ -474,11 +476,11 @@ export default function RecurringClient(_props: { user?: any } = {}) {
               <div key={r.id} className={`p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm ${!r.isActive ? 'opacity-70' : ''}`}>
                 <div className="flex justify-between items-start mb-2">
                   <span className={`px-2 py-1 rounded text-xs ${r.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{r.type === 'income' ? t('features.common.income') : t('features.common.expense')}</span>
-                  <div className="flex gap-1">
+                  {canWrite && <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleToggle(r.id)}>{r.isActive ? <Pause size={16} /> : <Play size={16} />}</Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Edit3 size={16} /></Button>
                     <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setDeleteId(r.id)}><Trash2 size={16} /></Button>
-                  </div>
+                  </div>}
                 </div>
                 <h3 className="font-semibold text-lg">{fmt(r.amount, locale)} ({t(`features.recurring.frequencyLabels.${r.frequency}`)})</h3>
                 <div className="text-sm text-slate-500 mt-2 space-y-1">
@@ -495,7 +497,7 @@ export default function RecurringClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      {deleteId && (
+      {canWrite && deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl dark:bg-slate-900 dark:text-slate-100">
             <h3 className="text-lg font-semibold mb-4">{t('common.confirmDelete')}</h3>

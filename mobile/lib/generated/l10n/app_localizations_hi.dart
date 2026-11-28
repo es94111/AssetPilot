@@ -7116,6 +7116,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get uxTransactionDetails => 'लेनदेन का विवरण';
 
   @override
+  String get uxIncludedInStats => 'केवल आँकड़ों में शामिल लेन-देन';
+
+  @override
   String get uxAdvancedOptions => 'उन्नत विकल्प';
 
   @override

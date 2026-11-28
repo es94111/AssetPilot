@@ -2366,6 +2366,7 @@ export const fr = {
     notificationsAndIntegrations: "Notifications et intégrations",
     dataAndAdmin: "Données et administration",
     transactionDetails: "Détails de la transaction",
+    includedInStats: "Seulement les opérations incluses dans les statistiques",
     advancedOptions: "Options avancées",
     drafts: "Brouillons en attente",
     stockTools: "Outils boursiers",

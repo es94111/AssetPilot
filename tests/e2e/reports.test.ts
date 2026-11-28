@@ -59,19 +59,25 @@ test('report drill-down matches uncategorized and direct parent totals', async (
   await createE2ETransaction(testUser.id, { date, amount: 400, note: '篩選統計以外交易', categoryId: parentId, excludeFromStats: true });
 
   const report = `/finance/reports?period=custom&from=${date}&to=${date}`;
+  const transactions = page.getByRole('table');
   await page.goto(report);
   await page.getByRole('link', { name: '查看對應交易 · 未分類 › （其他）', exact: true }).click();
-  await expect(page.getByText('篩選未分類交易', { exact: true })).toBeVisible();
-  await expect(page.getByText('篩選父分類交易', { exact: true })).toBeHidden();
+  await expect(transactions.getByText('篩選未分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選父分類交易', { exact: true })).toBeHidden();
 
   await page.goto(report);
   await page.getByRole('link', { name: '查看對應交易 · 報表父分類 › （其他）', exact: true }).click();
-  await expect(page.getByText('篩選父分類交易', { exact: true })).toBeVisible();
-  await expect(page.getByText('篩選子分類交易', { exact: true })).toBeHidden();
-  await expect(page.getByText('篩選統計以外交易', { exact: true })).toBeHidden();
+  await expect(transactions.getByText('篩選父分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選子分類交易', { exact: true })).toBeHidden();
+  await expect(transactions.getByText('篩選統計以外交易', { exact: true })).toBeHidden();
+  await page.getByRole('button', { name: /^篩選/ }).click();
+  await page.getByRole('checkbox', { name: '僅顯示計入統計的交易' }).uncheck();
+  await page.getByRole('button', { name: '套用' }).click();
+  await expect(transactions.getByText('篩選統計以外交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選子分類交易', { exact: true })).toBeHidden();
 
   await page.goto(`/finance/transactions?categoryId=${parentId}`);
-  await expect(page.getByText('篩選父分類交易', { exact: true })).toBeVisible();
-  await expect(page.getByText('篩選子分類交易', { exact: true })).toBeVisible();
-  await expect(page.getByText('篩選統計以外交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選父分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選子分類交易', { exact: true })).toBeVisible();
+  await expect(transactions.getByText('篩選統計以外交易', { exact: true })).toBeVisible();
 });

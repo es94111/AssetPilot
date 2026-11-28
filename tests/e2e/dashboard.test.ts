@@ -17,3 +17,24 @@ test('dashboard loads and shows income/expense totals for seeded data', async ({
   await expect(authedPage.getByRole('link', { name: '收入 NT$ 50,000' })).toBeVisible();
   await expect(authedPage.getByRole('link', { name: '支出 NT$ 1,200' })).toBeVisible();
 });
+
+test('phone navigation groups related pages and reports retain the dashboard month', async ({ authedPage: page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/dashboard?month=2026-02');
+  const nav = page.getByRole('navigation');
+  await expect(nav.getByRole('link')).toHaveText(['首頁', '記帳', '股票', '更多']);
+  await expect(page.getByRole('link', { name: '記一筆', exact: true })).toHaveCount(1);
+
+  await page.getByRole('link', { name: '查看報表', exact: true }).click();
+  await expect(page.getByLabel('開始')).toHaveValue('2026-02-01');
+  await expect(page.getByLabel('結束')).toHaveValue('2026-02-28');
+  await expect(nav.getByRole('link', { name: '更多' })).toHaveAttribute('aria-current', 'location');
+  await nav.getByRole('link', { name: '更多' }).click();
+
+  await expect(page.getByRole('link', { name: '固定收支' })).toBeHidden();
+  await page.getByText('帳務管理', { exact: true }).click();
+  await expect(page.getByRole('link', { name: '固定收支' })).toBeVisible();
+  await page.getByText('預算與報表', { exact: true }).click();
+  await expect(page.getByRole('link', { name: '固定收支' })).toBeHidden();
+  await expect(page.getByRole('link', { name: '統計報表' })).toBeVisible();
+});

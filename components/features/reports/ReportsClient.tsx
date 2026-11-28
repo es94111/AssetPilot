@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Decimal from 'decimal.js';
+import Link from 'next/link';
+import Disclosure from '@/components/ui/Disclosure';
+import { isCalendarIsoDate } from '@/lib/calendarDates';
 import { apiGet, getActiveLedgerHeaders } from '@/lib/clientApi';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -74,14 +77,13 @@ function getDateRange(period: string, customFrom: string, customTo: string) {
     case 'thisYear':
       from = new Date(now.getFullYear(), 0, 1);
       break;
-    case 'custom':
-      if (customFrom) from = new Date(customFrom);
-      if (customTo) to = new Date(customTo);
-      break;
   }
+  // Preserve calendar dates through the query string regardless of browser timezone.
+  const formatDate = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   return {
-    from: from.toISOString().split('T')[0],
-    to: to.toISOString().split('T')[0],
+    from: period === 'custom' && isCalendarIsoDate(customFrom) ? customFrom : formatDate(from),
+    to: period === 'custom' && isCalendarIsoDate(customTo) ? customTo : formatDate(to),
   };
 }
 
@@ -417,26 +419,29 @@ export default function ReportsClient(_props: { user?: any } = {}) {
     setExporting(false);
   }
 
-  function jumpToTransactions(row: any) {
+  function transactionsHref(row: any) {
     const { from, to } = getDateRange(period, customFrom, customTo);
-    const categoryId = row?.categoryId || (row?.isOtherGroup ? row?.parentId : '');
+    const categoryId = row?.categoryId || (row?.isOtherGroup ? row?.parentId : '')
+      || (row?.parentId === '__uncategorized__' ? '__uncategorized__' : '');
     const params = new URLSearchParams({
       type,
       dateFrom: from,
       dateTo: to,
     });
     if (categoryId) params.set('categoryId', categoryId);
-    router.push(`/finance/transactions?${params.toString()}`);
+    return `/finance/transactions?${params.toString()}`;
   }
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{t('features.reports.title')}</h2>
-      <div className="flex gap-2 border-b" style={{ borderColor: 'var(--border)' }}>
+      <div role="group" aria-label={t("features.reports.title")} className="flex flex-wrap gap-1 border-b" style={{ borderColor: 'var(--border)' }}>
         {(['category', 'trend', 'daily'] as const).map((tab) => (
           <button
             key={tab}
-            className="relative px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            type="button"
+            aria-pressed={activeTab === tab}
+            className="relative min-h-11 px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             style={{ color: activeTab === tab ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: activeTab === tab ? 600 : 500 }}
             onClick={() => setActiveTab(tab)}
           >
@@ -450,7 +455,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-4 p-4 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm">
+      <div className="flex flex-wrap items-start gap-3">
         <Select options={[
           { label: t('features.reports.periods.thisMonth'), value: 'thisMonth' },
           { label: t('features.reports.periods.lastMonth'), value: 'lastMonth' },
@@ -466,6 +471,10 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           </>
         )}
         <Select options={[{ label: t('features.common.expense'), value: 'expense' }, { label: t('features.common.income'), value: 'income' }]} value={type} onChange={(e) => setType(e.target.value)} label={t('features.common.type')} className="w-32" />
+      </div>
+
+      <Disclosure title={t('ux.reportOptions')} className="max-w-xl">
+        <div className="flex flex-wrap items-end gap-3">
         <Select
           options={baseCurrencyOptions.map((code) => ({ label: code, value: code }))}
           value={baseCurrency}
@@ -473,7 +482,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
           label={t('features.reports.baseCurrencyLabel')}
           className="w-32"
         />
-        <div className="flex items-end pb-4">
+        <div className="flex items-end pb-1">
           <button
             type="button"
             className="min-h-11 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -483,7 +492,8 @@ export default function ReportsClient(_props: { user?: any } = {}) {
             {exporting ? t('features.reports.exporting') : t('features.reports.exportCsv')}
           </button>
         </div>
-      </div>
+        </div>
+      </Disclosure>
 
       {rateInfo && baseCurrency !== REPORT_BASE_CURRENCY_DEFAULT && (
         <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -517,7 +527,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
 
       {activeTab === 'category' && catRows.length > 0 && (
         <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-lg shadow-sm space-y-4">
-          <div className="flex justify-between items-center border-b pb-2">
+          <div className="flex flex-wrap justify-between gap-2 border-b pb-2">
             <h3 className="font-semibold text-lg">{t('features.reports.detailTitle', { type: type === 'expense' ? t('features.common.expense') : t('features.common.income') })}</h3>
             <p className="font-bold">{t('features.reports.total', { amount: money(grandTotal, baseCurrency, locale) })}</p>
           </div>
@@ -525,9 +535,9 @@ export default function ReportsClient(_props: { user?: any } = {}) {
             <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span>{t('features.reports.selectedCategory')}<strong>{selectedRow.parentName && selectedRow.parentName !== selectedRow.name ? `${selectedRow.parentName} › ` : ''}{selectedRow.name}</strong>{t('features.reports.selectedCategoryAmount', { amount: money(selectedRow.total, baseCurrency, locale) })}</span>
-                <button type="button" className="rounded-md border border-blue-300 px-3 py-1 text-xs font-medium hover:bg-blue-100 dark:border-blue-800 dark:hover:bg-blue-900/50" onClick={() => jumpToTransactions(selectedRow)}>
+                <Link href={transactionsHref(selectedRow)} className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold underline underline-offset-4">
                   {t('features.reports.viewTransactions')}
-                </button>
+                </Link>
               </div>
             </div>
           )}
@@ -538,7 +548,7 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                 <div className="flex items-center gap-3">
                   <span className="w-3 h-3 rounded-full" style={{ background: group.parentColor }} />
                   <span className="flex-1 text-left font-medium">{group.parentName}</span>
-                  <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="hidden w-32 h-2 sm:block bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div className="h-full rounded-full flex overflow-hidden" style={{ width: `${percentOf(grandTotal, group.total)}%`, background: group.parentColor }}>
                       {group.children.map((child: any, childIndex: number) => {
                         const width = group.total > 0 ? (Number(child.total) / group.total) * 100 : 0;
@@ -559,10 +569,17 @@ export default function ReportsClient(_props: { user?: any } = {}) {
                   {group.children.map((child: any, childIndex: number) => {
                     const selected = selectedCategoryKey === categoryRowKey(child);
                     return (
-                      <button key={`${group.parentId}-${child.name}-${childIndex}`} type="button" className={`inline-flex items-center gap-1.5 rounded px-1 py-0.5 transition ${selected ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategoryKey(categoryRowKey(child))} onDoubleClick={() => jumpToTransactions(child)}>
-                        <span className="w-2 h-2 rounded-full" style={{ background: child.color || '#94a3b8' }} />
-                        {child.name}
-                      </button>
+                      <div key={`${group.parentId}-${child.name}-${childIndex}`} className={`flex flex-wrap items-center gap-x-2 rounded-lg px-2 text-sm ${selected ? 'bg-[var(--primary-light-bg)]' : ''}`}>
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full" style={{ background: child.color || '#94a3b8' }} />
+                          {child.name}
+                        </span>
+                        <Link href={transactionsHref(child)}
+                          aria-label={`${t('features.reports.viewTransactions')} · ${child.name}`}
+                          className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">
+                          {t('features.reports.viewTransactions')}
+                        </Link>
+                      </div>
                     );
                   })}
                 </div>
@@ -572,15 +589,20 @@ export default function ReportsClient(_props: { user?: any } = {}) {
             const percentage = grandTotal > 0 ? Math.round((Number(row.total) / grandTotal) * 100) : 0;
             const selected = selectedCategoryKey === categoryRowKey(row);
             return (
-              <button key={`${row.parentId}-${index}`} type="button" className={`w-full flex items-center gap-3 text-sm rounded-lg px-2 py-2 transition ${selected ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`} onClick={() => setSelectedCategoryKey(categoryRowKey(row))} onDoubleClick={() => jumpToTransactions(row)}>
+              <div key={`${row.parentId}-${index}`} className={`flex flex-wrap items-center gap-3 rounded-lg px-2 py-1 text-sm ${selected ? 'bg-[var(--primary-light-bg)]' : ''}`}>
                 <span className="w-3 h-3 rounded-full" style={{ background: row.color || '#94a3b8' }} />
                 <span className="flex-1 text-left">{row.parentName && row.parentName !== row.name ? `${row.parentName} › ` : ''}{row.name || t('features.common.uncategorized')}</span>
-                <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div className="hidden w-32 h-2 sm:block bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${percentage}%`, background: row.color || '#94a3b8' }} />
                 </div>
                 <span className="w-12 text-right">{percentage}%</span>
-                <span className="w-24 text-right font-medium">{money(row.total, baseCurrency, locale)}</span>
-              </button>
+                <span className="shrink-0 text-end font-medium">{money(row.total, baseCurrency, locale)}</span>
+                <Link href={transactionsHref(row)}
+                  aria-label={`${t('features.reports.viewTransactions')} · ${row.name}`}
+                  className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">
+                  {t('features.reports.viewTransactions')}
+                </Link>
+              </div>
             );
           })}
         </div>

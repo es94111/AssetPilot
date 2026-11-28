@@ -80,11 +80,14 @@ class ApiClient {
 
   /// 目前帳本是否唯讀（viewer）。由 [ledgers]／[refreshLedgerRole] 更新；
   /// 只影響 UI 的寫入入口與本地提前拒絕，伺服器端仍會逐次驗證角色。
-  bool _activeLedgerReadOnly = false;
+  final _activeLedgerReadOnly = ValueNotifier<bool>(false);
 
   String get activeLedgerId => _activeLedgerId;
 
-  bool get activeLedgerReadOnly => _activeLedgerReadOnly;
+  bool get activeLedgerReadOnly => _activeLedgerReadOnly.value;
+
+  ValueListenable<bool> get activeLedgerReadOnlyChanges =>
+      _activeLedgerReadOnly;
 
   bool isPersonalLedgerFor(String userId) =>
       _activeLedgerId.isEmpty || _activeLedgerId == 'personal:$userId';
@@ -104,6 +107,9 @@ class ApiClient {
   String? _cookie; // 例："authToken=xxxxx"
   String? _appDeviceId;
   final ValueNotifier<bool> authState = ValueNotifier(false);
+
+  @visibleForTesting
+  static http.Client Function()? testClientFactory;
 
   String get baseUrl => _baseUrl;
   bool get isLoggedIn => _cookie != null;
@@ -161,7 +167,7 @@ class ApiClient {
   }) async {
     final changed = _activeLedgerId != ledgerId;
     _activeLedgerId = ledgerId;
-    _activeLedgerReadOnly = readOnly;
+    _activeLedgerReadOnly.value = readOnly;
     final p = await SharedPreferences.getInstance();
     if (ledgerId.isEmpty) {
       await p.remove(_kActiveLedger);
@@ -178,7 +184,7 @@ class ApiClient {
   /// 登出時回到個人帳本，避免下一位使用者沿用前一位的共享帳本選取。
   Future<void> clearActiveLedger() async {
     _activeLedgerId = '';
-    _activeLedgerReadOnly = false;
+    _activeLedgerReadOnly.value = false;
     final p = await SharedPreferences.getInstance();
     await p.remove(_kActiveLedger);
   }
@@ -294,7 +300,9 @@ class ApiClient {
         // （方法／路徑／狀態碼／耗時），用於監控 API 延遲造成的效能下降。
         // 已處理的失敗不建立重複 error event；仍由下方結構化 log 保留安全的
         // path／狀態碼／例外型別。query string 由 sentry_config 的 hook 清除。
-        final c = SentryHttpClient(client: http.Client());
+        final c = SentryHttpClient(
+          client: testClientFactory?.call() ?? http.Client(),
+        );
         try {
           switch (method) {
             case 'GET':
@@ -1157,13 +1165,13 @@ class ApiClient {
   /// 查詢失敗（離線等）時維持目前旗標，實際寫入仍由伺服器把關。
   Future<bool> refreshLedgerRole() async {
     if (_activeLedgerId.isEmpty) {
-      _activeLedgerReadOnly = false;
+      _activeLedgerReadOnly.value = false;
       return false;
     }
     try {
       await ledgers();
     } catch (_) {}
-    return _activeLedgerReadOnly;
+    return _activeLedgerReadOnly.value;
   }
 
   /// 依帳本清單更新目前帳本的唯讀狀態；選取的帳本已不在清單中時視為
@@ -1171,13 +1179,13 @@ class ApiClient {
   void updateLedgerRoleState(List<dynamic> rows) {
     final active = _activeLedgerId;
     if (active.isEmpty) {
-      _activeLedgerReadOnly = false;
+      _activeLedgerReadOnly.value = false;
       return;
     }
     final selected = rows
         .where((e) => e is Map && '${e['id'] ?? ''}' == active)
         .toList();
-    _activeLedgerReadOnly =
+    _activeLedgerReadOnly.value =
         selected.isNotEmpty &&
         '${(selected.first as Map)['role'] ?? ''}' == 'viewer';
   }

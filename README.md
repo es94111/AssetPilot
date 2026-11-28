@@ -55,7 +55,7 @@
 | 🧭 **URL-first SPA** | 任何頁面可直連、可書籤、可分享；F5 重整不掉頁；上一頁／下一頁完整還原。 |
 | 📦 **純伺服端 CSV** | 匯出含 UTF-8 BOM + Formula Injection 防護；匯入採 DB transaction 原子化，失敗整批回滾。 |
 | 🌗 **三模式主題** | system / light / dark 跨裝置同步；登入頁無 FOUC 樂觀渲染。 |
-| 📱 **響應式 + PWA + Android App** | 桌機側邊欄常駐、行動裝置漢堡選單；可安裝為 PWA、**離線也能先記帳**（恢復連線自動同步）；另有 Android 原生 App，隨時隨地記帳。 |
+| 📱 **響應式 + PWA + Android App** | 桌機側欄和手機底部導覽採用同一組四個入口；可安裝為 PWA、**離線也能先記帳**（恢復連線自動同步）；另有 Android 原生 App，隨時隨地記帳。 |
 
 ---
 

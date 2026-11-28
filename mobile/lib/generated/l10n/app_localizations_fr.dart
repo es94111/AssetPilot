@@ -7218,4 +7218,62 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'Les widgets de l\'écran d\'accueil n\'affichent pas les montants par défaut, afin de protéger les données financières';
+
+  @override
+  String get uxBookkeeping => 'Transactions';
+
+  @override
+  String get uxLedgerTools => 'Gérer les comptes';
+
+  @override
+  String get uxBudgetsAndReports => 'Budgets et rapports';
+
+  @override
+  String get uxSettingsAndHelp => 'Paramètres et aide';
+
+  @override
+  String get uxPreferences => 'Préférences';
+
+  @override
+  String get uxSecurity => 'Compte et sécurité';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'Notifications et intégrations';
+
+  @override
+  String get uxDataAndAdmin => 'Données et administration';
+
+  @override
+  String get uxTransactionDetails => 'Détails de la transaction';
+
+  @override
+  String get uxAdvancedOptions => 'Options avancées';
+
+  @override
+  String get uxDrafts => 'Brouillons en attente';
+
+  @override
+  String get uxStockTools => 'Outils boursiers';
+
+  @override
+  String get uxStockView => 'Vue boursière';
+
+  @override
+  String get uxReportOptions => 'Options du rapport';
+
+  @override
+  String get uxViewReports => 'Voir les rapports';
+
+  @override
+  String get uxViewAllTransactions => 'Voir toutes les transactions';
+
+  @override
+  String get uxDashboardDetails => 'Analyse financière';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'Touchez « Ajouter une transaction » pour enregistrer votre premier revenu ou votre première dépense.';
+
+  @override
+  String get uxExport => 'Exporter';
 }

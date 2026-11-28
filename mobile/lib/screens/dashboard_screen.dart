@@ -11,13 +11,20 @@ import '../platform/widget_snapshot_service.dart';
 import '../widgets.dart';
 import '../l10n.dart';
 import '../theme.dart';
-import 'accounts_screen.dart';
-import 'budgets_screen.dart';
 import 'transaction_form_screen.dart';
-import 'transactions_screen.dart';
+import 'reports_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback? onShowTransactions;
+  final VoidCallback? onTransactionsChanged;
+  final int transactionsRevision;
+
+  const DashboardScreen({
+    super.key,
+    this.onShowTransactions,
+    this.onTransactionsChanged,
+    this.transactionsRevision = 0,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -124,6 +131,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant DashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.transactionsRevision != oldWidget.transactionsRevision) {
+      _future = _load(_ym);
+    }
+  }
+
+  void _openReports() {
+    final month = _month;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ReportsScreen(
+          initialRange: DateTimeRange(
+            start: DateTime(month.year, month.month, 1),
+            end: DateTime(month.year, month.month + 1, 0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -139,11 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       floatingActionButton: ApiClient.instance.activeLedgerReadOnly
           ? null
-          : FloatingActionButton.extended(
-              onPressed: _openNewTxn,
-              icon: const Icon(Icons.add),
-              label: Text(trKey('mobileLegacyAddTransaction')),
-            ),
+          : RecordButton(onPressed: _openNewTxn),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onHorizontalDragEnd: (details) {
@@ -179,92 +204,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ApSpace.xxl,
               ),
               children: [
-                _DashboardContext(month: _ym),
-                const SizedBox(height: ApSpace.lg),
-                _AssetRow(d: d),
-                const SizedBox(height: ApSpace.lg),
-                _SummaryGrid(d: d),
-                const SizedBox(height: ApSpace.lg),
-                _QuickAccess(onAddTxn: () => _openNewTxn()),
-              const SizedBox(height: ApSpace.xl),
-              _CategoryPie(nodes: d.catBreakdown),
-              const SizedBox(height: ApSpace.xl),
-              SectionHeader(
-                title: trKey('dashboardSectionsRecentTransactions'),
-                trailing: Text(
-                  trKey('dashboardSectionsRecentCount', {
-                    'count': d.recent.take(10).length,
-                  }),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-              const SizedBox(height: ApSpace.sm),
-              if (d.recent.isEmpty)
-                LedgerCard(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: ApSpace.lg),
-                    child: Center(
-                      child: Text(trKey('dashboardEmptyNoTransactions')),
-                    ),
+                if (ApiClient.instance.activeLedgerReadOnly)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: ApSpace.sm),
+                    child: Text(trKey('ledgerReadOnlyNotice')),
                   ),
-                )
-              else
-                ...d.recent
-                    .take(10)
-                    .toList()
-                    .asMap()
-                    .entries
-                    .map((e) => StaggerIn(index: e.key, child: _RecentTile(t: e.value))),
-            ],
+                _AssetRow(d: d),
+                const SizedBox(height: ApSpace.md),
+                _SummaryGrid(d: d),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton.icon(
+                    onPressed: _openReports,
+                    icon: const Icon(Icons.bar_chart_outlined),
+                    label: Text(trKey('uxViewReports')),
+                  ),
+                ),
+                const SizedBox(height: ApSpace.md),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    trKey('dashboardSectionsRecentTransactions'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                const SizedBox(height: ApSpace.sm),
+                if (d.recent.isEmpty)
+                  LedgerCard(
+                    child: Text(
+                      trKey(
+                        ApiClient.instance.activeLedgerReadOnly
+                            ? 'ledgerReadOnlyNotice'
+                            : 'uxEmptyLedgerHint',
+                      ),
+                    ),
+                  )
+                else ...[
+                  ...d.recent
+                      .take(10)
+                      .map((transaction) => _RecentTile(t: transaction)),
+                  if (widget.onShowTransactions != null)
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: TextButton(
+                        onPressed: widget.onShowTransactions,
+                        child: Text(trKey('uxViewAllTransactions')),
+                      ),
+                    ),
+                ],
+                const SizedBox(height: ApSpace.lg),
+                OptionGroup(
+                  label: trKey('uxDashboardDetails'),
+                  children: [_CategoryPie(nodes: d.catBreakdown)],
+                ),
+                const SizedBox(height: 72),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Future<void> _openNewTxn() async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const TransactionFormScreen()),
     );
-    if (changed == true) _reload();
-  }
-}
-
-class _DashboardContext extends StatelessWidget {
-  final String month;
-
-  const _DashboardContext({required this.month});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final tokens = apTokens(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: ApSpace.lg,
-        vertical: ApSpace.md + 2,
-      ),
-      decoration: BoxDecoration(
-        color: tokens.glassTint,
-        borderRadius: ApRadius.rMd,
-        border: Border.all(color: tokens.glassBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.calendar_month_outlined, color: theme.colorScheme.primary),
-          const SizedBox(width: ApSpace.md),
-          Expanded(
-            child: Text(
-              trKey('dashboardSubtitle', {'month': month}),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
-    );
+    if (changed != true || !mounted) return;
+    final onChanged = widget.onTransactionsChanged;
+    if (onChanged == null) {
+      _reload();
+    } else {
+      onChanged();
+    }
   }
 }
 
@@ -300,121 +313,6 @@ class _MonthSelector extends StatelessWidget {
             icon: const Icon(Icons.chevron_right),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 快速入口：把埋在「更多」的高頻功能（帳戶、預算、報表、記一筆）
-/// 提升到 Dashboard，降低點擊深度。
-class _QuickAccess extends StatelessWidget {
-  final VoidCallback onAddTxn;
-  const _QuickAccess({required this.onAddTxn});
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = apTokens(context);
-    final scheme = Theme.of(context).colorScheme;
-    final items = <(IconData, String, Color, VoidCallback)>[
-      (
-        Icons.add_circle_outline,
-        trKey('mobileLegacyAddTransaction'),
-        scheme.primary,
-        onAddTxn,
-      ),
-      (
-        Icons.account_balance_wallet_outlined,
-        trKey('featuresCommonAccount'),
-        tokens.net,
-        () => _push(context, AccountsScreen()),
-      ),
-      (
-        Icons.savings_outlined,
-        trKey('mobileLegacyBudgets'),
-        tokens.warning,
-        () => _push(context, BudgetsScreen()),
-      ),
-      (
-        Icons.receipt_long_outlined,
-        trKey('mobileLegacyTransactions8084a8ea'),
-        tokens.income,
-        () => _push(context, TransactionsScreen()),
-      ),
-    ];
-    return Row(
-      children: [
-        for (var i = 0; i < items.length; i++) ...[
-          if (i > 0) const SizedBox(width: ApSpace.sm),
-          Expanded(
-            child: _QuickTile(
-              icon: items[i].$1,
-              label: items[i].$2,
-              color: items[i].$3,
-              onTap: items[i].$4,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  void _push(BuildContext context, Widget page) =>
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
-}
-
-class _QuickTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickTile({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: ApRadius.rMd,
-          child: Ink(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: ApRadius.rMd,
-              border: Border.all(color: apTokens(context).glassBorder),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: ApSpace.md),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.14),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 20, color: color),
-                  ),
-                  const SizedBox(height: ApSpace.xs),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -475,10 +373,8 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: ApSpace.xs),
           AnimatedTextSwap(
             text: value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700, color: color),
           ),
         ],
       ),

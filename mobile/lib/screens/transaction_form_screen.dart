@@ -62,6 +62,9 @@ class TransactionFormScreen extends StatefulWidget {
 
 class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _advanced = ExpansibleController();
+  final _currencyField = GlobalKey<FormFieldState<String>>();
+  final _rateField = GlobalKey<FormFieldState<String>>();
   final _amount = TextEditingController();
   final _note = TextEditingController();
   final _fxFee = TextEditingController();
@@ -82,7 +85,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   DateTime _date = DateTime.now();
   bool _notificationDateChosen = false;
   String? _categoryId; // 實際存到後端的子分類 id
-  String? _parentCatId; // 兩段式選擇用：目前選到的父分類 id（不送後端）
   String? _accountId;
   String? _toAccountId;
   bool _saving = false;
@@ -153,6 +155,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     _note.dispose();
     _fxFee.dispose();
     _fxRate.dispose();
+    _advanced.dispose();
     super.dispose();
   }
 
@@ -242,8 +245,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       parentNames,
     );
     if (parent == null) return;
-
-    _parentCatId = parent.id;
     final children = _childCatsOf(parent.id);
     final preferredChild = _findCategory(
       children,
@@ -274,7 +275,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     ]);
     if (direct != null) {
       _categoryId = direct.id;
-      _parentCatId = direct.isParent ? null : direct.parentId;
       return;
     }
 
@@ -284,7 +284,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       [name],
     );
     if (parent == null) return;
-    _parentCatId = parent.id;
     final children = _childCatsOf(parent.id);
     _categoryId = children.isEmpty ? null : children.first.id;
   }
@@ -376,12 +375,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   /// 僅顯示符合目前收支類型的子分類（交易必須掛在子分類）。
   List<Category> get _selectableCats =>
       _categories.where((c) => c.type == _type && !c.isParent).toList();
-
-  /// 有可選子分類的父分類清單（依目前收支類型過濾），保留原分類排序。
-  List<Category> get _selectableParents {
-    final parentIds = _selectableCats.map((c) => c.parentId).toSet();
-    return _categories.where((c) => parentIds.contains(c.id)).toList();
-  }
 
   /// 指定父分類底下、符合目前收支類型的子分類。
   List<Category> _childCatsOf(String parentId) =>
@@ -615,7 +608,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   Future<void> _save() async {
     if (_saving) return;
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      if (_currencyField.currentState?.hasError == true ||
+          _rateField.currentState?.hasError == true) {
+        _advanced.expand();
+      }
+      return;
+    }
     // 離線草稿不經過 API 的統一唯讀防線，所以在這裡先擋。
     if (ApiClient.instance.activeLedgerReadOnly) {
       toast(context, trKey('ledgerReadOnlyNotice'), isError: true);
@@ -895,7 +894,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true || !mounted || ApiClient.instance.activeLedgerReadOnly) {
+      return;
+    }
     setState(() => _saving = true);
     try {
       await ApiClient.instance.deleteTransaction(e.id);
@@ -919,7 +920,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               ? trKey('notificationCaptureReviewTitle')
               : _isEdit
               ? trKey('featuresTransactionsEdit')
-              : trKey('featuresTransactionsAdd'),
+              : trKey('mobileLegacyAddTransaction'),
         ),
         actions: [
           if (notification != null)
@@ -930,7 +931,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   ? null
                   : () => _saveNotificationAndClose(notification),
             ),
-          if (_isEdit)
+          if (_isEdit && !ApiClient.instance.activeLedgerReadOnly)
             IconButton(
               tooltip: trKey('mobileLegacyDeleteTransaction'),
               icon: Icon(Icons.delete_outline),
@@ -974,26 +975,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 
   Widget _buildForm(BuildContext context) {
-    final parents = _selectableParents;
-    // 編輯既有交易時，由子分類回推其父分類，讓父分類下拉預選正確。
-    if (_categoryId != null && _parentCatId == null) {
-      final sel = _selectableCats.where((c) => c.id == _categoryId);
-      if (sel.isNotEmpty && parents.any((p) => p.id == sel.first.parentId)) {
-        _parentCatId = sel.first.parentId;
-      }
-    }
-    // 已選父分類不在清單內（例如切換收支類型後）→ 清掉父子選擇。
-    if (_parentCatId != null && !parents.any((p) => p.id == _parentCatId)) {
-      _parentCatId = null;
-      _categoryId = null;
-    }
-    final children = _parentCatId == null
-        ? <Category>[]
-        : _childCatsOf(_parentCatId!);
-    // 已選子分類不在目前父分類底下 → 清掉。
-    if (_categoryId != null && !children.any((c) => c.id == _categoryId)) {
-      _categoryId = null;
-    }
+    final categories = _selectableCats;
+    final parentNames = {
+      for (final parent in _categories.where((c) => c.isParent))
+        parent.id: parent.name,
+    };
+    final selectedCategory = categories.any((item) => item.id == _categoryId)
+        ? _categoryId
+        : null;
     return Form(
       key: _formKey,
       child: ListView(
@@ -1005,489 +994,522 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           16 + MediaQuery.of(context).padding.bottom,
         ),
         children: [
-          if (widget.notificationDraft case final NotificationDraft draft)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.receipt_long_outlined),
-              title: Text(draft.sourceName),
-              subtitle: Text(
-                draft.possibleDuplicate
-                    ? trKey('notificationCaptureCompare')
-                    : trKey('dashboardOverviewExpense'),
-              ),
-            )
-          else if (!_isEdit)
-            SegmentedButton<String>(
-              segments: [
-                ButtonSegment(
-                  value: 'expense',
-                  label: Text(trKey('dashboardOverviewExpense')),
-                ),
-                ButtonSegment(
-                  value: 'income',
-                  label: Text(trKey('dashboardOverviewIncome')),
-                ),
-                ButtonSegment(
-                  value: 'transfer',
-                  label: Text(trKey('featuresTransactionsTransfer')),
-                ),
-              ],
-              selected: {_type},
-              onSelectionChanged: (s) => setState(() {
-                _type = s.first;
-                _parentCatId = null;
-                _categoryId = null;
-              }),
-            ),
-          SizedBox(height: 16),
-          TextFormField(
-            controller: _amount,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: trKey('dashboardTableAmount'),
-              prefixIcon: Icon(Icons.attach_money),
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (_) => setState(() {}),
-            validator: (v) {
-              final n = num.tryParse(v?.trim() ?? '');
-              if (n == null || !n.isFinite || n <= 0) {
-                return trKey('mobileLegacyEnterAnAmountGreaterThan0');
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
+          // Keep validators mounted when their fields are below the viewport.
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final delta in [50, 100, 500, 1000])
-                ActionChip(
-                  visualDensity: VisualDensity.compact,
-                  label: Text('+$delta'),
-                  onPressed: () {
-                    final current = num.tryParse(_amount.text.trim()) ?? 0;
-                    final next = current + delta;
-                    setState(() {
-                      _amount.text = next == next.roundToDouble()
-                          ? next.toInt().toString()
-                          : next.toString();
-                    });
-                  },
-                ),
-              if (_amount.text.isNotEmpty)
-                ActionChip(
-                  visualDensity: VisualDensity.compact,
-                  label: Text(trKey('commonClear')),
-                  avatar: const Icon(Icons.backspace_outlined, size: 14),
-                  onPressed: () {
-                    setState(() {
-                      _amount.clear();
-                    });
-                  },
-                ),
-            ],
-          ),
-          SizedBox(height: 16),
-          ListTile(
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant,
-              ),
-              borderRadius: ApRadius.rSm,
-            ),
-            leading: Icon(Icons.calendar_today),
-            title: Text(trKey('dashboardTableDate')),
-            trailing: Text(
-              widget.notificationDraft != null && !_notificationDateChosen
-                  ? trKey('notificationCaptureChooseDate')
-                  : _dateStr,
-            ),
-            onTap: _pickDate,
-          ),
-          SizedBox(height: 16),
-          if (_type == 'transfer') ...[
-            _accountDropdown(
-              label: trKey('mobileLegacyFromAccount'),
-              value: _accountId,
-              onChanged: (v) => setState(() => _accountId = v),
-            ),
-            SizedBox(height: 16),
-            _accountDropdown(
-              label: trKey('mobileLegacyToAccount'),
-              value: _toAccountId,
-              onChanged: (v) => setState(() => _toAccountId = v),
-              validator: (v) {
-                if (v == null) {
-                  return trKey('mobileLegacySelectADestinationAccount');
-                }
-                if (v == _accountId) {
-                  return trKey(
-                    'mobileLegacyTheSourceAndDestinationAccountsMustDiffer',
-                  );
-                }
-                return null;
-              },
-            ),
-          ] else ...[
-            if (_selectableCats.isNotEmpty) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  for (final cat in _selectableCats.take(8))
-                    ChoiceChip(
-                      visualDensity: VisualDensity.compact,
-                      label: Text(cat.name),
-                      selected: _categoryId == cat.id,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _parentCatId = cat.parentId;
-                            _categoryId = cat.id;
-                          } else {
-                            _categoryId = null;
-                          }
-                        });
-                      },
+              if (widget.notificationDraft case final NotificationDraft draft)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: Text(draft.sourceName),
+                  subtitle: Text(
+                    draft.possibleDuplicate
+                        ? trKey('notificationCaptureCompare')
+                        : trKey('dashboardOverviewExpense'),
+                  ),
+                )
+              else if (!_isEdit)
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: 'expense',
+                      label: Text(trKey('dashboardOverviewExpense')),
                     ),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
-            // 先選父分類。
-            DropdownButtonFormField<String>(
-              key: ValueKey('parent_$_parentCatId'),
-              initialValue: _parentCatId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: trKey('featuresCategoriesParentLabel'),
-                prefixIcon: Icon(Icons.category_outlined),
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                for (final p in parents)
-                  DropdownMenuItem(value: p.id, child: Text(p.name)),
-              ],
-              onChanged: (v) => setState(() {
-                _parentCatId = v;
-                _categoryId = null; // 換父分類時清掉已選子分類
-              }),
-              validator: (v) =>
-                  v == null ? trKey('mobileLegacySelectAParentCategory') : null,
-            ),
-            SizedBox(height: 16),
-            // 再選該父分類底下的子分類（未選父分類前停用）。
-            DropdownButtonFormField<String>(
-              key: ValueKey('child_${_parentCatId}_$_categoryId'),
-              initialValue: _categoryId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: trKey('mobileLegacySubcategory'),
-                prefixIcon: Icon(Icons.subdirectory_arrow_right),
-                border: OutlineInputBorder(),
-                hintText: _parentCatId == null
-                    ? trKey('mobileLegacySelectAParentCategoryFirst')
-                    : null,
-              ),
-              items: [
-                for (final c in children)
-                  DropdownMenuItem(value: c.id, child: Text(c.name)),
-              ],
-              onChanged: _parentCatId == null
-                  ? null
-                  : (v) => setState(() => _categoryId = v),
-              validator: (v) =>
-                  v == null ? trKey('mobileLegacySelectASubcategory') : null,
-            ),
-            SizedBox(height: 16),
-            _accountDropdown(
-              label: trKey('featuresCommonAccount'),
-              value: _accountId,
-              onChanged: (v) => setState(() {
-                _accountId = v;
-                // 換帳戶時幣別跟著帳戶走，並清掉手動匯率（與網頁版一致）。
-                final a = _selectedAccount;
-                if (a != null && widget.notificationDraft == null) {
-                  _currency = a.currency;
-                  _currencyInput?.text = _currency;
-                  _fxRate.clear();
-                }
-              }),
-            ),
-            SizedBox(height: 16),
-            Autocomplete<String>(
-              initialValue: TextEditingValue(text: _currency),
-              optionsBuilder: (value) {
-                final query = value.text.trim().toUpperCase();
-                if (query.isEmpty) return _currencyOptions;
-                return _currencyOptions.where((c) => c.startsWith(query));
-              },
-              onSelected: (value) => setState(() {
-                _currency = value;
-                _fxRate.clear();
-              }),
-              fieldViewBuilder:
-                  (context, controller, focusNode, onFieldSubmitted) {
-                    _currencyInput = controller;
-                    return TextFormField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      maxLength: 3,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: InputDecoration(
-                        labelText: trKey('featuresCommonCurrency'),
-                        prefixIcon: Icon(Icons.payments_outlined),
-                        border: OutlineInputBorder(),
-                        counterText: '',
-                      ),
-                      onChanged: (value) {
-                        final normalized = value.trim().toUpperCase();
-                        setState(() {
-                          _currency = normalized;
-                          _fxRate.clear();
-                        });
-                        if (value != normalized) {
-                          controller.value = TextEditingValue(
-                            text: normalized,
-                            selection: TextSelection.collapsed(
-                              offset: normalized.length,
-                            ),
-                          );
-                        }
-                      },
-                      validator: (value) =>
-                          RegExp(r'^[A-Z]{3}$').hasMatch(value?.trim() ?? '')
-                          ? null
-                          : trKey('featuresAccountsMessagesCurrencyInvalid'),
-                    );
-                  },
-            ),
-            if (_currency != 'TWD') ...[
+                    ButtonSegment(
+                      value: 'income',
+                      label: Text(trKey('dashboardOverviewIncome')),
+                    ),
+                    ButtonSegment(
+                      value: 'transfer',
+                      label: Text(trKey('featuresTransactionsTransfer')),
+                    ),
+                  ],
+                  selected: {_type},
+                  onSelectionChanged: (s) => setState(() {
+                    _type = s.first;
+                    _categoryId = null;
+                  }),
+                ),
               SizedBox(height: 16),
               TextFormField(
-                controller: _fxRate,
+                controller: _amount,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: trKey('mobileDynamicExchangeRateForCurrency', {
-                    'currency': _currency,
-                  }),
-                  helperText: trKey('featuresTransactionsFxRatePlaceholder'),
-                  prefixIcon: Icon(Icons.currency_exchange),
+                  labelText: trKey('dashboardTableAmount'),
+                  suffixText: _type == 'transfer'
+                      ? _selectedAccount?.currency
+                      : _currency,
+                  prefixIcon: Icon(Icons.attach_money),
                   border: OutlineInputBorder(),
                 ),
+                onChanged: (_) => setState(() {}),
                 validator: (v) {
-                  final s = v?.trim() ?? '';
-                  if (s.isEmpty) return null;
-                  final n = num.tryParse(s);
-                  if (n == null || n <= 0) {
-                    return trKey('mobileLegacyExchangeRateMustBeGreaterThan0');
+                  final n = num.tryParse(v?.trim() ?? '');
+                  if (n == null || !n.isFinite || n <= 0) {
+                    return trKey('mobileLegacyEnterAnAmountGreaterThan0');
                   }
                   return null;
                 },
               ),
-            ],
-          ],
-          SizedBox(height: 16),
-          TextFormField(
-            controller: _note,
-            decoration: InputDecoration(
-              labelText: trKey('mobileLegacyNoteOptional'),
-              prefixIcon: Icon(Icons.notes),
-              border: OutlineInputBorder(),
-            ),
-          ),
-          if (_type != 'transfer') ...[
-            if (_overseasApplies) ...[
-              SizedBox(height: 16),
-              TextFormField(
-                controller: _fxFee,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: trKey(
-                    'mobileLegacyForeignTransactionFeeInTwdOptional',
+              const SizedBox(height: 16),
+              if (widget.notificationDraft != null) ...[
+                ListTile(
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    borderRadius: ApRadius.rSm,
                   ),
-                  helperText: trKey('mobileDynamicCardRateAutoFee', {
-                    'rate': _selectedAccount!.overseasFeeRate,
-                  }),
-                  prefixIcon: Icon(Icons.currency_exchange),
-                  border: OutlineInputBorder(),
+                  leading: Icon(Icons.calendar_today),
+                  title: Text(trKey('dashboardTableDate')),
+                  subtitle: Text(
+                    widget.notificationDraft != null && !_notificationDateChosen
+                        ? trKey('notificationCaptureChooseDate')
+                        : _dateStr,
+                  ),
+                  onTap: _pickDate,
                 ),
-              ),
-            ],
-            SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(trKey('featuresCommonExcludeFromStats')),
-              value: _excludeFromStats,
-              onChanged: (v) => setState(() => _excludeFromStats = v),
-            ),
-            if (_existingPhotos.isNotEmpty) ...[
-              SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  trKey('mobileDynamicUploadedPhotosCount', {
-                    'count': _existingPhotos.length,
-                  }),
-                  style: Theme.of(context).textTheme.labelLarge,
+                const SizedBox(height: 16),
+              ],
+              if (_type == 'transfer') ...[
+                _accountDropdown(
+                  label: trKey('mobileLegacyFromAccount'),
+                  value: _accountId,
+                  onChanged: (v) => setState(() => _accountId = v),
                 ),
-              ),
-              SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                SizedBox(height: 16),
+                _accountDropdown(
+                  label: trKey('mobileLegacyToAccount'),
+                  value: _toAccountId,
+                  onChanged: (v) => setState(() => _toAccountId = v),
+                  validator: (v) {
+                    if (v == null) {
+                      return trKey('mobileLegacySelectADestinationAccount');
+                    }
+                    if (v == _accountId) {
+                      return trKey(
+                        'mobileLegacyTheSourceAndDestinationAccountsMustDiffer',
+                      );
+                    }
+                    return null;
+                  },
+                ),
+              ] else ...[
+                DropdownButtonFormField<String>(
+                  menuMaxHeight: 420,
+                  key: ValueKey('category_${_type}_$selectedCategory'),
+                  initialValue: selectedCategory,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: trKey('dashboardTableCategory'),
+                    prefixIcon: const Icon(Icons.category_outlined),
+                  ),
+                  items: [
+                    for (final category in categories)
+                      DropdownMenuItem(
+                        value: category.id,
+                        child: Text(
+                          parentNames.containsKey(category.parentId)
+                              ? '${parentNames[category.parentId]} › ${category.name}'
+                              : category.name,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) => setState(() => _categoryId = value),
+                  validator: (value) => value == null
+                      ? trKey('mobileLegacySelectASubcategory')
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                _accountDropdown(
+                  label: trKey('featuresCommonAccount'),
+                  value: _accountId,
+                  onChanged: (v) => setState(() {
+                    _accountId = v;
+                    // 換帳戶時幣別跟著帳戶走，並清掉手動匯率（與網頁版一致）。
+                    final a = _selectedAccount;
+                    if (a != null && widget.notificationDraft == null) {
+                      _currency = a.currency;
+                      _currencyInput?.text = _currency;
+                      _fxRate.clear();
+                    }
+                  }),
+                ),
+              ],
+              const SizedBox(height: 16),
+              OptionGroup(
+                label: trKey('uxTransactionDetails'),
+                hint: widget.notificationDraft == null ? _dateStr : null,
+                initiallyExpanded: _isEdit,
+                maintainState: true,
                 children: [
-                  for (final photo in _existingPhotos)
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: InkWell(
-                            onTap: () => _viewExistingPhoto(photo),
-                            child: Image.network(
-                              ApiClient.instance.attachmentFileUrl(
-                                widget.existing!.id,
-                                '${photo['id']}',
-                              ),
-                              headers: ApiClient.instance.mediaHeaders(),
-                              width: 76,
-                              height: 76,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (c, child, progress) =>
-                                  progress == null
-                                  ? child
-                                  : SizedBox(
+                  if (widget.notificationDraft == null) ...[
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                        borderRadius: ApRadius.rSm,
+                      ),
+                      leading: Icon(Icons.calendar_today),
+                      title: Text(trKey('dashboardTableDate')),
+                      subtitle: Text(
+                        widget.notificationDraft != null &&
+                                !_notificationDateChosen
+                            ? trKey('notificationCaptureChooseDate')
+                            : _dateStr,
+                      ),
+                      onTap: _pickDate,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  TextFormField(
+                    controller: _note,
+                    decoration: InputDecoration(
+                      labelText: trKey('mobileLegacyNoteOptional'),
+                      prefixIcon: Icon(Icons.notes),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  if (_type != 'transfer') ...[
+                    if (_existingPhotos.isNotEmpty) ...[
+                      SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          trKey('mobileDynamicUploadedPhotosCount', {
+                            'count': _existingPhotos.length,
+                          }),
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final photo in _existingPhotos)
+                            Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: InkWell(
+                                    onTap: () => _viewExistingPhoto(photo),
+                                    child: Image.network(
+                                      ApiClient.instance.attachmentFileUrl(
+                                        widget.existing!.id,
+                                        '${photo['id']}',
+                                      ),
+                                      headers: ApiClient.instance
+                                          .mediaHeaders(),
                                       width: 76,
                                       height: 76,
-                                      child: Center(
-                                        child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
+                                      fit: BoxFit.cover,
+                                      loadingBuilder: (c, child, progress) =>
+                                          progress == null
+                                          ? child
+                                          : SizedBox(
+                                              width: 76,
+                                              height: 76,
+                                              child: Center(
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                      errorBuilder: (c, e, s) => Container(
+                                        width: 76,
+                                        height: 76,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+                                        child: Icon(
+                                          Icons.broken_image_outlined,
                                         ),
                                       ),
                                     ),
-                              errorBuilder: (c, e, s) => Container(
-                                width: 76,
-                                height: 76,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
-                                child: Icon(Icons.broken_image_outlined),
-                              ),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: InkWell(
+                                    onTap: _saving
+                                        ? null
+                                        : () => _removeExistingPhoto(photo),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.65,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(3),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: InkWell(
-                            onTap: _saving
-                                ? null
-                                : () => _removeExistingPhoto(photo),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.65),
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(3),
-                              child: Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ],
+                    SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: _saving ? null : _pickPhotos,
+                      icon: Icon(Icons.photo_library_outlined),
+                      label: Text(
+                        _photos.isEmpty
+                            ? trKey('mobileLegacyAddPhotosOptional')
+                            : trKey('mobileDynamicAddPhotosCount', {
+                                'count': _photos.length,
+                              }),
+                      ),
                     ),
+                    if (_photos.isNotEmpty ||
+                        (_isEdit && _existingPhotos.isNotEmpty)) ...[
+                      SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _saving || _ocrRunning ? null : _scanReceipt,
+                        icon: _ocrRunning
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(Icons.document_scanner_outlined),
+                        label: Text(
+                          _ocrRunning
+                              ? trKey('featuresTransactionsScanningReceipt')
+                              : trKey('featuresTransactionsScanReceipt'),
+                        ),
+                      ),
+                    ],
+                    if (_photos.isNotEmpty) ...[
+                      SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (var i = 0; i < _photos.length; i++)
+                            Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(_photos[i].path),
+                                    width: 76,
+                                    height: 76,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: InkWell(
+                                    onTap: _saving
+                                        ? null
+                                        : () => _removePhoto(i),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.65,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(3),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ],
               ),
-            ],
-            SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: _saving ? null : _pickPhotos,
-              icon: Icon(Icons.photo_library_outlined),
-              label: Text(
-                _photos.isEmpty
-                    ? trKey('mobileLegacyAddPhotosOptional')
-                    : trKey('mobileDynamicAddPhotosCount', {
-                        'count': _photos.length,
-                      }),
-              ),
-            ),
-            if (_type != 'transfer' &&
-                (_photos.isNotEmpty ||
-                    (_isEdit && _existingPhotos.isNotEmpty))) ...[
-              SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _saving || _ocrRunning ? null : _scanReceipt,
-                icon: _ocrRunning
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(Icons.document_scanner_outlined),
-                label: Text(
-                  _ocrRunning
-                      ? trKey('featuresTransactionsScanningReceipt')
-                      : trKey('featuresTransactionsScanReceipt'),
-                ),
-              ),
-            ],
-            if (_photos.isNotEmpty) ...[
-              SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              const SizedBox(height: 12),
+              OptionGroup(
+                label: trKey('uxAdvancedOptions'),
+                hint: _type == 'transfer' ? null : _currency,
+                controller: _advanced,
+                maintainState: true,
                 children: [
-                  for (var i = 0; i < _photos.length; i++)
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            File(_photos[i].path),
-                            width: 76,
-                            height: 76,
-                            fit: BoxFit.cover,
-                          ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      for (final delta in [50, 100, 500, 1000])
+                        ActionChip(
+                          visualDensity: VisualDensity.compact,
+                          label: Text('+$delta'),
+                          onPressed: () {
+                            final current =
+                                num.tryParse(_amount.text.trim()) ?? 0;
+                            final next = current + delta;
+                            setState(() {
+                              _amount.text = next == next.roundToDouble()
+                                  ? next.toInt().toString()
+                                  : next.toString();
+                            });
+                          },
                         ),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: InkWell(
-                            onTap: _saving ? null : () => _removePhoto(i),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.65),
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(3),
-                              child: Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
+                      if (_amount.text.isNotEmpty)
+                        ActionChip(
+                          visualDensity: VisualDensity.compact,
+                          label: Text(trKey('commonClear')),
+                          avatar: const Icon(
+                            Icons.backspace_outlined,
+                            size: 14,
                           ),
+                          onPressed: () {
+                            setState(() {
+                              _amount.clear();
+                            });
+                          },
                         ),
-                      ],
+                    ],
+                  ),
+                  if (_type != 'transfer') ...[
+                    const SizedBox(height: 12),
+                    Autocomplete<String>(
+                      initialValue: TextEditingValue(text: _currency),
+                      optionsBuilder: (value) {
+                        final query = value.text.trim().toUpperCase();
+                        if (query.isEmpty) return _currencyOptions;
+                        return _currencyOptions.where(
+                          (c) => c.startsWith(query),
+                        );
+                      },
+                      onSelected: (value) => setState(() {
+                        _currency = value;
+                        _fxRate.clear();
+                      }),
+                      fieldViewBuilder:
+                          (context, controller, focusNode, onFieldSubmitted) {
+                            _currencyInput = controller;
+                            return TextFormField(
+                              key: _currencyField,
+                              controller: controller,
+                              focusNode: focusNode,
+                              maxLength: 3,
+                              textCapitalization: TextCapitalization.characters,
+                              decoration: InputDecoration(
+                                labelText: trKey('featuresCommonCurrency'),
+                                prefixIcon: Icon(Icons.payments_outlined),
+                                border: OutlineInputBorder(),
+                                counterText: '',
+                              ),
+                              onChanged: (value) {
+                                final normalized = value.trim().toUpperCase();
+                                setState(() {
+                                  _currency = normalized;
+                                  _fxRate.clear();
+                                });
+                                if (value != normalized) {
+                                  controller.value = TextEditingValue(
+                                    text: normalized,
+                                    selection: TextSelection.collapsed(
+                                      offset: normalized.length,
+                                    ),
+                                  );
+                                }
+                              },
+                              validator: (value) =>
+                                  RegExp(r'^[A-Z]{3}$')
+                                      .hasMatch(value?.trim() ?? '')
+                                  ? null
+                                  : trKey(
+                                      'featuresAccountsMessagesCurrencyInvalid',
+                                    ),
+                            );
+                          },
                     ),
+                    if (_currency != 'TWD') ...[
+                      SizedBox(height: 16),
+                      TextFormField(
+                        key: _rateField,
+                        controller: _fxRate,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: trKey(
+                            'mobileDynamicExchangeRateForCurrency',
+                            {'currency': _currency},
+                          ),
+                          helperText: trKey(
+                            'featuresTransactionsFxRatePlaceholder',
+                          ),
+                          prefixIcon: Icon(Icons.currency_exchange),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) {
+                          final s = v?.trim() ?? '';
+                          if (s.isEmpty) return null;
+                          final n = num.tryParse(s);
+                          if (n == null || n <= 0) {
+                            return trKey(
+                              'mobileLegacyExchangeRateMustBeGreaterThan0',
+                            );
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                    if (_overseasApplies) ...[
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _fxFee,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: trKey(
+                            'mobileLegacyForeignTransactionFeeInTwdOptional',
+                          ),
+                          helperText: trKey('mobileDynamicCardRateAutoFee', {
+                            'rate': _selectedAccount!.overseasFeeRate,
+                          }),
+                          prefixIcon: Icon(Icons.currency_exchange),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(trKey('featuresCommonExcludeFromStats')),
+                      value: _excludeFromStats,
+                      onChanged: (v) => setState(() => _excludeFromStats = v),
+                    ),
+                  ],
                 ],
               ),
+              SizedBox(height: 24),
             ],
-          ],
-          SizedBox(height: 24),
+          ),
         ],
       ),
     );

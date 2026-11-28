@@ -18,8 +18,6 @@ import 'screens/dashboard_screen.dart';
 import 'screens/ledger_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/more_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'screens/reports_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/stocks_screen.dart';
 import 'screens/transaction_form_screen.dart';
@@ -200,6 +198,7 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
 
   /// 帳本切換時遞增，讓 IndexedStack 內的分頁全部重建（不保留舊帳本快取）。
   int _homeEpoch = 0;
+  int _transactionsRevision = 0;
   final DeepLinkService _deepLinks = DeepLinkService.instance;
   StreamSubscription<Uri>? _linkSubscription;
   Timer? _notificationRetryTimer;
@@ -209,6 +208,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ApiClient.instance.activeLedgerReadOnlyChanges.addListener(
+      _updateLedgerPermissions,
+    );
+    unawaited(ApiClient.instance.refreshLedgerRole());
     ConnectivityService.instance.isOnline.addListener(
       _scheduleNotificationRetry,
     );
@@ -220,10 +223,8 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     // 離線草稿需要知道目前連線狀態，以及草稿所屬的使用者／帳本。
     unawaited(ConnectivityService.instance.start());
     unawaited(_bindOfflineDrafts());
-    // 第一次進到主畫面時自動彈出使用教學（看過後不再出現）。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_handleInitialLink());
-      if (mounted) OnboardingScreen.showIfFirstTime(context);
     });
   }
 
@@ -292,6 +293,9 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    ApiClient.instance.activeLedgerReadOnlyChanges.removeListener(
+      _updateLedgerPermissions,
+    );
     ConnectivityService.instance.isOnline.removeListener(
       _scheduleNotificationRetry,
     );
@@ -369,7 +373,10 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         ),
       );
       if (changed == true && mounted) {
-        setState(() => _index = 0);
+        setState(() {
+          _index = 0;
+          _transactionsRevision++;
+        });
       }
     } finally {
       _openingDeepLink = false;
@@ -415,18 +422,30 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     );
   }
 
+  void _updateLedgerPermissions() {
+    if (mounted) setState(() {});
+  }
+
+  void _refreshTransactionViews() {
+    if (mounted) setState(() => _transactionsRevision++);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 五個分頁：總覽／交易／股票／報表／更多。報表從「更多」提升為一級分頁，
-    // 高頻功能（帳戶、預算）則由 Dashboard 快速入口與「更多」分區進入。
     final pages = [
-      DashboardScreen(key: ValueKey('dashboard-$_homeEpoch')),
+      DashboardScreen(
+        key: ValueKey('dashboard-$_homeEpoch'),
+        transactionsRevision: _transactionsRevision,
+        onTransactionsChanged: _refreshTransactionViews,
+        onShowTransactions: () => setState(() => _index = 1),
+      ),
       TransactionsScreen(
         key: ValueKey('transactions-$_homeEpoch'),
+        transactionsRevision: _transactionsRevision,
+        onTransactionsChanged: _refreshTransactionViews,
         onLedgerChanged: _reloadAll,
       ),
       StocksScreen(key: ValueKey('stocks-$_homeEpoch')),
-      ReportsScreen(key: ValueKey('reports-$_homeEpoch')),
       MoreScreen(
         key: ValueKey('more-$_homeEpoch'),
         onLoggedOut: widget.onLoggedOut,
@@ -435,17 +454,15 @@ class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
     ];
     final labels = [
       trKey('mobileLegacyHome'),
-      trKey('mobileLegacyTransactions8084a8ea'),
+      trKey('uxBookkeeping'),
       trKey('featuresCommonStock'),
-      trKey('navReports'),
       trKey('mobileLegacyMore'),
     ];
     final icons = [
       (Icons.space_dashboard_outlined, Icons.space_dashboard),
       (Icons.receipt_long_outlined, Icons.receipt_long),
       (Icons.trending_up_outlined, Icons.trending_up),
-      (Icons.donut_small_outlined, Icons.donut_small),
-      (Icons.menu, Icons.menu_open),
+      (Icons.folder_open_outlined, Icons.folder_open),
     ];
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 600;

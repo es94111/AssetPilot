@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiGet, apiPut, apiPost, apiPatch, apiDelete } from "@/lib/clientApi";
 import StocksTabNav from "./StocksTabNav";
+import Disclosure from "@/components/ui/Disclosure";
+import { useActiveLedger } from "@/components/features/ledgers/LedgerSwitcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -53,6 +55,7 @@ function fmtCurrency(n: number | string, currency: string, locale: string) {
 }
 
 export default function StockSettingsClient(_props: { user?: any } = {}) {
+  const { canWrite } = useActiveLedger();
   const { t, locale } = useT();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -246,10 +249,8 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
       </h2>
       <StocksTabNav />
 
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">
-          {t("features.stocks.settings.feeTitle")}
-        </h3>
+      <Disclosure name="stock-settings" title={t("features.stocks.settings.feeTitle")}>
+        <fieldset disabled={!canWrite}>
         <form
           onSubmit={handleSave}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -350,17 +351,13 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
             </Button>
           </div>
         </form>
-      </div>
+        </fieldset>
+      </Disclosure>
 
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">
-            {t("features.stocks.settings.stockStatusTitle")}
-          </h3>
+      <Disclosure name="stock-settings" title={t("features.stocks.settings.stockStatusTitle")}>
           {stockStatusMsg && (
             <span className="text-sm text-slate-600">{stockStatusMsg}</span>
           )}
-        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -401,7 +398,7 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleToggleDelisted(stock)}
+                    disabled={!canWrite} onClick={() => handleToggleDelisted(stock)}
                   >
                     {stock.delisted
                       ? t("features.stocks.settings.restoreTracking")
@@ -412,16 +409,13 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Disclosure>
 
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">
-            {t("features.stocks.settings.recurringTitle")}
-          </h3>
-          <Dialog open={recDialogOpen} onOpenChange={setRecDialogOpen}>
+      <Disclosure name="stock-settings" title={t("features.stocks.settings.recurringTitle")}>
+        <div className="mb-3 flex justify-end">
+          <Dialog open={recDialogOpen && canWrite} onOpenChange={setRecDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" onClick={openRecCreate}>
+              <Button size="sm" disabled={!canWrite} onClick={openRecCreate}>
                 <Plus size={16} className="mr-2" />{" "}
                 {t("features.stocks.settings.addRecurringShort")}
               </Button>
@@ -561,14 +555,14 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleToggleRec(r.id)}
+                      disabled={!canWrite} onClick={() => handleToggleRec(r.id)}
                     >
                       {r.isActive ? <Pause size={16} /> : <Play size={16} />}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => openRecEdit(r)}
+                      disabled={!canWrite} onClick={() => openRecEdit(r)}
                     >
                       <Edit3 size={16} />
                     </Button>
@@ -576,7 +570,7 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
                       variant="ghost"
                       size="icon"
                       className="text-red-500"
-                      onClick={() => handleDeleteRec(r.id)}
+                      disabled={!canWrite} onClick={() => handleDeleteRec(r.id)}
                     >
                       <Trash2 size={16} />
                     </Button>
@@ -586,7 +580,7 @@ export default function StockSettingsClient(_props: { user?: any } = {}) {
             })}
           </TableBody>
         </Table>
-      </div>
+      </Disclosure>
     </div>
   );
 }

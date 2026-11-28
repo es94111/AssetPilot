@@ -7,16 +7,18 @@ import { enqueueOffline } from '../../../lib/clientOfflineQueue';
 import { newQueueId } from '../../../lib/offlineQueueCore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import Disclosure from '@/components/ui/Disclosure';
+import { useActiveLedger } from '@/components/features/ledgers/LedgerSwitcher';
 import { useT } from '@/components/i18n/I18nProvider';
 import { useToast } from '@/components/ui/Toast';
 import { localeTag } from '@/lib/i18n/localeTag';
-import { ArrowLeftRight, ArrowUpRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, Image, Images, Pencil, Plus, RotateCcw, Search, SlidersHorizontal, Tags, Trash2, Undo2, X } from 'lucide-react';
 import { TRANSACTION_NOTE_MAX_LENGTH } from '@/lib/transactionEditRules';
 import { isCalendarIsoDate } from '@/lib/calendarDates';
 import { applyReceiptOcrPrefill, createReceiptOcrRequestGate } from '@/lib/receiptOcrPrefill';
 
 const EMPTY_FORM = { date: '', type: 'expense', amount: '', categoryId: '', accountId: '', note: '', excludeFromStats: false, currency: 'TWD', fxRate: '', fxFee: '' };
-const EMPTY_TRANSFER_FORM = { date: '', amount: '', fromAccountId: '', toAccountId: '', note: '' };
+const EMPTY_TRANSFER_ACCOUNTS = { fromAccountId: '', toAccountId: '' };
 const EMPTY_FILTERS = { type: '', accountId: '', categoryId: '', dateFrom: '', dateTo: '', keyword: '', excludeTransfer: '', tagIds: '', tagMode: '' };
 const DEFAULT_CURRENCIES = ['TWD', 'USD', 'JPY', 'EUR', 'CNY', 'HKD', 'GBP', 'AUD', 'CAD', 'SGD'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];
@@ -136,6 +138,7 @@ function fmt(n: number | string, locale: string) {
 function labelForType(type: string, t: (path: string) => string) {
   if (type === 'income') return t('features.transactions.typeLabels.income');
   if (type === 'expense') return t('features.transactions.typeLabels.expense');
+  if (type === 'transfer' || type === 'future') return t(`features.transactions.${type}`);
   if (type === 'transfer_in') return t('features.transactions.typeLabels.transfer_in');
   if (type === 'transfer_out') return t('features.transactions.typeLabels.transfer_out');
   return type;
@@ -144,10 +147,12 @@ function labelForType(type: string, t: (path: string) => string) {
 export default function TransactionsClient(_props: { user?: any } = {}) {
   const { t, locale } = useT();
   const showToast = useToast();
+  const { canWrite } = useActiveLedger();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentQuery = searchParams.toString();  const [txs, setTxs] = useState<any[]>([]);
+  const currentQuery = searchParams.toString();
+  const [txs, setTxs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(() => readPageParam(searchParams));
   const [pageSize, setPageSize] = useState(() => readPageSizeParam(searchParams));
@@ -161,16 +166,17 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const [filters, setFilters] = useState(() => readFilters(searchParams));
   const [searchDraft, setSearchDraft] = useState(() => searchParams.get('keyword') || '');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterDraft, setFilterDraft] = useState(EMPTY_FILTERS);
   const [modal, setModal] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [transferModal, setTransferModal] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [batchModal, setBatchModal] = useState<'category' | 'date' | 'tags' | null>(null);
   const [allTags, setAllTags] = useState<Array<{ id: string; name: string; color: string; isActive: boolean }>>([]);
   const [formTagIds, setFormTagIds] = useState<string[]>([]);
   const [batchTagIds, setBatchTagIds] = useState<string[]>([]);
   const [batchTagAction, setBatchTagAction] = useState<'add' | 'remove'>('add');
   const [form, setForm] = useState({ ...EMPTY_FORM, date: today() });
-  const [transferForm, setTransferForm] = useState({ ...EMPTY_TRANSFER_FORM, date: today() });
+  const [transferAccounts, setTransferAccounts] = useState(EMPTY_TRANSFER_ACCOUNTS);
   const [batchCategoryId, setBatchCategoryId] = useState('');
   const [batchDate, setBatchDate] = useState(today());
   const [editId, setEditId] = useState<string | null>(null);
@@ -274,17 +280,6 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setFilters((current) => ({ ...current, ...patch }));
   }, []);
 
-  // "Exclude transfers" and the transfer type filter contradict each other, so
-  // turning the toggle on falls back to all types.
-  const toggleExcludeTransfer = useCallback((checked: boolean) => {
-    setPage(1);
-    setFilters((current) => ({
-      ...current,
-      excludeTransfer: checked ? '1' : '',
-      type: checked && current.type === 'transfer' ? '' : current.type,
-    }));
-  }, []);
-
   const clearFilters = useCallback(() => {
     setPage(1);
     setFilters(EMPTY_FILTERS);
@@ -358,6 +353,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   }, [currentQuery, filters, page, pageSize, pathname, quickCreateHandled, router, searchParams]);
 
   function openAdd(dateOverride?: string) {
+    if (!canWrite) return;
     ocrRequestGate.invalidate();
     const preferredAccount = accounts.find((account: any) => String(account.currency || 'TWD').toUpperCase() === defaultCurrency) || accounts[0];
     const defaultAccountId = preferredAccount?.id || '';
@@ -365,6 +361,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     const selectedDate = dateOverride && isCalendarIsoDate(dateOverride) ? dateOverride : today();
     manuallyEditedOcrFields.current = new Set(dateOverride && isCalendarIsoDate(dateOverride) ? ['date'] : []);
     setForm({ ...EMPTY_FORM, date: selectedDate, accountId: defaultAccountId, currency: nextCurrency, fxRate: '' });
+    setTransferAccounts({ fromAccountId: defaultAccountId, toAccountId: accounts.find(account => account.id !== defaultAccountId)?.id || '' });
     setFormTagIds([]);
     setEditId(null);
     setFxFeeEdited(false);
@@ -376,6 +373,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setEditAttachmentsLoading(false);
     setPendingDeleteIds(new Set());
     setAdvancedOpen(false);
+    setDetailsOpen(false);
     setCategorySuggestions([]);
     setSuggestionsHidden(false);
     setModal(true);
@@ -386,16 +384,16 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       if (quickCreateHandled) setQuickCreateHandled(false);
       return;
     }
-    if (!metaLoaded || quickCreateHandled) return;
+    if (!canWrite || !metaLoaded || quickCreateHandled) return;
     setQuickCreateHandled(true);
     openAdd(searchParams.get('date') || undefined);
-  }, [currentQuery, metaLoaded, pathname, quickCreateHandled, searchParams]);
+  }, [canWrite, currentQuery, metaLoaded, pathname, quickCreateHandled, searchParams]);
 
   // 分類建議：僅在「新增」且摘要與分類皆尚未填寫時查詢，避免覆蓋使用者已做的選擇。
   // 以遞增序號認領回應，避免快速輸入時舊回應覆蓋新結果。
   useEffect(() => {
     const loadId = ++latestSuggestionsLoadId.current;
-    if (!modal || editId || suggestionsHidden) {
+    if (!modal || editId || suggestionsHidden || form.type === 'transfer') {
       setCategorySuggestions([]);
       setSuggestionsLoading(false);
       return;
@@ -471,13 +469,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     void fetchFxRate(form.currency);
   }, [modal, editId, form.currency, fetchFxRate]);
 
-  function openTransfer() {
-    setTransferForm({ ...EMPTY_TRANSFER_FORM, date: today(), fromAccountId: accounts[0]?.id || '', toAccountId: accounts[1]?.id || '' });
-    setFormError('');
-    setTransferModal(true);
-  }
-
   function openEdit(tx: any) {
+    if (!canWrite) return;
     ocrRequestGate.invalidate();
     const touchedFields: Array<'amount' | 'date' | 'note'> = ['date'];
     if (tx.originalAmount ?? tx.amount) touchedFields.push('amount');
@@ -512,7 +505,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setOcrState(null);
     setEditAttachments([]);
     setPendingDeleteIds(new Set());
-    setAdvancedOpen(true);
+    setAdvancedOpen(false);
+    setDetailsOpen(true);
     setEditAttachmentsLoading(tx.attachmentCount > 0);
     setModal(true);
     if (tx.attachmentCount > 0) {
@@ -642,8 +636,13 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.date) { setAdvancedOpen(true); setFormError(t('features.transactions.messages.dateRequired')); return; }
-    if (!form.amount || Number(form.amount) <= 0) { setFormError(t('features.transactions.messages.amountRequired')); return; }
+    if (!canWrite || saving) return;
+    if (!isCalendarIsoDate(form.date)) { setDetailsOpen(true); setFormError(t('features.transactions.messages.dateRequired')); return; }
+    if (!Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0) { setFormError(t('features.transactions.messages.amountRequired')); return; }
+    if (form.type === 'transfer') {
+      await handleTransferSave();
+      return;
+    }
     if (!/^[A-Z]{3}$/.test(form.currency)) { setAdvancedOpen(true); setFormError(t('features.accounts.messages.currencyInvalid')); return; }
     // Freeze the reviewed form snapshot before building the payload; a pending OCR response
     // must not mutate the form after the request has been submitted.
@@ -726,33 +725,28 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     setSaving(false);
   }
 
-  async function handleTransferSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!transferForm.fromAccountId || !transferForm.toAccountId) {
+  async function handleTransferSave() {
+    if (!transferAccounts.fromAccountId || !transferAccounts.toAccountId) {
       setFormError(t('features.transactions.messages.transferAccountsRequired'));
       return;
     }
-    if (transferForm.fromAccountId === transferForm.toAccountId) {
+    if (transferAccounts.fromAccountId === transferAccounts.toAccountId) {
       setFormError(t('features.transactions.messages.transferSameAccount'));
-      return;
-    }
-    if (!transferForm.amount || Number(transferForm.amount) <= 0) {
-      setFormError(t('features.transactions.messages.amountRequired'));
       return;
     }
     setSaving(true);
     setFormError('');
     const clientRef = newQueueId();
     const transferPayload = {
-      date: transferForm.date,
-      amount: Number(transferForm.amount),
-      fromAccountId: transferForm.fromAccountId,
-      toAccountId: transferForm.toAccountId,
-      note: transferForm.note,
+      date: form.date,
+      amount: Number(form.amount),
+      fromAccountId: transferAccounts.fromAccountId,
+      toAccountId: transferAccounts.toAccountId,
+      note: form.note,
     };
     try {
       await apiPost('/api/transactions/transfer', { ...transferPayload, clientRef });
-      setTransferModal(false);
+      closeTransactionModal();
       await load(page);
       notifyDataChanged('transactions');
     } catch (e: any) {
@@ -762,7 +756,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         if (!persisted) {
           setFormError(t('features.offline.saveFailed'));
         } else {
-          setTransferModal(false);
+          closeTransactionModal();
           showToast(t('features.offline.queued'), 'info');
         }
       } else {
@@ -968,28 +962,38 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
   const activeFilterCount = Object.entries(filters)
     .filter(([key, value]) => key !== 'keyword' && key !== 'tagMode' && Boolean(value)).length;
   const filterControlClass = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
-  const renderFilterFields = (scope: string) => (
+  const draftTagIds = filterDraft.tagIds.split(',').filter(Boolean);
+  const updateFilterDraft = (patch: Partial<typeof EMPTY_FILTERS>) =>
+    setFilterDraft(current => ({ ...current, ...patch }));
+  const appliedFilters = [
+    filters.type && labelForType(filters.type, t),
+    accounts.find(account => account.id === filters.accountId)?.name,
+    filters.categoryId === '__uncategorized__' ? t('features.common.uncategorized') : categories.find(category => category.id === filters.categoryId)?.name,
+    [filters.dateFrom, filters.dateTo].filter(Boolean).join(' – '),
+    filters.excludeTransfer && t('features.transactions.excludeTransfer'),
+  ].filter(Boolean);
+  const filterFields = (
     <>
-      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-type`}>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor="transaction-filter-type">
         {t('features.common.type')}
-        <select id={`${scope}-type`} className={filterControlClass} value={filters.type} onChange={(e) => updateFilters({ type: e.target.value })}>
+        <select id="transaction-filter-type" className={filterControlClass} value={filterDraft.type} onChange={(e) => updateFilterDraft({ type: e.target.value })}>
           <option value="">{t('features.transactions.allTypes')}</option>
           <option value="income">{t('features.common.income')}</option>
           <option value="expense">{t('features.common.expense')}</option>
-          <option value="transfer" disabled={filters.excludeTransfer === '1'}>{t('features.transactions.transfer')}</option>
+          <option value="transfer" disabled={filterDraft.excludeTransfer === '1'}>{t('features.transactions.transfer')}</option>
           <option value="future">{t('features.transactions.future')}</option>
         </select>
       </label>
-      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-account`}>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor="transaction-filter-account">
         {t('features.common.account')}
-        <select id={`${scope}-account`} className={filterControlClass} value={filters.accountId} onChange={(e) => updateFilters({ accountId: e.target.value })}>
+        <select id="transaction-filter-account" className={filterControlClass} value={filterDraft.accountId} onChange={(e) => updateFilterDraft({ accountId: e.target.value })}>
           <option value="">{t('features.transactions.allAccounts')}</option>
           {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
         </select>
       </label>
-      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-category`}>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor="transaction-filter-category">
         {t('features.recurring.category')}
-        <select id={`${scope}-category`} className={filterControlClass} value={filters.categoryId} onChange={(e) => updateFilters({ categoryId: e.target.value })}>
+        <select id="transaction-filter-category" className={filterControlClass} value={filterDraft.categoryId} onChange={(e) => updateFilterDraft({ categoryId: e.target.value })}>
           <option value="">{t('features.transactions.allCategories')}</option>
           <option value="__uncategorized__">{t('features.common.uncategorized')}</option>
           {allStandalone.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1001,25 +1005,25 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           ))}
         </select>
       </label>
-      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-date-from`}>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor="transaction-filter-date-from">
         {t('features.transactions.startDateTitle')}
-        <input id={`${scope}-date-from`} type="date" className={filterControlClass} value={filters.dateFrom} onChange={(e) => updateFilters({ dateFrom: e.target.value })} />
+        <input id="transaction-filter-date-from" type="date" className={filterControlClass} max={filterDraft.dateTo || undefined} value={filterDraft.dateFrom} onChange={(e) => updateFilterDraft({ dateFrom: e.target.value })} />
       </label>
-      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor={`${scope}-date-to`}>
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-slate-500" htmlFor="transaction-filter-date-to">
         {t('features.transactions.endDateTitle')}
-        <input id={`${scope}-date-to`} type="date" className={filterControlClass} value={filters.dateTo} onChange={(e) => updateFilters({ dateTo: e.target.value })} />
+        <input id="transaction-filter-date-to" type="date" className={filterControlClass} min={filterDraft.dateFrom || undefined} value={filterDraft.dateTo} onChange={(e) => updateFilterDraft({ dateTo: e.target.value })} />
       </label>
       {allTags.length > 0 && (
         <div className="flex min-w-0 basis-full flex-col gap-1 text-xs font-medium text-slate-500">
           <span>{t('features.tags.filterLabel')}</span>
           <div className="flex flex-wrap items-center gap-2">
-            {renderTagChips(filterTagIds, (id) => { const next = toggleId(filterTagIds, id); updateFilters({ tagIds: next.join(','), tagMode: next.length ? filters.tagMode : '' }); }, true)}
+            {renderTagChips(draftTagIds, (id) => { const next = toggleId(draftTagIds, id); updateFilterDraft({ tagIds: next.join(','), tagMode: next.length ? filterDraft.tagMode : '' }); }, true)}
             <select
               aria-label={t('features.tags.filterLabel')}
               className="min-h-8 rounded-lg border border-slate-300 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
-              value={filters.tagMode || 'any'}
-              disabled={filterTagIds.length < 2}
-              onChange={(e) => updateFilters({ tagMode: e.target.value === 'all' ? 'all' : '' })}
+              value={filterDraft.tagMode || 'any'}
+              disabled={draftTagIds.length < 2}
+              onChange={(e) => updateFilterDraft({ tagMode: e.target.value === 'all' ? 'all' : '' })}
             >
               <option value="any">{t('features.tags.modeAny')}</option>
               <option value="all">{t('features.tags.modeAll')}</option>
@@ -1027,13 +1031,16 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           </div>
         </div>
       )}
-      <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300" htmlFor={`${scope}-exclude-transfer`}>
+      <label className="flex min-h-11 shrink-0 items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300" htmlFor="transaction-filter-exclude-transfer">
         <input
-          id={`${scope}-exclude-transfer`}
+          id="transaction-filter-exclude-transfer"
           type="checkbox"
           className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
-          checked={filters.excludeTransfer === '1'}
-          onChange={(e) => toggleExcludeTransfer(e.target.checked)}
+          checked={filterDraft.excludeTransfer === '1'}
+          onChange={(e) => updateFilterDraft({
+            excludeTransfer: e.target.checked ? '1' : '',
+            type: e.target.checked && filterDraft.type === 'transfer' ? '' : filterDraft.type,
+          })}
         />
         {t('features.transactions.excludeTransfer')}
       </label>
@@ -1044,40 +1051,55 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
     <div className="page active space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="page-title">{t('features.transactions.title')}</h2>
-        {formError && <div className="text-sm text-red-500">{formError}</div>}
+        {canWrite && (
+          <Button type="button" className="min-h-11 gap-2" disabled={!metaLoaded} onClick={() => openAdd()}>
+            <Plus size={18} aria-hidden="true" /> {t('mobileLegacy.addTransaction')}
+          </Button>
+        )}
       </div>
 
+      {!modal && formError && <p role="alert" className="text-sm text-destructive">{formError}</p>}
       <div className="flex items-center gap-2">
         <label className="relative min-w-0 flex-1" htmlFor="transaction-search">
           <span className="sr-only">{t('features.transactions.searchPlaceholder')}</span>
           <Search size={18} className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input id="transaction-search" type="search" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white pe-3 ps-10 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" placeholder={t('features.transactions.searchPlaceholder')} value={searchDraft} onChange={(e) => setSearchDraft(e.target.value)} />
         </label>
-        <Button type="button" variant="outline" className="min-h-11 gap-2 md:hidden" aria-expanded={filtersOpen} aria-controls="mobile-transaction-filters" onClick={() => setFiltersOpen((current) => !current)}>
+        <Button type="button" variant="outline" className="min-h-11 gap-2"
+          aria-expanded={filtersOpen} aria-controls="transaction-filters"
+          onClick={() => { if (!filtersOpen) setFilterDraft(filters); setFiltersOpen(!filtersOpen); }}>
           <SlidersHorizontal size={18} aria-hidden="true" />
           {t('mobileLegacy.filter')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </Button>
-        <Button type="button" className="hidden min-h-11 gap-2 md:inline-flex" onClick={() => openAdd()}>
-          <Plus size={18} aria-hidden="true" /> {t('features.transactions.add')}
-        </Button>
       </div>
 
-      <div id="mobile-transaction-filters" className={`${filtersOpen ? 'grid' : 'hidden'} gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60 md:hidden`}>
-        {renderFilterFields('mobile-filter')}
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" className="min-h-11 flex-1" onClick={clearFilters}>{t('common.clear')}</Button>
-          <Button type="button" className="min-h-11 flex-1" onClick={() => setFiltersOpen(false)}>{t('common.close')}</Button>
-        </div>
-      </div>
+      {appliedFilters.length > 0 && (
+        <ul className="flex flex-wrap gap-2 text-sm text-[var(--text-secondary)]">
+          {appliedFilters.map((label, index) => (
+            <li key={index} className="rounded-lg bg-[var(--surface-subtle)] px-2.5 py-1">{label}</li>
+          ))}
+        </ul>
+      )}
 
-      <div className="hidden gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60 md:grid md:grid-cols-2 md:items-end lg:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto_auto]">
-        {renderFilterFields('desktop-filter')}
-        <Button type="button" variant="outline" className="min-h-11 shrink-0" onClick={clearFilters}>{t('common.clear')}</Button>
+      <div id="transaction-filters" hidden={!filtersOpen}>
+        {filtersOpen && (
+          <form className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:grid-cols-2 lg:grid-cols-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              updateFilters({ ...filterDraft, keyword: searchDraft });
+              setFiltersOpen(false);
+            }}>
+            {filterFields}
+            <div className="col-span-full flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="outline" className="min-h-11" onClick={() => { clearFilters(); setFilterDraft(EMPTY_FILTERS); }}>{t('common.clear')}</Button>
+              <Button type="submit" className="min-h-11">{t('mobileLegacy.apply')}</Button>
+            </div>
+          </form>
+        )}
       </div>
 
       <div className="tx-actions flex flex-wrap gap-2 items-center">
-        <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={openTransfer}><ArrowLeftRight size={17} aria-hidden="true" /> {t('features.transactions.accountTransfer')}</Button>
-        {selected.size > 0 && (
+        {canWrite && selected.size > 0 && (
           <>
             <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={() => setBatchModal('category')}><Tags size={17} aria-hidden="true" /> {t('features.transactions.batchCategory')}</Button>
             <Button type="button" variant="outline" className="min-h-11 gap-2" onClick={() => { setBatchTagIds([]); setBatchTagAction('add'); setBatchModal('tags'); }}><Tags size={17} aria-hidden="true" /> {t('features.tags.batchTitle')}</Button>
@@ -1146,6 +1168,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
             return (
               <li key={tx.id} className={`rounded-2xl border p-4 shadow-sm ${selected.has(tx.id) ? 'border-primary bg-primary/5' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'}`}>
                 <div className="flex items-start gap-3">
+                  {canWrite && (
                   <label className="-m-2 flex h-11 w-11 shrink-0 cursor-pointer items-start justify-center p-2" aria-label={`${t('features.common.actions')}: ${transactionLabel}`}>
                     <input
                       type="checkbox"
@@ -1158,6 +1181,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                       }}
                     />
                   </label>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -1202,6 +1226,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                           )
                         )}
                       </div>
+                      {canWrite && (
                       <div className="flex shrink-0 items-center gap-1">
                         {!isTransfer && !tx.isFxFee && (
                           <Button type="button" variant="ghost" size="icon" aria-label={`${t('common.edit')}: ${transactionLabel}`} onClick={() => openEdit(tx)}><Pencil size={18} aria-hidden="true" /></Button>
@@ -1214,6 +1239,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                         )}
                         <Button type="button" variant="ghost" size="icon" className="text-destructive" aria-label={`${t('common.delete')}: ${transactionLabel}`} onClick={() => setDeleteId(tx.id)}><Trash2 size={18} aria-hidden="true" /></Button>
                       </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1225,14 +1251,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
           <table className="data-table">
             <thead>
               <tr>
-                <th><input type="checkbox" aria-label={t('features.transactions.title')} onChange={(e) => setSelected(e.target.checked ? new Set(txs.map((tx) => tx.id)) : new Set())} checked={selected.size === txs.length && txs.length > 0} /></th>
+                {canWrite && <th><input type="checkbox" aria-label={t('features.transactions.title')} onChange={(e) => setSelected(e.target.checked ? new Set(txs.map((tx) => tx.id)) : new Set())} checked={selected.size === txs.length && txs.length > 0} /></th>}
                 <th>{t('features.common.date')}</th>
                 <th>{t('features.common.type')}</th>
                 <th>{t('features.recurring.category')}</th>
                 <th>{t('features.common.account')}</th>
                 <th>{t('features.common.note')}</th>
                 <th>{t('features.common.amount')}</th>
-                <th>{t('features.common.actions')}</th>
+                {canWrite && <th>{t('features.common.actions')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -1241,6 +1267,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 const isFuture = tx.date > today();
                 return (
                   <tr key={tx.id} className={selected.has(tx.id) ? 'row-selected' : ''}>
+                    {canWrite && (
                     <td>
                       <input
                           type="checkbox"
@@ -1253,6 +1280,7 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                         }}
                       />
                     </td>
+                    )}
                     <td>
                       <div>{tx.date}</div>
                       {isFuture && <div className="text-xs text-amber-600">{t('features.transactions.future')}</div>}
@@ -1304,12 +1332,14 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                         <div className="text-xs text-slate-500">{tx.currency} {Math.abs(Number(tx.originalAmount || tx.amount)).toLocaleString(localeTag(locale))}</div>
                       )}
                     </td>
+                    {canWrite && (
                     <td>
                       {!isTransfer && !tx.isFxFee && <button className="btn-icon" title={t('common.edit')} aria-label={`${t('common.edit')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openEdit(tx)}><Pencil size={15} strokeWidth={1.8} aria-hidden="true" /></button>}
                       {tx.aiCreated && <button className="btn-icon" title={t('features.transactions.restoreCreated')} aria-label={`${t('features.transactions.restoreCreated')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setRestoreCreatedId(tx.id)}><RotateCcw size={15} strokeWidth={1.8} aria-hidden="true" /></button>}
                       {tx.noteAiModified && <button className="btn-icon" title={t('features.transactions.restoreNote')} aria-label={`${t('features.transactions.restoreNote')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => openRestoreNote(tx)}><Undo2 size={15} strokeWidth={1.8} aria-hidden="true" /></button>}
                       <button className="btn-icon danger" title={t('common.delete')} aria-label={`${t('common.delete')}: ${getCatName(tx)} · ${tx.date}`} onClick={() => setDeleteId(tx.id)}><Trash2 size={15} strokeWidth={1.8} aria-hidden="true" /></button>
                     </td>
+                    )}
                   </tr>
                 );
               })}
@@ -1327,20 +1357,8 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
         </div>
       )}
 
-      {selected.size === 0 && (
-        <Button type="button" className="fixed bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] end-4 z-30 min-h-12 rounded-full px-5 shadow-lg md:hidden" onClick={() => openAdd()}>
-          <Plus size={19} aria-hidden="true" /> {t('features.transactions.add')}
-        </Button>
-      )}
-      {selected.size > 0 && (
-        <div className="fixed bottom-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))] inset-x-3 z-30 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-xl backdrop-blur md:hidden dark:border-slate-700 dark:bg-slate-900/95">
-          <Button type="button" variant="outline" className="min-h-11 gap-2" aria-label={t('features.transactions.batchCategory')} onClick={() => setBatchModal('category')}><Tags size={18} aria-hidden="true" /><span className="sr-only">{t('features.transactions.batchCategory')}</span></Button>
-          <Button type="button" variant="outline" className="min-h-11 gap-2" aria-label={t('features.transactions.batchDate')} onClick={() => setBatchModal('date')}><CalendarDays size={18} aria-hidden="true" /><span className="sr-only">{t('features.transactions.batchDate')}</span></Button>
-          <Button type="button" variant="destructive" className="min-h-11 gap-2" aria-label={t('features.transactions.deleteSelected', { count: selected.size })} onClick={handleBatchDelete}><Trash2 size={18} aria-hidden="true" /><span className="text-xs tabular-nums">{selected.size}</span></Button>
-        </div>
-      )}
-
-      <Dialog open={modal} onOpenChange={(open) => {
+      <Dialog open={modal && canWrite} onOpenChange={(open) => {
+        if (saving) return;
         if (!open) {
           closeTransactionModal();
         } else {
@@ -1349,32 +1367,55 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
       }}>
         <DialogContent className="max-h-[calc(100dvh-1rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editId ? t('features.transactions.edit') : t('features.transactions.create')}</DialogTitle>
+            <DialogTitle>{editId ? t('features.transactions.edit') : t('mobileLegacy.addTransaction')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-3">
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.type')}</span>
-              <div className="grid grid-cols-2 gap-2" role="group" aria-label={t('features.common.type')}>
-                {(['expense', 'income'] as const).map((type) => (
+              <div className={editId ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-3 gap-2'} role="group" aria-label={t('features.common.type')}>
+                {(editId ? ['expense', 'income'] : ['expense', 'income', 'transfer']).map((type) => (
                   <button
                     key={type}
                     type="button"
                     aria-pressed={form.type === type}
-                    className={`min-h-11 rounded-xl border px-3 text-sm font-semibold transition-colors ${form.type === type ? 'border-primary bg-primary text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'}`}
+                    style={form.type === type ? { background: 'var(--primary-solid)', borderColor: 'var(--primary-solid)' } : undefined}
+                    className={`min-h-11 rounded-xl border px-3 text-sm font-semibold transition-colors ${form.type === type ? 'text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'}`}
                     onClick={() => {
-                      if (form.type !== type) invalidateOcrForTransactionContextChange();
+                      if (form.type === type) return;
+                      invalidateOcrForTransactionContextChange();
+                      setFormError('');
                       setForm((current) => ({ ...current, type, categoryId: '' }));
                     }}
                   >
-                    {type === 'income' ? t('features.common.income') : t('features.common.expense')}
+                    {labelForType(type, t)}
                   </button>
                 ))}
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <label htmlFor="transaction-amount" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.amountRequiredLabel')}</label>
+              <label htmlFor="transaction-amount" className="text-sm font-medium text-gray-700 dark:text-slate-200">
+                {t('features.transactions.amountRequiredLabel')}
+                {' · '}{form.type === 'transfer' ? accounts.find(account => account.id === transferAccounts.fromAccountId)?.currency || 'TWD' : form.currency}
+              </label>
               <input id="transaction-amount" type="number" required min="0.01" step="any" inputMode="decimal" autoFocus={!editId} placeholder="0" className="min-h-12 w-full rounded-xl border border-gray-300 px-3 text-lg font-semibold shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.amount} onChange={(e) => { manuallyEditedOcrFields.current.add('amount'); setForm((current) => ({ ...current, amount: e.target.value })); }} />
             </div>
+            {form.type === 'transfer' ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {([['fromAccountId', 'transferOut'], ['toAccountId', 'transferIn']] as const).map(([key, label]) => (
+                  <label key={key} className="flex min-w-0 flex-col gap-1 text-sm font-medium">
+                    {t(`features.transactions.${label}`)}
+                    <select required className={filterControlClass} value={transferAccounts[key]}
+                      onChange={(event) => setTransferAccounts(current => ({ ...current, [key]: event.target.value }))}>
+                      <option value="">{t('features.transactions.selectPlaceholder')}</option>
+                      {accounts.map(account => (
+                        <option key={account.id} value={account.id}>{account.name} ({account.currency || 'TWD'})</option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <>
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-category" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.recurring.category')}</label>
               <select id="transaction-category" className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.categoryId} onChange={(e) => setForm((current) => ({ ...current, categoryId: e.target.value }))}>
@@ -1437,81 +1478,26 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}{account.currency && account.currency !== 'TWD' ? ` (${account.currency})` : ''}</option>)}
               </select>
             </div>
-            <details className="rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60" open={advancedOpen} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}>
-              <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-sm font-semibold text-slate-700 dark:text-slate-200"><span>{t('mobileLegacy.more')}</span><span className="text-xs font-normal text-slate-500">{form.date}</span></summary>
-              <div className="space-y-3 border-t border-slate-200 p-3 dark:border-slate-700">
+
+              </>
+            )}
+            <Disclosure title={t('ux.transactionDetails')} hint={form.date} open={detailsOpen}
+              onToggle={(event) => setDetailsOpen(event.currentTarget.open)}
+              onInvalidCapture={(event) => { event.currentTarget.open = true; setDetailsOpen(true); }}>
+              <div className="space-y-3">
             <div className="flex flex-col gap-1">
               <label htmlFor="transaction-date" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.dateRequiredLabel')}</label>
               <input id="transaction-date" type="date" required className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.date} onChange={(e) => { manuallyEditedOcrFields.current.add('date'); setForm((current) => ({ ...current, date: e.target.value })); }} />
             </div>
             <div className="flex flex-col gap-1">
-              <label htmlFor="transaction-currency" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.currency')}</label>
-              <input
-                id="transaction-currency"
-                type="text"
-                list="transaction-currency-options"
-                maxLength={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                value={form.currency}
-                onChange={(e) => {
-                  const currency = e.target.value.toUpperCase();
-                  if (form.currency !== currency) invalidateOcrForTransactionContextChange();
-                  setForm((current) => ({ ...current, currency, fxRate: '' }));
-                }}
-              />
-              <datalist id="transaction-currency-options">
-                {currencyOptions.map((currency) => <option key={currency} value={currency} />)}
-              </datalist>
-            </div>
-            {form.currency && form.currency !== 'TWD' && (
-              <div className="flex flex-col gap-1">
-                <label htmlFor="transaction-fx-rate" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.fxRateLabel', { currency: form.currency })}</label>
-                <input id="transaction-fx-rate" type="number" min="0.0001" step="any" placeholder={t('features.transactions.fxRatePlaceholder')} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
-                {fxLoading && <p className="text-xs text-slate-500">{t('features.transactions.latestRateLoading')}</p>}
-              </div>
-            )}
-            {overseasApplies && (
-              <div className="flex flex-col gap-1">
-                <label htmlFor="transaction-fx-fee" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.recurring.fxFeeLabel')}</label>
-                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                  <input
-                    id="transaction-fx-fee" type="number" min="0" step="1" placeholder={t('features.transactions.fxFeePlaceholder')}
-                    className="min-h-11 min-w-0 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
-                    value={form.fxFee}
-                    onChange={(e) => { setFxFeeEdited(true); setForm((current) => ({ ...current, fxFee: e.target.value })); }}
-                  />
-                  <button
-                    type="button"
-                    className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                    onClick={() => { setFxFeeEdited(false); setForm((current) => ({ ...current, fxFee: autoFxFee > 0 ? String(autoFxFee) : '' })); }}
-                  >
-                    {t('features.common.autoCalculate')}
-                  </button>
-                </div>
-                <p className="text-xs text-slate-500">{t('features.transactions.fxFeeHint', {
-                  rate: overseasFeeRate,
-                  suggestion: autoFxFee > 0 ? t('features.transactions.fxFeeSuggestion', { amount: autoFxFee.toLocaleString(localeTag(locale)) }) : '',
-                })}</p>
-              </div>
-            )}
-            <div className="flex flex-col gap-1">
               <label htmlFor="transaction-note" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.note')}</label>
               <input id="transaction-note" type="text" maxLength={TRANSACTION_NOTE_MAX_LENGTH} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.note} onChange={(e) => { manuallyEditedOcrFields.current.add('note'); setForm((current) => ({ ...current, note: e.target.value })); }} />
             </div>
-            {(form.type === 'income' || form.type === 'expense') && (
+
+                {form.type !== 'transfer' && (
+            <div className="space-y-3">
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.tags.picker')}</span>
-                {renderTagChips(formTagIds, (id) => setFormTagIds((list) => toggleId(list, id)), false)}
-              </div>
-            )}
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> {t('features.common.excludeFromStats')}
-            </label>
-              </div>
-            </details>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">{t('features.transactions.photos')}</label>
+                <span className="text-sm font-medium">{t('features.transactions.photos')}</span>
                 {editId && editAttachmentsLoading && (
                   <p className="text-xs text-slate-500">{t('features.transactions.loadingPhotos')}</p>
                 )}
@@ -1547,28 +1533,28 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 )}
                 {editAttachments.filter(a => !pendingDeleteIds.has(a.id)).length + photoFiles.length < 5 && (
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
+                    <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100 focus-within:outline-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
                       <Images size={15} strokeWidth={1.8} aria-hidden="true" />
                       {t('features.transactions.takePhoto')}
                       <input
                         type="file"
                         accept="image/*"
                         capture="environment"
-                        className="hidden"
+                        className="sr-only"
                         onChange={(e) => {
                           addPhotoFiles(e.target.files);
                           e.currentTarget.value = '';
                         }}
                       />
                     </label>
-                    <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100">
+                    <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100 focus-within:outline-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
                       <Image size={13} strokeWidth={1.8} aria-hidden="true" />
                       {t('features.transactions.chooseImage')}
                       <input
                         type="file"
                         accept="image/*"
                         multiple
-                        className="hidden"
+                        className="sr-only"
                         onChange={(e) => {
                           addPhotoFiles(e.target.files);
                           e.currentTarget.value = '';
@@ -1630,59 +1616,88 @@ export default function TransactionsClient(_props: { user?: any } = {}) {
                 </div>
               )}
             </div>
+
+                )}
+              </div>
+            </Disclosure>
+            {form.type !== 'transfer' && (
+              <Disclosure title={t('ux.advancedOptions')} hint={form.currency} open={advancedOpen}
+                onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
+                onInvalidCapture={(event) => { event.currentTarget.open = true; setAdvancedOpen(true); }}>
+                <div className="space-y-3">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="transaction-currency" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.common.currency')}</label>
+              <input
+                id="transaction-currency"
+                type="text"
+                list="transaction-currency-options"
+                maxLength={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                value={form.currency}
+                onChange={(e) => {
+                  const currency = e.target.value.toUpperCase();
+                  if (form.currency !== currency) invalidateOcrForTransactionContextChange();
+                  setForm((current) => ({ ...current, currency, fxRate: '' }));
+                }}
+              />
+              <datalist id="transaction-currency-options">
+                {currencyOptions.map((currency) => <option key={currency} value={currency} />)}
+              </datalist>
+            </div>
+            {form.currency && form.currency !== 'TWD' && (
+              <div className="flex flex-col gap-1">
+                <label htmlFor="transaction-fx-rate" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.transactions.fxRateLabel', { currency: form.currency })}</label>
+                <input id="transaction-fx-rate" type="number" min="0.0001" step="any" placeholder={t('features.transactions.fxRatePlaceholder')} className="min-h-11 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900" value={form.fxRate} onChange={(e) => setForm((current) => ({ ...current, fxRate: e.target.value }))} />
+                {fxLoading && <p className="text-xs text-slate-500">{t('features.transactions.latestRateLoading')}</p>}
+              </div>
+            )}
+            {overseasApplies && (
+              <div className="flex flex-col gap-1">
+                <label htmlFor="transaction-fx-fee" className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.recurring.fxFeeLabel')}</label>
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <input
+                    id="transaction-fx-fee" type="number" min="0" step="1" placeholder={t('features.transactions.fxFeePlaceholder')}
+                    className="min-h-11 min-w-0 w-full rounded-xl border border-gray-300 px-3 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+                    value={form.fxFee}
+                    onChange={(e) => { setFxFeeEdited(true); setForm((current) => ({ ...current, fxFee: e.target.value })); }}
+                  />
+                  <button
+                    type="button"
+                    className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    onClick={() => { setFxFeeEdited(false); setForm((current) => ({ ...current, fxFee: autoFxFee > 0 ? String(autoFxFee) : '' })); }}
+                  >
+                    {t('features.common.autoCalculate')}
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500">{t('features.transactions.fxFeeHint', {
+                  rate: overseasFeeRate,
+                  suggestion: autoFxFee > 0 ? t('features.transactions.fxFeeSuggestion', { amount: autoFxFee.toLocaleString(localeTag(locale)) }) : '',
+                })}</p>
+              </div>
+            )}
+            {(form.type === 'income' || form.type === 'expense') && (
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-700 dark:text-slate-200">{t('features.tags.picker')}</span>
+                {renderTagChips(formTagIds, (id) => setFormTagIds((list) => toggleId(list, id)), false)}
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={form.excludeFromStats} onChange={(e) => setForm((current) => ({ ...current, excludeFromStats: e.target.checked }))} /> {t('features.common.excludeFromStats')}
+            </label>
+
+                </div>
+              </Disclosure>
+            )}
             {photoUploadWarning && <p className="text-sm text-amber-600">{photoUploadWarning}</p>}
             {ocrState && !ocrState.running && ocrState.status === 'ok' && (ocrState.draft?.amount !== null || ocrState.draft?.date || ocrState.draft?.merchant) && (
               <p className="text-xs text-slate-500" role="status">{t('features.transactions.ocrApplied')}</p>
             )}
             {formError && <p className="text-sm text-destructive" role="alert" aria-live="assertive">{formError}</p>}
-            <DialogFooter className="sticky bottom-0 z-10 -mx-1 flex-row justify-end border-t border-slate-200 bg-white/95 px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95">
+            <DialogFooter className="sticky bottom-0 z-10 -mx-1 flex-row justify-end border-t border-[var(--border)] bg-[var(--surface)] px-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-3">
               <DialogClose asChild>
-                <Button type="button" variant="outline">{t('common.cancel')}</Button>
+                <Button type="button" variant="outline" className="min-h-11" disabled={saving}>{t('common.cancel')}</Button>
               </DialogClose>
-              <Button type="submit" disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={transferModal} onOpenChange={setTransferModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('features.transactions.accountTransfer')}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleTransferSave} className="space-y-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.transactions.dateRequiredLabel')}</label>
-              <input type="date" required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.date} onChange={(e) => setTransferForm((current) => ({ ...current, date: e.target.value }))} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.transactions.transferOut')}</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.fromAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, fromAccountId: e.target.value }))}>
-                <option value="">{t('features.transactions.selectPlaceholder')}</option>
-                {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.transactions.transferIn')}</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.toAccountId} onChange={(e) => setTransferForm((current) => ({ ...current, toAccountId: e.target.value }))}>
-                <option value="">{t('features.transactions.selectPlaceholder')}</option>
-                {accounts.map((account: any) => <option key={account.id} value={account.id}>{account.name}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.transactions.amountRequiredLabel')}</label>
-              <input type="number" required min="0.01" step="any" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.amount} onChange={(e) => setTransferForm((current) => ({ ...current, amount: e.target.value }))} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t('features.common.note')}</label>
-              <input type="text" maxLength={TRANSACTION_NOTE_MAX_LENGTH} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" value={transferForm.note} onChange={(e) => setTransferForm((current) => ({ ...current, note: e.target.value }))} />
-            </div>
-            {formError && <p className="text-sm text-destructive">{formError}</p>}
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">{t('common.cancel')}</Button>
-              </DialogClose>
-              <Button type="submit" disabled={saving}>{saving ? t('features.transactions.creating') : t('features.transactions.confirmTransfer')}</Button>
+              <Button type="submit" disabled={saving} className="min-h-11">{saving ? t('common.saving') : form.type === 'transfer' ? t('features.transactions.confirmTransfer') : t('common.save')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

@@ -1,19 +1,31 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
 import '../app_widget_sync.dart';
 import '../format.dart';
 import '../models.dart';
+import '../offline/offline_draft_service.dart';
 import '../platform/notification_capture.dart';
 import '../widgets.dart';
 import '../theme.dart';
 import 'transaction_form_screen.dart';
 import 'notification_capture_screens.dart';
+import 'offline_drafts_screen.dart';
 import '../l10n.dart';
 
 class TransactionsScreen extends StatefulWidget {
   final VoidCallback? onLedgerChanged;
-  const TransactionsScreen({super.key, this.onLedgerChanged});
+  final VoidCallback? onTransactionsChanged;
+  final int transactionsRevision;
+
+  const TransactionsScreen({
+    super.key,
+    this.onLedgerChanged,
+    this.onTransactionsChanged,
+    this.transactionsRevision = 0,
+  });
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -34,7 +46,9 @@ class _TransactionsData {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   late Future<_TransactionsData> _future;
-  String _filter = 'all'; // all / income / expense
+  String _filter = 'all';
+  final _search = TextEditingController();
+  Timer? _searchDebounce;
   // 進階篩選
   DateTime? _dateFrom;
   DateTime? _dateTo;
@@ -42,37 +56,55 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   String? _filterCategoryId;
   String _keyword = '';
 
-  bool get _hasAdvancedFilter =>
-      _dateFrom != null ||
-      _dateTo != null ||
-      _filterAccountId != null ||
-      _filterCategoryId != null ||
-      _keyword.trim().isNotEmpty;
+  bool get _hasFilters => _activeFilterCount > 0 || _keyword.isNotEmpty;
 
   int get _activeFilterCount => [
+    _filter != 'all',
     _dateFrom != null || _dateTo != null,
     _filterAccountId != null,
     _filterCategoryId != null,
-    _keyword.trim().isNotEmpty,
   ].where((active) => active).length;
 
   @override
   void initState() {
     super.initState();
-    _refreshLedgerRole();
     _future = _load();
   }
 
   static String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  /// 取得目前帳本角色，viewer 時隱藏新增入口（伺服器端仍會逐次驗證）。
-  Future<void> _refreshLedgerRole() async {
-    try {
-      await ApiClient.instance.ledgers();
-      if (mounted) setState(() {});
-    } catch (_) {
-      /* 角色查詢失敗時維持可寫，實際寫入仍由伺服器把關 */
+  @override
+  void didUpdateWidget(covariant TransactionsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.transactionsRevision != oldWidget.transactionsRevision) {
+      _future = _load();
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _updateSearch(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted || value.trim() == _keyword) return;
+      _keyword = value.trim();
+      _reload();
+    });
+  }
+
+  void _transactionsChanged() {
+    if (!mounted) return;
+    final onChanged = widget.onTransactionsChanged;
+    if (onChanged == null) {
+      _reload();
+    } else {
+      onChanged();
     }
   }
 
@@ -144,23 +176,27 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         dateTo: _dateTo,
         accountId: _filterAccountId,
         categoryId: _filterCategoryId,
-        keyword: _keyword,
-        onApply: (from, to, accountId, categoryId, keyword) {
+        type: _filter,
+        onClear: _clearFilters,
+        onApply: (type, from, to, accountId, categoryId) {
           setState(() {
+            _filter = type;
             _dateFrom = from;
             _dateTo = to;
             _filterAccountId = accountId;
             _filterCategoryId = categoryId;
-            _keyword = keyword;
           });
         },
       ),
     );
-    if (applied == true) _reload();
+    if (applied == true && mounted) _reload();
   }
 
   void _clearFilters() {
+    _searchDebounce?.cancel();
+    _search.clear();
     setState(() {
+      _filter = 'all';
       _dateFrom = null;
       _dateTo = null;
       _filterAccountId = null;
@@ -171,10 +207,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Future<void> _openForm([Txn? txn]) async {
+    if (ApiClient.instance.activeLedgerReadOnly) return;
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => TransactionFormScreen(existing: txn)),
     );
-    if (changed == true) _reload();
+    if (changed == true) _transactionsChanged();
   }
 
   /// 刪除一筆交易（需確認）。回傳是否真的刪除成功，供滑動刪除判斷是否移除列項。
@@ -198,12 +235,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ],
       ),
     );
-    if (ok != true) return false;
+    if (ok != true || ApiClient.instance.activeLedgerReadOnly) return false;
     try {
       await ApiClient.instance.deleteTransaction(t.id);
       await _refreshDashboardWidget();
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
-      _reload();
+      _transactionsChanged();
       return true;
     } catch (e) {
       if (mounted) toast(context, '$e');
@@ -300,7 +337,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       await ApiClient.instance.restoreAiCreatedTransaction(t.id);
       await _refreshDashboardWidget();
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
-      _reload();
+      _transactionsChanged();
     } catch (e) {
       if (mounted) toast(context, '$e');
     }
@@ -365,223 +402,285 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       );
       await _refreshDashboardWidget();
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
-      _reload();
+      _transactionsChanged();
     } catch (e) {
       if (mounted) toast(context, '$e');
     }
   }
 
-  // AsyncView 載入後暫存資料，供 AppBar 篩選按鈕取用帳戶/分類清單。
-  _TransactionsData? _lastData;
+  Future<void> _openDrafts() async {
+    final source = !NotificationCapturePlatform.supported.value
+        ? 'offline'
+        : await showModalBottomSheet<String>(
+            context: context,
+            useSafeArea: true,
+            builder: (context) => SafeArea(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(ApSpace.lg),
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      trKey('uxDrafts'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.edit_note_outlined),
+                    title: Text(trKey('offlineDraftsTitle')),
+                    onTap: () => Navigator.pop(context, 'offline'),
+                  ),
+                  if (NotificationCapturePlatform.supported.value)
+                    ListTile(
+                      leading: const Icon(Icons.receipt_long_outlined),
+                      title: Text(trKey('notificationCaptureDrafts')),
+                      onTap: () => Navigator.pop(context, 'notification'),
+                    ),
+                ],
+              ),
+            ),
+          );
+    if (!mounted || source == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => source == 'offline'
+            ? const OfflineDraftsScreen()
+            : NotificationDraftsScreen(
+                onLedgerChanged: widget.onLedgerChanged,
+                onPosted: _transactionsChanged,
+              ),
+      ),
+    );
+    _transactionsChanged();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final readOnly = ApiClient.instance.activeLedgerReadOnly;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(trKey('mobileLegacyTransactions8084a8ea')),
-        actions: [
-          ValueListenableBuilder(
-            valueListenable: NotificationCapturePlatform.supported,
-            builder: (context, supported, _) => supported
-                ? ValueListenableBuilder(
-                    valueListenable: NotificationCapturePlatform.snapshot,
-                    builder: (context, capture, _) => IconButton(
-                      tooltip: trKey('notificationCaptureDrafts'),
-                      icon: Badge.count(
-                        count: capture.drafts.length,
-                        isLabelVisible: capture.drafts.isNotEmpty,
-                        child: const Icon(Icons.receipt_long_outlined),
-                      ),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => NotificationDraftsScreen(
-                            onLedgerChanged: widget.onLedgerChanged,
-                            onPosted:
-                                widget.onLedgerChanged ??
-                                () {
-                                  if (mounted) _reload();
-                                },
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          if (_hasAdvancedFilter)
-            IconButton(
-              tooltip: trKey('mobileLegacyClearFilters'),
-              icon: Icon(Icons.filter_alt_off),
-              onPressed: _clearFilters,
-            ),
-          IconButton(
-            tooltip: _activeFilterCount == 0
-                ? trKey('mobileLegacyFilter')
-                : '${trKey('mobileLegacyFilter')} ($_activeFilterCount)',
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  _hasAdvancedFilter
-                      ? Icons.filter_alt
-                      : Icons.filter_alt_outlined,
-                ),
-                if (_activeFilterCount > 0)
-                  Positioned(
-                    right: -8,
-                    top: -8,
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minWidth: 18,
-                        minHeight: 18,
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$_activeFilterCount',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            onPressed: _lastData == null
-                ? null
-                : () => _openFilters(_lastData!),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(52),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: SegmentedButton<String>(
-              segments: [
-                ButtonSegment(
-                  value: 'all',
-                  label: Text(trKey('mobileLegacyAll')),
-                ),
-                ButtonSegment(
-                  value: 'income',
-                  label: Text(trKey('dashboardOverviewIncome')),
-                ),
-                ButtonSegment(
-                  value: 'expense',
-                  label: Text(trKey('dashboardOverviewExpense')),
-                ),
-              ],
-              selected: {_filter},
-              onSelectionChanged: (s) {
-                setState(() => _filter = s.first);
-                _reload();
-              },
-            ),
-          ),
-        ),
-      ),
+      appBar: AppBar(title: Text(trKey('mobileLegacyTransactions8084a8ea'))),
       // viewer 帳本不顯示新增入口（伺服器端同樣會拒絕寫入）。
       floatingActionButton: ApiClient.instance.activeLedgerReadOnly
           ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _openForm(),
-              icon: Icon(Icons.add),
-              label: Text(trKey('mobileLegacyAddTransaction')),
+          : RecordButton(onPressed: () => _openForm()),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              ApSpace.lg,
+              0,
+              ApSpace.lg,
+              ApSpace.sm,
             ),
-      body: AsyncView<_TransactionsData>(
-        future: _future,
-        onRetry: _reload,
-        builder: (context, data) {
-          _lastData = data;
-          final list = data.items;
-          if (list.isEmpty) {
-            return EmptyState(
-              icon: Icons.receipt_long,
-              title: _hasAdvancedFilter
-                  ? trKey('mobileLegacyNoTransactionsMatchTheseFilters')
-                  : trKey(
-                      'mobileLegacyNoTransactionsYetTapAddTransactionToBegin',
-                    ),
-              message: _hasAdvancedFilter
-                  ? trKey('mobileLegacyClearFilters')
-                  : trKey('mobileLegacyAddTransaction'),
-              onAction: _hasAdvancedFilter ? _clearFilters : null,
-              actionLabel: _hasAdvancedFilter
-                  ? trKey('mobileLegacyClearFilters')
-                  : null,
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async => _reload(),
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
-                ApSpace.md + 2,
-                ApSpace.sm,
-                ApSpace.md + 2,
-                96,
-              ),
-              itemCount: list.length,
-              itemBuilder: (context, i) {
-                final t = list[i];
-                return StaggerIn(
-                  index: i,
-                  child: Dismissible(
-                    key: ValueKey(t.id),
-                    direction: DismissDirection.endToStart,
-                    // 由 confirmDismiss 跳出確認並執行刪除；回傳 false 時列項不會被移除。
-                    confirmDismiss: (_) => _delete(t),
-                    background: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.error,
-                        borderRadius: ApRadius.rMd,
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: ApSpace.xl,
-                      ),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    child: _TxnTile(
-                      t: t,
-                      categoryName: data.catName[t.categoryId],
-                      onTap: () => t.type == 'transfer'
-                          ? toast(
-                              context,
-                              trKey('mobileLegacyEditTransfersInTheWebApp'),
-                            )
-                          : t.isFxFee
-                          ? toast(
-                              context,
-                              trKey(
-                                'mobileLegacyForeignCardFeesAreGeneratedAutomaticallyEditThe',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (readOnly)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: ApSpace.sm),
+                    child: Text(trKey('ledgerReadOnlyNotice')),
+                  ),
+                TextField(
+                  controller: _search,
+                  onChanged: _updateSearch,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    labelText: trKey('mobileLegacyNoteKeyword'),
+                    prefixIcon: const Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: ApSpace.sm),
+                FutureBuilder<_TransactionsData>(
+                  future: _future,
+                  builder: (context, snapshot) {
+                    final data = snapshot.data;
+                    final count = _activeFilterCount;
+                    final summary = [
+                      if (_filter != 'all') _typeLabel(_filter),
+                      if (_dateFrom case final from?) _ymd(from),
+                      if (_dateTo case final to?) _ymd(to),
+                      if (_filterAccountId != null && data != null)
+                        ...data.accounts
+                            .where((item) => item.id == _filterAccountId)
+                            .map((item) => item.name),
+                      if (_filterCategoryId != null && data != null)
+                        ...data.categories
+                            .where((item) => item.id == _filterCategoryId)
+                            .map((item) => item.name),
+                    ];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: ApSpace.sm,
+                          runSpacing: ApSpace.xs,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: data == null
+                                  ? null
+                                  : () => _openFilters(data),
+                              icon: const Icon(Icons.tune),
+                              label: Text(
+                                count == 0
+                                    ? trKey('mobileLegacyFilter')
+                                    : "${trKey('mobileLegacyFilter')} ($count)",
                               ),
-                            )
-                          : _openForm(t),
-                      onLongPress: () => _delete(t),
-                      onDelete: () => _delete(t),
-                      onRestoreCreated: t.aiCreated
-                          ? () => _restoreAiCreated(t)
-                          : null,
-                      onRestoreNote: t.noteAiModified
-                          ? () => _restoreAiNote(t)
-                          : null,
-                      onViewRepaymentSummary: t.repaymentSummaryId.isNotEmpty
-                          ? () => _openRepaymentSummary(t.repaymentSummaryId)
-                          : null,
+                            ),
+                            ValueListenableBuilder<int>(
+                              valueListenable:
+                                  OfflineDraftService.instance.pendingCount,
+                              builder: (context, offlineCount, _) =>
+                                  ValueListenableBuilder(
+                                    valueListenable:
+                                        NotificationCapturePlatform.snapshot,
+                                    builder: (context, snapshot, _) {
+                                      final draftCount =
+                                          (OfflineDraftService
+                                                      .instance
+                                                      .ledgerId ==
+                                                  ApiClient
+                                                      .instance
+                                                      .activeLedgerId
+                                              ? offlineCount
+                                              : 0) +
+                                          (NotificationCapturePlatform
+                                                  .supported
+                                                  .value
+                                              ? snapshot.drafts.length
+                                              : 0);
+                                      final label = trKey('uxDrafts');
+                                      return TextButton.icon(
+                                        onPressed: _openDrafts,
+                                        icon: const Icon(
+                                          Icons.edit_note_outlined,
+                                        ),
+                                        label: Text(
+                                          draftCount == 0
+                                              ? label
+                                              : '$label ($draftCount)',
+                                        ),
+                                      );
+                                    },
+                                  ),
+                            ),
+                          ],
+                        ),
+                        if (summary.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: ApSpace.sm),
+                            child: Text(summary.join(' · ')),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: AsyncView<_TransactionsData>(
+              future: _future,
+              onRetry: _reload,
+              builder: (context, data) {
+                final list = data.items;
+                if (list.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.receipt_long,
+                    message: trKey(
+                      _hasFilters
+                          ? 'mobileLegacyNoTransactionsMatchTheseFilters'
+                          : readOnly
+                          ? 'ledgerReadOnlyNotice'
+                          : 'uxEmptyLedgerHint',
                     ),
+                    onAction: _hasFilters ? _clearFilters : null,
+                    actionLabel: _hasFilters
+                        ? trKey('mobileLegacyClearFilters')
+                        : null,
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: () async => _reload(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(
+                      ApSpace.md + 2,
+                      ApSpace.sm,
+                      ApSpace.md + 2,
+                      96,
+                    ),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    itemCount: list.length,
+                    itemBuilder: (context, i) {
+                      final t = list[i];
+                      return StaggerIn(
+                        index: i,
+                        child: Dismissible(
+                          key: ValueKey(t.id),
+                          direction: readOnly
+                              ? DismissDirection.none
+                              : DismissDirection.endToStart,
+                          // 由 confirmDismiss 跳出確認並執行刪除；回傳 false 時列項不會被移除。
+                          confirmDismiss: (_) => _delete(t),
+                          background: Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.error,
+                              borderRadius: ApRadius.rMd,
+                            ),
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: ApSpace.xl,
+                            ),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                            ),
+                          ),
+                          child: _TxnTile(
+                            t: t,
+                            categoryName: data.catName[t.categoryId],
+                            onTap: readOnly
+                                ? null
+                                : () => t.type == 'transfer'
+                                      ? toast(
+                                          context,
+                                          trKey(
+                                            'mobileLegacyEditTransfersInTheWebApp',
+                                          ),
+                                        )
+                                      : t.isFxFee
+                                      ? toast(
+                                          context,
+                                          trKey(
+                                            'mobileLegacyForeignCardFeesAreGeneratedAutomaticallyEditThe',
+                                          ),
+                                        )
+                                      : _openForm(t),
+                            onLongPress: readOnly ? null : () => _delete(t),
+                            onDelete: readOnly ? null : () => _delete(t),
+                            onRestoreCreated: !readOnly && t.aiCreated
+                                ? () => _restoreAiCreated(t)
+                                : null,
+                            onRestoreNote: !readOnly && t.noteAiModified
+                                ? () => _restoreAiNote(t)
+                                : null,
+                            onViewRepaymentSummary:
+                                t.repaymentSummaryId.isNotEmpty
+                                ? () => _openRepaymentSummary(
+                                    t.repaymentSummaryId,
+                                  )
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -590,9 +689,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 class _TxnTile extends StatelessWidget {
   final Txn t;
   final String? categoryName;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
-  final VoidCallback onDelete;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onDelete;
   final VoidCallback? onRestoreCreated;
   final VoidCallback? onRestoreNote;
   final VoidCallback? onViewRepaymentSummary;
@@ -683,51 +782,56 @@ class _TxnTile extends StatelessWidget {
               text: sign + money(t.originalAmount, t.currency),
               style: TextStyle(fontWeight: FontWeight.w700, color: color),
             ),
-            PopupMenuButton<String>(
-              tooltip: trKey('mobileLegacyMore'),
-              onSelected: (value) {
-                switch (value) {
-                  case 'delete':
-                    onDelete();
-                    break;
-                  case 'restore-created':
-                    onRestoreCreated?.call();
-                    break;
-                  case 'restore-note':
-                    onRestoreNote?.call();
-                    break;
-                  case 'repayment':
-                    onViewRepaymentSummary?.call();
-                    break;
-                }
-              },
-              itemBuilder: (_) => [
-                if (onRestoreCreated != null)
-                  PopupMenuItem(
-                    value: 'restore-created',
-                    child: Text(trKey('featuresTransactionsRestoreCreated')),
-                  ),
-                if (onRestoreNote != null)
-                  PopupMenuItem(
-                    value: 'restore-note',
-                    child: Text(trKey('featuresTransactionsRestoreNote')),
-                  ),
-                if (onViewRepaymentSummary != null)
-                  PopupMenuItem(
-                    value: 'repayment',
-                    child: Text(
-                      trKey('featuresTransactionsViewRepaymentAllocation'),
+            if (onDelete != null ||
+                onRestoreCreated != null ||
+                onRestoreNote != null ||
+                onViewRepaymentSummary != null)
+              PopupMenuButton<String>(
+                tooltip: trKey('mobileLegacyMore'),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'delete':
+                      onDelete?.call();
+                      break;
+                    case 'restore-created':
+                      onRestoreCreated?.call();
+                      break;
+                    case 'restore-note':
+                      onRestoreNote?.call();
+                      break;
+                    case 'repayment':
+                      onViewRepaymentSummary?.call();
+                      break;
+                  }
+                },
+                itemBuilder: (_) => [
+                  if (onRestoreCreated != null)
+                    PopupMenuItem(
+                      value: 'restore-created',
+                      child: Text(trKey('featuresTransactionsRestoreCreated')),
                     ),
-                  ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text(
-                    trKey('commonDelete'),
-                    style: TextStyle(color: scheme.error),
-                  ),
-                ),
-              ],
-            ),
+                  if (onRestoreNote != null)
+                    PopupMenuItem(
+                      value: 'restore-note',
+                      child: Text(trKey('featuresTransactionsRestoreNote')),
+                    ),
+                  if (onViewRepaymentSummary != null)
+                    PopupMenuItem(
+                      value: 'repayment',
+                      child: Text(
+                        trKey('featuresTransactionsViewRepaymentAllocation'),
+                      ),
+                    ),
+                  if (onDelete != null)
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        trKey('commonDelete'),
+                        style: TextStyle(color: scheme.error),
+                      ),
+                    ),
+                ],
+              ),
           ],
         ),
       ),
@@ -755,7 +859,14 @@ class _TxnMeta extends StatelessWidget {
   }
 }
 
-/// 交易進階篩選：日期區間、帳戶、分類、關鍵字。
+String _typeLabel(String type) => trKey(switch (type) {
+  'expense' => 'dashboardOverviewExpense',
+  'income' => 'dashboardOverviewIncome',
+  'transfer' => 'featuresTransactionsTransfer',
+  _ => 'mobileLegacyAll',
+});
+
+/// 交易進階篩選：類型、日期區間、帳戶與分類。
 class _TxnFilterSheet extends StatefulWidget {
   final List<Account> accounts;
   final List<Category> categories; // 父分類 + 其子分類（依序）
@@ -763,13 +874,14 @@ class _TxnFilterSheet extends StatefulWidget {
   final DateTime? dateTo;
   final String? accountId;
   final String? categoryId;
-  final String keyword;
+  final String type;
+  final VoidCallback onClear;
   final void Function(
+    String type,
     DateTime? from,
     DateTime? to,
     String? accountId,
     String? categoryId,
-    String keyword,
   )
   onApply;
 
@@ -780,7 +892,8 @@ class _TxnFilterSheet extends StatefulWidget {
     required this.dateTo,
     required this.accountId,
     required this.categoryId,
-    required this.keyword,
+    required this.type,
+    required this.onClear,
     required this.onApply,
   });
 
@@ -793,13 +906,7 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
   late DateTime? _to = widget.dateTo;
   late String? _accountId = widget.accountId;
   late String? _categoryId = widget.categoryId;
-  late final _keyword = TextEditingController(text: widget.keyword);
-
-  @override
-  void dispose() {
-    _keyword.dispose();
-    super.dispose();
-  }
+  late String _type = widget.type;
 
   static String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -811,7 +918,7 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-    if (d != null) setState(() => isFrom ? _from = d : _to = d);
+    if (d != null && mounted) setState(() => isFrom ? _from = d : _to = d);
   }
 
   @override
@@ -834,6 +941,21 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
             Text(
               trKey('mobileLegacyFilterTransactions'),
               style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: ApSpace.md),
+            DropdownButtonFormField<String>(
+              initialValue: _type,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: trKey('featuresCommonType'),
+              ),
+              items: [
+                for (final type in ['all', 'expense', 'income', 'transfer'])
+                  DropdownMenuItem(value: type, child: Text(_typeLabel(type))),
+              ],
+              onChanged: (type) {
+                if (type != null) setState(() => _type = type);
+              },
             ),
             SizedBox(height: 12),
             Row(
@@ -919,26 +1041,26 @@ class _TxnFilterSheetState extends State<_TxnFilterSheet> {
               onChanged: (v) => setState(() => _categoryId = v),
             ),
             SizedBox(height: 12),
-            TextField(
-              controller: _keyword,
-              decoration: InputDecoration(
-                labelText: trKey('mobileLegacyNoteKeyword'),
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(height: 20),
-            FilledButton(
+            TextButton(
               onPressed: () {
-                widget.onApply(
-                  _from,
-                  _to,
-                  _accountId,
-                  _categoryId,
-                  _keyword.text,
-                );
-                Navigator.pop(context, true);
+                widget.onClear();
+                Navigator.pop(context);
               },
+              child: Text(trKey('mobileLegacyClearFilters')),
+            ),
+            FilledButton(
+              onPressed: (_from != null && _to != null && _from!.isAfter(_to!))
+                  ? null
+                  : () {
+                      widget.onApply(
+                        _type,
+                        _from,
+                        _to,
+                        _accountId,
+                        _categoryId,
+                      );
+                      Navigator.pop(context, true);
+                    },
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

@@ -10,8 +10,8 @@ import '../platform/platform_info.dart';
 import '../platform/notification_capture.dart';
 import '../platform/widget_snapshot_service.dart';
 import '../widgets.dart';
+import '../theme.dart';
 import 'admin_screen.dart';
-import 'changelog_screen.dart';
 import 'notification_capture_screens.dart';
 import 'report_schedule_screen.dart';
 import 'security_screens.dart';
@@ -254,6 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         future: _future,
         onRetry: () => setState(() => _future = _load()),
         builder: (context, user) => ListView(
+          padding: const EdgeInsets.all(ApSpace.lg),
           children: [
             ListTile(
               leading: CircleAvatar(
@@ -272,168 +273,178 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     )
                   : null,
             ),
-            if (user.isAdmin) ...[
-              ListTile(
-                leading: Icon(Icons.admin_panel_settings_outlined),
-                title: Text(trKey('navAdmin')),
-                subtitle: Text(trKey('adminScreenSubtitle')),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () => _push(AdminScreen()),
-              ),
-              Divider(),
-            ],
-            ListTile(
-              leading: Icon(Icons.badge_outlined),
-              title: Text(trKey('authDisplayNameLabel')),
-              subtitle: Text(user.displayName),
-              onTap: () => _editName(user),
-            ),
-            ValueListenableBuilder<ThemeMode>(
-              valueListenable: themeMode,
-              builder: (context, mode, _) => ListTile(
-                leading: Icon(Icons.brightness_6_outlined),
-                title: Text(trKey('mobileLegacyTheme')),
-                subtitle: Text(_themeLabel(mode)),
-                onTap: () async {
-                  final picked = await showDialog<ThemeMode>(
-                    context: context,
-                    builder: (_) => SimpleDialog(
-                      title: Text(trKey('mobileLegacyChooseTheme')),
-                      children: [
-                        for (final m in ThemeMode.values)
-                          ListTile(
-                            title: Text(_themeLabel(m)),
-                            trailing: mode == m ? Icon(Icons.check) : null,
-                            onTap: () => Navigator.pop(context, m),
-                          ),
-                      ],
-                    ),
-                  );
-                  if (picked != null) await setThemeMode(picked);
-                },
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.payments_outlined),
-              title: Text(trKey('mobileLegacyCurrencySettings')),
-              subtitle: Text(
-                trKey('mobileLegacyDefaultAndFrequentlyUsedCurrencies'),
-              ),
-              onTap: () => _push(CurrencySettingsScreen()),
-            ),
-            ListTile(
-              leading: Icon(Icons.translate),
-              title: Text(trKey('commonLanguage')),
-              subtitle: Text(trKey('mobileLegacyTraditionalChineseEnglish')),
-              onTap: _pickLanguage,
-            ),
-            ListTile(
-              leading: Icon(Icons.notifications_outlined),
-              title: Text(trKey('mobileLegacyReportNotifications')),
-              subtitle: Text(
-                trKey('mobileLegacyCustomizeScheduledCashFlowReports'),
-              ),
-              onTap: () => _push(ReportScheduleScreen()),
-            ),
-            ValueListenableBuilder(
-              valueListenable: NotificationCapturePlatform.supported,
-              builder: (context, supported, _) => supported
-                  ? ListTile(
-                      leading: const Icon(Icons.receipt_long_outlined),
-                      title: Text(trKey('notificationCaptureTitle')),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _push(
-                        NotificationCaptureSettingsScreen(ownerId: user.id),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            if (PlatformInfo.isIOS)
-              FutureBuilder<bool>(
-                future: WidgetSnapshotService.readHideAmounts(),
-                builder: (context, snapshot) {
-                  final hide = snapshot.data ?? true;
-                  return SwitchListTile(
-                    secondary: Icon(Icons.widgets_outlined),
-                    title: Text(trKey('settingsWidgetHideAmountsTitle')),
-                    subtitle: Text(trKey('settingsWidgetHideAmountsSubtitle')),
-                    value: hide,
-                    onChanged: (v) async {
-                      await WidgetSnapshotService.setHideAmounts(v);
-                      if (!context.mounted) return;
-                      setState(() {});
-                    },
-                  );
-                },
-              ),
-            Divider(),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Text(
-                trKey('mobileLegacyAccountSecurity'),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+            const SizedBox(height: ApSpace.md),
+            OptionGroup(
+              label: trKey('uxPreferences'),
+              children: [
+                ListTile(
+                  leading: Icon(Icons.badge_outlined),
+                  title: Text(trKey('authDisplayNameLabel')),
+                  subtitle: Text(user.displayName),
+                  onTap: () => _editName(user),
                 ),
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: themeMode,
+                  builder: (context, mode, _) => ListTile(
+                    leading: Icon(Icons.brightness_6_outlined),
+                    title: Text(trKey('mobileLegacyTheme')),
+                    subtitle: Text(_themeLabel(mode)),
+                    onTap: () async {
+                      final picked = await showDialog<ThemeMode>(
+                        context: context,
+                        builder: (_) => SimpleDialog(
+                          title: Text(trKey('mobileLegacyChooseTheme')),
+                          children: [
+                            for (final m in ThemeMode.values)
+                              ListTile(
+                                title: Text(_themeLabel(m)),
+                                trailing: mode == m ? Icon(Icons.check) : null,
+                                onTap: () => Navigator.pop(context, m),
+                              ),
+                          ],
+                        ),
+                      );
+                      if (picked != null) await setThemeMode(picked);
+                    },
+                  ),
+                ),
+                ListTile(
+                  leading: Icon(Icons.payments_outlined),
+                  title: Text(trKey('mobileLegacyCurrencySettings')),
+                  subtitle: Text(
+                    trKey('mobileLegacyDefaultAndFrequentlyUsedCurrencies'),
+                  ),
+                  onTap: () => _push(CurrencySettingsScreen()),
+                ),
+                ListTile(
+                  leading: Icon(Icons.translate),
+                  title: Text(trKey('commonLanguage')),
+                  subtitle: Text(
+                    trKey('mobileLegacyTraditionalChineseEnglish'),
+                  ),
+                  onTap: _pickLanguage,
+                ),
+              ],
+            ),
+            const SizedBox(height: ApSpace.md),
+            OptionGroup(
+              label: trKey('uxSecurity'),
+              children: [
+                ListTile(
+                  leading: Icon(Icons.key_outlined),
+                  title: Text(trKey('settingsAccountPasskeyTitle')),
+                  onTap: () => _push(PasskeysScreen()),
+                ),
+                ListTile(
+                  leading: Icon(Icons.link),
+                  title: Text(trKey('mobileLegacyLinkedAccounts')),
+                  subtitle: Text('Google / Apple'),
+                  onTap: () => _push(AccountBindingsScreen()),
+                ),
+                ListTile(
+                  leading: Icon(Icons.devices_outlined),
+                  title: Text(trKey('mobileLegacySignedInDevices')),
+                  onTap: () => _push(SessionsScreen()),
+                ),
+                ListTile(
+                  leading: Icon(Icons.history),
+                  title: Text(trKey('mobileLegacySignInHistory')),
+                  onTap: () => _push(LoginAuditScreen()),
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.logout,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    trKey('shellLogout'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  onTap: _logout,
+                ),
+                Divider(),
+                ListTile(
+                  leading: Icon(
+                    Icons.delete_forever_outlined,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    trKey('settingsAccountDeleteTitle'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  subtitle: Text(
+                    trKey('mobileLegacyPermanentlyDeleteYourAccountAndAllData'),
+                  ),
+                  onTap: () => _deleteAccount(user),
+                ),
+              ],
+            ),
+            const SizedBox(height: ApSpace.md),
+            OptionGroup(
+              label: trKey('uxNotificationsAndIntegrations'),
+              children: [
+                ListTile(
+                  leading: Icon(Icons.notifications_outlined),
+                  title: Text(trKey('mobileLegacyReportNotifications')),
+                  subtitle: Text(
+                    trKey('mobileLegacyCustomizeScheduledCashFlowReports'),
+                  ),
+                  onTap: () => _push(ReportScheduleScreen()),
+                ),
+                ValueListenableBuilder(
+                  valueListenable: NotificationCapturePlatform.supported,
+                  builder: (context, supported, _) => supported
+                      ? ListTile(
+                          leading: const Icon(Icons.receipt_long_outlined),
+                          title: Text(trKey('notificationCaptureTitle')),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _push(
+                            NotificationCaptureSettingsScreen(ownerId: user.id),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                if (PlatformInfo.isIOS)
+                  FutureBuilder<bool>(
+                    future: WidgetSnapshotService.readHideAmounts(),
+                    builder: (context, snapshot) {
+                      final hide = snapshot.data ?? true;
+                      return SwitchListTile(
+                        secondary: Icon(Icons.widgets_outlined),
+                        title: Text(trKey('settingsWidgetHideAmountsTitle')),
+                        subtitle: Text(
+                          trKey('settingsWidgetHideAmountsSubtitle'),
+                        ),
+                        value: hide,
+                        onChanged: (v) async {
+                          await WidgetSnapshotService.setHideAmounts(v);
+                          if (!context.mounted) return;
+                          setState(() {});
+                        },
+                      );
+                    },
+                  ),
+              ],
+            ),
+            if (user.isAdmin) ...[
+              const SizedBox(height: ApSpace.md),
+              OptionGroup(
+                label: trKey('uxDataAndAdmin'),
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.admin_panel_settings_outlined),
+                    title: Text(trKey('navAdmin')),
+                    subtitle: Text(trKey('adminScreenSubtitle')),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () => _push(AdminScreen()),
+                  ),
+                ],
               ),
-            ),
-            ListTile(
-              leading: Icon(Icons.key_outlined),
-              title: Text(trKey('settingsAccountPasskeyTitle')),
-              onTap: () => _push(PasskeysScreen()),
-            ),
-            ListTile(
-              leading: Icon(Icons.link),
-              title: Text(trKey('mobileLegacyLinkedAccounts')),
-              subtitle: Text('Google / Apple'),
-              onTap: () => _push(AccountBindingsScreen()),
-            ),
-            ListTile(
-              leading: Icon(Icons.devices_outlined),
-              title: Text(trKey('mobileLegacySignedInDevices')),
-              onTap: () => _push(SessionsScreen()),
-            ),
-            ListTile(
-              leading: Icon(Icons.history),
-              title: Text(trKey('mobileLegacySignInHistory')),
-              onTap: () => _push(LoginAuditScreen()),
-            ),
-            Divider(),
-            ListTile(
-              leading: Icon(Icons.system_update_outlined),
-              title: Text(trKey('shellVersionInfo')),
-              subtitle: Text(
-                trKey('mobileLegacyViewTheCurrentVersionAndReleaseNotes'),
-              ),
-              onTap: () => _push(ChangelogScreen()),
-            ),
-            Divider(),
-            ListTile(
-              leading: Icon(
-                Icons.logout,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              title: Text(
-                trKey('shellLogout'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-              onTap: _logout,
-            ),
-            Divider(),
-            ListTile(
-              leading: Icon(
-                Icons.delete_forever_outlined,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              title: Text(
-                trKey('settingsAccountDeleteTitle'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-              subtitle: Text(
-                trKey('mobileLegacyPermanentlyDeleteYourAccountAndAllData'),
-              ),
-              onTap: () => _deleteAccount(user),
-            ),
+            ],
           ],
         ),
       ),

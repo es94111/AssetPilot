@@ -9,7 +9,6 @@ import {
   CircleAlert,
   Clock3,
   Gauge,
-  Plus,
   ReceiptText,
   Repeat2,
   ShieldAlert,
@@ -19,6 +18,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
+import DashboardRecordLink from '@/components/features/transactions/DashboardRecordLink';
+import Disclosure from '@/components/ui/Disclosure';
 import { getDashboardData } from '@/lib/dashboardHelpers';
 import {
   DEFAULT_DASHBOARD_LAYOUT,
@@ -68,14 +69,15 @@ function percentLabel(total: number, value: number) {
   return total ? `${((value / total) * 100).toFixed(1)}%` : '0.0%';
 }
 
-function transactionHref(yearMonth: string, type: 'income' | 'expense') {
+function dashboardMonthRange(yearMonth: string) {
   const [year, month] = yearMonth.split('-').map(Number);
   const lastDay = new Date(year, month, 0).getDate();
-  return `/finance/transactions?${new URLSearchParams({
-    type,
-    dateFrom: `${yearMonth}-01`,
-    dateTo: `${yearMonth}-${String(lastDay).padStart(2, '0')}`,
-  })}`;
+  return { from: `${yearMonth}-01`, to: `${yearMonth}-${String(lastDay).padStart(2, '0')}` };
+}
+
+function transactionHref(yearMonth: string, type: 'income' | 'expense') {
+  const { from, to } = dashboardMonthRange(yearMonth);
+  return `/finance/transactions?${new URLSearchParams({ type, dateFrom: from, dateTo: to })}`;
 }
 
 function comparisonTransactionHref(
@@ -123,6 +125,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
   const t = getTranslator(locale);
   const data = await getDashboardData(searchParams.month);
   const dashboardMonth = fmtMonth(data.yearMonth, locale);
+  const reportsHref = `/finance/reports?${new URLSearchParams({ period: 'custom', ...dashboardMonthRange(data.yearMonth) })}`;
 
   const expenseRows = Array.isArray(data.catBreakdown) ? data.catBreakdown : [];
   const expenseGroups = groupCategoryRows(expenseRows, t('dashboard.uncategorized'));
@@ -180,17 +183,6 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
       href: '/stocks/portfolio',
     } : null,
   ].filter((item): item is NonNullable<typeof item> => item !== null).slice(0, 3);
-  const leadAttention = attentionItems[0];
-  const signalCashValue = cashOutlook?.available
-    ? fmtMoney(cashOutlook.projectedClosingBalance, locale)
-    : '—';
-  let signalPortfolioValue = '—';
-  if (portfolio?.available) {
-    const prefix = portfolio.unrealizedGrossPL >= 0 ? '+' : '−';
-    signalPortfolioValue = `${prefix}${fmtMoney(Math.abs(portfolio.unrealizedGrossPL), locale, portfolio.currency || 'TWD')}`;
-  }
-  const LeadAttentionIcon = leadAttention?.icon || CircleAlert;
-
   const assetCards = [
     {
       label: t('dashboard.kpi.bankAccounts'), value: fmtMoney(data.bankBalance, locale),
@@ -261,7 +253,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
                 : t('dashboard.comparison.unavailable')}
             </p>
           </div>
-          <Link href="/finance/reports" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">{t('nav.reports')} <ArrowRight size={15} aria-hidden="true" /></Link>
+          <Link href={reportsHref} className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">{t('nav.reports')} <ArrowRight size={15} aria-hidden="true" /></Link>
         </div>
         {!comparison?.available || !comparison.delta ? (
           <div className="empty-hint py-10"><p>{t('dashboard.comparison.unavailable')}</p></div>
@@ -435,7 +427,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
       <section key="spending" className="section-card" aria-labelledby="dashboard-expense-title">
         <div className="section-card-header">
           <div><h2 id="dashboard-expense-title" className="section-card-title">{t('dashboard.sections.expenseCategories')}</h2><p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{fmtMoney(totalExpense, locale)}</p></div>
-          <Link href="/finance/reports" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">{t('nav.reports')} <ArrowRight size={15} aria-hidden="true" /></Link>
+          <Link href={reportsHref} className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">{t('nav.reports')} <ArrowRight size={15} aria-hidden="true" /></Link>
         </div>
         {expenseGroups.length === 0 ? (
           <div className="empty-hint"><ReceiptText size={28} className="mx-auto mb-3 opacity-60" aria-hidden="true" /><p>{t('dashboard.empty.noExpense')}</p></div>
@@ -483,8 +475,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
       </section>
     ),
     incomeRecent: (
-      <section key="incomeRecent" className="grid gap-6 xl:col-span-2 xl:grid-cols-[0.8fr_1.2fr]" aria-label={t('dashboard.personalize.modules.incomeRecent')}>
-        <div className="section-card">
+      <div className="section-card">
           <div className="section-card-header"><h2 className="section-card-title">{t('dashboard.sections.incomeCategories')}</h2><span className="section-card-sub">{fmtMoney(totalIncome, locale)}</span></div>
           {incomeRows.length === 0 ? <div className="empty-hint py-10"><p>{t('dashboard.empty.noIncome')}</p></div> : (
             <div className="space-y-4">{incomeRows.map((row: any, index: number) => (
@@ -495,8 +486,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
             ))}</div>
           )}
         </div>
-        <div className="section-card">
-          <div className="section-card-header"><div><h2 className="section-card-title">{t('dashboard.sections.recentTransactions')}</h2><p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.sections.recentCount', { count: recentRows.length })}</p></div><Link href="/finance/transactions" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">{t('nav.transactions')} <ArrowRight size={15} aria-hidden="true" /></Link></div>
+    ),
+  };
+
+  const recentTransactions = (
+    <section className="section-card" aria-labelledby="dashboard-recent-title">
+          <div className="section-card-header"><div><h2 id="dashboard-recent-title" className="section-card-title">{t('dashboard.sections.recentTransactions')}</h2><p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{t('dashboard.sections.recentCount', { count: recentRows.length })}</p></div><Link href="/finance/transactions" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-primary/10">{t('ux.viewAllTransactions')} <ArrowRight size={15} aria-hidden="true" /></Link></div>
           {recentRows.length === 0 ? <div className="empty-hint py-10"><p>{t('dashboard.empty.noTransactions')}</p></div> : (
             <ul className="space-y-2">{recentRows.map((row: any) => (
               <li key={row.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:flex-nowrap" style={{ borderColor: 'var(--border)' }}>
@@ -506,82 +501,56 @@ export default async function DashboardPage(props: { searchParams: Promise<{ mon
               </li>
             ))}</ul>
           )}
-        </div>
-      </section>
-    ),
-  };
+        </section>
+  );
 
   const visibleModules = layout.moduleOrder.filter(id => !layout.hiddenModules.includes(id));
 
   return (
     <AppLayout user={user}>
       <div className="dashboard-page mx-auto w-full max-w-[1600px] space-y-6 md:space-y-8">
-        <header className="dashboard-page-header flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="page-header"><span className="dashboard-eyebrow">{t('dashboard.kpi.net')}</span><h1>{t('dashboard.title')}</h1><p>{t('dashboard.subtitle', { month: dashboardMonth })}</p></div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <DashboardFilters />
-            <DashboardPersonalization initialLayout={layout} updatedAt={data.preferences?.updatedAt || 0} />
-            <div className="dashboard-query-status inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-xs font-medium" title={t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}>
-              <span className="dashboard-status-dot" aria-hidden="true" />
-              <span>{t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}</span>
-            </div>
-            <Link href="/finance/transactions?action=add" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary-solid px-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-[0.98]"><Plus size={17} aria-hidden="true" />{t('features.transactions.add')}</Link>
-          </div>
+        <header className="dashboard-page-header">
+          <div className="page-header"><h1>{t('dashboard.title')}</h1></div>
+          <div className="flex justify-end"><DashboardRecordLink /></div>
+          <div className="dashboard-period"><DashboardFilters /></div>
         </header>
 
-        <section className="dashboard-hero relative overflow-hidden rounded-[20px] p-5 text-white shadow-lg sm:p-7 lg:p-8" aria-labelledby="dashboard-overview-title">
-          <div className="dashboard-hero-gridline pointer-events-none absolute inset-0" aria-hidden="true" />
-          <div className="dashboard-hero-mark pointer-events-none absolute -right-10 -top-14 h-64 w-64 rounded-full" aria-hidden="true" />
-          <div className="relative grid gap-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-            <div className="min-w-0"><p id="dashboard-overview-title" className="dashboard-hero-label text-sm font-medium text-white/90">{t('dashboard.kpi.net')}</p><h2 className="dashboard-hero-value mt-1 break-all text-3xl font-extrabold tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">{fmtMoney(net, locale)}</h2><p className="mt-3 text-sm text-white/90">{dashboardMonth}</p></div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                [t('dashboard.overview.income'), fmtMoney(totalIncome, locale), transactionHref(data.yearMonth, 'income')],
-                [t('dashboard.overview.expense'), fmtMoney(totalExpense, locale), transactionHref(data.yearMonth, 'expense')],
-                comparison?.available && comparison.delta
-                  ? [t('dashboard.comparison.netChange'), `${comparison.delta.net >= 0 ? '+' : '−'}${fmtMoney(Math.abs(comparison.delta.net), locale)}`, '/finance/reports']
-                  : [t('dashboard.kpi.bankAccounts'), fmtMoney(data.bankBalance, locale), '/finance/accounts'],
-              ].map(([label, value, href]) => <Link key={label} href={href} className="group min-w-0 rounded-2xl border border-white/10 bg-white/10 p-4 transition-colors hover:bg-white/16"><span className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">{label}<ArrowUpRight size={15} aria-hidden="true" /></span><strong className="mt-2 block break-all text-lg font-bold text-white tabular-nums">{value}</strong></Link>)}
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-signal-rail" aria-labelledby="dashboard-signal-title">
-          <div className="dashboard-signal-lead">
-            <div className="dashboard-signal-heading">
-              <span id="dashboard-signal-title" className="dashboard-signal-kicker">{t('dashboard.attention.title')}</span>
-              <span className="dashboard-signal-meta">{t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}</span>
-            </div>
-            {leadAttention ? (
-              <Link href={leadAttention.href} className="dashboard-signal-alert group">
-                <span className="dashboard-signal-icon dashboard-signal-icon--alert"><LeadAttentionIcon size={18} aria-hidden="true" /></span>
-                <span className="dashboard-signal-alert-label">{leadAttention.label}</span>
-                <ArrowUpRight size={17} className="dashboard-signal-arrow" aria-hidden="true" />
-              </Link>
-            ) : (
-              <div className="dashboard-signal-clear" role="status">
-                <span className="dashboard-signal-icon dashboard-signal-icon--clear"><CheckCircle2 size={18} aria-hidden="true" /></span>
-                <span>{t('dashboard.attention.allClear')}</span>
+        <div className="space-y-2">
+          <section className="dashboard-hero relative overflow-hidden rounded-[20px] p-5 text-white shadow-lg sm:p-7 lg:p-8" aria-labelledby="dashboard-overview-title">
+            <div className="dashboard-hero-gridline pointer-events-none absolute inset-0" aria-hidden="true" />
+            <div className="dashboard-hero-mark pointer-events-none absolute -right-10 -top-14 h-64 w-64 rounded-full" aria-hidden="true" />
+            <div className="relative grid gap-4 sm:gap-7 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+              <div className="min-w-0"><p id="dashboard-overview-title" className="dashboard-hero-label text-sm font-medium text-white/90">{t('dashboard.kpi.net')}</p><h2 className="dashboard-hero-value mt-1 break-all text-3xl font-extrabold tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">{fmtMoney(net, locale)}</h2><p className="mt-3 text-sm text-white/90">{dashboardMonth}</p></div>
+              <div className="dashboard-totals gap-2 sm:gap-3">
+                {[
+                  [t('dashboard.overview.income'), fmtMoney(totalIncome, locale), transactionHref(data.yearMonth, 'income')],
+                  [t('dashboard.overview.expense'), fmtMoney(totalExpense, locale), transactionHref(data.yearMonth, 'expense')],
+                  comparison?.available && comparison.delta
+                    ? [t('dashboard.comparison.netChange'), `${comparison.delta.net >= 0 ? '+' : '−'}${fmtMoney(Math.abs(comparison.delta.net), locale)}`, reportsHref]
+                    : [t('dashboard.kpi.bankAccounts'), fmtMoney(data.bankBalance, locale), '/finance/accounts'],
+                ].map(([label, value, href]) => <Link key={label} href={href} className="group min-w-0 rounded-2xl border border-white/10 bg-white/10 p-3 transition-colors hover:bg-white/16 sm:p-4"><span className="flex items-center justify-between gap-2 text-xs font-medium text-white/90">{label}<ArrowUpRight size={15} aria-hidden="true" /></span><strong className="mt-2 block break-all text-lg font-bold text-white tabular-nums">{value}</strong></Link>)}
               </div>
-            )}
+            </div>
+          </section>
+
+          <div className="flex items-center justify-end">
+            <Link href={reportsHref} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-primary underline-offset-4 hover:underline">
+              {t('ux.viewReports')} <ArrowRight size={16} aria-hidden="true" />
+            </Link>
           </div>
-
-          <Link href={cashOutlookActionHref} className="dashboard-signal-cell group" aria-label={`${t('dashboard.cashOutlook.closingBalance')}: ${signalCashValue}`}>
-            <span className="dashboard-signal-cell-label"><CalendarRange size={16} aria-hidden="true" />{t('dashboard.cashOutlook.closingBalance')}</span>
-            <strong className="dashboard-signal-cell-value">{signalCashValue}</strong>
-            <ArrowUpRight size={16} className="dashboard-signal-arrow" aria-hidden="true" />
-          </Link>
-
-          <Link href="/stocks/portfolio" className="dashboard-signal-cell group" aria-label={`${t('dashboard.portfolioHealth.unrealizedGross')}: ${signalPortfolioValue}`}>
-            <span className="dashboard-signal-cell-label"><Gauge size={16} aria-hidden="true" />{t('dashboard.portfolioHealth.unrealizedGross')}</span>
-            <strong className="dashboard-signal-cell-value" data-tone={portfolio?.available && portfolio.unrealizedGrossPL < 0 ? 'loss' : 'gain'}>{signalPortfolioValue}</strong>
-            <ArrowUpRight size={16} className="dashboard-signal-arrow" aria-hidden="true" />
-          </Link>
-        </section>
-
-        <div className="dashboard-module-grid grid gap-6 xl:grid-cols-2">
-          {visibleModules.map(id => modules[id])}
         </div>
+
+        {!layout.hiddenModules.includes('incomeRecent') && recentTransactions}
+
+        <Disclosure title={t('ux.dashboardDetails')}>
+          <div className="mb-4 flex flex-wrap justify-between gap-2">
+            <p className="self-center text-sm text-[var(--text-secondary)]">{t('dashboard.dataStatus.queriedAt', { time: generatedAtLabel })}</p>
+            <DashboardPersonalization initialLayout={layout} updatedAt={data.preferences?.updatedAt || 0} />
+          </div>
+          <div className="dashboard-module-grid grid gap-6 xl:grid-cols-2">
+            {visibleModules.map(id => modules[id])}
+          </div>
+        </Disclosure>
       </div>
     </AppLayout>
   );

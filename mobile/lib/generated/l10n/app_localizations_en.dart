@@ -7097,4 +7097,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsWidgetHideAmountsSubtitle =>
       'Home screen widgets do not show amounts by default, to keep financial data private';
+
+  @override
+  String get uxBookkeeping => 'Transactions';
+
+  @override
+  String get uxLedgerTools => 'Manage finances';
+
+  @override
+  String get uxBudgetsAndReports => 'Budgets and reports';
+
+  @override
+  String get uxSettingsAndHelp => 'Settings and help';
+
+  @override
+  String get uxPreferences => 'Preferences';
+
+  @override
+  String get uxSecurity => 'Account and security';
+
+  @override
+  String get uxNotificationsAndIntegrations => 'Notifications and integrations';
+
+  @override
+  String get uxDataAndAdmin => 'Data and administration';
+
+  @override
+  String get uxTransactionDetails => 'Transaction details';
+
+  @override
+  String get uxAdvancedOptions => 'Advanced options';
+
+  @override
+  String get uxDrafts => 'Pending drafts';
+
+  @override
+  String get uxStockTools => 'Stock tools';
+
+  @override
+  String get uxStockView => 'Stock view';
+
+  @override
+  String get uxReportOptions => 'Report options';
+
+  @override
+  String get uxViewReports => 'View reports';
+
+  @override
+  String get uxViewAllTransactions => 'View all transactions';
+
+  @override
+  String get uxDashboardDetails => 'Financial analysis';
+
+  @override
+  String get uxEmptyLedgerHint =>
+      'Tap “Add transaction” to record your first income or expense.';
+
+  @override
+  String get uxExport => 'Export';
 }

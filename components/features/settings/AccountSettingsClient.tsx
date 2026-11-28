@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { ChevronRight, LogOut } from "lucide-react";
+import Disclosure from "@/components/ui/Disclosure";
+import { notifyOfflineQueueLogout } from "@/lib/clientOfflineQueue";
 import { client as webauthnClient } from "@passwordless-id/webauthn";
 import { apiGet, apiPut, apiPost, apiDelete } from "@/lib/clientApi";
 import { Button } from "@/components/ui/button";
@@ -62,6 +66,8 @@ export default function AccountSettingsClient({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
   // 智慧輔助（分類建議／固定收支偵測）總開關（issue #252）。
   const [smartAssistEnabled, setSmartAssistEnabled] = useState(true);
   const [smartAssistSaving, setSmartAssistSaving] = useState(false);
@@ -416,35 +422,38 @@ export default function AccountSettingsClient({
     setDeleting(false);
   }
 
+  async function signOut() {
+    setSigningOut(true);
+    setSignOutError(false);
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      if (!response.ok) throw new Error();
+      notifyOfflineQueueLogout();
+      window.location.assign('/login');
+    } catch {
+      setSignOutError(true);
+      setSigningOut(false);
+    }
+  }
+
   if (loading)
     return <div className="p-8 text-slate-500">{t("common.loading")}</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-4">
       <h2 className="text-2xl font-bold">{ta("title")}</h2>
 
-      {/* Profile Info */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">{ta("profileInfo")}</h3>
-        <div className="flex gap-4 mb-2">
-          <span className="text-slate-600 w-24">{ta("email")}</span>
-          <span className="font-medium">{profile?.email || "—"}</span>
-        </div>
-        <div className="flex gap-4">
-          <span className="text-slate-600 w-24">{ta("displayName")}</span>
-          <span className="font-medium">
-            {profile?.displayName || profile?.display_name || "—"}
-          </span>
-        </div>
-      </div>
+      <p className="break-all text-sm text-[var(--text-secondary)]">{profile?.email}</p>
 
+      <Disclosure name="account-settings" title={t('ux.preferences')}>
+        <div className="divide-y divide-[var(--border)]">
       {/* Language */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <LanguageSwitcher />
       </div>
 
       {/* Display Name */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold mb-4">{ta("editDisplayName")}</h3>
         <form onSubmit={handleDisplayName}>
           <Input
@@ -469,9 +478,9 @@ export default function AccountSettingsClient({
       </div>
 
       {/* Theme Mode */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold mb-4">{ta("themeTitle")}</h3>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
           {[
             ["system", ta("theme.system")],
             ["light", ta("theme.light")],
@@ -493,7 +502,7 @@ export default function AccountSettingsClient({
       </div>
 
       {/* Smart assist (issue #252) */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold mb-2">{ta("smartAssistTitle")}</h3>
         <p className="text-sm text-slate-500 mb-3">{ta("smartAssistDescription")}</p>
         <label className="flex items-center gap-2 cursor-pointer text-sm">
@@ -508,7 +517,7 @@ export default function AccountSettingsClient({
         </label>
       </div>
 
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold mb-4">{ta("defaultCurrency")}</h3>
         <form onSubmit={handleDefaultCurrency} className="space-y-3 max-w-xs">
           <Input
@@ -533,8 +542,13 @@ export default function AccountSettingsClient({
         </form>
       </div>
 
+        </div>
+      </Disclosure>
+
+      <Disclosure name="account-settings" title={t('ux.security')}>
+        <div className="divide-y divide-[var(--border)]">
       {/* Passkeys */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold mb-4">{ta("passkeyTitle")}</h3>
         {pkError && <div className="text-red-500 text-sm mb-4">{pkError}</div>}
         {pkLoading && <p className="text-slate-500">{t("common.loading")}</p>}
@@ -567,7 +581,7 @@ export default function AccountSettingsClient({
       </div>
 
       {/* Recovery codes */}
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold mb-2">{ta("recovery.title")}</h3>
         <p className="text-sm text-slate-500 mb-4">{ta("recovery.desc")}</p>
         {rcError && <div className="text-red-500 text-sm mb-4">{rcError}</div>}
@@ -611,7 +625,7 @@ export default function AccountSettingsClient({
         </Button>
       </div>
 
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold mb-4">{ta("googleTitle")}</h3>
         <p className="text-sm text-slate-500 mb-4">
           {ta("statusPrefix")}
@@ -632,7 +646,7 @@ export default function AccountSettingsClient({
         )}
       </div>
 
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">{ta("sessionsTitle")}</h3>
           <Button variant="outline" onClick={loadSessions}>
@@ -699,7 +713,7 @@ export default function AccountSettingsClient({
         )}
       </div>
 
-      <div className="p-6 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl shadow-sm">
+      <div className="py-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">{ta("auditTitle")}</h3>
           <Button variant="outline" onClick={loadLoginAudit}>
@@ -747,7 +761,7 @@ export default function AccountSettingsClient({
         )}
       </div>
 
-      <div className="p-6 bg-white border border-red-200 dark:bg-slate-900 dark:border-red-900/50 rounded-xl shadow-sm">
+      <div className="py-4">
         <h3 className="text-lg font-semibold text-red-600 mb-4">
           {ta("deleteTitle")}
         </h3>
@@ -756,6 +770,30 @@ export default function AccountSettingsClient({
           {ta("deleteButton")}
         </Button>
       </div>
+          <div className="py-4">
+            <Button variant="outline" onClick={signOut} disabled={signingOut} className="min-h-11 gap-2">
+              <LogOut size={16} aria-hidden="true" />{t('shell.logout')}
+            </Button>
+            {signOutError && <p role="alert" className="mt-2 text-sm text-[var(--danger)]">{t('settings.account.recovery.failed')}</p>}
+          </div>
+        </div>
+      </Disclosure>
+
+      <Disclosure name="account-settings" title={t('ux.notificationsAndIntegrations')}>
+        <SettingsLinks links={[
+          ['/settings/notifications', t('nav.notifications')],
+          ['/settings/mcp', t('nav.mcp')],
+          ['/settings/mcp-connections', t('nav.mcpConnections')],
+          ['/settings/api-integration', t('nav.apiIntegration')],
+        ]} />
+      </Disclosure>
+
+      <Disclosure name="account-settings" title={t('ux.dataAndAdmin')}>
+        <SettingsLinks links={[
+          ['/settings/export', t('nav.exportImport')],
+          ...(initialUser?.isAdmin ? [['/settings/admin', t('nav.admin')] as const] : []),
+        ]} />
+      </Disclosure>
 
       <Modal
         open={deleteOpen}
@@ -795,5 +833,20 @@ export default function AccountSettingsClient({
         </div>
       </Modal>
     </div>
+  );
+}
+
+function SettingsLinks({ links }: { links: ReadonlyArray<readonly [string, string]> }) {
+  return (
+    <ul className="[&>li+li]:border-t [&>li+li]:border-[var(--border)]">
+      {links.map(([path, label]) => (
+        <li key={path}>
+          <Link href={path} className="nav-link min-h-11">
+            <span className="min-w-0 flex-1">{label}</span>
+            <ChevronRight size={16} aria-hidden="true" className="rtl:rotate-180" />
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

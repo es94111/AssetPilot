@@ -96,8 +96,9 @@ class _CategoriesScreenState extends State<CategoriesScreen>
         ],
       ),
     );
-    if (ok != true || !mounted || ApiClient.instance.activeLedgerReadOnly)
+    if (ok != true || !mounted || ApiClient.instance.activeLedgerReadOnly) {
       return;
+    }
     try {
       await ApiClient.instance.deleteCategory(c.id);
       if (mounted) toast(context, trKey('mobileLegacyDeleted'));
